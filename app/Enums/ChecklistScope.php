@@ -13,6 +13,7 @@ enum ChecklistScope: string
     case Event = 'event';
     case Station = 'station';
     case Person = 'person';
+    case Period = 'period';
 
     /**
      * Get the human-readable label for the scope.
@@ -23,6 +24,7 @@ enum ChecklistScope: string
             self::Event => 'Once for the event',
             self::Station => 'Once per station',
             self::Person => 'Once per person',
+            self::Period => 'Once per operational period',
         };
     }
 }

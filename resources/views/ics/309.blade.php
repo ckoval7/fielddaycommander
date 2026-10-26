@@ -3,8 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 @php
-    $start = $event->start_time ? toLocalTime($event->start_time) : null;
-    $end = $event->end_time ? toLocalTime($event->end_time) : null;
+    $start = $period->start_time ? toLocalTime($period->start_time) : null;
+    $end = $period->end_time ? toLocalTime($period->end_time) : null;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -57,7 +57,7 @@
             <div class="cell">
                 <div class="label">2. Operational Period</div>
                 <div class="value">
-                    {{ $start?->format('Y-m-d H:i') }} to {{ $end?->format('Y-m-d H:i T') }}
+                    @if($period->exists){{ $period->name }}: @endif{{ $start?->format('Y-m-d H:i') }} to {{ $end?->format('Y-m-d H:i T') }}
                 </div>
             </div>
             <div class="cell">

@@ -6,7 +6,9 @@
     use App\Enums\ChecklistAnswerType;
     use App\Enums\ChecklistScope;
     $scope = $checklist->scope;
-    $subjectName = $this->subjectStation?->name ?? $this->subjectPerson?->call_sign;
+    $subjectName = $this->subjectStation?->name ?? $this->subjectPerson?->call_sign ?? $this->subjectPeriod?->name;
+    // A run picked from a list of subjects links back to that list.
+    $backToSubjects = $this->showsRun && $scope !== ChecklistScope::Event && ! ($scope === ChecklistScope::Period && $this->periods->isEmpty());
 @endphp
 <div>
     <x-slot:title>{{ $checklist->name }}</x-slot:title>
@@ -17,12 +19,12 @@
             <div class="min-w-0">
                 @unless(\App\Support\StationMode::isActive() || ($scope === ChecklistScope::Person && ! auth()->user()->can('manage-shifts')))
                     <a
-                        href="{{ $this->showsRun && $scope !== ChecklistScope::Event ? route('checklists.show', $checklist) : route('checklists.index') }}"
+                        href="{{ $backToSubjects ? route('checklists.show', $checklist) : route('checklists.index') }}"
                         wire:navigate
                         class="inline-flex items-center gap-1 text-sm link link-hover pointer-coarse:min-h-11"
                     >
                         <x-icon name="phosphor-arrow-left" class="w-4 h-4" />
-                        {{ $this->showsRun && $scope !== ChecklistScope::Event ? $checklist->name : 'Checklists' }}
+                        {{ $backToSubjects ? $checklist->name : 'Checklists' }}
                     </a>
                 @endunless
                 <h1 class="text-2xl md:text-3xl font-bold break-words">
@@ -30,6 +32,8 @@
                 </h1>
                 @if($this->subjectStation?->location)
                     <p class="text-base-content/60">{{ $this->subjectStation->location }}</p>
+                @elseif($this->subjectPeriod)
+                    <p class="text-base-content/60">{{ $this->subjectPeriod->timeRange() }}</p>
                 @elseif($checklist->description && ! $this->showsRun)
                     <p class="text-base-content/60">{{ $checklist->description }}</p>
                 @endif
@@ -66,7 +70,7 @@
         </div>
 
         @if(! $this->showsRun)
-            {{-- Stations or people this checklist covers --}}
+            {{-- Stations, people or periods this checklist covers --}}
             @if($scope === ChecklistScope::Person)
                 <div class="mb-4">
                     <x-button label="Open my checklist" icon="phosphor-user" link="{{ route('checklists.show', [$checklist, 'person' => auth()->id()]) }}" class="btn-primary max-sm:w-full" />
@@ -77,6 +81,8 @@
                 <x-alert icon="phosphor-info" class="alert-info">
                     @if($scope === ChecklistScope::Station)
                         This event has no stations yet.
+                    @elseif($scope === ChecklistScope::Period)
+                        This event doesn't have any operational periods yet.
                     @else
                         Nobody has signed up for a shift at this event yet.
                     @endif
@@ -87,7 +93,7 @@
                     @foreach($this->subjects as $subject)
                         <li wire:key="subject-{{ $subject['key'] }}">
                             <a
-                                href="{{ route('checklists.show', [$checklist, $scope === ChecklistScope::Station ? 'station' : 'person' => $subject['id']]) }}"
+                                href="{{ route('checklists.show', [$checklist, match ($scope) { ChecklistScope::Station => 'station', ChecklistScope::Period => 'period', default => 'person' } => $subject['id']]) }}"
                                 wire:navigate
                                 class="flex items-center gap-3 p-3 min-h-14 rounded-lg bg-base-100 border border-base-300 hover:border-primary active:bg-base-200"
                             >

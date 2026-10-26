@@ -286,6 +286,9 @@ class AuditLogViewer extends Component
                 'shift.updated' => 'Shift updated',
                 'shift.deleted' => 'Shift deleted',
                 'shift.bulk_created' => 'Shifts bulk created',
+                'operational_period.created' => 'Operational period created',
+                'operational_period.updated' => 'Operational period updated',
+                'operational_period.deleted' => 'Operational period deleted',
             ],
             'Bonuses' => [
                 'bonus.claimed' => 'Bonus claimed',

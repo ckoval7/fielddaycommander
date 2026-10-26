@@ -7,10 +7,13 @@ namespace App\Services;
 
 use App\Models\EventConfiguration;
 use App\Models\Message;
+use App\Models\OperationalPeriod;
+use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -21,6 +24,11 @@ use Illuminate\Support\Str;
  * FEMA PDF's own field names to values. The browser fills one blank copy of
  * the form per page and merges them, so the field mapping lives here where it
  * can be tested.
+ *
+ * The operational period sets the dates in each form's header. A saved
+ * period also limits the people on the ICS-205A and 211 to those whose
+ * shifts overlap it; the whole-event period (an unsaved one, used when the
+ * event has no periods) limits nothing.
  *
  * @phpstan-type IcsForm array{template: string, filename: string, pages: list<array<string, string>>}
  */
@@ -52,17 +60,15 @@ class IcsFormBuilder
      *
      * @return IcsForm
      */
-    public function ics205(EventConfiguration $config, ?User $preparedBy): array
+    public function ics205(EventConfiguration $config, ?User $preparedBy, ?OperationalPeriod $period = null): array
     {
         $event = $config->event;
+        $period ??= $this->wholeEvent($config);
 
         $header = [
             '1 Incident Name_8' => (string) $event->name,
             '2 Date/Time Prepared' => $this->now()->format(self::DATETIME_FORMAT),
-            'Date From' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
-            'Date To' => $this->formatLocal($event->end_time, self::DATE_FORMAT),
-            'Time From' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
-            'Time To' => $this->formatLocal($event->end_time, self::TIME_FORMAT),
+            ...$this->periodFields($period),
             '5 Special Instructions' => "Club callsign: {$config->callsign}",
             '6 Prepared by Communications Unit Leader Name' => $this->personName($preparedBy),
             'DateTime_8' => $this->now()->format(self::DATETIME_FORMAT),
@@ -96,14 +102,15 @@ class IcsFormBuilder
      *
      * @return IcsForm
      */
-    public function ics211(EventConfiguration $config, ?User $preparedBy): array
+    public function ics211(EventConfiguration $config, ?User $preparedBy, ?OperationalPeriod $period = null): array
     {
         $event = $config->event;
+        $period ??= $this->wholeEvent($config);
 
         $header = [
             '1 Incident Name' => (string) $event->name,
-            'Start Date' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
-            'Start Time' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
+            'Start Date' => $this->formatLocal($period->start_time, self::DATE_FORMAT),
+            'Start Time' => $this->formatLocal($period->start_time, self::TIME_FORMAT),
             'Name' => $this->personName($preparedBy),
             'PositionTitle_12' => 'Communications',
             'Date/Time' => $this->now()->format(self::DATETIME_FORMAT),
@@ -111,7 +118,7 @@ class IcsFormBuilder
 
         $checkIns = ShiftAssignment::query()
             ->whereNotNull('checked_in_at')
-            ->whereHas('shift', fn ($query) => $query->forEvent($config->id))
+            ->whereHas('shift', fn ($query) => $this->shiftsInPeriod($query->forEvent($config->id), $period))
             ->with(['user.credentials', 'shift.shiftRole'])
             ->orderBy('checked_in_at')
             ->get();
@@ -143,16 +150,14 @@ class IcsFormBuilder
      *
      * @return IcsForm
      */
-    public function ics205a(EventConfiguration $config, ?User $preparedBy): array
+    public function ics205a(EventConfiguration $config, ?User $preparedBy, ?OperationalPeriod $period = null): array
     {
         $event = $config->event;
+        $period ??= $this->wholeEvent($config);
 
         $header = [
             '1 Incident Name_9' => (string) $event->name,
-            'Date From' => $this->formatLocal($event->start_time, self::DATE_FORMAT),
-            'Date To' => $this->formatLocal($event->end_time, self::DATE_FORMAT),
-            'Time From' => $this->formatLocal($event->start_time, self::TIME_FORMAT),
-            'Time To' => $this->formatLocal($event->end_time, self::TIME_FORMAT),
+            ...$this->periodFields($period),
             '4 Prepared by Name' => $this->personName($preparedBy),
             'PositionTitle_8' => 'Communications',
             'DateTime_9' => $this->now()->format(self::DATETIME_FORMAT),
@@ -160,7 +165,7 @@ class IcsFormBuilder
 
         $entries = ShiftAssignment::query()
             ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
-            ->whereHas('shift', fn ($query) => $query->forEvent($config->id))
+            ->whereHas('shift', fn ($query) => $this->shiftsInPeriod($query->forEvent($config->id), $period))
             ->whereHas('user')
             ->with(['user.credentials', 'shift.shiftRole'])
             ->get()
@@ -268,6 +273,40 @@ class IcsFormBuilder
             'mode_letter' => $this->modeLetter($station->comms_mode),
             'remarks' => collect([$station->comms_mode, $station->location])->filter()->implode(', '),
         ]))->values();
+    }
+
+    /**
+     * The "Operational Period" date and time fields shared by the ICS-205
+     * and ICS-205A.
+     *
+     * @return array<string, string>
+     */
+    protected function periodFields(OperationalPeriod $period): array
+    {
+        return [
+            'Date From' => $this->formatLocal($period->start_time, self::DATE_FORMAT),
+            'Date To' => $this->formatLocal($period->end_time, self::DATE_FORMAT),
+            'Time From' => $this->formatLocal($period->start_time, self::TIME_FORMAT),
+            'Time To' => $this->formatLocal($period->end_time, self::TIME_FORMAT),
+        ];
+    }
+
+    /**
+     * Limit a shift query to shifts that overlap a saved period.
+     *
+     * @param  Builder<Shift>  $query
+     * @return Builder<Shift>
+     */
+    protected function shiftsInPeriod(Builder $query, OperationalPeriod $period): Builder
+    {
+        return $query->when($period->exists, fn (Builder $q) => $q
+            ->where('shifts.start_time', '<', $period->end_time)
+            ->where('shifts.end_time', '>', $period->start_time));
+    }
+
+    protected function wholeEvent(EventConfiguration $config): OperationalPeriod
+    {
+        return app(OperationalPeriodService::class)->wholeEvent($config);
     }
 
     /**

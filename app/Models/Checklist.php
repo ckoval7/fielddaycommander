@@ -18,7 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * A checklist an event runs: its items, who may complete it, and how often
- * it runs (once for the event, per station or per person).
+ * it runs (once for the event, per station, per person or per operational
+ * period).
  */
 class Checklist extends Model
 {

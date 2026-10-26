@@ -6,72 +6,72 @@
      Reports Hub — Page-scoped color system
      Named --reports-* to avoid collisions with scoring tokens
      ============================================================ --}}
-<style>
-    :root {
-        --reports-bg:           hsl(215, 20%, 97%);
-        --reports-surface:      hsl(0, 0%, 100%);
-        --reports-surface-alt:  hsl(215, 16%, 94%);
-        --reports-text:         hsl(215, 25%, 15%);
-        --reports-text-muted:   hsl(215, 15%, 50%);
-        --reports-border:       hsl(215, 20%, 86%);
-        --reports-divider:      hsl(215, 20%, 91%);
-
-        /* Cabrillo card — amber */
-        --reports-cabrillo-border: hsl(38, 80%, 50%);
-        --reports-cabrillo-bg:     hsl(38, 90%, 97%);
-        --reports-cabrillo-icon:   hsl(38, 80%, 38%);
-
-        /* PDF card — deep blue */
-        --reports-pdf-border:  hsl(223, 71%, 40%);
-        --reports-pdf-bg:      hsl(223, 90%, 97%);
-        --reports-pdf-icon:    hsl(223, 71%, 40%);
-
-        /* CSV card — neutral slate */
-        --reports-csv-border:  hsl(215, 20%, 72%);
-        --reports-csv-bg:      hsl(215, 20%, 97%);
-        --reports-csv-icon:    hsl(215, 20%, 42%);
-
-        /* Section header accent bar */
-        --reports-section-bar: hsl(223, 71%, 40%);
-
-        /* Highlight for active QSO rows */
-        --reports-row-active:  hsl(38, 90%, 95%);
-        --reports-row-hover:   hsl(215, 20%, 96%);
-
-        --reports-warning:     hsl(38, 92%, 50%);
-    }
-
-    [data-theme="dark"] {
-        --reports-bg:           hsl(222, 20%, 9%);
-        --reports-surface:      hsl(222, 16%, 14%);
-        --reports-surface-alt:  hsl(222, 14%, 18%);
-        --reports-text:         hsl(210, 20%, 92%);
-        --reports-text-muted:   hsl(215, 14%, 58%);
-        --reports-border:       hsl(215, 16%, 24%);
-        --reports-divider:      hsl(215, 14%, 20%);
-
-        --reports-cabrillo-border: hsl(40, 82%, 52%);
-        --reports-cabrillo-bg:     hsl(38, 30%, 12%);
-        --reports-cabrillo-icon:   hsl(40, 86%, 58%);
-
-        --reports-pdf-border:  hsl(217, 80%, 60%);
-        --reports-pdf-bg:      hsl(223, 30%, 12%);
-        --reports-pdf-icon:    hsl(217, 82%, 64%);
-
-        --reports-csv-border:  hsl(215, 16%, 36%);
-        --reports-csv-bg:      hsl(222, 14%, 16%);
-        --reports-csv-icon:    hsl(215, 18%, 66%);
-
-        --reports-section-bar: hsl(217, 80%, 58%);
-
-        --reports-row-active:  hsl(38, 30%, 14%);
-        --reports-row-hover:   hsl(222, 14%, 17%);
-
-        --reports-warning:     hsl(38, 92%, 65%);
-    }
-</style>
-
 <div class="min-h-dvh" style="background-color: var(--reports-bg); color: var(--reports-text);">
+    {{-- Inside the root element so Livewire binds to the page, not the style tag --}}
+    <style>
+        :root {
+            --reports-bg:           hsl(215, 20%, 97%);
+            --reports-surface:      hsl(0, 0%, 100%);
+            --reports-surface-alt:  hsl(215, 16%, 94%);
+            --reports-text:         hsl(215, 25%, 15%);
+            --reports-text-muted:   hsl(215, 15%, 50%);
+            --reports-border:       hsl(215, 20%, 86%);
+            --reports-divider:      hsl(215, 20%, 91%);
+
+            /* Cabrillo card — amber */
+            --reports-cabrillo-border: hsl(38, 80%, 50%);
+            --reports-cabrillo-bg:     hsl(38, 90%, 97%);
+            --reports-cabrillo-icon:   hsl(38, 80%, 38%);
+
+            /* PDF card — deep blue */
+            --reports-pdf-border:  hsl(223, 71%, 40%);
+            --reports-pdf-bg:      hsl(223, 90%, 97%);
+            --reports-pdf-icon:    hsl(223, 71%, 40%);
+
+            /* CSV card — neutral slate */
+            --reports-csv-border:  hsl(215, 20%, 72%);
+            --reports-csv-bg:      hsl(215, 20%, 97%);
+            --reports-csv-icon:    hsl(215, 20%, 42%);
+
+            /* Section header accent bar */
+            --reports-section-bar: hsl(223, 71%, 40%);
+
+            /* Highlight for active QSO rows */
+            --reports-row-active:  hsl(38, 90%, 95%);
+            --reports-row-hover:   hsl(215, 20%, 96%);
+
+            --reports-warning:     hsl(38, 92%, 50%);
+        }
+
+        [data-theme="dark"] {
+            --reports-bg:           hsl(222, 20%, 9%);
+            --reports-surface:      hsl(222, 16%, 14%);
+            --reports-surface-alt:  hsl(222, 14%, 18%);
+            --reports-text:         hsl(210, 20%, 92%);
+            --reports-text-muted:   hsl(215, 14%, 58%);
+            --reports-border:       hsl(215, 16%, 24%);
+            --reports-divider:      hsl(215, 14%, 20%);
+
+            --reports-cabrillo-border: hsl(40, 82%, 52%);
+            --reports-cabrillo-bg:     hsl(38, 30%, 12%);
+            --reports-cabrillo-icon:   hsl(40, 86%, 58%);
+
+            --reports-pdf-border:  hsl(217, 80%, 60%);
+            --reports-pdf-bg:      hsl(223, 30%, 12%);
+            --reports-pdf-icon:    hsl(217, 82%, 64%);
+
+            --reports-csv-border:  hsl(215, 16%, 36%);
+            --reports-csv-bg:      hsl(222, 14%, 16%);
+            --reports-csv-icon:    hsl(215, 18%, 66%);
+
+            --reports-section-bar: hsl(217, 80%, 58%);
+
+            --reports-row-active:  hsl(38, 30%, 14%);
+            --reports-row-hover:   hsl(222, 14%, 17%);
+
+            --reports-warning:     hsl(38, 92%, 65%);
+        }
+    </style>
 
     {{-- ============================================================
          EMPTY STATE — no active event
@@ -301,6 +301,17 @@
             ICS Forms
         </div>
 
+        @if($this->operationalPeriods->isNotEmpty())
+            <div class="mb-5 max-w-md">
+                <x-select
+                    label="Operational period"
+                    wire:model.live="icsPeriod"
+                    :options="$this->operationalPeriods"
+                    data-testid="ics-period"
+                />
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             @foreach ([
                 ['form' => 'ics-205', 'icon' => 'phosphor-cell-signal-high', 'title' => 'ICS-205 Radio Plan', 'subtitle' => 'Channels from stations and talk-in · FEMA PDF'],
@@ -310,14 +321,17 @@
             ] as $card)
                 {{-- FEMA PDFs are filled in the browser; the ICS-309 is a print page --}}
                 @php($isPdf = $card['form'] !== 'ics-309')
+                @php($formUrl = route('reports.'.$card['form'], $this->icsQuery))
+                {{-- Keyed on the URL so Alpine starts over with the new period --}}
                 <{{ $isPdf ? 'button' : 'a' }}
+                   wire:key="{{ $formUrl }}"
                    @if ($isPdf)
                        type="button"
-                       x-data="icsPdf('{{ route('reports.'.$card['form']) }}')"
+                       x-data="icsPdf('{{ $formUrl }}')"
                        x-on:click="openPdf()"
                        x-bind:disabled="busy"
                    @else
-                       href="{{ route('reports.'.$card['form']) }}" target="_blank" rel="noopener"
+                       href="{{ $formUrl }}" target="_blank" rel="noopener"
                    @endif
                    data-testid="{{ $card['form'] }}"
                    class="group no-underline block w-full text-left rounded-lg p-4 sm:p-5 transition-shadow hover:shadow-md active:shadow-sm disabled:opacity-60"

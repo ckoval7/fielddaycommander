@@ -15,12 +15,14 @@ use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\OperatingClass;
+use App\Models\OperationalPeriod;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Models\Station;
 use App\Models\User;
+use App\Services\ChecklistService;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -331,5 +333,71 @@ describe('per-person checklists', function () {
             ->test(ChecklistShow::class, ['checklist' => $this->goKit])
             ->assertSet('person', $this->regularUser->id)
             ->assertSeeText('Go-Kit: '.$this->regularUser->call_sign);
+    });
+});
+
+describe('per-period checklists', function () {
+    beforeEach(function () {
+        $this->radioCheck = Checklist::factory()->perPeriod()->create(['event_configuration_id' => $this->eventConfig->id, 'name' => 'Radio Check']);
+        $this->radioItem = ChecklistItem::factory()->required()->create(['checklist_id' => $this->radioCheck->id, 'label' => 'Net control heard']);
+    });
+
+    test('without periods it runs once for the whole event', function () {
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(ChecklistShow::class, ['checklist' => $this->radioCheck])
+            ->assertSee('Net control heard')
+            ->call('answer', $this->radioItem->id, true);
+
+        expect(ChecklistRun::sole())
+            ->subject_key->toBe(ChecklistRun::EVENT_SUBJECT)
+            ->operational_period_id->toBeNull()
+            ->and(app(ChecklistService::class)->progress($this->radioCheck))->toBe(['done' => 1, 'total' => 1]);
+    });
+
+    test('with periods each period gets its own run', function () {
+        $am = OperationalPeriod::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'name' => 'Day 1 AM', 'start_time' => now()->subHours(8), 'end_time' => now()]);
+        $pm = OperationalPeriod::factory()->create(['event_configuration_id' => $this->eventConfig->id, 'name' => 'Day 1 PM', 'start_time' => now(), 'end_time' => now()->addHours(8)]);
+        OperationalPeriod::factory()->create(['name' => 'Someone else\'s period']);
+        $this->actingAs($this->safetyOfficer);
+
+        Livewire::test(ChecklistShow::class, ['checklist' => $this->radioCheck])
+            ->assertSeeInOrder(['Day 1 AM', 'Not started', 'Day 1 PM', 'Not started'])
+            ->assertDontSee('Someone else')
+            ->assertDontSee('Net control heard');
+
+        Livewire::withQueryParams(['period' => $pm->id])
+            ->test(ChecklistShow::class, ['checklist' => $this->radioCheck])
+            ->assertSeeText('Radio Check: Day 1 PM')
+            ->call('answer', $this->radioItem->id, true);
+
+        expect(ChecklistRun::sole())
+            ->subject_key->toBe(ChecklistRun::periodKey($pm->id))
+            ->operational_period_id->toBe($pm->id)
+            ->and(app(ChecklistService::class)->progress($this->radioCheck))->toBe(['done' => 1, 'total' => 2]);
+
+        Livewire::withQueryParams(['period' => $am->id])
+            ->test(ChecklistShow::class, ['checklist' => $this->radioCheck])
+            ->assertSee('0 of 1 answered');
+    });
+
+    test('a whole-event run stops counting once the event has periods', function () {
+        ChecklistRun::factory()->create(['checklist_id' => $this->radioCheck->id, 'completed_at' => now()]);
+        OperationalPeriod::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+
+        expect(app(ChecklistService::class)->progress($this->radioCheck))->toBe(['done' => 0, 'total' => 1]);
+    });
+
+    test('deleting a period deletes its runs', function () {
+        $period = OperationalPeriod::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+        ChecklistRun::factory()->create([
+            'checklist_id' => $this->radioCheck->id,
+            'subject_key' => ChecklistRun::periodKey($period->id),
+            'operational_period_id' => $period->id,
+        ]);
+
+        $period->delete();
+
+        expect(ChecklistRun::count())->toBe(0);
     });
 });

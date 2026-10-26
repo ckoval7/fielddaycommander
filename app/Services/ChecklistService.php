@@ -15,6 +15,7 @@ use App\Models\ChecklistItem;
 use App\Models\ChecklistRun;
 use App\Models\EventBonus;
 use App\Models\EventConfiguration;
+use App\Models\OperationalPeriod;
 use App\Models\ShiftAssignment;
 use App\Models\Station;
 use App\Models\User;
@@ -38,15 +39,40 @@ class ChecklistService
     /**
      * Find or start the run of a checklist for one subject.
      */
-    public function runFor(Checklist $checklist, ?Station $station = null, ?User $user = null): ChecklistRun
+    public function runFor(Checklist $checklist, ?Station $station = null, ?User $user = null, ?OperationalPeriod $period = null): ChecklistRun
     {
         [$key, $attributes] = match ($checklist->scope) {
             ChecklistScope::Station => [ChecklistRun::stationKey($station->id), ['station_id' => $station->id]],
             ChecklistScope::Person => [ChecklistRun::userKey($user->id), ['user_id' => $user->id]],
+            ChecklistScope::Period => $this->periodSubject($period),
             ChecklistScope::Event => [ChecklistRun::EVENT_SUBJECT, []],
         };
 
         return ChecklistRun::createOrFirst(['checklist_id' => $checklist->id, 'subject_key' => $key], $attributes);
+    }
+
+    /**
+     * Subject key and attributes for a per-period run. An event without
+     * periods runs the checklist once, as one period covering the event.
+     *
+     * @return array{0: string, 1: array<string, int>}
+     */
+    public function periodSubject(?OperationalPeriod $period): array
+    {
+        return $period?->exists
+            ? [ChecklistRun::periodKey($period->id), ['operational_period_id' => $period->id]]
+            : [ChecklistRun::EVENT_SUBJECT, []];
+    }
+
+    /**
+     * Operational periods a per-period checklist covers. Empty when the
+     * event has none, and the checklist runs once for the whole event.
+     *
+     * @return Collection<int, OperationalPeriod>
+     */
+    public function periodsFor(Checklist $checklist): Collection
+    {
+        return OperationalPeriod::where('event_configuration_id', $checklist->event_configuration_id)->ordered()->get();
     }
 
     /**
@@ -86,14 +112,22 @@ class ChecklistService
      */
     public function progress(Checklist $checklist): array
     {
+        $periodCount = $checklist->scope === ChecklistScope::Period
+            ? OperationalPeriod::where('event_configuration_id', $checklist->event_configuration_id)->count()
+            : 0;
+
         $total = match ($checklist->scope) {
             ChecklistScope::Event => 1,
             ChecklistScope::Station => Station::forEvent($checklist->event_configuration_id)->count(),
             ChecklistScope::Person => $this->peopleFor($checklist)->count(),
+            ChecklistScope::Period => max(1, $periodCount),
         };
 
+        // Once an event has periods, its whole-event run no longer counts.
         $done = $checklist->runs()->whereNotNull('completed_at')
             ->when($checklist->scope === ChecklistScope::Station, fn ($q) => $q->whereHas('station'))
+            ->when($periodCount > 0, fn ($q) => $q->whereHas('operationalPeriod'))
+            ->when($checklist->scope === ChecklistScope::Period && $periodCount === 0, fn ($q) => $q->where('subject_key', ChecklistRun::EVENT_SUBJECT))
             ->count();
 
         return ['done' => min($done, $total), 'total' => $total];

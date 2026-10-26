@@ -82,6 +82,16 @@ class ChecklistIndex extends Component
             ]);
     }
 
+    /**
+     * Whether the event has operational periods. Without them a per-period
+     * checklist runs once, like an event-wide one.
+     */
+    #[Computed]
+    public function hasPeriods(): bool
+    {
+        return $this->eventConfig?->operationalPeriods()->exists() ?? false;
+    }
+
     public function render(): View
     {
         return view('livewire.checklists.checklist-index')

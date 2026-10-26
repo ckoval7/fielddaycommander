@@ -11,6 +11,7 @@ use App\Models\EventConfiguration;
 use App\Models\Message;
 use App\Models\Net;
 use App\Models\NetLogEntry;
+use App\Models\OperationalPeriod;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
@@ -315,4 +316,87 @@ test('ICS-213 messages offer the FEMA PDF', function () {
         ->assertSee(route('events.messages.ics-213', [$this->event, $message]), false)
         ->assertSeeHtml('x-on:click="openPdf()"')
         ->assertDontSee(route('events.messages.ics-213', [$this->event, $radiogram]), false);
+});
+
+describe('operational periods', function () {
+    beforeEach(function () {
+        $this->earlier = OperationalPeriod::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'name' => 'Early Shift',
+            'start_time' => now()->subHours(2)->startOfMinute(),
+            'end_time' => now()->subHour()->startOfMinute(),
+        ]);
+        $this->current = OperationalPeriod::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'name' => 'Late Shift',
+            'start_time' => now()->subHour()->startOfMinute(),
+            'end_time' => now()->addHours(6)->startOfMinute(),
+        ]);
+    });
+
+    test('form headers show the period under way', function () {
+        $form = $this->actingAs($this->user)->getJson(route('reports.ics-205'))->assertOk()->json();
+
+        expect($form['pages'][0]['Time From'])->toBe(toLocalTime($this->current->start_time)->format('H:i'))
+            ->and($form['pages'][0]['Time To'])->toBe(toLocalTime($this->current->end_time)->format('H:i'));
+    });
+
+    test('a chosen period fills the header and limits the people to its shifts', function () {
+        $role = ShiftRole::factory()->create(['event_configuration_id' => $this->config->id]);
+        $earlyShift = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $role->id, 'start_time' => $this->earlier->start_time, 'end_time' => $this->earlier->end_time]);
+        $lateShift = Shift::factory()->create(['event_configuration_id' => $this->config->id, 'shift_role_id' => $role->id, 'start_time' => $this->current->start_time, 'end_time' => $this->current->end_time]);
+        foreach (['K1EAR' => $earlyShift, 'K1LAT' => $lateShift] as $call => $shift) {
+            ShiftAssignment::factory()->create([
+                'shift_id' => $shift->id,
+                'user_id' => User::factory()->create(['call_sign' => $call])->id,
+                'status' => ShiftAssignment::STATUS_CHECKED_IN,
+                'checked_in_at' => $shift->start_time,
+            ]);
+        }
+
+        $ics211 = $this->actingAs($this->user)->getJson(route('reports.ics-211', ['period' => $this->earlier->id]))->json();
+        $ics205a = $this->actingAs($this->user)->getJson(route('reports.ics-205a', ['period' => $this->earlier->id]))->json();
+
+        expect($ics211['pages'][0]['Start Time'])->toBe(toLocalTime($this->earlier->start_time)->format('H:i'))
+            ->and($ics211['pages'][0]['R1 Resource Name or ID 1'])->toBe('K1EAR')
+            ->and($ics211['pages'][0])->not->toHaveKey('R2 Resource Name or ID 2')
+            ->and($ics205a['pages'][0]['Name AlphabetizedRow1'])->toContain('K1EAR')
+            ->and($ics205a['pages'][0])->not->toHaveKey('Name AlphabetizedRow2');
+    });
+
+    test('the ICS-309 lists only the period\'s net log entries', function () {
+        NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'logged_at' => now()->subMinutes(90), 'message' => 'EARLY TRAFFIC']);
+        NetLogEntry::factory()->create(['event_configuration_id' => $this->config->id, 'logged_at' => now()->subMinutes(10), 'message' => 'LATE TRAFFIC']);
+
+        $this->actingAs($this->user)->get(route('reports.ics-309'))
+            ->assertSee('Late Shift:')
+            ->assertSee('LATE TRAFFIC')
+            ->assertDontSee('EARLY TRAFFIC');
+
+        $this->actingAs($this->user)->get(route('reports.ics-309', ['period' => $this->earlier->id]))
+            ->assertSee('Early Shift:')
+            ->assertSee('EARLY TRAFFIC')
+            ->assertDontSee('LATE TRAFFIC');
+    });
+
+    test('the reports page picks the current period and links the forms to it', function () {
+        Livewire::actingAs($this->user)->test(ReportsIndex::class)
+            ->assertSet('icsPeriod', $this->current->id)
+            ->assertSeeHtml('data-testid="ics-period"')
+            ->assertSee(route('reports.ics-309', ['period' => $this->current->id]))
+            ->set('icsPeriod', $this->earlier->id)
+            ->assertSee("icsPdf('".route('reports.ics-205', ['period' => $this->earlier->id])."')", false);
+    });
+});
+
+test('the reports page binds Livewire to its root element so the period picker updates', function () {
+    $html = Livewire::actingAs($this->user)->test(ReportsIndex::class)->html();
+
+    expect(trim($html))->toMatch('/^<div[^>]*wire:id=/');
+});
+
+test('without periods the reports page has no period picker', function () {
+    Livewire::actingAs($this->user)->test(ReportsIndex::class)
+        ->assertSet('icsPeriod', null)
+        ->assertDontSeeHtml('data-testid="ics-period"');
 });

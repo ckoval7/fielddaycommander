@@ -368,6 +368,64 @@
                     </div>
                 </x-tab>
 
+                {{-- Tab: Operational periods --}}
+                <x-tab name="periods" label="Periods" icon="phosphor-calendar-dots">
+                    <div class="mt-6 space-y-4">
+                        <p class="text-sm text-base-content/70">
+                            Split the event into time blocks, such as "Day 1 AM", for ICS forms and checklists. Periods can't overlap. Without periods, the whole event counts as one.
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <x-button
+                                label="Add Period"
+                                icon="phosphor-plus"
+                                class="btn-primary btn-sm"
+                                wire:click="openPeriodModal"
+                            />
+                        </div>
+
+                        @if($this->operationalPeriods->isEmpty())
+                            <x-card shadow>
+                                <div class="text-center py-8 text-base-content/60">
+                                    <x-icon name="phosphor-calendar-dots" class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                    <p class="text-lg font-medium">No operational periods</p>
+                                    <p class="text-sm">The whole event is one period.</p>
+                                </div>
+                            </x-card>
+                        @else
+                            <div class="space-y-3">
+                                @foreach($this->operationalPeriods as $period)
+                                    <x-card shadow wire:key="period-{{ $period->id }}" data-testid="period-row">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="font-semibold break-words">{{ $period->name }}</p>
+                                                <p class="text-sm text-base-content/60">{{ $period->timeRange() }}</p>
+                                            </div>
+                                            <div class="flex items-center gap-2 shrink-0">
+                                                <x-button
+                                                    icon="phosphor-pencil-simple"
+                                                    class="btn-ghost btn-sm btn-square"
+                                                    wire:click="openPeriodModal({{ $period->id }})"
+                                                    tooltip="Edit Period"
+                                                    aria-label="Edit Period"
+                                                />
+                                                {{-- A double-quoted string inside a component attribute stops Blade compiling the tag --}}
+                                                @php $deleteMessage = "Delete '{$period->name}'? This also deletes its per-period checklist answers."; @endphp
+                                                <x-button
+                                                    icon="phosphor-trash"
+                                                    class="btn-ghost btn-sm text-error btn-square"
+                                                    x-on:click="askConfirm({ message: {{ Js::from($deleteMessage) }}, confirmLabel: 'Delete Period', action: 'deletePeriod', args: [{{ $period->id }}] })"
+                                                    tooltip="Delete Period"
+                                                    aria-label="Delete Period"
+                                                />
+                                            </div>
+                                        </div>
+                                    </x-card>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                </x-tab>
+
                 {{-- Tab 3: Confirmations --}}
                 <x-tab name="confirmations" label="Confirmations" icon="phosphor-seal-check">
                     <div class="mt-6 space-y-4">
@@ -600,6 +658,37 @@
             <x-slot:actions>
                 <x-button label="Cancel" @click="$wire.showShiftModal = false" />
                 <x-button label="Save Shift" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
+            </x-slot:actions>
+        </div>
+    </x-modal>
+
+    {{-- Operational Period Modal --}}
+    <x-modal wire:model="showPeriodModal" title="{{ $editingPeriodId ? 'Edit Period' : 'Add Period' }}">
+        <div>
+            <div class="space-y-4">
+                <x-input
+                    label="Name"
+                    wire:model="periodName"
+                    autocapitalize="words"
+                    placeholder="Day 1 AM"
+                    required
+                />
+                <x-flatpickr
+                    label="Start Time"
+                    wire:model="periodStartTime"
+                    required
+                    hint="Times are in your local timezone"
+                />
+                <x-flatpickr
+                    label="End Time"
+                    wire:model="periodEndTime"
+                    required
+                    hint="Times are in your local timezone"
+                />
+            </div>
+            <x-slot:actions>
+                <x-button label="Cancel" @click="$wire.showPeriodModal = false" />
+                <x-button label="Save Period" wire:click="savePeriod" class="btn-primary" spinner="savePeriod" />
             </x-slot:actions>
         </div>
     </x-modal>

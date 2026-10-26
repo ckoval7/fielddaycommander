@@ -11,7 +11,9 @@ use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\ShiftAssignment;
 use App\Services\EventContextService;
+use App\Services\OperationalPeriodService;
 use App\Support\VolunteerHours;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -20,10 +22,51 @@ class ReportsIndex extends Component
 {
     public ?Event $event = null;
 
-    public function mount(EventContextService $eventContext): void
+    /**
+     * The operational period the ICS forms cover. Null when the event has
+     * no periods and the forms cover the whole event.
+     */
+    public ?int $icsPeriod = null;
+
+    public function mount(EventContextService $eventContext, OperationalPeriodService $periods): void
     {
         $this->event = $eventContext->getContextEvent();
         $this->event?->load(['eventConfiguration.section', 'eventConfiguration.operatingClass']);
+
+        if ($config = $this->config()) {
+            $this->icsPeriod = $periods->current($config)->id;
+        }
+    }
+
+    /**
+     * The event's operational periods, for the ICS forms' period picker.
+     *
+     * @return Collection<int, array{id: int, name: string}>
+     */
+    #[Computed]
+    public function operationalPeriods(): Collection
+    {
+        $config = $this->config();
+
+        if (! $config) {
+            return collect();
+        }
+
+        return app(OperationalPeriodService::class)->periods($config)
+            ->map(fn ($period) => ['id' => $period->id, 'name' => "{$period->name} ({$period->timeRange()})"]);
+    }
+
+    /**
+     * Query string for the ICS form links: the chosen period, if any.
+     *
+     * @return array<string, int>
+     */
+    #[Computed]
+    public function icsQuery(): array
+    {
+        return $this->icsPeriod !== null && $this->operationalPeriods->contains('id', $this->icsPeriod)
+            ? ['period' => $this->icsPeriod]
+            : [];
     }
 
     protected function config(): ?EventConfiguration

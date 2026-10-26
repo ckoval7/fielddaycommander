@@ -43,6 +43,11 @@ class ChecklistFactory extends Factory
         return $this->state(fn () => ['scope' => ChecklistScope::Person]);
     }
 
+    public function perPeriod(): static
+    {
+        return $this->state(fn () => ['scope' => ChecklistScope::Period]);
+    }
+
     public function safetyOfficer(): static
     {
         return $this->state(fn () => [

@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Schedule;
 
+use App\Livewire\Schedule\Concerns\WithOperationalPeriods;
 use App\Livewire\Schedule\Concerns\WithScheduleFilters;
 use App\Livewire\Schedule\Concerns\WithShiftAssignment;
 use App\Models\AuditLog;
@@ -28,6 +29,7 @@ use Livewire\Component;
 
 class ManageSchedule extends Component
 {
+    use WithOperationalPeriods;
     use WithScheduleFilters;
     use WithShiftAssignment;
 

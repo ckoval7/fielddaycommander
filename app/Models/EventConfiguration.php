@@ -317,6 +317,11 @@ class EventConfiguration extends Model
         return $this->hasMany(Checklist::class);
     }
 
+    public function operationalPeriods(): HasMany
+    {
+        return $this->hasMany(OperationalPeriod::class);
+    }
+
     public function nets(): HasMany
     {
         return $this->hasMany(Net::class);

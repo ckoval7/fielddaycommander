@@ -12,8 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * One pass through a checklist for one subject: the event, a station or a
- * person. The subject key keeps each subject to a single run.
+ * One pass through a checklist for one subject: the event, a station, a
+ * person or an operational period. The subject key keeps each subject to a
+ * single run.
  */
 class ChecklistRun extends Model
 {
@@ -27,6 +28,7 @@ class ChecklistRun extends Model
         'subject_key',
         'station_id',
         'user_id',
+        'operational_period_id',
         'completed_at',
     ];
 
@@ -62,6 +64,14 @@ class ChecklistRun extends Model
     }
 
     /**
+     * @return BelongsTo<OperationalPeriod, $this>
+     */
+    public function operationalPeriod(): BelongsTo
+    {
+        return $this->belongsTo(OperationalPeriod::class);
+    }
+
+    /**
      * @return HasMany<ChecklistAnswer, $this>
      */
     public function answers(): HasMany
@@ -86,6 +96,14 @@ class ChecklistRun extends Model
     }
 
     /**
+     * Subject key for an operational period's run.
+     */
+    public static function periodKey(int $periodId): string
+    {
+        return "period:{$periodId}";
+    }
+
+    /**
      * Name of what this run covers, for headings and logs.
      */
     public function subjectName(): string
@@ -93,6 +111,7 @@ class ChecklistRun extends Model
         return match (true) {
             $this->station_id !== null => $this->station?->name ?? 'Station',
             $this->user_id !== null => $this->user?->call_sign ?? 'Person',
+            $this->operational_period_id !== null => $this->operationalPeriod?->name ?? 'Operational period',
             default => $this->checklist?->eventConfiguration?->event?->name ?? 'Event',
         };
     }

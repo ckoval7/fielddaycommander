@@ -57,6 +57,13 @@
                                         @case(\App\Enums\ChecklistScope::Person)
                                             {{ $progress['done'] }} of {{ $progress['total'] }} {{ Str::plural('person', $progress['total']) }} done
                                             @break
+                                        @case(\App\Enums\ChecklistScope::Period)
+                                            @if($this->hasPeriods)
+                                                {{ $progress['done'] }} of {{ $progress['total'] }} {{ Str::plural('period', $progress['total']) }} done
+                                            @else
+                                                {{ $done ? 'Done' : 'Not done yet' }}
+                                            @endif
+                                            @break
                                         @default
                                             {{ $done ? 'Done' : 'Not done yet' }}
                                     @endswitch

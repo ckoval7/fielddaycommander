@@ -10,6 +10,7 @@ use App\Models\Checklist;
 use App\Models\ChecklistAnswer;
 use App\Models\ChecklistItem;
 use App\Models\ChecklistRun;
+use App\Models\OperationalPeriod;
 use App\Models\Station;
 use App\Models\User;
 use App\Services\ChecklistService;
@@ -23,8 +24,8 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * One checklist: the list of stations or people it covers, or a single
- * run to work through.
+ * One checklist: the list of stations, people or operational periods it
+ * covers, or a single run to work through.
  */
 class ChecklistShow extends Component
 {
@@ -35,6 +36,9 @@ class ChecklistShow extends Component
 
     #[Url]
     public ?int $person = null;
+
+    #[Url]
+    public ?int $period = null;
 
     public function mount(Checklist $checklist): void
     {
@@ -66,7 +70,7 @@ class ChecklistShow extends Component
 
     public function refreshAnswers(): void
     {
-        unset($this->run, $this->answers, $this->counts, $this->subjects);
+        unset($this->run, $this->answers, $this->counts, $this->subjects, $this->periods);
     }
 
     /**
@@ -79,7 +83,33 @@ class ChecklistShow extends Component
             ChecklistScope::Event => true,
             ChecklistScope::Station => $this->subjectStation !== null,
             ChecklistScope::Person => $this->subjectPerson !== null,
+            ChecklistScope::Period => $this->periods->isEmpty() || $this->subjectPeriod !== null,
         };
+    }
+
+    /**
+     * The event's operational periods, for a per-period checklist.
+     *
+     * @return Collection<int, OperationalPeriod>
+     */
+    #[Computed]
+    public function periods(): Collection
+    {
+        if ($this->checklist->scope !== ChecklistScope::Period) {
+            return collect();
+        }
+
+        return app(ChecklistService::class)->periodsFor($this->checklist);
+    }
+
+    #[Computed]
+    public function subjectPeriod(): ?OperationalPeriod
+    {
+        if ($this->period === null) {
+            return null;
+        }
+
+        return $this->periods->firstWhere('id', $this->period);
     }
 
     #[Computed]
@@ -121,6 +151,7 @@ class ChecklistShow extends Component
             ChecklistScope::Event => ChecklistRun::EVENT_SUBJECT,
             ChecklistScope::Station => ChecklistRun::stationKey($this->subjectStation->id),
             ChecklistScope::Person => ChecklistRun::userKey($this->subjectPerson->id),
+            ChecklistScope::Period => app(ChecklistService::class)->periodSubject($this->subjectPeriod)[0],
         };
 
         return $this->checklist->runs()->where('subject_key', $key)->first()
@@ -129,6 +160,7 @@ class ChecklistShow extends Component
                 'subject_key' => $key,
                 'station_id' => $this->subjectStation?->id,
                 'user_id' => $this->subjectPerson?->id,
+                'operational_period_id' => $this->subjectPeriod?->id,
             ]);
     }
 
@@ -179,7 +211,8 @@ class ChecklistShow extends Component
     }
 
     /**
-     * Stations or people the checklist covers, with how far each run has got.
+     * Stations, people or periods the checklist covers, with how far each
+     * run has got.
      *
      * @return Collection<int, array{id: int, name: string, detail: string|null, answered: int, completed: bool, started: bool}>
      */
@@ -205,6 +238,12 @@ class ChecklistShow extends Component
                 'key' => ChecklistRun::userKey($user->id),
                 'name' => $user->call_sign,
                 'detail' => trim("{$user->first_name} {$user->last_name}") ?: null,
+            ]),
+            ChecklistScope::Period => $this->periods->map(fn (OperationalPeriod $period) => [
+                'id' => $period->id,
+                'key' => ChecklistRun::periodKey($period->id),
+                'name' => $period->name,
+                'detail' => $period->timeRange(),
             ]),
             ChecklistScope::Event => collect(),
         };
@@ -248,7 +287,7 @@ class ChecklistShow extends Component
         }
 
         $service = app(ChecklistService::class);
-        $run = $service->runFor($this->checklist, $this->subjectStation, $this->subjectPerson);
+        $run = $service->runFor($this->checklist, $this->subjectStation, $this->subjectPerson, $this->subjectPeriod);
 
         $this->toastBonusChange($service->answer($run, $item, $value, Auth::user()));
 
@@ -265,7 +304,7 @@ class ChecklistShow extends Component
         }
 
         $service = app(ChecklistService::class);
-        $service->saveNotes($service->runFor($this->checklist, $this->subjectStation, $this->subjectPerson), $item, $notes);
+        $service->saveNotes($service->runFor($this->checklist, $this->subjectStation, $this->subjectPerson, $this->subjectPeriod), $item, $notes);
 
         $this->refreshAnswers();
         $this->dispatch('autosaved');
