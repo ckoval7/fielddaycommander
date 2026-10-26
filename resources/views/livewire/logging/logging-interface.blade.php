@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-<div class="max-sm:-mx-3" x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}', {
+<div class="max-sm:-mx-3" wire:ignore.self x-data="contactQueue({{ $operatingSession->id }}, '{{ csrf_token() }}', {
         band_id: {{ $operatingSession->band_id }},
         mode_id: {{ $operatingSession->mode_id }},
         power_watts: {{ $operatingSession->power_watts }},
@@ -14,6 +14,10 @@
         get gota_operator_last_name() { return document.querySelector('[wire\\:model=gotaOperatorLastName]')?.value || null },
         get gota_operator_callsign() { return document.querySelector('[wire\\:model=gotaOperatorCallsign]')?.value || null },
         get gota_operator_user_id() { return @this.gotaOperatorUserId || null },
+        mode_category: {{ Js::from($operatingSession->mode?->category) }},
+        bands: {{ Js::from($this->switchBands->map->only(['id', 'name'])->values()) }},
+        modes: {{ Js::from($this->switchModes->map->only(['id', 'name', 'category'])->values()) }},
+        band_ranges: {{ Js::from((object) $this->bandRanges) }},
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }},
         class_codes: {{ Js::from(\App\Models\OperatingClass::where('event_type_id', $operatingSession->station->eventConfiguration?->event?->event_type_id)->pluck('code')->map(fn ($code) => strtoupper($code))->all()) }}
      })">
@@ -22,14 +26,21 @@
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
             {{-- Left: Station name --}}
             <div class="min-w-0">
-                <span class="font-bold text-lg sm:text-xl truncate block">{{ $operatingSession->station->name ?? 'Station' }}</span>
+                <span class="font-bold text-lg sm:text-xl truncate block">
+                    {{ $operatingSession->station->name ?? 'Station' }}
+                    {{-- Phones show power here; the band/mode row below has no room for it. --}}
+                    <span class="sm:hidden font-mono font-normal text-sm text-base-content/60">{{ $operatingSession->power_watts }}W</span>
+                </span>
             </div>
 
             {{-- Center: Band / Mode / Power --}}
             <div class="hidden sm:flex items-center gap-1.5 text-base font-mono tracking-wide">
-                <span class="font-semibold">{{ $operatingSession->band->name ?? '?' }}</span>
-                <span class="text-base-content/30">|</span>
-                <span class="font-semibold">{{ $operatingSession->mode->name ?? '?' }}</span>
+                <x-logging.band-mode-switch
+                    :session="$operatingSession"
+                    :bands="$this->switchBands"
+                    :modes="$this->switchModes"
+                    :shortcuts="true"
+                />
                 <span class="text-base-content/30">|</span>
                 <span class="text-base-content/70">{{ $operatingSession->power_watts }}W</span>
                 <span class="text-base-content/30">|</span>
@@ -59,7 +70,7 @@
             <div class="flex items-center gap-3 flex-shrink-0">
                 <div class="flex items-center gap-1">
                     <span class="text-xs uppercase tracking-wider text-base-content/50 hidden sm:inline">QSOs</span>
-                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + queue.length">{{ $operatingSession->qso_count }}</span>
+                    <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + sessionQueueCount">{{ $operatingSession->qso_count }}</span>
                 </div>
 
                 {{-- Sync Status Indicator --}}
@@ -113,27 +124,33 @@
             </div>
         </div>
 
-        {{-- Mobile-only compact row for band/mode/power --}}
-        <div class="sm:hidden flex items-center justify-center gap-2 px-4 pb-2 text-sm font-mono text-base-content/60">
-            <span>{{ $operatingSession->band->name ?? '?' }}</span>
-            <span class="text-base-content/20">&middot;</span>
-            <span>{{ $operatingSession->mode->name ?? '?' }}</span>
-            <span class="text-base-content/20">&middot;</span>
-            <span>{{ $operatingSession->power_watts }}W</span>
-            <span class="text-base-content/20">&middot;</span>
+        {{-- Mobile-only compact row for band/mode/sub-mode --}}
+        <div class="sm:hidden flex flex-wrap items-center justify-center gap-2 px-3 pb-2 text-sm font-mono text-base-content/60">
+            <x-logging.band-mode-switch
+                :session="$operatingSession"
+                :bands="$this->switchBands"
+                :modes="$this->switchModes"
+            />
             <input
                 data-submode-input
                 type="text"
                 list="log-submodes"
                 maxlength="20"
                 x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                class="input input-xs w-28 pointer-coarse:w-36 uppercase font-mono"
+                class="input input-xs w-28 pointer-coarse:w-32 uppercase font-mono"
                 placeholder="Sub-mode"
                 aria-label="Sub-mode (optional)"
                 autocapitalize="characters"
                 autocorrect="off"
                 spellcheck="false"
             />
+        </div>
+
+        <div x-show="switchError" x-cloak role="alert" data-band-mode-switch-error class="bg-error text-error-content text-sm font-semibold px-4 py-2 flex items-center justify-between gap-3">
+            <span x-text="switchError"></span>
+            <button type="button" class="btn btn-ghost btn-xs" @click="switchError = ''" aria-label="Dismiss">
+                <x-icon name="phosphor-x" class="w-4 h-4" />
+            </button>
         </div>
 
         {{-- Shown while the browser can't save the queue and contacts are waiting to sync --}}
@@ -232,11 +249,6 @@
             </div>
         @endif
 
-        {{-- Band/Mode Info --}}
-        <div class="max-sm:hidden text-center text-xs text-base-content/50">
-            To change band or mode, end this session and start a new one.
-        </div>
-
         {{-- Log: QSO history (oldest → newest) with the exchange input docked underneath, chat-style --}}
         <x-logging.qso-log
             title="Recent QSOs"
@@ -245,7 +257,10 @@
             <x-slot:cards>
                 {{-- Server-confirmed --}}
                 @foreach($this->recentContacts->reverse() as $contact)
-                    <x-logging.contact-card :contact="$contact" />
+                    <x-logging.contact-card
+                        :contact="$contact"
+                        :details="array_values(array_filter([$contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact)]))"
+                    />
                 @endforeach
 
                 {{-- Pending/failed from the JS queue (newest, so last) --}}
@@ -263,7 +278,7 @@
                     >
                         <div class="min-w-0">
                             <div class="font-bold font-mono uppercase text-lg truncate" x-text="contact.callsign"></div>
-                            <div class="text-xs text-base-content/60 font-mono" x-text="contact.exchange_class + ' · ' + (contact.section_code || '—')"></div>
+                            <div class="text-xs text-base-content/60 font-mono" x-text="[contact.exchange_class, contact.section_code || '—', queuedSummary(contact)].filter(Boolean).join(' · ')"></div>
                         </div>
                         <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                             <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
@@ -278,10 +293,20 @@
                 </template>
             </x-slot:cards>
 
+            <x-slot:extraColumns>
+                <th>Details</th>
+            </x-slot:extraColumns>
+
             <x-slot:rows>
                 {{-- Server-confirmed contacts --}}
                 @foreach($this->recentContacts->reverse() as $contact)
-                    <x-logging.contact-row :contact="$contact" :number="$this->recentContactNumbers[$contact->id] ?? null" />
+                    <x-logging.contact-row
+                        :contact="$contact"
+                        :number="$this->recentContactNumbers[$contact->id] ?? null"
+                        :data-advanced="json_encode($contact->only(\App\Support\AdvancedContactFields::FIELDS))"
+                    >
+                        <td class="font-mono text-xs text-base-content/70">{{ \App\Support\AdvancedContactFields::summary($contact) }}</td>
+                    </x-logging.contact-row>
                 @endforeach
 
                 {{-- Pending/Failed contacts from local queue (newest, so last) --}}
@@ -310,11 +335,13 @@
                         </td>
                         <td class="font-mono" x-text="contact.exchange_class"></td>
                         <td x-text="contact.section_code || '-'"></td>
+                        <td class="font-mono text-xs text-base-content/70" x-text="queuedSummary(contact)"></td>
                     </tr>
                 </template>
             </x-slot:rows>
 
             <x-logging.exchange-composer
+                :advanced="true"
                 :suggestions="$suggestions"
                 :duplicate-warning="$isDuplicate ? $dupeWarning : null"
                 :participant-warning="$participantWarning ?: null"
@@ -327,10 +354,26 @@
                         <span x-text="parseError"></span>
                     </div>
                 </template>
+                <template x-if="offBandSuggestion">
+                    <div class="flex flex-wrap items-center gap-2" data-off-band-offer>
+                        <button
+                            type="button"
+                            class="btn btn-warning btn-sm"
+                            x-init="$nextTick(() => $el.focus())"
+                            @click="switchBandMode(offBandSuggestion.band_id, {{ $operatingSession->mode_id }})"
+                            @keydown.escape.prevent="offBandSuggestion = null; $refs.exchangeInput.focus()"
+                            :disabled="switching"
+                        >
+                            <x-icon name="phosphor-arrows-left-right" class="w-4 h-4" />
+                            <span x-text="'Switch to ' + offBandSuggestion.name"></span>
+                        </button>
+                        <span class="text-xs text-base-content/60 max-sm:hidden"><kbd class="kbd kbd-xs">Enter</kbd> to switch, <kbd class="kbd kbd-xs">Esc</kbd> to go back. Your entry is kept.</span>
+                    </div>
+                </template>
             </x-logging.exchange-composer>
         </x-logging.qso-log>
 
-        <x-logging.keyboard-shortcuts />
+        <x-logging.keyboard-shortcuts :live="true" />
     </div>
 </div>
 </div>

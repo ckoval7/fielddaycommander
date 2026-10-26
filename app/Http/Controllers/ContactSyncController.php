@@ -10,6 +10,7 @@ use App\Http\Requests\StoreContactSyncRequest;
 use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
+use App\Support\AdvancedContactFields;
 use App\Support\StationMode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -76,6 +77,7 @@ class ContactSyncController extends Controller
             'section_id' => $request->section_id,
             'exchange_class' => $request->exchange_class,
             'power_watts' => $request->power_watts,
+            ...$request->safe()->only(AdvancedContactFields::FIELDS),
             'is_gota_contact' => $isGotaContact,
             'gota_operator_first_name' => $isGotaContact ? $request->gota_operator_first_name : null,
             'gota_operator_last_name' => $isGotaContact ? $request->gota_operator_last_name : null,

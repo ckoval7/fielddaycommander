@@ -1291,7 +1291,7 @@ test('recent QSO rows expose the contact uuid so queued copies can be pruned', f
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtml('data-contact-uuid="'.$contact->uuid.'"')
-        ->assertSeeHtml('parseInt('.$this->session->fresh()->qso_count.') + queue.length');
+        ->assertSeeHtml('parseInt('.$this->session->fresh()->qso_count.') + sessionQueueCount');
 });
 
 test('empty log hides its containers with CSS, not x-cloak that a morph would re-add', function () {

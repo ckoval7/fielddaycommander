@@ -79,7 +79,7 @@ Slots:
 
     {{-- History: stays pinned to the bottom so the newest QSO sits right above the input --}}
     <div
-        class="group/log max-sm:flex-1 max-sm:min-h-0 sm:h-80 overflow-y-auto overflow-x-auto"
+        class="group/log max-sm:flex-1 max-sm:min-h-28 sm:h-80 overflow-y-auto overflow-x-auto"
         x-data="{
             pinned: true,
             scrollToBottom() {

@@ -6,21 +6,29 @@
 namespace App\Livewire\Logging;
 
 use App\Events\ContactChanged;
+use App\Exceptions\BandModeSwitchException;
 use App\Livewire\Logging\Concerns\HasContactForm;
 use App\Livewire\Logging\Concerns\HasDuplicateDetection;
 use App\Livewire\Logging\Concerns\HasParticipantWarning;
 use App\Livewire\Logging\Concerns\HasRecentContactNumbers;
 use App\Models\AuditLog;
+use App\Models\Band;
 use App\Models\Contact;
+use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\User;
+use App\Services\BandModeSwitchService;
+use App\Services\BandResolverService;
 use App\Services\DuplicateCheckService;
 use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
+use App\Support\AdvancedContactFields;
 use App\Support\BroadcastChannels;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -222,6 +230,68 @@ class LoggingInterface extends Component
         $this->redirect(route('logging.station-select'), navigate: true);
     }
 
+    /**
+     * Move to another band and mode: end this session and start a new one
+     * on the same station. Returns the new session's id and logging URL for
+     * the contact queue, which carries unsynced contacts across before it
+     * navigates, or the reason the switch can't happen.
+     *
+     * @return array{ok: bool, session_id?: int, url?: string, message?: string}
+     */
+    public function switchBandMode(int $bandId, int $modeId): array
+    {
+        $this->operatingSession->refresh();
+
+        if ($this->operatingSession->operator_user_id !== auth()->id()
+            || ! StationMode::allowsStation($this->operatingSession->station_id)) {
+            abort(403);
+        }
+
+        try {
+            $session = app(BandModeSwitchService::class)->switchTo($this->operatingSession, $bandId, $modeId);
+        } catch (BandModeSwitchException $exception) {
+            return ['ok' => false, 'message' => $exception->getMessage()];
+        }
+
+        return [
+            'ok' => true,
+            'session_id' => $session->id,
+            'url' => route('logging.session', $session),
+        ];
+    }
+
+    /**
+     * Bands an operator can switch to, in band-plan order.
+     *
+     * @return Collection<int, Band>
+     */
+    #[Computed]
+    public function switchBands(): Collection
+    {
+        return Band::query()->allowedForFieldDay()->ordered()->get(['id', 'name']);
+    }
+
+    /**
+     * @return Collection<int, Mode>
+     */
+    #[Computed]
+    public function switchModes(): Collection
+    {
+        return Mode::query()->orderBy('id')->get(['id', 'name', 'category']);
+    }
+
+    /**
+     * Frequency range of each band, so the browser can tell which band a
+     * dial frequency is on before it queues a contact.
+     *
+     * @return array<int, array{name: string, low: float, high: float}>
+     */
+    #[Computed]
+    public function bandRanges(): array
+    {
+        return app(BandResolverService::class)->rangesFor($this->switchBands);
+    }
+
     public function deleteContact(int $contactId): void
     {
         $this->operatingSession->refresh();
@@ -300,7 +370,13 @@ class LoggingInterface extends Component
         unset($this->recentContacts);
     }
 
-    public function updateContact(int $contactId, string $exchangeInput): void
+    /**
+     * Save an edit to a recalled contact: its exchange and, when the
+     * Advanced Fields are sent, those too.
+     *
+     * @param  array<string, mixed>|null  $advanced
+     */
+    public function updateContact(int $contactId, string $exchangeInput, ?array $advanced = null): void
     {
         $this->operatingSession->refresh();
 
@@ -325,11 +401,17 @@ class LoggingInterface extends Component
             return;
         }
 
-        $oldValues = [
-            'callsign' => $contact->callsign,
-            'exchange_class' => $contact->exchange_class,
-            'section_id' => $contact->section_id,
-        ];
+        $advancedValues = [];
+        if ($advanced !== null) {
+            $advancedValues = $this->validatedAdvancedFields($advanced);
+
+            if ($advancedValues === null) {
+                return;
+            }
+        }
+
+        $auditedFields = ['callsign', 'exchange_class', 'section_id', ...array_keys($advancedValues)];
+        $oldValues = $contact->only($auditedFields);
 
         $dupes = app(DuplicateCheckService::class);
         $previousKey = $dupes->keyFor($contact);
@@ -338,6 +420,7 @@ class LoggingInterface extends Component
             'callsign' => $parsed['callsign'],
             'exchange_class' => $parsed['transmitter_count'].$parsed['class_code'],
             'section_id' => $parsed['section_id'],
+            ...$advancedValues,
         ]);
 
         $dupes->save($contact, $previousKey);
@@ -347,17 +430,52 @@ class LoggingInterface extends Component
             'contact.updated',
             auditable: $contact,
             oldValues: $oldValues,
-            newValues: [
-                'callsign' => $contact->callsign,
-                'exchange_class' => $contact->exchange_class,
-                'section_id' => $contact->section_id,
-            ],
+            newValues: $contact->only($auditedFields),
         );
 
         $this->exchangeInput = '';
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
+    }
+
+    /**
+     * The Advanced Fields from a recalled-contact edit, normalized, or null
+     * with parseError set when one doesn't pass.
+     *
+     * @param  array<string, mixed>  $advanced
+     * @return array<string, mixed>|null
+     */
+    protected function validatedAdvancedFields(array $advanced): ?array
+    {
+        $values = AdvancedContactFields::normalize(
+            array_intersect_key($advanced, array_flip(AdvancedContactFields::FIELDS))
+        );
+
+        $validator = Validator::make(
+            $values,
+            AdvancedContactFields::rules(),
+            AdvancedContactFields::messages(),
+            AdvancedContactFields::attributes(),
+        );
+
+        if ($validator->fails()) {
+            $this->parseError = $validator->errors()->first();
+
+            return null;
+        }
+
+        $band = $this->operatingSession->band;
+        $frequencyHz = $values['frequency_hz'] ?? null;
+
+        if ($frequencyHz !== null && $band !== null
+            && ! app(BandResolverService::class)->bandContainsFrequencyHz($band, (int) $frequencyHz)) {
+            $this->parseError = AdvancedContactFields::formatMhz((int) $frequencyHz)." MHz is not on {$band->name}.";
+
+            return null;
+        }
+
+        return $validator->validated();
     }
 
     /**

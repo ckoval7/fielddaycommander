@@ -2,8 +2,17 @@
 
 ## Unreleased
 
+### Added
+
+- On **Log Contact**, **Advanced fields** opens a panel below the exchange box with **Freq (MHz)**, **RST sent**, **RST rcvd**, **Grid**, **Name**, and **Notes**. Alt+A opens or closes it, and this device remembers that choice. With the panel open, Tab from the exchange box moves through the fields in order. Shift+Tab from **Freq (MHz)** returns to the exchange box, Enter logs the contact or saves a recalled edit, and Esc returns to the exchange box. Frequency stays filled between contacts and after a band or mode switch if it belongs on the new band. The other fields clear after each contact. Signal reports accept values such as 59, 599, and -10. Grid squares accept 4 or 6 characters and are stored like FN31pr. The log shows frequency, reports, grid, and name in **Details**, or on the card line on phones. Recalling a contact with the up arrow also loads its advanced fields for editing.
+- On **Log Contact**, a frequency on another band is refused. For example, entering 7.200 MHz while on 20m shows **Switch to 40m** and focuses the button. Press Enter to switch and keep what you typed.
+- On **Log Contact**, band and mode pickers in the session bar let you switch without leaving the logging screen. Mouse or touch selections switch immediately. Alt+B and Alt+M focus the pickers, arrow keys choose a value, Enter switches, and Esc cancels. You can also type a band or mode alone in the exchange box and press Enter: `40M` or `40`, `CW`, `PH` or `SSB`, `DIG`, or a pair such as `20M PH`. A switch ends the current session and starts a new one on the same station with the same power, as **End Session** followed by a new session would. Contacts waiting to sync go with you and still count toward the session where they were logged. A switch is refused while offline, when the station is unavailable, or when another station already uses that band and mode. GOTA stations are exempt from the conflict check. The pickers replace the hint to end the session to change band or mode.
+- ADIF exports include `FREQ`, `RST_SENT`, `RST_RCVD`, `GRIDSQUARE`, `NAME`, and `COMMENT` (notes) when those fields were logged. Cabrillo QSO lines use the logged frequency in kHz below 1 GHz instead of the band edge.
+- On phones, the **Log Contact** session bar shows power next to the station name.
+
 ### Fixed
 
+- While editing a recalled QSO on **Log Contact**, using the up arrow or tapping a QSO, the screen could leave editing mode every 30 seconds or when another queued contact finished syncing. The exchange stayed in the box, so pressing Enter logged a new contact (a dupe) instead of saving the edit. Editing mode now holds until you save, delete, or cancel.
 - Since 26.10.12, **Manage Schedule** > **Roles** showed only the edit (pencil) button for each role, so you couldn't delete roles. The delete (trash) button is back and still asks for confirmation, deletes the role's unassigned shifts, and refuses to delete a role with assigned shifts.
 - Entering the organization callsign in lowercase, such as w1abc, during setup or in **System Preferences** was rejected as an invalid callsign. It is now saved in uppercase, like operator callsigns. Setup also kept clearing the organization fields and weather email whenever a field failed validation. They now keep what you typed.
 - On the Shift Dashboard, the timeline's horizontal scrollbar could sit on top of the bottom role row in browsers with overlay scrollbars, such as Chrome and Edge on Windows 11. It now sits below the chart.

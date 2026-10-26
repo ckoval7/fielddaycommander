@@ -7,7 +7,9 @@ namespace App\Http\Requests;
 
 use App\Models\OperatingClass;
 use App\Models\OperatingSession;
+use App\Services\BandResolverService;
 use App\Services\ExchangeParserService;
+use App\Support\AdvancedContactFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -22,6 +24,7 @@ class StoreContactSyncRequest extends FormRequest
     {
         $this->merge([
             'callsign' => strtoupper(trim($this->callsign ?? '')),
+            ...AdvancedContactFields::normalize($this->all()),
         ]);
     }
 
@@ -46,6 +49,7 @@ class StoreContactSyncRequest extends FormRequest
             'gota_operator_last_name' => ['nullable', 'string', 'max:50'],
             'gota_operator_callsign' => ['nullable', 'string', 'max:20', 'regex:/^[A-Z0-9\/]*$/'],
             'gota_operator_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            ...AdvancedContactFields::rules(),
         ];
     }
 
@@ -83,7 +87,8 @@ class StoreContactSyncRequest extends FormRequest
      * field and message, or null when it fits.
      *
      * GOTA contacts are credited to the GOTA operator, so one must be named,
-     * and a session operates on one band and mode, so contacts must match it.
+     * and a session operates on one band and mode, so contacts (and any dial
+     * frequency) must match it.
      *
      * @return array{0: string, 1: string}|null
      */
@@ -102,6 +107,11 @@ class StoreContactSyncRequest extends FormRequest
                 'mode_id',
                 'The mode does not match this operating session.',
             ],
+            $this->frequency_hz !== null && $session?->band !== null
+                && ! app(BandResolverService::class)->bandContainsFrequencyHz($session->band, (int) $this->frequency_hz) => [
+                    'frequency_hz',
+                    AdvancedContactFields::formatMhz((int) $this->frequency_hz)." MHz is not on {$session->band->name}.",
+                ],
             default => null,
         };
     }
@@ -153,6 +163,7 @@ class StoreContactSyncRequest extends FormRequest
             'callsign.regex' => 'The callsign must contain only letters, numbers, and forward slashes',
             'exchange_class.required' => 'The exchange class is required',
             'exchange_class.regex' => 'The exchange class must be a number followed by a valid class letter (e.g. 3A, 2M)',
+            ...AdvancedContactFields::messages(),
         ];
     }
 
@@ -175,6 +186,7 @@ class StoreContactSyncRequest extends FormRequest
             'gota_operator_last_name' => 'GOTA operator last name',
             'gota_operator_callsign' => 'GOTA operator callsign',
             'gota_operator_user_id' => 'GOTA operator',
+            ...AdvancedContactFields::attributes(),
         ];
     }
 }
