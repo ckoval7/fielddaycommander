@@ -1125,7 +1125,7 @@ test('logging interface emits mobile-friendly responsive classes', function () {
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtml('max-lg:z-10 lg:z-30')
         ->assertSeeHtml('flex flex-col sm:flex-row gap-2')
-        ->assertSeeHtml('hidden sm:flex flex-wrap');
+        ->assertSeeHtml('hidden sm:grid md:grid-cols-2');
 });
 
 test('sub-mode input sits in the sticky bar beside power on desktop and mobile', function () {

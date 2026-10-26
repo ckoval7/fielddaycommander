@@ -989,7 +989,7 @@ test('transcribe interface emits mobile-friendly responsive classes', function (
         ->assertSeeHtml('max-lg:z-10 lg:z-40')
         ->assertSeeHtml('flex flex-col sm:flex-row gap-2')
         ->assertSeeHtml('grid grid-cols-1 sm:grid-cols-3 gap-3')
-        ->assertSeeHtml('hidden sm:flex flex-wrap');
+        ->assertSeeHtml('hidden sm:grid md:grid-cols-2');
 });
 
 test('logContact dispatches ContactLogged event', function () {

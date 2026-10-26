@@ -5,7 +5,8 @@
 {{--
 Keyboard Shortcuts Component
 
-Desktop-only legend for the exchange composer's keyboard shortcuts.
+Desktop-only legend for the exchange composer's keyboard shortcuts: keys in
+a right-aligned column beside a short description, in two columns from md.
 
 Props:
 - $live: bool - Add the live logging shortcuts (Advanced Fields, band/mode switch)
@@ -13,15 +14,42 @@ Props:
 
 @props(['live' => false])
 
-<div class="hidden sm:flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs text-base-content/40">
-    <span><kbd class="kbd kbd-xs text-base-content">Enter</kbd> Log or save</span>
-    <span><kbd class="kbd kbd-xs text-base-content">Esc</kbd> Clear or cancel</span>
-    <span><kbd class="kbd kbd-xs text-base-content">&uarr;</kbd><kbd class="kbd kbd-xs text-base-content">&darr;</kbd> Select suggestion or recall QSO (start with empty input)</span>
-    <span><kbd class="kbd kbd-xs text-base-content">Del</kbd> Delete recalled QSO</span>
-    <span><kbd class="kbd kbd-xs text-base-content">Tab</kbd> Accept selected suggestion{{ $live ? ', or move into the advanced fields' : '' }}</span>
-    @if($live)
-        <span><kbd class="kbd kbd-xs text-base-content">Alt+A</kbd> Show or hide advanced fields</span>
-        <span><kbd class="kbd kbd-xs text-base-content">Alt+B</kbd> <kbd class="kbd kbd-xs text-base-content">Alt+M</kbd> Focus band or mode picker</span>
-        <span>Type <span class="font-mono">40M</span>, <span class="font-mono">CW</span>, or <span class="font-mono">20M PH</span> and press <kbd class="kbd kbd-xs text-base-content">Enter</kbd> to switch</span>
-    @endif
+@php
+    /** @var array<int, array{keys: array<int, string>, label: string, typed?: bool}> $shortcuts */
+    $shortcuts = [
+        ['keys' => ['Enter'], 'label' => 'Log, or save an edit'],
+        ['keys' => ['Esc'], 'label' => 'Clear, or cancel an edit'],
+        ['keys' => ['↑', '↓'], 'label' => 'Recall QSOs, or browse suggestions'],
+        ['keys' => ['Del'], 'label' => 'Delete the recalled QSO'],
+        ['keys' => ['Tab'], 'label' => $live ? 'Accept suggestion, or advanced fields' : 'Accept suggestion'],
+    ];
+
+    if ($live) {
+        array_push(
+            $shortcuts,
+            ['keys' => ['Alt+A'], 'label' => 'Show or hide advanced fields'],
+            ['keys' => ['Alt+B', 'Alt+M'], 'label' => 'Focus band or mode picker'],
+            ['keys' => ['40M', 'CW'], 'label' => 'Type band/mode alone, Enter to switch', 'typed' => true],
+        );
+    }
+@endphp
+
+<div class="hidden sm:grid md:grid-cols-2 gap-x-10 gap-y-1.5 w-fit mx-auto text-xs text-base-content/60" data-keyboard-shortcuts>
+    @foreach($shortcuts as $shortcut)
+        <div class="flex items-center gap-2">
+            <span class="w-28 flex-shrink-0 flex justify-end items-center gap-1">
+                @foreach($shortcut['keys'] as $key)
+                    @if($shortcut['typed'] ?? false)
+                        @if(! $loop->first)
+                            <span>/</span>
+                        @endif
+                        <span class="font-mono font-semibold text-base-content">{{ $key }}</span>
+                    @else
+                        <kbd class="kbd kbd-xs text-base-content">{{ $key }}</kbd>
+                    @endif
+                @endforeach
+            </span>
+            <span>{{ $shortcut['label'] }}</span>
+        </div>
+    @endforeach
 </div>
