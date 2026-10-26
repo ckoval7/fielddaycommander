@@ -349,7 +349,7 @@ test('claim checkbox prevents native toggling and re-keys on state change', func
     $component->call('claim', $bonusType->id)
         ->assertSeeHtml("bonus-checkbox-{$bonusType->id}-claimed")
         ->assertSeeHtml("\$wire.unclaim({$bonusType->id})")
-        ->assertSeeHtml('confirm(');
+        ->assertSeeHtml('$confirm(');
 });
 
 test('lists only bonuses with no other way to be earned', function (string $rulesVersion) {

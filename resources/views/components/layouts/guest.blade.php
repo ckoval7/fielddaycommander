@@ -90,5 +90,6 @@
 
     <x-toast />
     <x-form-error-summary />
+    <x-confirm-dialog />
 </body>
 </html>
