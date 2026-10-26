@@ -39,6 +39,28 @@ class EventBonus extends Model
         ];
     }
 
+    /**
+     * Points this claim is worth: its calculated points, or, for a pending
+     * claim stored before anything was calculated, what verifying it would
+     * award (quantity × base points, capped at the type's maximum).
+     */
+    public function claimedPoints(): int
+    {
+        if ((int) $this->calculated_points > 0) {
+            return (int) $this->calculated_points;
+        }
+
+        $bonusType = $this->bonusType;
+
+        if (! $bonusType) {
+            return 0;
+        }
+
+        $points = max(1, (int) ($this->quantity ?? 1)) * (int) $bonusType->base_points;
+
+        return $bonusType->max_points !== null ? min($points, (int) $bonusType->max_points) : $points;
+    }
+
     public function eventConfiguration(): BelongsTo
     {
         return $this->belongsTo(EventConfiguration::class);

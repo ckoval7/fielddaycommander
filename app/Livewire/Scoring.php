@@ -229,6 +229,10 @@ class Scoring extends Component
     // QSO BREAKDOWN
     // ========================================================================
 
+    /**
+     * Every contact logged for the event, GOTA and dupes included: the
+     * logbook's unfiltered row count.
+     */
     #[Computed]
     public function totalContacts(): int
     {
@@ -236,13 +240,31 @@ class Scoring extends Component
             return 0;
         }
 
+        return $this->config()->contacts()->count();
+    }
+
+    /**
+     * Non-duplicate contacts, GOTA included: the QSO count the dashboard and
+     * logbook show.
+     */
+    #[Computed]
+    public function validContacts(): int
+    {
+        if (! $this->config()) {
+            return 0;
+        }
+
         return $this->config()->contacts()
-            ->where('is_gota_contact', false)
+            ->where('is_duplicate', false)
             ->count();
     }
 
+    /**
+     * Non-duplicate contacts outside the GOTA station: the rows the band/mode
+     * grid and QSO points cover, since GOTA contacts score as a bonus.
+     */
     #[Computed]
-    public function validContacts(): int
+    public function mainStationContacts(): int
     {
         if (! $this->config()) {
             return 0;
@@ -263,7 +285,6 @@ class Scoring extends Component
 
         return $this->config()->contacts()
             ->where('is_duplicate', true)
-            ->where('is_gota_contact', false)
             ->count();
     }
 
@@ -380,7 +401,7 @@ class Scoring extends Component
                 continue;
             }
 
-            $eventBonus = $claimedBonuses->get($bonusType->id);
+            $eventBonus = $claimedBonuses->get($bonusType->id)?->setRelation('bonusType', $bonusType);
             $list[] = $this->buildBonusEntry($bonusType, $eventBonus);
         }
 
@@ -430,7 +451,7 @@ class Scoring extends Component
             $points = (int) $eventBonus->calculated_points;
         } elseif ($eventBonus) {
             $status = 'claimed';
-            $points = (int) $eventBonus->calculated_points;
+            $points = $eventBonus->claimedPoints();
         } else {
             $status = 'unclaimed';
             $points = 0;
@@ -448,7 +469,7 @@ class Scoring extends Component
      * Aggregated bonus point totals for the summary row.
      * Depends on the bonusList computed property.
      *
-     * @return array{verified_pts: int, claimed_pts: int, unclaimed_count: int}
+     * @return array{verified_pts: int, claimed_pts: int, verified_count: int, claimed_count: int, unclaimed_count: int, verified_multiplier: int, claimed_multiplier: int}
      */
     #[Computed]
     public function bonusSummary(): array
@@ -458,6 +479,8 @@ class Scoring extends Component
         return [
             'verified_pts' => (int) $list->where('status', 'verified')->sum('points'),
             'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
+            'verified_count' => $list->where('status', 'verified')->count(),
+            'claimed_count' => $list->where('status', 'claimed')->count(),
             'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
             // Objective rulebooks award multipliers rather than points, so the
             // same tiles show summed OM instead of summed points.

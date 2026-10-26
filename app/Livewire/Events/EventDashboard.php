@@ -74,7 +74,7 @@ class EventDashboard extends Component
             ];
         }
 
-        $totalContacts = $config->contacts()->count();
+        $totalContacts = $config->contacts()->notDuplicate()->count();
 
         $categoryCounts = $config->contacts()
             ->notDuplicate()
@@ -311,14 +311,14 @@ class EventDashboard extends Component
                 continue;
             }
 
-            $eventBonus = $claimedBonuses->get($bonusType->id);
+            $eventBonus = $claimedBonuses->get($bonusType->id)?->setRelation('bonusType', $bonusType);
 
             if ($eventBonus && $eventBonus->is_verified) {
                 $status = 'verified';
                 $points = (int) $eventBonus->calculated_points;
             } elseif ($eventBonus) {
                 $status = 'claimed';
-                $points = (int) $eventBonus->calculated_points;
+                $points = $eventBonus->claimedPoints();
             } else {
                 $status = 'unclaimed';
                 $points = 0;
@@ -352,6 +352,8 @@ class EventDashboard extends Component
         return [
             'verified_pts' => (int) $list->where('status', 'verified')->sum('points'),
             'claimed_pts' => (int) $list->where('status', 'claimed')->sum('points'),
+            'verified_count' => $list->where('status', 'verified')->count(),
+            'claimed_count' => $list->where('status', 'claimed')->count(),
             'unclaimed_count' => $list->where('status', 'unclaimed')->count(),
             // Objective rulebooks award multipliers rather than points, so the
             // same tiles show summed OM instead of summed points.

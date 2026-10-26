@@ -9,6 +9,11 @@
         <div class="text-center">
             <div class="text-xs sm:text-sm text-base-content/70 uppercase tracking-wide">Total QSOs</div>
             <div class="text-2xl sm:text-3xl font-bold text-primary mt-1">{{ number_format($this->stats['total_qsos']) }}</div>
+            @if($this->stats['duplicate_count'] > 0)
+                <div class="text-xs text-base-content/60 mt-1">
+                    {{ number_format($this->stats['duplicate_count']) }} {{ Str::plural('dupe', $this->stats['duplicate_count']) }} not counted
+                </div>
+            @endif
         </div>
     </x-card>
 
@@ -17,6 +22,11 @@
         <div class="text-center">
             <div class="text-xs sm:text-sm text-base-content/70 uppercase tracking-wide">QSO Points</div>
             <div class="text-2xl sm:text-3xl font-bold text-success mt-1">{{ number_format($this->stats['total_points']) }}</div>
+            @if($this->stats['gota_points'] > 0)
+                <div class="text-xs text-base-content/60 mt-1">
+                    Plus {{ number_format($this->stats['gota_points']) }} GOTA bonus pts
+                </div>
+            @endif
         </div>
     </x-card>
 

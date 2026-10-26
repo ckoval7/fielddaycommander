@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\EventType;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -322,4 +323,20 @@ test('view syncs from $wire on tick instead of registering $wire watchers', func
     Livewire::test(EventCountdown::class)
         ->assertSeeHtml('syncFromServer()')
         ->assertDontSeeHtml('$wire.$watch(');
+});
+
+test('lazy placeholder renders the countdown so the header does not shift when it loads', function () {
+    $event = Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+
+    $html = Blade::render('<livewire:components.event-countdown lazy />');
+
+    expect($html)
+        ->toContain($event->name)
+        ->toContain('Ends in')
+        ->toContain('LIVE')
+        ->not->toContain('x-text="countdown"');
 });

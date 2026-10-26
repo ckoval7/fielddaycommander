@@ -374,13 +374,24 @@ class LogbookBrowser extends Component
         });
     }
 
+    /**
+     * Summary figures for the filtered logbook, counted the way the scoring
+     * page counts them: QSOs and the band and mode tallies leave out dupes,
+     * QSO points also leave out GOTA contacts (they score as the GOTA bonus)
+     * and any contact the rulebook gives no credit. The dupes and GOTA bonus
+     * points are reported alongside so the differences are visible.
+     *
+     * @return array{total_qsos: int, duplicate_count: int, total_points: int, gota_points: int, unique_sections: int, by_band: array<string, int>, by_mode: array<string, int>}
+     */
     #[Computed]
     public function stats(): array
     {
         if (! $this->eventConfigurationId) {
             return [
                 'total_qsos' => 0,
+                'duplicate_count' => 0,
                 'total_points' => 0,
+                'gota_points' => 0,
                 'unique_sections' => 0,
                 'by_band' => [],
                 'by_mode' => [],
@@ -388,15 +399,18 @@ class LogbookBrowser extends Component
         }
 
         $filters = $this->filters();
-        $query = $filters->query($this->eventConfigurationId)->reorder();
+        $counted = fn () => $filters->query($this->eventConfigurationId)->reorder()->notDuplicate();
 
-        // Get aggregated stats
-        $totalQsos = $query->count();
-        $totalPoints = $query->sum('points');
-        $uniqueSections = $query->distinct('section_id')->count('section_id');
+        $totalQsos = $counted()->count();
+        $duplicateCount = $filters->query($this->eventConfigurationId)->reorder()->duplicatesOnly()->count();
+        $uniqueSections = $counted()->distinct('section_id')->count('section_id');
 
-        // Stats by band
-        $byBand = $filters->query($this->eventConfigurationId)->reorder()
+        $pointsQuery = $counted()->where('is_gota_contact', false);
+        EventConfiguration::find($this->eventConfigurationId)?->contactCreditRules()?->constrainToCreditable($pointsQuery);
+        $totalPoints = (int) $pointsQuery->sum('points');
+        $gotaPoints = (int) $counted()->where('is_gota_contact', true)->sum('points');
+
+        $byBand = $counted()
             ->select('band_id', \DB::raw('count(*) as count'))
             ->groupBy('band_id')
             ->with('band')
@@ -406,8 +420,7 @@ class LogbookBrowser extends Component
             })
             ->toArray();
 
-        // Stats by mode
-        $byMode = $filters->query($this->eventConfigurationId)->reorder()
+        $byMode = $counted()
             ->select('mode_id', \DB::raw('count(*) as count'))
             ->groupBy('mode_id')
             ->with('mode')
@@ -419,7 +432,9 @@ class LogbookBrowser extends Component
 
         return [
             'total_qsos' => $totalQsos,
+            'duplicate_count' => $duplicateCount,
             'total_points' => $totalPoints,
+            'gota_points' => $gotaPoints,
             'unique_sections' => $uniqueSections,
             'by_band' => $byBand,
             'by_mode' => $byMode,
