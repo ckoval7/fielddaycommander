@@ -534,9 +534,10 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
          * still waiting to sync move to the new session's queue (they keep
          * their own session, band and mode), the frequency comes along when
          * it's on the new band, and with keepDraft so does the half-typed
-         * contact.
+         * contact. With logOnArrival that contact is logged on the new
+         * session as soon as it loads (the off-band frequency offer).
          */
-        async switchBandMode(bandId, modeId, { keepDraft = true } = {}) {
+        async switchBandMode(bandId, modeId, { keepDraft = true, logOnArrival = false } = {}) {
             bandId = Number(bandId);
             modeId = Number(modeId);
             this.switchError = '';
@@ -575,6 +576,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             writeStorage(sessionStorage, SWITCH_DRAFT_KEY, JSON.stringify({
                 session_id: result.session_id,
                 exchange: keepDraft ? (input?.value ?? '') : '',
+                log_on_arrival: keepDraft && logOnArrival,
                 advanced: {
                     ...(keepDraft ? this.advanced : emptyAdvancedFields()),
                     frequency: keepFrequency ? this.advanced.frequency : '',
@@ -628,10 +630,16 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 if (draft.exchange) {
                     this.$nextTick(() => {
                         const input = document.getElementById('exchange-input');
-                        if (input) {
-                            input.value = draft.exchange;
+                        if (!input) {
+                            return;
+                        }
+                        input.value = draft.exchange;
+                        input.focus();
+                        if (draft.log_on_arrival) {
+                            // Anything that doesn't pass stays in the box with its error.
+                            this.logContact(input);
+                        } else {
                             input.dispatchEvent(new Event('input', { bubbles: true }));
-                            input.focus();
                         }
                     });
                 }
@@ -853,8 +861,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             // table renders oldest → newest, so walk it backwards.
             const rows = [...document.querySelectorAll(String.raw`tr[wire\:key^="contact-"]`)].reverse();
             rows.forEach(row => {
-                // Skip deleted rows (they have line-through class)
-                if (row.classList.contains('line-through')) return;
+                // Skip deleted rows (they have line-through class) and
+                // read-only rows from earlier sessions.
+                if (row.classList.contains('line-through') || row.hasAttribute('data-earlier-session')) return;
                 const callsignCell = row.querySelector('td:nth-child(3)');
                 const exchangeClassCell = row.querySelector('td:nth-child(4)');
                 const sectionCell = row.querySelector('td:nth-child(5)');

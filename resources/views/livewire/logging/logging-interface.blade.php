@@ -252,9 +252,18 @@
         {{-- Log: QSO history (oldest → newest) with the exchange input docked underneath, chat-style --}}
         <x-logging.qso-log
             title="Recent QSOs"
-            subtitle="This session only"
+            :subtitle="$this->earlierContacts->isNotEmpty() ? 'Earlier sessions greyed out' : 'Current session'"
         >
             <x-slot:cards>
+                {{-- Earlier sessions at this station, read-only --}}
+                @foreach($this->earlierContacts->reverse() as $contact)
+                    <x-logging.contact-card
+                        :contact="$contact"
+                        :readonly="true"
+                        :details="array_values(array_filter([$contact->band?->name.' '.$contact->mode?->name, $contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact)]))"
+                    />
+                @endforeach
+
                 {{-- Server-confirmed --}}
                 @foreach($this->recentContacts->reverse() as $contact)
                     <x-logging.contact-card
@@ -298,6 +307,13 @@
             </x-slot:extraColumns>
 
             <x-slot:rows>
+                {{-- Earlier sessions at this station, read-only --}}
+                @foreach($this->earlierContacts->reverse() as $contact)
+                    <x-logging.contact-row :contact="$contact" :readonly="true">
+                        <td class="font-mono text-xs text-base-content/70">{{ implode(' · ', array_filter([$contact->band?->name.' '.$contact->mode?->name, \App\Support\AdvancedContactFields::summary($contact)])) }}</td>
+                    </x-logging.contact-row>
+                @endforeach
+
                 {{-- Server-confirmed contacts --}}
                 @foreach($this->recentContacts->reverse() as $contact)
                     <x-logging.contact-row
@@ -360,14 +376,14 @@
                             type="button"
                             class="btn btn-warning btn-sm"
                             x-init="$nextTick(() => $el.focus())"
-                            @click="switchBandMode(offBandSuggestion.band_id, {{ $operatingSession->mode_id }})"
+                            @click="switchBandMode(offBandSuggestion.band_id, {{ $operatingSession->mode_id }}, { logOnArrival: true })"
                             @keydown.escape.prevent="offBandSuggestion = null; $refs.exchangeInput.focus()"
                             :disabled="switching"
                         >
                             <x-icon name="phosphor-arrows-left-right" class="w-4 h-4" />
                             <span x-text="'Switch to ' + offBandSuggestion.name"></span>
                         </button>
-                        <span class="text-xs text-base-content/60 max-sm:hidden"><kbd class="kbd kbd-xs">Enter</kbd> to switch, <kbd class="kbd kbd-xs">Esc</kbd> to go back. Your entry is kept.</span>
+                        <span class="text-xs text-base-content/60 max-sm:hidden"><kbd class="kbd kbd-xs">Enter</kbd> to switch and log, <kbd class="kbd kbd-xs">Esc</kbd> to go back.</span>
                     </div>
                 </template>
             </x-logging.exchange-composer>

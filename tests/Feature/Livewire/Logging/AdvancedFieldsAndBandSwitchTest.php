@@ -306,3 +306,67 @@ describe('advanced fields', function () {
             ->rst_sent->toBe('59');
     });
 });
+
+describe('log after a switch', function () {
+    test('shows the operator\'s earlier contacts at this station greyed out and read-only', function () {
+        $this->actingAs($this->user);
+
+        $earlier = Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->twenty->id,
+            'mode_id' => $this->phone->id,
+            'section_id' => $this->section->id,
+            'callsign' => 'K1OLD',
+            'uuid' => (string) Str::uuid(),
+            'qso_time' => now()->subMinutes(5),
+        ]);
+
+        $otherOperatorSession = OperatingSession::factory()->create([
+            'station_id' => $this->station->id,
+            'operator_user_id' => User::factory()->create()->id,
+            'band_id' => $this->twenty->id,
+            'mode_id' => $this->cw->id,
+            'end_time' => now()->subHour(),
+        ]);
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $otherOperatorSession->id,
+            'callsign' => 'W9NOTME',
+            'qso_time' => now()->subHours(2),
+        ]);
+
+        $newSession = app(BandModeSwitchService::class)->switchTo($this->session, $this->forty->id, $this->phone->id);
+
+        Livewire::test(LoggingInterface::class, ['operatingSession' => $newSession])
+            ->assertSee('K1OLD')
+            ->assertSee('20m Phone')
+            ->assertSeeHtml('data-earlier-session')
+            ->assertSeeHtml('data-contact-uuid="'.$earlier->uuid.'"')
+            ->assertDontSeeHtml('recallByContactId('.$earlier->id.')')
+            ->assertDontSee('W9NOTME')
+            ->assertSee('Earlier sessions greyed out');
+    });
+
+    test('keeps the GOTA operator across a switch', function () {
+        $this->station->update(['is_gota' => true]);
+        $this->actingAs($this->user);
+
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $this->session->id,
+            'band_id' => $this->twenty->id,
+            'mode_id' => $this->phone->id,
+            'qso_time' => now()->subMinute(),
+            'is_gota_contact' => true,
+            'gota_operator_first_name' => 'Ada',
+            'gota_operator_last_name' => 'Lovelace',
+        ]);
+
+        $newSession = app(BandModeSwitchService::class)->switchTo($this->session->fresh(), $this->forty->id, $this->phone->id);
+
+        Livewire::test(LoggingInterface::class, ['operatingSession' => $newSession])
+            ->assertSet('gotaOperatorFirstName', 'Ada')
+            ->assertSet('gotaOperatorLastName', 'Lovelace');
+    });
+});
