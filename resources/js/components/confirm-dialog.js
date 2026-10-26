@@ -114,9 +114,10 @@ export function confirmDialogPanel() {
 
             this.$nextTick(() => {
                 const store = this.$store.confirmDialog;
-                const target = store.expected === null
-                    ? (store.danger ? this.$refs.cancel : this.$refs.confirm)
-                    : this.$refs.typed;
+                let target = this.$refs.typed;
+                if (store.expected === null) {
+                    target = store.danger ? this.$refs.cancel : this.$refs.confirm;
+                }
 
                 target?.focus();
             });

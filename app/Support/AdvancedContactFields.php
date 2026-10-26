@@ -75,7 +75,10 @@ final class AdvancedContactFields
      */
     public const FIELDS = ['frequency_hz', 'rst_sent', 'rst_received', 'grid_square', 'contact_name', 'notes'];
 
-    private function __construct() {}
+    private function __construct()
+    {
+        // Static helpers only: never instantiated.
+    }
 
     /**
      * @return array<string, array<int, string>>

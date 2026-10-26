@@ -22,7 +22,7 @@ Props:
 @endphp
 
 @if($row)
-    <tr data-session-divider aria-hidden="true" class="hover:bg-transparent">
+    <tr data-session-divider class="hover:bg-transparent">
         <td colspan="6" class="py-1.5">
             <div @class(['flex items-center gap-3 text-xs font-mono', 'text-base-content/50' => ! $current, 'text-primary font-semibold' => $current])>
                 <span class="flex-1 border-t border-current opacity-40"></span>
@@ -32,7 +32,7 @@ Props:
         </td>
     </tr>
 @else
-    <div data-session-divider aria-hidden="true" @class(['flex items-center gap-3 py-1 text-xs font-mono', 'text-base-content/50' => ! $current, 'text-primary font-semibold' => $current])>
+    <div data-session-divider @class(['flex items-center gap-3 py-1 text-xs font-mono', 'text-base-content/50' => ! $current, 'text-primary font-semibold' => $current])>
         <span class="flex-1 border-t border-current opacity-40"></span>
         <span>{{ $label }}{{ $time ? ' · '.$time : '' }}</span>
         <span class="flex-1 border-t border-current opacity-40"></span>
