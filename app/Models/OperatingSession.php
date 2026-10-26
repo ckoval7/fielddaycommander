@@ -21,6 +21,7 @@ class OperatingSession extends Model
     protected $fillable = [
         'station_id',
         'operator_user_id',
+        'previous_session_id',
         'band_id',
         'mode_id',
         'start_time',
@@ -63,6 +64,33 @@ class OperatingSession extends Model
     public function mode(): BelongsTo
     {
         return $this->belongsTo(Mode::class);
+    }
+
+    /**
+     * The session this one replaced in a band/mode switch, if any.
+     */
+    public function previousSession(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_session_id');
+    }
+
+    /**
+     * Earlier sessions this one continues through band/mode switches,
+     * newest first, up to $limit. A session started fresh has none.
+     *
+     * @return list<int>
+     */
+    public function switchChainIds(int $limit = 20): array
+    {
+        $ids = [];
+        $previousId = $this->previous_session_id;
+
+        while ($previousId !== null && count($ids) < $limit && ! in_array($previousId, $ids, true)) {
+            $ids[] = $previousId;
+            $previousId = self::query()->whereKey($previousId)->value('previous_session_id');
+        }
+
+        return $ids;
     }
 
     public function contacts(): HasMany

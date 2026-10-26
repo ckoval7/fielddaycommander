@@ -89,9 +89,10 @@ class LoggingInterface extends Component
     }
 
     /**
-     * Refill the GOTA operator panel from the latest contact this operator
-     * logged at this station, so a page reload or a band/mode switch keeps
-     * the operator who's at the radio.
+     * Refill the GOTA operator panel from the latest contact in this session
+     * or the ones it continues through band/mode switches, so a page reload
+     * or a switch keeps the operator who's at the radio. A fresh session
+     * starts empty.
      */
     protected function restoreGotaOperator(): void
     {
@@ -100,7 +101,7 @@ class LoggingInterface extends Component
         }
 
         $lastContact = Contact::query()
-            ->whereIn('operating_session_id', $this->stationSessionIds())
+            ->whereIn('operating_session_id', [$this->operatingSession->id, ...$this->operatingSession->switchChainIds()])
             ->where(fn ($query) => $query->whereNotNull('gota_operator_user_id')
                 ->orWhereNotNull('gota_operator_first_name')
                 ->orWhereNotNull('gota_operator_callsign'))
@@ -610,22 +611,10 @@ class LoggingInterface extends Component
     }
 
     /**
-     * This operator's sessions at this station, the current one included.
-     *
-     * @return Collection<int, int>
-     */
-    protected function stationSessionIds(): Collection
-    {
-        return OperatingSession::query()
-            ->where('station_id', $this->operatingSession->station_id)
-            ->where('operator_user_id', $this->operatingSession->operator_user_id)
-            ->pluck('id');
-    }
-
-    /**
-     * Contacts from this operator's earlier sessions at this station, newest
-     * first, so a band/mode switch doesn't empty the log. Shown greyed out
-     * and read-only above this session's contacts.
+     * Contacts from the sessions this one continues through band/mode
+     * switches, newest first, so a switch doesn't empty the log. Shown
+     * greyed out and read-only above this session's contacts, under a
+     * divider per session. A session started fresh has none.
      *
      * @return EloquentCollection<int, Contact>
      */
@@ -633,8 +622,8 @@ class LoggingInterface extends Component
     public function earlierContacts(): EloquentCollection
     {
         return Contact::query()
-            ->whereIn('operating_session_id', $this->stationSessionIds()->reject(fn ($id): bool => (int) $id === $this->operatingSession->id))
-            ->with(['section', 'band', 'mode'])
+            ->whereIn('operating_session_id', $this->operatingSession->switchChainIds())
+            ->with(['section', 'operatingSession:id,band_id,mode_id,start_time', 'operatingSession.band:id,name', 'operatingSession.mode:id,name'])
             ->latest('qso_time')
             ->latest('id')
             ->limit(20)
