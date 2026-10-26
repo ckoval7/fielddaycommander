@@ -22,7 +22,7 @@
                                     wire:key="bonus-checkbox-{{ $bonusType->id }}-{{ $claimed ? 'claimed' : 'unclaimed' }}"
                                     @checked($claimed)
                                     @if($claimed)
-                                        x-on:click.prevent="if (confirm({{ Js::from('Remove this '.strtolower($this->terms->awardSingular).' claim?') }})) { $wire.unclaim({{ $bonusType->id }}) }"
+                                        x-on:click.prevent="$confirm({ message: {{ Js::from('Remove this '.strtolower($this->terms->awardSingular).' claim?') }}, confirmLabel: 'Remove', danger: true }).then((confirmed) => confirmed && $wire.unclaim({{ $bonusType->id }}))"
                                     @else
                                         x-on:click.prevent="$wire.claim({{ $bonusType->id }}, $wire.notes[{{ $bonusType->id }}])"
                                     @endif
