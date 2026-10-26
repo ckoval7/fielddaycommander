@@ -8,7 +8,7 @@
 - On **Log Contact**, a frequency on another band is refused. For example, entering 7.200 MHz while on 20m shows **Switch to 40m** and focuses the button. Press Enter to switch and keep what you typed.
 - On **Log Contact**, band and mode pickers in the session bar let you switch without leaving the logging screen. Mouse or touch selections switch immediately. Alt+B and Alt+M focus the pickers, arrow keys choose a value, Enter switches, and Esc cancels. You can also type a band or mode alone in the exchange box and press Enter: `40M` or `40`, `CW`, `PH` or `SSB`, `DIG`, or a pair such as `20M PH`. A switch ends the current session and starts a new one on the same station with the same power, as **End Session** followed by a new session would. Contacts waiting to sync go with you and still count toward the session where they were logged. A switch is refused while offline, when the station is unavailable, or when another station already uses that band and mode. GOTA stations are exempt from the conflict check. The pickers replace the hint to end the session to change band or mode.
 - ADIF exports include `FREQ`, `RST_SENT`, `RST_RCVD`, `GRIDSQUARE`, `NAME`, and `COMMENT` (notes) when those fields were logged. Cabrillo QSO lines use the logged frequency in kHz below 1 GHz instead of the band edge.
-- On phones, the **Log Contact** session bar shows power next to the station name.
+- Below 1280px wide, the **Log Contact** session bar uses two rows: station name with power beside it, QSOs, and **End Session** on top, then band and mode pickers with the sub-mode box below. At 1280px and wider, it stays in one row.
 
 ### Fixed
 

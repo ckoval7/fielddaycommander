@@ -28,13 +28,13 @@
             <div class="min-w-0">
                 <span class="font-bold text-lg sm:text-xl truncate block">
                     {{ $operatingSession->station->name ?? 'Station' }}
-                    {{-- Phones show power here; the band/mode row below has no room for it. --}}
-                    <span class="sm:hidden font-mono font-normal text-sm text-base-content/60">{{ $operatingSession->power_watts }}W</span>
+                    {{-- Narrow screens show power here; the band/mode row below has no room for it. --}}
+                    <span class="xl:hidden font-mono font-normal text-sm text-base-content/60">{{ $operatingSession->power_watts }}W</span>
                 </span>
             </div>
 
             {{-- Center: Band / Mode / Power --}}
-            <div class="hidden sm:flex items-center gap-1.5 text-base font-mono tracking-wide">
+            <div class="hidden xl:flex items-center gap-1.5 text-base font-mono tracking-wide">
                 <x-logging.band-mode-switch
                     :session="$operatingSession"
                     :bands="$this->switchBands"
@@ -124,8 +124,8 @@
             </div>
         </div>
 
-        {{-- Mobile-only compact row for band/mode/sub-mode --}}
-        <div class="sm:hidden flex flex-wrap items-center justify-center gap-2 px-3 pb-2 text-sm font-mono text-base-content/60">
+        {{-- Second row for band/mode/sub-mode below xl, where one row has no room --}}
+        <div class="xl:hidden flex flex-wrap items-center justify-center gap-2 px-3 pb-2 text-sm font-mono text-base-content/60">
             <x-logging.band-mode-switch
                 :session="$operatingSession"
                 :bands="$this->switchBands"
@@ -137,7 +137,7 @@
                 list="log-submodes"
                 maxlength="20"
                 x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                class="input input-xs w-28 pointer-coarse:w-32 uppercase font-mono"
+                class="input input-xs w-28 uppercase font-mono"
                 placeholder="Sub-mode"
                 aria-label="Sub-mode (optional)"
                 autocapitalize="characters"
