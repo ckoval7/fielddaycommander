@@ -68,7 +68,7 @@ Props:
         @change="onChange()"
         @keydown="onKeydown($event)"
         :disabled="switching"
-        class="select select-xs w-auto max-sm:w-[4.75rem] font-mono font-semibold touch-manipulation"
+        class="select select-sm text-base w-[4.5rem] sm:w-24 font-mono font-semibold touch-manipulation"
         aria-label="Band"
         data-band-switch
     >
@@ -81,7 +81,7 @@ Props:
         @change="onChange()"
         @keydown="onKeydown($event)"
         :disabled="switching"
-        class="select select-xs w-auto max-sm:w-[6.5rem] font-mono font-semibold touch-manipulation"
+        class="select select-sm text-base w-[7.25rem] sm:w-32 font-mono font-semibold touch-manipulation"
         aria-label="Mode"
         data-mode-switch
     >
