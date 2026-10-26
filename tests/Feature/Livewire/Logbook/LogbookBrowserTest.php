@@ -362,6 +362,44 @@ describe('showDeleted filter', function () {
     });
 });
 
+describe('stats', function () {
+    test('stats leave dupes out of the QSO count and GOTA out of QSO points', function () {
+        $attributes = [
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ];
+
+        Contact::factory()->count(3)->create($attributes + ['points' => 2]);
+        Contact::factory()->duplicate()->create($attributes);
+        Contact::factory()->gota()->count(2)->create($attributes + ['points' => 5]);
+
+        $stats = Livewire::test(LogbookBrowser::class)->instance()->stats;
+
+        expect($stats['total_qsos'])->toBe(5)
+            ->and($stats['duplicate_count'])->toBe(1)
+            ->and($stats['total_points'])->toBe(6)
+            ->and($stats['gota_points'])->toBe(10)
+            ->and(array_sum($stats['by_mode']))->toBe(5);
+    });
+
+    test('stats summary labels the dupes and GOTA bonus it leaves out', function () {
+        $attributes = [
+            'event_configuration_id' => $this->eventConfiguration->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+        ];
+
+        Contact::factory()->create($attributes);
+        Contact::factory()->duplicate()->create($attributes);
+        Contact::factory()->gota()->create($attributes + ['points' => 5]);
+
+        Livewire::test(LogbookBrowser::class)
+            ->assertSeeText('1 dupe not counted')
+            ->assertSeeText('Plus 5 GOTA bonus pts');
+    });
+});
+
 describe('event listeners', function () {
     test('contact change events clear the selection and re-query contacts and stats', function (string $event) {
         $component = Livewire::test(LogbookBrowser::class)

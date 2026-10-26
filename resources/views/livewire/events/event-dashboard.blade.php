@@ -235,7 +235,7 @@
                 <x-card title="Scoring Summary" shadow>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <div class="text-sm text-base-content/60">Contacts</div>
+                            <div class="text-sm text-base-content/60">QSOs</div>
                             <div class="text-2xl font-bold">{{ number_format($this->qsoBreakdown['total_contacts']) }}</div>
                         </div>
                         @foreach($this->scoringHeadline as $term)
@@ -482,25 +482,27 @@
                     {{-- Column 2: the rulebook's awards, "Bonus Points" for Field Day and
                          "Objectives" for Winter Field Day --}}
                     <x-card :title="$this->terms->awardSectionTitle" shadow>
-                        {{-- Summary row --}}
+                        {{-- Summary row: each tile counts awards, with what they're worth below --}}
                         <div class="grid grid-cols-3 gap-2 mb-4 text-center">
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Verified</div>
-                                <div class="text-lg font-bold tabular-nums text-success">
+                                <div class="text-lg font-bold tabular-nums text-success">{{ $this->bonusSummary['verified_count'] }}</div>
+                                <div class="text-xs tabular-nums text-base-content/60">
                                     @if($this->terms->awardsAreMultipliers)
-                                        {{ $this->bonusSummary['verified_multiplier'] }}×
+                                        OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                                     @else
-                                        {{ number_format($this->bonusSummary['verified_pts']) }}
+                                        {{ number_format($this->bonusSummary['verified_pts']) }} pts
                                     @endif
                                 </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Claimed</div>
-                                <div class="text-lg font-bold tabular-nums text-warning">
+                                <div class="text-lg font-bold tabular-nums text-warning">{{ $this->bonusSummary['claimed_count'] }}</div>
+                                <div class="text-xs tabular-nums text-base-content/60">
                                     @if($this->terms->awardsAreMultipliers)
-                                        {{ $this->bonusSummary['claimed_multiplier'] }}×
+                                        OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                                     @else
-                                        {{ number_format($this->bonusSummary['claimed_pts']) }}
+                                        {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
                                     @endif
                                 </div>
                             </div>
@@ -524,7 +526,7 @@
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
-                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} pts @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
                                         </span>
                                         @if($item['status'] === 'verified')
                                             <x-badge value="Verified" class="badge-success badge-xs" />

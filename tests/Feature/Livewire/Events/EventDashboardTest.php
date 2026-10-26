@@ -360,7 +360,7 @@ test('qsoBreakdown returns real contact counts by mode category', function () {
     $phoneMode = Mode::factory()->phone()->create();
     $digitalMode = Mode::factory()->digital()->create();
 
-    // Create contacts: 3 CW, 2 Phone, 1 Digital, 1 duplicate (should be excluded from category counts but included in total)
+    // Create contacts: 3 CW, 2 Phone, 1 Digital, 1 duplicate (excluded from every count)
     Contact::factory()->count(3)->create([
         'event_configuration_id' => $config->id,
         'mode_id' => $cwMode->id,
@@ -386,7 +386,7 @@ test('qsoBreakdown returns real contact counts by mode category', function () {
     $component = Livewire::test(EventDashboard::class, ['event' => $event]);
     $breakdown = $component->get('qsoBreakdown');
 
-    expect($breakdown['total_contacts'])->toBe(7);
+    expect($breakdown['total_contacts'])->toBe(6);
     expect($breakdown['cw_contacts'])->toBe(3);
     expect($breakdown['phone_contacts'])->toBe(2);
     expect($breakdown['digital_contacts'])->toBe(1);

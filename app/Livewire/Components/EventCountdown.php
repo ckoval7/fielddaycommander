@@ -214,6 +214,29 @@ class EventCountdown extends Component
         };
     }
 
+    /**
+     * Lazy-load placeholder: the same markup, rendered statically from the
+     * current state, so the header keeps its height while the component loads
+     * instead of growing under the page once it arrives.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    public function placeholder(array $params = []): View
+    {
+        $this->updateComponent();
+
+        return view('livewire.components.event-countdown-placeholder', [
+            'event' => $this->event,
+            'state' => $this->state,
+            'label' => $this->label,
+            'badgeClass' => $this->badgeClass,
+            'textClass' => $this->textClass,
+            'timezone' => $this->timezone,
+            'timezoneLabel' => $this->timezoneLabel,
+            'formattedCountdown' => $this->formattedCountdown,
+        ]);
+    }
+
     public function render(): View
     {
         return view('livewire.components.event-countdown');
