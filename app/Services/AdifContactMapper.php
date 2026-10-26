@@ -6,6 +6,7 @@
 namespace App\Services;
 
 use App\DTOs\ExternalContactDto;
+use App\Support\AdvancedContactFields;
 use Illuminate\Support\Carbon;
 
 class AdifContactMapper
@@ -51,6 +52,8 @@ class AdifContactMapper
         // imported contact and re-import them as duplicates.
         $externalId = md5($callsign.$qsoDate.$timeOn.$freq);
 
+        ['fields' => $advancedFields, 'extra' => $adifFields] = AdvancedContactFields::fromAdif($tags);
+
         return new ExternalContactDto(
             callsign: $callsign,
             timestamp: $timestamp,
@@ -69,6 +72,8 @@ class AdifContactMapper
             isDelete: false,
             isReplace: false,
             parentModeName: $tags['MODE'] ?? null,
+            advancedFields: $advancedFields,
+            adifFields: $adifFields !== [] ? $adifFields : null,
         );
     }
 }

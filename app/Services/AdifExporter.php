@@ -207,6 +207,21 @@ class AdifExporter
             'COMMENT' => $contact->notes !== null ? preg_replace('/\s+/', ' ', $contact->notes) : null,
         ];
 
+        // Tags from the original ADIF record (MY_GRIDSQUARE, TX_PWR, APP_...)
+        // ride along so a contact leaves as whole as it came in. What the app
+        // holds for a tag wins; derived tags always come from the contact.
+        foreach ($contact->adif_fields ?? [] as $name => $value) {
+            $name = strtoupper((string) $name);
+
+            if (preg_match('/^[A-Z][A-Z0-9_]*$/', $name) !== 1
+                || in_array($name, AdvancedContactFields::DERIVED_ADIF_TAGS, true)
+                || trim((string) ($fields[$name] ?? '')) !== '') {
+                continue;
+            }
+
+            $fields[$name] = is_scalar($value) ? (string) $value : null;
+        }
+
         $line = '';
         foreach ($fields as $name => $value) {
             $line .= $this->field($name, $value);

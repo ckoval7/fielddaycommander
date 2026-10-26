@@ -52,6 +52,7 @@ class Contact extends Model
         'external_source',
         'duplicate_of_contact_id',
         'notes',
+        'adif_fields',
     ];
 
     protected function casts(): array
@@ -59,6 +60,7 @@ class Contact extends Model
         return [
             'qso_time' => 'datetime',
             'frequency_hz' => 'integer',
+            'adif_fields' => 'array',
             'is_gota_contact' => 'boolean',
             'is_natural_power' => 'boolean',
             'is_satellite' => 'boolean',

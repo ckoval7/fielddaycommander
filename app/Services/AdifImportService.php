@@ -14,6 +14,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Scoring\DomainEvents\QsoLogged;
+use App\Support\AdvancedContactFields;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +25,12 @@ class AdifImportService
 {
     /**
      * Fields on Contact that can be filled by merge (only if currently null).
+     * The advanced fields (frequency, reports, grid, name, notes) and the
+     * record's other ADIF tags are filled the same way.
      *
      * @var array<string>
      */
-    private const MERGEABLE_FIELDS = ['power_watts', 'notes', 'exchange_class'];
+    private const MERGEABLE_FIELDS = ['power_watts', 'exchange_class'];
 
     public function __construct(
         private readonly DuplicateCheckService $dupes = new DuplicateCheckService,
@@ -270,6 +273,7 @@ class AdifImportService
 
         ['session' => $session, 'owned' => $owned] = $this->sessionFor($record);
         $station = $this->stations[$record->station_id] ??= Station::find($record->station_id);
+        ['fields' => $advancedFields, 'extra' => $adifFields] = AdvancedContactFields::fromAdif($record->raw_data ?? []);
 
         $contact = new Contact([
             'uuid' => Str::uuid()->toString(),
@@ -284,6 +288,8 @@ class AdifImportService
             'section_id' => $record->section_id,
             'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
             'power_watts' => $session->power_watts,
+            ...$advancedFields,
+            'adif_fields' => $adifFields !== [] ? $adifFields : null,
             'points' => 0,
             'is_duplicate' => false,
             'duplicate_of_contact_id' => null,
@@ -469,6 +475,18 @@ class AdifImportService
                     $updates[$field] = $value;
                 }
             }
+        }
+
+        ['fields' => $advancedFields, 'extra' => $adifFields] = AdvancedContactFields::fromAdif($record->raw_data ?? []);
+
+        foreach ($advancedFields as $field => $value) {
+            if ($contact->{$field} === null) {
+                $updates[$field] = $value;
+            }
+        }
+
+        if ($contact->adif_fields === null && $adifFields !== []) {
+            $updates['adif_fields'] = $adifFields;
         }
 
         // Quiet like the inserts: import() reconciles bonuses once at the end.
