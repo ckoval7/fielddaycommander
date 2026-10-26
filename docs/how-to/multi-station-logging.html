@@ -245,7 +245,7 @@
         <p><span class="step-number">4</span> When your turn is over, click the red <strong>Sign Out</strong> button in the top-right corner. The callsign screen comes back up for the next operator.</p>
       </div>
 
-      <p>The band and mode stay fixed for the session. To QSY, end the session, type your callsign again, and pick the new band or mode.</p>
+      <p>To QSY, use the band and mode pickers in the session bar. You should see the new band and mode after the switch, on the same station and power. Alt+B or Alt+M focuses a picker. Choose with the arrow keys, press Enter to switch, or Esc to cancel. You can also type "40M", "40", "CW", "PH", "SSB", "DIG", or "20M PH" alone in the exchange box and press Enter. Reconnect before switching if you are offline. An unavailable station or a band and mode already used by another non-GOTA station will block the switch. GOTA stations are exempt from that conflict check.</p>
 
       <p>If an operator walks away without ending their session, the idle timeout will end it for them. <a href="station-mode.html">Set Up Station Mode</a> explains how it works.</p>
 
@@ -260,17 +260,17 @@
       <p>Type the whole exchange into the entry field, separated by spaces, like <code>W1AW 3A CT</code>, and press Enter or click <strong>Log</strong>. The exchange is checked before it's logged, so a bad section or a class from the wrong event will show an error instead of going into the log.</p>
 
       <figure class="screenshot">
-        <a href="../screenshots/log-contact-dark.png"><img src="../screenshots/log-contact-dark.png" alt="The Field Day Commander logging screen for the VHF/UHF station on 2m Phone at 100 W, showing 20 QSOs, the club's exchange W1FDC 4A CT with phonetics, a numbered Recent QSOs list of contacts 13 through 20, the exchange entry field with Log and Clear buttons, and keyboard hints for Enter, Esc, the arrow keys, Del, and Tab" loading="lazy" width="1920" height="1080"></a>
-        <figcaption>A session on the VHF/UHF station. The entry field takes the whole exchange at once, and the hints underneath list the keyboard shortcuts.</figcaption>
+        <a href="../screenshots/log-contact-dark.png"><img src="../screenshots/log-contact-dark.png" alt="Winter Field Day 2027 logging screen for Station Charlie on 15m Phone at 100W, showing six QSOs, the exchange W1FDC 4O CT with phonetics, a greyed earlier contact above the 15m Phone session divider, six numbered contacts below it, the exchange entry field with Log and Clear buttons, a collapsed Advanced fields toggle, and keyboard hints" loading="lazy" width="1918" height="1080"></a>
       </figure>
 
       <p>A few things on this screen make a long run easier:</p>
 
       <ul>
         <li><strong>Your Exchange</strong> at the top shows what to send, spelled out phonetically for phone.</li>
-        <li><strong>Sub-mode</strong>, next to the power, is optional. Type what you're running, such as USB, FM, or FT8, and it stays set between contacts.</li>
+        <li><strong>Sub-mode</strong>, beside the band and mode pickers, is optional. Type what you're running, such as USB, FM, or FT8, and it stays set between contacts.</li>
+        <li>Open <strong>Advanced fields</strong> below the exchange box, or press Alt+A, to enter <strong>Freq (MHz)</strong>, <strong>RST sent</strong>, <strong>RST rcvd</strong>, <strong>Grid</strong>, <strong>Name</strong>, and <strong>Notes</strong>. Tab moves through the fields, Enter logs, and Esc returns to the exchange box. The panel remembers whether you left it open on this device. Frequency stays filled between contacts and through a switch if it fits the new band. The other fields clear. You should see frequency, reports, grid, and name in <strong>Details</strong>, or on the card line on a phone. If the frequency is on another band, logging stops and offers a button such as <strong>Switch to 40m</strong>. Press Enter to switch and log, or Esc to go back.</li>
         <li><strong>Suggestions</strong> appear after two characters, listing callsigns your club has already worked on other bands or modes, with their exchange. Arrow down to one and press Tab to fill it in.</li>
-        <li><strong>Recent QSOs</strong>, on a wider screen, lists this session's contacts. To fix one, press the up arrow in an empty entry field (or click the row), then save, delete, or cancel.</li>
+        <li><strong>Recent QSOs</strong>, on a wider screen, lists this session's contacts. After a band or mode switch, up to 20 contacts from earlier sessions in the switch chain appear greyed out under band, mode, and time dividers. Those contacts are read-only here. Open <strong>Logging &gt; View Log</strong> to edit or delete them. To fix a contact in the current session, press the up arrow in an empty entry field (or click the row), then save, delete, or cancel. Recall loads its advanced fields too.</li>
       </ul>
 
       <h2>How Dupe Checking Works Across Stations</h2>
