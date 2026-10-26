@@ -403,23 +403,11 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
 
             const frequency = String(fields.frequency ?? '').trim();
             if (frequency !== '') {
-                const mhz = Number(frequency.replace(',', '.'));
-                if (!Number.isFinite(mhz) || mhz <= 0) {
-                    this.parseError = `Invalid frequency: ${frequency} (enter MHz, e.g. 14.074)`;
+                const frequencyHz = this.parseFrequency(frequency);
+                if (frequencyHz === null) {
                     return null;
                 }
-                const bandId = this.bandIdForMhz(mhz);
-                const range = sessionContext.band_ranges?.[sessionContext.band_id];
-                if (range && bandId !== sessionContext.band_id) {
-                    if (bandId) {
-                        this.offBandSuggestion = { band_id: bandId, name: sessionContext.band_ranges[bandId].name };
-                        this.parseError = `${frequency} MHz is on ${this.offBandSuggestion.name}, not ${range.name}.`;
-                    } else {
-                        this.parseError = `${frequency} MHz is not on ${range.name}.`;
-                    }
-                    return null;
-                }
-                result.frequency_hz = Math.round(mhz * 1_000_000);
+                result.frequency_hz = frequencyHz;
             }
 
             for (const [field, label] of [['rst_sent', 'sent'], ['rst_received', 'received']]) {
@@ -441,6 +429,30 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             result.notes = String(fields.notes ?? '').trim().slice(0, 500);
 
             return result;
+        },
+
+        /**
+         * Convert a frequency in MHz to Hz, or return null with parseError
+         * set. A frequency on another band offers a switch.
+         */
+        parseFrequency(frequency) {
+            const mhz = Number(frequency.replace(',', '.'));
+            if (!Number.isFinite(mhz) || mhz <= 0) {
+                this.parseError = `Invalid frequency: ${frequency} (enter MHz, e.g. 14.074)`;
+                return null;
+            }
+            const bandId = this.bandIdForMhz(mhz);
+            const range = sessionContext.band_ranges?.[sessionContext.band_id];
+            if (range && bandId !== sessionContext.band_id) {
+                if (bandId) {
+                    this.offBandSuggestion = { band_id: bandId, name: sessionContext.band_ranges[bandId].name };
+                    this.parseError = `${frequency} MHz is on ${this.offBandSuggestion.name}, not ${range.name}.`;
+                } else {
+                    this.parseError = `${frequency} MHz is not on ${range.name}.`;
+                }
+                return null;
+            }
+            return Math.round(mhz * 1_000_000);
         },
 
         /**
@@ -863,7 +875,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             rows.forEach(row => {
                 // Skip deleted rows (they have line-through class) and
                 // read-only rows from earlier sessions.
-                if (row.classList.contains('line-through') || row.hasAttribute('data-earlier-session')) return;
+                if (row.classList.contains('line-through') || row.dataset.earlierSession !== undefined) return;
                 const callsignCell = row.querySelector('td:nth-child(3)');
                 const exchangeClassCell = row.querySelector('td:nth-child(4)');
                 const sectionCell = row.querySelector('td:nth-child(5)');

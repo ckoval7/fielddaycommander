@@ -462,20 +462,7 @@ class AdifImportService
             return;
         }
 
-        $updates = [];
-
-        foreach (self::MERGEABLE_FIELDS as $field) {
-            if ($contact->{$field} === null) {
-                $value = match ($field) {
-                    'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
-                    default => null,
-                };
-
-                if ($value !== null) {
-                    $updates[$field] = $value;
-                }
-            }
-        }
+        $updates = $this->mergeableUpdates($contact, $record);
 
         ['fields' => $advancedFields, 'extra' => $adifFields] = AdvancedContactFields::fromAdif($record->raw_data ?? []);
 
@@ -495,5 +482,32 @@ class AdifImportService
         }
 
         $record->update(['status' => AdifRecordStatus::Merged]);
+    }
+
+    /**
+     * Values from the import for the contact's empty mergeable fields.
+     *
+     * @return array<string, mixed>
+     */
+    private function mergeableUpdates(Contact $contact, AdifImportRecord $record): array
+    {
+        $updates = [];
+
+        foreach (self::MERGEABLE_FIELDS as $field) {
+            if ($contact->{$field} !== null) {
+                continue;
+            }
+
+            $value = match ($field) {
+                'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
+                default => null,
+            };
+
+            if ($value !== null) {
+                $updates[$field] = $value;
+            }
+        }
+
+        return $updates;
     }
 }
