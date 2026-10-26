@@ -246,7 +246,12 @@ class CabrilloExporter
 
     private function formatQso(EventConfiguration $config, Contact $contact): string
     {
-        $freqKhz = $this->cabrilloFrequency($contact->band->frequency_mhz);
+        // The logged dial frequency in kHz when there is one below 1 GHz;
+        // above that Cabrillo uses band designators, which come from the band.
+        $dialMhz = $contact->frequency_hz !== null ? $contact->frequency_hz / 1_000_000 : null;
+        $freqKhz = $this->cabrilloFrequency(
+            $dialMhz !== null && $dialMhz < 1000 ? $dialMhz : $contact->band->frequency_mhz
+        );
         $mode = $this->cabrilloMode($contact->mode->category);
         $date = $contact->qso_time->format('Y-m-d');
         $time = $contact->qso_time->format('Hi');

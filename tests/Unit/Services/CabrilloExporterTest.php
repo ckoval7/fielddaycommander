@@ -453,3 +453,47 @@ test('wfd filename is the uppercase callsign', function () {
     $portable = makeWfdCabrilloConfig(['callsign' => 'k4sco/p']);
     expect(app(CabrilloExporter::class)->filename($portable))->toBe('K4SCO_P.log');
 });
+
+test('uses the logged dial frequency for the qso line when there is one', function () {
+    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00', 'end_time' => '2025-06-29 18:00:00']);
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.0]);
+    $mode = Mode::factory()->create(['name' => 'CW', 'category' => 'CW']);
+    $meSection = Section::factory()->create(['code' => 'ME']);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'section_id' => $meSection->id,
+        'qso_time' => '2025-06-28 14:23:00',
+        'callsign' => 'K1ABC',
+        'exchange_class' => '1A',
+        'is_duplicate' => false,
+        'frequency_hz' => 14_032_400,
+    ]);
+
+    expect(app(CabrilloExporter::class)->export($config))
+        ->toContain('QSO: 14032 CW 2025-06-28 1423 W1AW');
+});
+
+test('keeps the band designator above 1 GHz even with a dial frequency', function () {
+    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00', 'end_time' => '2025-06-29 18:00:00']);
+    $band = Band::factory()->create(['name' => '23cm', 'frequency_mhz' => 1240.0]);
+    $mode = Mode::factory()->create(['name' => 'Phone', 'category' => 'Phone']);
+    $meSection = Section::factory()->create(['code' => 'ME']);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'section_id' => $meSection->id,
+        'qso_time' => '2025-06-28 14:23:00',
+        'callsign' => 'K1ABC',
+        'exchange_class' => '1A',
+        'is_duplicate' => false,
+        'frequency_hz' => 1_296_100_000,
+    ]);
+
+    expect(app(CabrilloExporter::class)->export($config))
+        ->toContain('QSO:  1.2G PH 2025-06-28 1423');
+});

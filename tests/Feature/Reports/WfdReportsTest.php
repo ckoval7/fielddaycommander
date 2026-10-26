@@ -120,6 +120,29 @@ describe('ADIF export', function () {
             ->and(strpos($adif, 'W4OPS'))->toBeLessThan(strpos($adif, 'W4NRR'));
     });
 
+    test('exports the advanced fields logged with a contact', function () {
+        $config = makeReportEvent('WFD', '2027');
+        logReportContact($config, 'CW', '20m', [
+            'callsign' => 'W0MET',
+            'frequency_hz' => 14_032_400,
+            'rst_sent' => '599',
+            'rst_received' => '579',
+            'grid_square' => 'FN31pr',
+            'contact_name' => 'Bob',
+            'notes' => "Worked on\na dipole",
+        ]);
+        logReportContact($config, 'CW', '40m', ['callsign' => 'W4NRR']);
+
+        $adif = app(AdifExporter::class)->export($config);
+
+        expect($adif)
+            ->toContain('<BAND:3>20M <FREQ:7>14.0324 ')
+            ->toContain('<RST_SENT:3>599 <RST_RCVD:3>579 <GRIDSQUARE:6>FN31pr <NAME:3>Bob <COMMENT:18>Worked on a dipole');
+
+        $plain = substr($adif, strpos($adif, 'W4NRR'));
+        expect($plain)->not->toContain('<FREQ')->not->toContain('<RST_SENT');
+    });
+
     test('maps sub-modes to ADIF mode and submode', function (?string $submode, string $category, ?string $mode, ?string $adifSubmode) {
         expect(app(AdifExporter::class)->adifMode($submode, $category))->toBe([$mode, $adifSubmode]);
     })->with([
