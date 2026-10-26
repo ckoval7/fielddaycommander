@@ -82,6 +82,9 @@ class SystemPreferences extends Component
 
     public function save(): void
     {
+        $callsign = mb_strtoupper(trim((string) $this->organization_callsign));
+        $this->organization_callsign = $callsign !== '' ? $callsign : null;
+
         $this->validate([
             'timezone' => ['required', 'string', 'timezone:all'],
             'date_format' => ['required', 'string', 'in:Y-m-d,m/d/Y,d/m/Y'],
@@ -96,7 +99,7 @@ class SystemPreferences extends Component
             'volunteer_hours_mode' => ['required', Rule::in([VolunteerHours::MODE_SUM, VolunteerHours::MODE_WALL_CLOCK])],
         ], [
             'organization_name.required' => 'An organization name is required.',
-            'organization_callsign.regex' => 'Enter a callsign with 3–10 uppercase letters and numbers.',
+            'organization_callsign.regex' => 'Enter a callsign with 3–10 letters and numbers.',
         ]);
 
         $oldValues = [

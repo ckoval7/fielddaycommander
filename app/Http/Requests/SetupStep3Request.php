@@ -19,6 +19,18 @@ class SetupStep3Request extends FormRequest
     }
 
     /**
+     * Uppercase the callsign so lowercase entry passes the format check.
+     */
+    protected function prepareForValidation(): void
+    {
+        $callsign = mb_strtoupper(trim((string) $this->organization_callsign));
+
+        $this->merge([
+            'organization_callsign' => $callsign !== '' ? $callsign : null,
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -88,7 +100,7 @@ class SetupStep3Request extends FormRequest
             'contact_email.max' => 'The contact email must not exceed 255 characters.',
             'organization_name.required' => 'An organization name is required.',
             'organization_name.max' => 'The organization name must not exceed 255 characters.',
-            'organization_callsign.regex' => 'The callsign must be 3–10 characters using uppercase letters or numbers.',
+            'organization_callsign.regex' => 'Enter a callsign with 3–10 letters and numbers.',
             'organization_callsign.max' => 'The callsign must not exceed 20 characters.',
             'organization_email.email' => 'The organization email must be a valid email address.',
             'organization_email.max' => 'The organization email must not exceed 255 characters.',
