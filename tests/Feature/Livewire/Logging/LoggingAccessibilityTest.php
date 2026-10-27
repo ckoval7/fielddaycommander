@@ -145,7 +145,7 @@ test('logged contacts can be recalled with a named button', function () {
     ]);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->assertSeeHtml('@click.stop="recallByContactId('.$contact->id.')" aria-label="Edit K1ABC"');
+        ->assertSeeHtml('@click.stop="recallByContactId('.$contact->id.')" aria-label="K1ABC, edit contact"');
 });
 
 test('editing a synced contact with a bad exchange shows and announces the error', function () {
@@ -185,7 +185,7 @@ test('saving and deleting a synced contact are announced', function () {
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->call('updateContact', $contact->id, 'K1ABC 3A CT')
-        ->assertDispatched('announce', message: 'Saved K1ABC')
+        ->assertDispatched('announce', message: 'K1ABC saved')
         ->call('deleteContact', $contact->id)
-        ->assertDispatched('announce', message: 'Deleted K1ABC');
+        ->assertDispatched('announce', message: 'K1ABC deleted');
 });

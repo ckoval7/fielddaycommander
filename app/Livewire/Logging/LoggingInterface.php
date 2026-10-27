@@ -330,7 +330,7 @@ class LoggingInterface extends Component
             $this->operatingSession->decrement('qso_count');
         });
         ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, [$contact]);
-        $this->dispatch('announce', message: "Deleted {$contact->callsign}");
+        $this->dispatch('announce', message: "{$contact->callsign} deleted");
 
         $this->operatingSession->refresh();
         unset($this->recentContacts);
@@ -442,7 +442,7 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
-        $this->dispatch('announce', message: "Saved {$contact->callsign}");
+        $this->dispatch('announce', message: "{$contact->callsign} saved");
     }
 
     /**

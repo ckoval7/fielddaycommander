@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
-    <x-slot:title>Message</x-slot:title>
+    <x-slot:title>{{ $isEditing ? 'Edit Message' : 'Log Message' }}</x-slot:title>
     {{-- Header --}}
     <x-header use-h1
         title="{{ $isEditing ? 'Edit Message' : 'Log Message' }}"

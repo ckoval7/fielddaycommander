@@ -352,7 +352,7 @@
                         <td class="font-mono">-</td>
                         <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
                         <td class="font-bold font-mono uppercase">
-                            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="'Edit ' + contact.callsign" x-text="contact.callsign"></button>
+                            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
                             <template x-if="contact.status === 'failed'">
                                 <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL<span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>

@@ -117,12 +117,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             });
             this.$watch('isOnline', (online) => {
                 announce(online
-                    ? 'Back online. Queued contacts are syncing.'
-                    : 'Offline. Contacts are saved on this device and sync when the connection returns.', { assertive: !online });
+                    ? 'Online. Syncing contacts'
+                    : 'Offline. Saving contacts on this device', { assertive: !online });
             });
             this.$watch('recalledExchange', (exchange) => {
                 if (exchange) {
-                    announce(`Editing ${exchange}. Enter saves, Delete removes it, Escape cancels.`);
+                    announce(`${exchange}, editing. Enter saves, Delete deletes, Escape cancels`);
                 }
             });
 
@@ -358,13 +358,13 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const wire = this.$wire;
             const isDupe = Boolean(wire?.isDuplicate)
                 && String(wire?.exchangeInput ?? '').trim().toUpperCase() === rawInput.toUpperCase();
-            const parts = [`Logged ${callsign}`];
+            const parts = [`${callsign} logged`];
 
             if (isDupe) {
                 parts.push('dupe');
             }
             if (!this.isOnline) {
-                parts.push('saved on this device until the connection returns');
+                parts.push('saved on this device');
             }
 
             announce(parts.join(', '));
@@ -768,7 +768,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         announceSyncFailure(candidate) {
-            announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
+            announce(`${candidate.callsign} sync failed. ${candidate.last_error}`, { assertive: true });
         },
 
         async syncNext() {
@@ -1089,7 +1089,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 this.recalledUuid = null;
                 this.queue = this.queue.filter(c => c.uuid !== uuid);
                 this.saveQueue();
-                announce(`Deleted ${this.recalledExchange}`);
+                announce(`${this.recalledExchange} deleted`);
                 globalThis.Livewire?.dispatch('contact-discarded');
                 this.exitRecall(inputEl);
                 return;
@@ -1139,7 +1139,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     delete entry._prevStatus;
                     this.schedulePendingIndicator(entry);
                     this.saveQueue();
-                    announce(`Saved ${entry.callsign}`);
+                    announce(`${entry.callsign} saved`);
                 }
 
                 // exitRecall would try to release the lock, but we've already

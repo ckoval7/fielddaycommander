@@ -49,7 +49,7 @@ Slots:
             {{ $contact->callsign }}
         @else
             {{-- The row is clickable too; this is the keyboard and screen reader way in --}}
-            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByContactId({{ $contact->id }})" aria-label="Edit {{ $contact->callsign }}">{{ $contact->callsign }}</button>
+            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByContactId({{ $contact->id }})" aria-label="{{ $contact->callsign }}, edit contact">{{ $contact->callsign }}</button>
         @endif
         @if($contact->trashed())
             <button
