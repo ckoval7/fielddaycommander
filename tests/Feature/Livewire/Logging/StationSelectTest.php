@@ -454,7 +454,7 @@ test('band warning shown when selected band is not supported by station radio', 
     expect($warning)->not->toBeNull()
         ->and($warning['type'])->toBe('warning')
         ->and($warning['message'])->toContain('20m')
-        ->and($warning['message'])->toContain('Icom IC-7300');
+        ->and($warning['message'])->toContain('The Icom IC-7300 covers 40m.');
 });
 
 test('band warning shows info when station has no radio assigned', function () {

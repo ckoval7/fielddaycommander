@@ -8,7 +8,6 @@ namespace App\Livewire\Dashboard\Widgets;
 use App\Livewire\Dashboard\Widgets\Concerns\IsWidget;
 use App\Models\Contact;
 use App\Models\Event;
-use App\Models\EventBonus;
 use App\Models\GuestbookEntry;
 use App\Models\Section;
 use App\Models\Station;
@@ -361,13 +360,12 @@ class StatCard extends Component
     }
 
     /**
-     * Get accumulated bonus points metric.
+     * Get accumulated bonus points metric: the verified bonus points the
+     * scoring page counts, including the ones scored from the log.
      */
     protected function getBonusPointsEarned(Event $event): array
     {
-        $bonusPoints = EventBonus::query()
-            ->where('event_configuration_id', $event->eventConfiguration->id)
-            ->sum('calculated_points') ?? 0;
+        $bonusPoints = $event->eventConfiguration->calculateBonusScore();
 
         return [
             'value' => number_format($bonusPoints),

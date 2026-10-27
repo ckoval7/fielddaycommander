@@ -773,7 +773,7 @@ test('updateContact preserves CW mode points on edit', function () {
     expect($contact->points)->toBe(2);
 });
 
-test('updateContact preserves GOTA 5 points on edit', function () {
+test('updateContact keeps a GOTA contact scored by mode on edit', function () {
     $this->actingAs($this->user);
 
     $gotaStation = Station::factory()->create([
@@ -818,7 +818,7 @@ test('updateContact preserves GOTA 5 points on edit', function () {
 
     $contact->refresh();
     expect($contact->is_gota_contact)->toBeTrue()
-        ->and($contact->points)->toBe(5);
+        ->and($contact->points)->toBe((int) $this->mode->points_fd);
 });
 
 test('toggling timeIsLocal to true converts contactTime and workingDate to local', function () {

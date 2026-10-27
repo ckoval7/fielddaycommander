@@ -399,7 +399,7 @@ test('flags contacts imported for the GOTA station as GOTA contacts', function (
     $contact = Contact::where('callsign', 'W1AW')->where('is_imported', true)->firstOrFail();
     expect($contact->is_gota_contact)->toBeTrue()
         ->and($contact->is_duplicate)->toBeFalse()
-        ->and($contact->points)->toBe(5);
+        ->and($contact->points)->toBe((int) $this->mode->points_fd);
 });
 
 test('logs the exception when an import fails', function () {

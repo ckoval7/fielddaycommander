@@ -19,7 +19,8 @@ use App\Scoring\Dto\PowerContext;
 interface FieldDayRuleSet extends RuleSet
 {
     /**
-     * Flat points for each non-duplicate GOTA contact, ignored by QSO multiplier.
+     * GOTA bonus points for each non-duplicate GOTA contact, on top of its QSO
+     * points and outside the power multiplier.
      */
     public function gotaPointsPerContact(): int;
 

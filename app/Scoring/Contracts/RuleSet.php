@@ -41,8 +41,7 @@ interface RuleSet
     /**
      * Points awarded for a single non-duplicate contact.
      *
-     * Rulesets apply their own per-class handling here (e.g. Field Day's flat
-     * GOTA rate, or Winter Field Day excluding satellite QSOs from QSO credit).
+     * Rulesets apply their own per-mode and per-station handling here.
      */
     public function pointsForContact(Mode $mode, Station $station): int;
 

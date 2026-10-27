@@ -297,7 +297,7 @@ test('cannot sync contacts before event has started', function () {
         ->assertJson(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.']);
 });
 
-test('syncing a gota contact assigns 5 bonus points', function () {
+test('syncing a gota contact scores it by mode', function () {
     $gotaStation = Station::factory()->create([
         'event_configuration_id' => $this->config->id,
         'is_gota' => true,
@@ -327,7 +327,7 @@ test('syncing a gota contact assigns 5 bonus points', function () {
         ])
         ->assertCreated();
 
-    expect($response->json('points'))->toBe(5);
+    expect($response->json('points'))->toBe((int) $this->mode->points_fd);
     expect($response->json('is_duplicate'))->toBeFalse();
 });
 

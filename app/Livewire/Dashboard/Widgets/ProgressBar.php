@@ -173,7 +173,7 @@ class ProgressBar extends Component
     protected function buildBonusProgress(?Event $event): array
     {
         $config = $event?->eventConfiguration;
-        $current = (int) ($config?->bonuses()->sum('calculated_points') ?? 0);
+        $current = $config?->calculateBonusScore() ?? 0;
 
         $target = 0;
 

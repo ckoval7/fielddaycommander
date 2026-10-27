@@ -180,7 +180,8 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Sum of points on non-duplicate, non-GOTA contacts, before any multiplier.
+     * Sum of points on non-duplicate contacts, before any multiplier. GOTA
+     * station contacts count here too; their GOTA bonus is separate.
      */
     public function qsoBasePoints(): int
     {
@@ -190,14 +191,13 @@ class EventConfiguration extends Model
 
         return (int) $this->contacts()
             ->where('is_duplicate', false)
-            ->where('is_gota_contact', false)
             ->sum('points');
     }
 
     /**
      * Resolve points for a single contact via the event's pinned RuleSet.
      *
-     * Handles GOTA flat-rate and mode_rule_points overrides internally.
+     * Handles mode_rule_points overrides internally.
      */
     public function pointsForContact(Mode $mode, Station $station): int
     {
@@ -211,8 +211,7 @@ class EventConfiguration extends Model
      * and submitted logs (Cabrillo, ADIF, summary sheets) should all start here.
      * Contacts a rulebook gives no credit (e.g. WFD 2027 WSJT-mode or satellite
      * contacts) are left out; rulebooks without such rules return every
-     * non-duplicate contact. GOTA contacts are included — filter them yourself
-     * where the rulebook scores them separately.
+     * non-duplicate contact. GOTA contacts are included.
      *
      * @return HasMany<Contact, EventConfiguration>
      */
@@ -402,19 +401,26 @@ class EventConfiguration extends Model
      */
     public function calculateGotaBonus(): int
     {
+        $perContact = $this->gotaBonusPointsPerContact();
+
+        if ($perContact === 0) {
+            return 0;
+        }
+
+        return $this->scoredGotaContacts()->count() * $perContact;
+    }
+
+    /**
+     * GOTA bonus points each GOTA contact earns, or 0 without a GOTA station
+     * or under a rulebook that has none.
+     */
+    public function gotaBonusPointsPerContact(): int
+    {
         if (! $this->has_gota_station) {
             return 0;
         }
 
-        $rules = $this->fieldDayRules();
-
-        if (! $rules) {
-            return 0;
-        }
-
-        $gotaContactCount = $this->scoredGotaContacts()->count();
-
-        return $gotaContactCount * $rules->gotaPointsPerContact();
+        return $this->fieldDayRules()?->gotaPointsPerContact() ?? 0;
     }
 
     /**

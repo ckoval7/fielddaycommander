@@ -445,7 +445,7 @@
                                     <tbody>
                                         @foreach($this->bandModeGrid as $row)
                                             <tr>
-                                                <td class="font-semibold">{{ $row['mode']->name }}</td>
+                                                <td class="font-semibold">{{ $row['label'] }}</td>
                                                 @foreach($this->bands as $band)
                                                     <td class="text-center tabular-nums">
                                                         @if($row['cells'][$band->id] > 0)
