@@ -41,7 +41,7 @@
         @elseif(!$coverage)
             <div class="text-center py-12">
                 <x-icon name="phosphor-calendar" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                <h3 class="text-lg font-semibold mb-2">No shifts scheduled</h3>
+                <h2 class="text-lg font-semibold mb-2">No shifts scheduled</h2>
                 <p class="text-base-content/60">Shifts have not been set up for this event yet.</p>
             </div>
         @else
@@ -157,20 +157,21 @@
                                             <div
                                                 @class([
                                                     'absolute flex items-center gap-1 px-1.5 rounded text-[11px] leading-none overflow-hidden whitespace-nowrap',
-                                                    'opacity-50' => $shift->is_past,
+                                                    'text-base-content/70' => $shift->is_past,
                                                     'cursor-pointer hover:ring-2 hover:ring-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary' => $canAssign,
                                                 ])
                                                 @if($canAssign)
-                                                    role="button"
-                                                    tabindex="0"
-                                                    wire:click="openAssignModal({{ $shift->id }})"
-                                                    x-on:keydown.enter="$wire.openAssignModal({{ $shift->id }})"
                                                     data-assignable
                                                 @endif
                                                 style="left: {{ $coverage->offsetPercent($shift->start_time) }}%; width: {{ $coverage->widthPercent($shift->start_time, $shift->end_time) }}%; top: {{ $laneIndex * $laneHeight + 4 }}px; height: {{ $laneHeight - 6 }}px; {{ $barStyle }}"
                                                 title="{{ $row['role']->name }} · {{ $formatRange($shift->start_time, $shift->end_time) }} · {{ $staffed }}/{{ $shift->capacity }} filled{{ $names ? ' · ' . $names : '' }}{{ $canAssign ? ' · Assign a volunteer' : '' }}"
                                                 data-testid="gantt-bar"
                                             >
+                                                @if($canAssign)
+                                                    <button type="button" class="absolute inset-0 min-h-11 focus-visible:ring-2 focus-visible:ring-primary pointer-coarse:min-w-11"
+                                                        aria-label="Assign a volunteer: {{ $row['role']->name }}, {{ $formatRange($shift->start_time, $shift->end_time) }}, {{ $staffed }}/{{ $shift->capacity }} filled"
+                                                        wire:click="openAssignModal({{ $shift->id }})"></button>
+                                                @endif
                                                 <span class="font-semibold">{{ $staffed }}/{{ $shift->capacity }}</span>
                                                 @if($names)
                                                     <span class="truncate">{{ $names }}</span>
@@ -271,17 +272,17 @@
                                         'flex items-center gap-3 p-2 rounded-lg border',
                                         'border-error bg-error/5' => $isCurrent,
                                         'border-base-300 bg-base-200/50' => ! $isCurrent,
-                                        'cursor-pointer hover:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary' => $gapShift,
+                                        'hover:border-primary' => $gapShift,
                                     ])
                                     @if($gapShift)
-                                        role="button"
-                                        tabindex="0"
-                                        title="Assign a volunteer"
-                                        wire:click="openAssignModal({{ $gapShift->id }})"
-                                        x-on:keydown.enter="$wire.openAssignModal({{ $gapShift->id }})"
                                         data-assignable
                                     @endif
                                 >
+                                    @if($gapShift)
+                                        <button type="button" class="btn btn-sm btn-outline"
+                                            aria-label="Assign a volunteer: {{ $gap['role']->name }}, {{ $formatRange($gap['start'], $gap['end']) }}"
+                                            wire:click="openAssignModal({{ $gapShift->id }})">Assign</button>
+                                    @endif
                                     <span class="inline-block w-1 self-stretch rounded-full shrink-0" style="background-color: {{ $gap['role']->color ?? '#64748b' }}"></span>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-sm font-medium truncate">{{ $gap['role']->name }}</div>

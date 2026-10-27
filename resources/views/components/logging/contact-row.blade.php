@@ -32,27 +32,32 @@ Slots:
         data-earlier-session
     @elseif(! $contact->trashed())
         @click="recallByContactId({{ $contact->id }})"
-        @keydown.enter="recallByContactId({{ $contact->id }})"
-        tabindex="0"
     @endif
     :aria-current="recalledContactId === {{ $contact->id }}"
     :class="{
         '!bg-primary/25': recalledContactId === {{ $contact->id }},
     }"
     {{ $attributes->class([
-        'opacity-40 line-through' => $contact->trashed(),
-        'opacity-50' => ! $contact->trashed() && ($contact->is_duplicate || $readonly),
+        'text-base-content/70 line-through' => $contact->trashed(),
+        'text-base-content/70' => ! $contact->trashed() && ($contact->is_duplicate || $readonly),
         'cursor-pointer hover:bg-base-200' => ! $contact->trashed() && ! $readonly,
     ]) }}>
     <td class="font-mono">{{ $number ?? '-' }}</td>
     <td class="font-mono">{{ $time->format('H:i') }}</td>
     <td class="font-bold font-mono uppercase">
-        {{ $contact->callsign }}
+        @if($readonly || $contact->trashed())
+            {{ $contact->callsign }}
+        @else
+            {{-- The row is clickable too; this is the keyboard and screen reader way in --}}
+            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByContactId({{ $contact->id }})" aria-label="Edit {{ $contact->callsign }}">{{ $contact->callsign }}</button>
+        @endif
         @if($contact->trashed())
             <button
                 wire:click="restoreContact({{ $contact->id }})"
+                type="button"
                 class="btn btn-ghost btn-xs ml-1"
                 title="Undo delete"
+                aria-label="Undo delete of {{ $contact->callsign }}"
             >
                 Undo
             </button>

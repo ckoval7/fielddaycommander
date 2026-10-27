@@ -32,7 +32,7 @@
     @if($sessions->count() > 1)
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Other Sign-In Sessions</h3>
+                <h2 class="card-title">Other Sign-In Sessions</h2>
                 <p class="text-sm text-gray-500">
                     You have {{ $sessions->count() - 1 }} other {{ str('session')->plural($sessions->count() - 1) }}.
                 </p>
@@ -62,7 +62,7 @@
         {{-- Logout All Other Sessions --}}
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Sign Out Other Sessions</h3>
+                <h2 class="card-title">Sign Out Other Sessions</h2>
                 <p class="text-sm text-gray-500">
                     Sign out of all other browsers and devices. This session will stay signed in.
                 </p>

@@ -5,12 +5,12 @@
 
 namespace App\View\Components;
 
-use Closure;
-use Illuminate\Contracts\View\View;
+use App\View\Components\Concerns\LabelsFormControl;
 use Mary\View\Components\ChoicesOffline as MaryChoicesOffline;
 
 /**
- * Mary UI's <x-choices-offline> with null-safe selection getters.
+ * Mary UI's <x-choices-offline> with null-safe selection getters, and its
+ * label, hint and errors linked to the search input.
  *
  * Since Alpine 3.17 (bundled with Livewire 4.4), changing an `x-data`
  * expression reconciles the old data object instead of starting fresh.
@@ -20,10 +20,15 @@ use Mary\View\Components\ChoicesOffline as MaryChoicesOffline;
  * option never shows and `isReadonly is not defined` is logged.
  *
  * Mary fixed <x-choices> this way in robsontenorio/mary#1119 but not
- * <x-choices-offline>. Drop this override once Mary ships the same fix.
+ * <x-choices-offline>. Drop the getter replacements once Mary ships the
+ * same fix.
  */
 class ChoicesOffline extends MaryChoicesOffline
 {
+    use LabelsFormControl {
+        templateReplacements as formControlReplacements;
+    }
+
     /**
      * Getter expressions made null-safe, keyed by Mary's original text.
      *
@@ -35,12 +40,16 @@ class ChoicesOffline extends MaryChoicesOffline
         ': this.selection.length == 0' => ': this.selection?.length == 0',
     ];
 
-    public function render(): View|Closure|string
+    public static function controlNeedle(): string
     {
-        return str_replace(
-            array_keys(self::NULL_SAFE_GETTERS),
-            array_values(self::NULL_SAFE_GETTERS),
-            parent::render(),
-        );
+        return 'x-ref="searchInput"';
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function templateReplacements(): array
+    {
+        return self::NULL_SAFE_GETTERS + self::formControlReplacements();
     }
 }

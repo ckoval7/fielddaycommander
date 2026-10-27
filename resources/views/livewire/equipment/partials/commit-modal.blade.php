@@ -34,7 +34,7 @@
             rows="4"
         />
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" wire:click="$set('showCommitModal', false)" class="btn-ghost" />
             <x-button label="Commit Equipment" type="submit" class="btn-primary" spinner="commitEquipment" />
         </x-slot:actions>

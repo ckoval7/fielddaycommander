@@ -41,7 +41,7 @@
     {{-- Recent Operating Sessions --}}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h3 class="card-title">Recent Operating Sessions</h3>
+            <h2 class="card-title">Recent Operating Sessions</h2>
 
             @if($operatingSessions->isEmpty())
                 <x-alert icon="phosphor-info">
@@ -49,18 +49,18 @@
                 </x-alert>
             @else
                 {{-- Table of operating sessions --}}
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Recent operating sessions">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Event</th>
-                                <th>Station</th>
-                                <th>Band</th>
-                                <th>Mode</th>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Duration</th>
-                                <th>QSOs</th>
+                                <th scope="col">Event</th>
+                                <th scope="col">Station</th>
+                                <th scope="col">Band</th>
+                                <th scope="col">Mode</th>
+                                <th scope="col">Start Time</th>
+                                <th scope="col">End Time</th>
+                                <th scope="col">Duration</th>
+                                <th scope="col">QSOs</th>
                             </tr>
                         </thead>
                         <tbody>

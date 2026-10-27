@@ -12,14 +12,14 @@
         --reports-surface:      hsl(0, 0%, 100%);
         --reports-surface-alt:  hsl(215, 16%, 94%);
         --reports-text:         hsl(215, 25%, 15%);
-        --reports-text-muted:   hsl(215, 15%, 50%);
+        --reports-text-muted:   hsl(215, 15%, 40%);
         --reports-border:       hsl(215, 20%, 86%);
         --reports-divider:      hsl(215, 20%, 91%);
 
         /* Cabrillo card — amber */
         --reports-cabrillo-border: hsl(38, 80%, 50%);
         --reports-cabrillo-bg:     hsl(38, 90%, 97%);
-        --reports-cabrillo-icon:   hsl(38, 80%, 38%);
+        --reports-cabrillo-icon:   hsl(38, 80%, 28%);
 
         /* PDF card — deep blue */
         --reports-pdf-border:  hsl(223, 71%, 40%);
@@ -46,7 +46,7 @@
         --reports-surface:      hsl(222, 16%, 14%);
         --reports-surface-alt:  hsl(222, 14%, 18%);
         --reports-text:         hsl(210, 20%, 92%);
-        --reports-text-muted:   hsl(215, 14%, 58%);
+        --reports-text-muted:   hsl(215, 14%, 70%);
         --reports-border:       hsl(215, 16%, 24%);
         --reports-divider:      hsl(215, 14%, 20%);
 
@@ -72,6 +72,9 @@
 </style>
 
 <div class="min-h-dvh" style="background-color: var(--reports-bg); color: var(--reports-text);">
+    <h1 class="text-2xl font-bold mb-6">Reports</h1>
+
+    <x-slot:title>Reports</x-slot:title>
 
     {{-- ============================================================
          EMPTY STATE — no active event
@@ -79,7 +82,7 @@
     @if (! $this->event)
         <div class="flex flex-col items-center justify-center min-h-96 gap-4 p-8">
             <x-mary-icon name="phosphor-chart-bar" class="w-16 h-16 opacity-25" />
-            <div class="text-2xl font-semibold opacity-50">No active event</div>
+            <div class="text-2xl font-semibold text-base-content/70">No active event</div>
             <p class="text-sm text-center max-w-sm" style="color: var(--reports-text-muted);">
                 Select an event to view its reports.
             </p>
@@ -145,7 +148,7 @@
                     </span>
                     They're missing a band or mode, or were logged outside the event window. They earn no points and won't be in the Cabrillo log until you fix them.
                 </div>
-                <x-slot:actions>
+                <x-slot:actions class="flex-wrap max-sm:w-full">
                     <a href="{{ route('logbook.index', ['needsAttention' => 'only', 'event' => $event?->id]) }}" class="btn btn-sm">Review in logbook</a>
                 </x-slot:actions>
             </x-alert>
@@ -299,19 +302,19 @@
                     <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="QSO rate by hour">
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">
-                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Hour (UTC)</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Total</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">CW</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Phone</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Digital</th>
                             </tr>
                         </thead>
@@ -366,19 +369,19 @@
                     <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Contacts by logger">
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">
-                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Call Sign</th>
-                                <th class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-left px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Name</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Non-dupe QSOs</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Total Logged</th>
-                                <th class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
+                                <th scope="col" class="text-right px-2 sm:px-4 py-3 font-semibold uppercase tracking-wide text-xs"
                                     style="color: var(--reports-text-muted);">Dupes</th>
                             </tr>
                         </thead>

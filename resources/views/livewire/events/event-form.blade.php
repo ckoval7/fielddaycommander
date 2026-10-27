@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}</x-slot:title>
     <!-- Header -->
-    <x-header
+    <x-header use-h1
         title="{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}"
         subtitle="{{ $mode === 'create' ? 'Set up a Field Day or Winter Field Day event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 icon="phosphor-x"

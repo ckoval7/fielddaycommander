@@ -3,6 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $event->name }}</x-slot:title>
+
     <!-- Header Section -->
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="flex-1">
@@ -104,7 +106,7 @@
                 />
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="cancelRescore" class="btn-ghost" />
                 <x-button
                     label="Apply & Rescore"
@@ -350,15 +352,15 @@
                             <p>No contacts logged yet.</p>
                         </div>
                     @else
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Recent contacts">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Time</th>
-                                        <th>Callsign</th>
-                                        <th>Band</th>
-                                        <th>Mode</th>
-                                        <th>Operator</th>
+                                        <th scope="col">Time</th>
+                                        <th scope="col">Callsign</th>
+                                        <th scope="col">Band</th>
+                                        <th scope="col">Mode</th>
+                                        <th scope="col">Operator</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -380,7 +382,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="text-xs text-base-content/40 mt-3">
+                        <div class="text-xs text-base-content/70 mt-3">
                             Showing the latest {{ $this->recentContacts->count() }} {{ str('contact')->plural($this->recentContacts->count()) }}
                         </div>
                     @endif
@@ -399,7 +401,7 @@
                              (QSO x Power) + Bonus while Winter Field Day renders QSO x (OM + 1). --}}
                         @foreach($this->scoringHeadline as $part)
                             @if(is_string($part))
-                                <span class="text-2xl font-light text-base-content/30">{{ $part }}</span>
+                                <span class="text-2xl font-light text-base-content/70">{{ $part }}</span>
                             @else
                                 <div class="text-center">
                                     <div class="text-3xl font-black tabular-nums">{{ $part->value }}</div>
@@ -407,7 +409,7 @@
                                 </div>
                             @endif
                         @endforeach
-                        <span class="text-2xl font-light text-base-content/30">=</span>
+                        <span class="text-2xl font-light text-base-content/70">=</span>
                         <div class="text-center">
                             <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>
                             <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1 font-bold">Final Score</div>
@@ -430,16 +432,16 @@
                         </div>
 
                         @if(count($this->bandModeGrid) > 0 && collect($this->bandModeGrid)->sum('total_count') > 0)
-                            <div class="overflow-x-auto">
+                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="QSO points">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
-                                            <th>Mode</th>
+                                            <th scope="col">Mode</th>
                                             @foreach($this->bands as $band)
-                                                <th class="text-center">{{ $band->name }}</th>
+                                                <th scope="col" class="text-center">{{ $band->name }}</th>
                                             @endforeach
-                                            <th class="text-right">QSOs</th>
-                                            <th class="text-right">Pts</th>
+                                            <th scope="col" class="text-right">QSOs</th>
+                                            <th scope="col" class="text-right">Pts</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -451,7 +453,7 @@
                                                         @if($row['cells'][$band->id] > 0)
                                                             <span class="font-bold">{{ $row['cells'][$band->id] }}</span>
                                                         @else
-                                                            <span class="text-base-content/20">&mdash;</span>
+                                                            <span class="text-base-content/70">&mdash;</span>
                                                         @endif
                                                     </td>
                                                 @endforeach
@@ -473,7 +475,7 @@
                                 </table>
                             </div>
                         @else
-                            <div class="text-center py-6 text-base-content/40">
+                            <div class="text-center py-6 text-base-content/70">
                                 No contacts logged yet.
                             </div>
                         @endif
@@ -508,7 +510,7 @@
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Unclaimed</div>
-                                <div class="text-lg font-bold tabular-nums text-base-content/40">{{ $this->bonusSummary['unclaimed_count'] }}</div>
+                                <div class="text-lg font-bold tabular-nums text-base-content/70">{{ $this->bonusSummary['unclaimed_count'] }}</div>
                             </div>
                         </div>
 
@@ -525,7 +527,7 @@
                                         @endif
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
+                                        <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/70' }}">
                                             @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} pts @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
                                         </span>
                                         @if($item['status'] === 'verified')
@@ -540,7 +542,7 @@
                             @endforeach
 
                             @if(empty($this->bonusList))
-                                <div class="text-center py-4 text-base-content/40">
+                                <div class="text-center py-4 text-base-content/70">
                                     No bonus types configured.
                                 </div>
                             @endif
@@ -595,15 +597,15 @@
                                     <p>No equipment was committed to this event.</p>
                                 </div>
                             @else
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment used">
                                     <table class="table table-sm">
                                         <thead>
                                             <tr>
-                                                <th>Equipment</th>
-                                                <th>Type</th>
-                                                <th>Owner</th>
-                                                <th>Station</th>
-                                                <th>Status</th>
+                                                <th scope="col">Equipment</th>
+                                                <th scope="col">Type</th>
+                                                <th scope="col">Owner</th>
+                                                <th scope="col">Station</th>
+                                                <th scope="col">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>

@@ -37,8 +37,28 @@ use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
 use App\Support\StationMode;
+use App\View\Components\Breadcrumbs;
+use App\View\Components\Button;
+use App\View\Components\Checkbox;
+use App\View\Components\Choices;
 use App\View\Components\ChoicesOffline;
+use App\View\Components\DateTime;
+use App\View\Components\File;
+use App\View\Components\Header;
 use App\View\Components\Icon;
+use App\View\Components\Input;
+use App\View\Components\Main;
+use App\View\Components\MenuItem;
+use App\View\Components\MenuSeparator;
+use App\View\Components\Modal;
+use App\View\Components\Pagination;
+use App\View\Components\Range;
+use App\View\Components\Select;
+use App\View\Components\Tab;
+use App\View\Components\Table;
+use App\View\Components\Tabs;
+use App\View\Components\Textarea;
+use App\View\Components\Toggle;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -49,6 +69,35 @@ use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Mary components replaced by subclasses, keyed by their unprefixed alias.
+     *
+     * @var array<string, class-string>
+     */
+    public const ACCESSIBLE_MARY_COMPONENTS = [
+        'breadcrumbs' => Breadcrumbs::class,
+        'button' => Button::class,
+        'checkbox' => Checkbox::class,
+        'choices' => Choices::class,
+        'choices-offline' => ChoicesOffline::class,
+        'datetime' => DateTime::class,
+        'file' => File::class,
+        'header' => Header::class,
+        'input' => Input::class,
+        'main' => Main::class,
+        'menu-item' => MenuItem::class,
+        'menu-separator' => MenuSeparator::class,
+        'modal' => Modal::class,
+        'pagination' => Pagination::class,
+        'range' => Range::class,
+        'select' => Select::class,
+        'tab' => Tab::class,
+        'table' => Table::class,
+        'tabs' => Tabs::class,
+        'textarea' => Textarea::class,
+        'toggle' => Toggle::class,
+    ];
+
     /**
      * Register any application services.
      */
@@ -88,9 +137,19 @@ class AppServiceProvider extends ServiceProvider
             Blade::component('mary-icon', Icon::class);
         });
 
-        // Null-safe getters for <x-choices-offline>; see the class docblock.
+        // Mary components patched for screen readers and keyboards, plus
+        // null-safe getters for <x-choices-offline>; see each class docblock.
+        // Mary's own templates use the `mary-` aliases, so cover those too.
         $this->app->booted(function (): void {
-            Blade::component(config('mary.prefix').'choices-offline', ChoicesOffline::class);
+            $prefix = config('mary.prefix');
+
+            foreach (self::ACCESSIBLE_MARY_COMPONENTS as $alias => $component) {
+                Blade::component($prefix.$alias, $component);
+            }
+
+            foreach (['button', 'header', 'input', 'menu-item', 'modal', 'pagination'] as $alias) {
+                Blade::component('mary-'.$alias, self::ACCESSIBLE_MARY_COMPONENTS[$alias]);
+            }
         });
 
         $this->configureStationMode();

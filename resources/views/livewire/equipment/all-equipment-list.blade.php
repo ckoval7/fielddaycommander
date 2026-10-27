@@ -54,12 +54,12 @@
                                         Club
                                     </span>
                                     @if($item->managed_by_user_id && $item->manager)
-                                        <span class="text-xs opacity-70 ml-1">Manager: {{ $item->manager->call_sign }}</span>
+                                        <span class="text-xs text-base-content/70 ml-1">Manager: {{ $item->manager->call_sign }}</span>
                                     @endif
                                 @elseif($item->owner)
                                     <span class="text-sm font-semibold">{{ $item->owner->call_sign }}</span>
                                     @if($item->owner->first_name || $item->owner->last_name)
-                                        <span class="text-xs opacity-70 ml-1">{{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}</span>
+                                        <span class="text-xs text-base-content/70 ml-1">{{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}</span>
                                     @endif
                                 @endif
                             </div>
@@ -69,7 +69,7 @@
                         <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
                         <x-equipment.status-badge :status="$item->activeCommitments->first()?->status ?? 'available'" />
                         @if($item->serial_number)
-                            <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                            <code class="text-xs text-base-content/70">{{ $item->serial_number }}</code>
                         @endif
                     </div>
                     @if($item->tags && is_array($item->tags) && count($item->tags))
@@ -91,20 +91,20 @@
 
         {{-- Desktop Table View --}}
         <x-card shadow class="hidden xl:block">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment catalog">
                 <table class="table table-zebra">
                     <thead>
                         <tr>
-                            <th>Photo</th>
-                            <th>Owner</th>
-                            <th>Make/Model</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Serial Number</th>
-                            <th>Status</th>
-                            <th>Tags</th>
+                            <th scope="col">Photo</th>
+                            <th scope="col">Owner</th>
+                            <th scope="col">Make/Model</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Serial Number</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Tags</th>
                             @can('edit-any-equipment')
-                                <th class="text-right">Actions</th>
+                                <th scope="col" class="text-right">Actions</th>
                             @endcan
                         </tr>
                     </thead>
@@ -121,19 +121,19 @@
                                             Club
                                         </span>
                                         @if($item->managed_by_user_id && $item->manager)
-                                            <div class="text-xs opacity-70 mt-0.5">
+                                            <div class="text-xs text-base-content/70 mt-0.5">
                                                 Manager: {{ $item->manager->call_sign }}
                                             </div>
                                         @endif
                                     @elseif($item->owner)
                                         <div class="font-semibold text-sm">{{ $item->owner->call_sign }}</div>
                                         @if($item->owner->first_name || $item->owner->last_name)
-                                            <div class="text-xs opacity-70">
+                                            <div class="text-xs text-base-content/70">
                                                 {{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}
                                             </div>
                                         @endif
                                     @else
-                                        <span class="text-xs opacity-50">—</span>
+                                        <span class="text-xs text-base-content/70">—</span>
                                     @endif
                                 </td>
                                 <td class="font-semibold">

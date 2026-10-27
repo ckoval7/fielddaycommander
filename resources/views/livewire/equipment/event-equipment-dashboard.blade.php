@@ -3,6 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>Equipment - {{ $event->name }}</x-slot:title>
+
     {{-- Page Header --}}
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="flex-1">
@@ -26,9 +28,10 @@
                 />
 
                 <x-dropdown>
-                    <x-slot:trigger>
-                        <x-button label="Export" icon="phosphor-file-arrow-down" class="btn-outline" />
-                    </x-slot:trigger>
+                    <x-slot:trigger class="btn btn-outline">
+                            Export
+                            <x-icon name="phosphor-file-arrow-down" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
                     {{-- Pre-Event Reports --}}
                     <x-menu-separator title="Pre-Event" />
@@ -113,49 +116,49 @@
 
     {{-- Stats Cards --}}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <x-card class="bg-base-200 cursor-pointer hover:bg-base-300 transition-colors" wire:click="$set('statusFilter', null)">
+        <button type="button" class="card rounded-lg p-5 bg-base-200 cursor-pointer hover:bg-base-300 transition-colors" wire:click="$set('statusFilter', null)" aria-pressed="{{ blank($statusFilter) ? 'true' : 'false' }}">
             <div class="text-center">
                 <div class="text-3xl font-bold text-primary">{{ $this->statsCards['total'] }}</div>
-                <div class="text-sm text-base-content/60">Total</div>
+                <div class="text-sm text-base-content/70">Total</div>
             </div>
-        </x-card>
+        </button>
 
-        <x-card class="bg-info/10 cursor-pointer hover:bg-info/20 transition-colors" wire:click="$set('statusFilter', 'committed')">
+        <button type="button" class="card rounded-lg p-5 bg-info/10 cursor-pointer hover:bg-info/20 transition-colors" wire:click="$set('statusFilter', 'committed')" aria-pressed="{{ $statusFilter === 'committed' ? 'true' : 'false' }}">
             <div class="text-center">
                 <div class="text-3xl font-bold text-info">{{ $this->statsCards['committed'] }}</div>
-                <div class="text-sm text-base-content/60 flex items-center justify-center">
+                <div class="text-sm text-base-content/70 flex items-center justify-center">
                     <x-icon name="phosphor-clipboard-text" class="w-4 h-4 mr-2" />
                     Committed
                 </div>
             </div>
-        </x-card>
+        </button>
 
-        <x-card class="bg-success/10 cursor-pointer hover:bg-success/20 transition-colors" wire:click="$set('statusFilter', 'delivered')">
+        <button type="button" class="card rounded-lg p-5 bg-success/10 cursor-pointer hover:bg-success/20 transition-colors" wire:click="$set('statusFilter', 'delivered')" aria-pressed="{{ $statusFilter === 'delivered' ? 'true' : 'false' }}">
             <div class="text-center">
                 <div class="text-3xl font-bold text-success">{{ $this->statsCards['delivered'] }}</div>
-                <div class="text-sm text-base-content/60 flex items-center justify-center">
+                <div class="text-sm text-base-content/70 flex items-center justify-center">
                     <x-icon name="phosphor-truck" class="w-4 h-4 mr-2" />
                     Delivered
                 </div>
             </div>
-        </x-card>
+        </button>
 
-        <x-card class="bg-neutral/10 cursor-pointer hover:bg-neutral/20 transition-colors" wire:click="$set('statusFilter', 'returned')">
+        <button type="button" class="card rounded-lg p-5 bg-neutral/10 cursor-pointer hover:bg-neutral/20 transition-colors" wire:click="$set('statusFilter', 'returned')" aria-pressed="{{ $statusFilter === 'returned' ? 'true' : 'false' }}">
             <div class="text-center">
                 <div class="text-3xl font-bold text-base-content/80">{{ $this->statsCards['returned'] }}</div>
-                <div class="text-sm text-base-content/60 flex items-center justify-center">
+                <div class="text-sm text-base-content/70 flex items-center justify-center">
                     <x-icon name="phosphor-check-circle" class="w-4 h-4 mr-2" />
                     Returned
                 </div>
             </div>
-        </x-card>
+        </button>
 
-        <x-card class="bg-error/10 cursor-pointer hover:bg-error/20 transition-colors" wire:click="$set('statusFilter', null); $set('activeTab', 'overview')">
+        <button type="button" class="card rounded-lg p-5 bg-error/10 cursor-pointer hover:bg-error/20 transition-colors" wire:click="$set('statusFilter', null); $set('activeTab', 'overview')">
             <div class="text-center">
                 <div class="text-3xl font-bold text-error">{{ $this->statsCards['issues'] }}</div>
-                <div class="text-sm text-base-content/60">Issues</div>
+                <div class="text-sm text-base-content/70">Issues</div>
             </div>
-        </x-card>
+        </button>
     </div>
 
     {{-- Filters --}}
@@ -172,6 +175,7 @@
             <div class="flex flex-wrap gap-2">
                 <x-select
                     wire:model.live="typeFilter"
+                    aria-label="Filter by type"
                     :options="$this->equipmentTypes"
                     placeholder="All Types"
                     option-value="id"
@@ -180,6 +184,7 @@
                 />
                 <x-select
                     wire:model.live="statusFilter"
+                    aria-label="Filter by status"
                     :options="$this->statusOptions"
                     placeholder="All Statuses"
                     option-value="id"
@@ -188,6 +193,7 @@
                 />
                 <x-select
                     wire:model.live="stationFilter"
+                    aria-label="Filter by station"
                     :options="collect([['id' => 0, 'name' => 'Unassigned']])->concat($this->commitmentsByStation->filter(fn($g) => $g['station_id'] !== null)->map(fn($g) => ['id' => $g['station_id'], 'name' => $g['station_name']]))->toArray()"
                     placeholder="All Stations"
                     option-value="id"
@@ -214,17 +220,17 @@
                 {{-- Equipment List --}}
                 <x-card title="All Equipment ({{ $this->filteredCommitments->count() }})" shadow separator>
                     @if($this->filteredCommitments->count() > 0)
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto" tabindex="0" role="region" aria-label="All equipment">
                             <table class="table table-zebra">
                                 <thead>
                                     <tr>
-                                        <th>Equipment</th>
-                                        <th>Owner</th>
-                                        <th>Status</th>
-                                        <th>Station</th>
-                                        <th>Last Updated</th>
+                                        <th scope="col">Equipment</th>
+                                        <th scope="col">Owner</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Station</th>
+                                        <th scope="col">Last Updated</th>
                                         @if($this->canManage)
-                                            <th class="text-right">Actions</th>
+                                            <th scope="col" class="text-right">Actions</th>
                                         @endif
                                     </tr>
                                 </thead>
@@ -338,7 +344,7 @@
                                                         icon="phosphor-arrow-clockwise"
                                                         class="btn-sm btn-ghost"
                                                         wire:click="openStatusModal({{ $commitment->id }})"
-                                                        title="Change Status"
+                                                        title="Change Status" aria-label="Change status for {{ $commitment->equipment->make }} {{ $commitment->equipment->model }}"
                                                     />
                                                 </td>
                                             @endif
@@ -437,16 +443,16 @@
                                 </div>
                             </x-slot:title>
 
-                            <div class="overflow-x-auto">
+                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment from {{ $ownerGroup['owner_name'] }}">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
-                                            <th>Equipment</th>
-                                            <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Station</th>
+                                            <th scope="col">Equipment</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Station</th>
                                             @if($this->canManage)
-                                                <th class="text-right">Actions</th>
+                                                <th scope="col" class="text-right">Actions</th>
                                             @endif
                                         </tr>
                                     </thead>
@@ -463,7 +469,7 @@
                                                             </span>
                                                         </div>
                                                         @if($commitment->equipment->managed_by_user_id && $commitment->equipment->manager)
-                                                            <div class="text-xs opacity-70 mt-0.5">
+                                                            <div class="text-xs text-base-content/70 mt-0.5">
                                                                 Managed by {{ $commitment->equipment->manager->full_name }}
                                                             </div>
                                                         @endif
@@ -503,7 +509,7 @@
                                                     @elseif($primaryRadioStation = $this->primaryRadioStations->get($commitment->equipment_id))
                                                         {{ $primaryRadioStation->name }}
                                                     @else
-                                                        <span class="text-base-content/50">-</span>
+                                                        <span class="text-base-content/70">-</span>
                                                     @endif
                                                 </td>
                                                 @if($this->canManage)
@@ -512,7 +518,7 @@
                                                             icon="phosphor-arrow-clockwise"
                                                             class="btn-xs btn-ghost"
                                                             wire:click="openStatusModal({{ $commitment->id }})"
-                                                            title="Change Status"
+                                                            title="Change Status" aria-label="Change status for {{ $commitment->equipment->make }} {{ $commitment->equipment->model }}"
                                                         />
                                                     </td>
                                                 @endif
@@ -542,7 +548,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($this->equipmentByType as $typeGroup)
                             <x-card shadow>
-                                <x-slot:title>
+                            <x-slot:title>
                                     <div class="flex items-center justify-between w-full">
                                         <span>{{ $typeGroup['label'] }}</span>
                                         <x-badge value="{{ $typeGroup['count'] }}" class="badge-primary" />
@@ -624,16 +630,16 @@
                                 </div>
                             </x-slot:title>
 
-                            <div class="overflow-x-auto">
+                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment at {{ $stationGroup['station_name'] }}">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
-                                            <th>Equipment</th>
-                                            <th>Type</th>
-                                            <th>Owner</th>
-                                            <th>Status</th>
+                                            <th scope="col">Equipment</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Owner</th>
+                                            <th scope="col">Status</th>
                                             @if($this->canManage)
-                                                <th class="text-right">Actions</th>
+                                                <th scope="col" class="text-right">Actions</th>
                                             @endif
                                         </tr>
                                     </thead>
@@ -686,7 +692,7 @@
                                                             icon="phosphor-arrow-clockwise"
                                                             class="btn-xs btn-ghost"
                                                             wire:click="openStatusModal({{ $commitment->id }})"
-                                                            title="Change Status"
+                                                            title="Change Status" aria-label="Change status for {{ $commitment->equipment->make }} {{ $commitment->equipment->model }}"
                                                         />
                                                     </td>
                                                 @endif
@@ -755,7 +761,7 @@
                     @endif
                 </div>
 
-                <x-slot:actions>
+                <x-slot:actions class="flex-wrap max-sm:w-full">
                     <x-button
                         label="Cancel"
                         wire:click="$set('showStatusModal', false)"
@@ -811,7 +817,7 @@
                 </div>
             @endif
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button
                     label="Cancel"
                     wire:click="$set('showCommitModal', false)"

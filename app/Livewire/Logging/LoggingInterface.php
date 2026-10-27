@@ -330,6 +330,7 @@ class LoggingInterface extends Component
             $this->operatingSession->decrement('qso_count');
         });
         ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, [$contact]);
+        $this->dispatch('announce', message: "Deleted {$contact->callsign}");
 
         $this->operatingSession->refresh();
         unset($this->recentContacts);
@@ -441,6 +442,7 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
+        $this->dispatch('announce', message: "Saved {$contact->callsign}");
     }
 
     /**
@@ -649,6 +651,7 @@ class LoggingInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.logging-interface')
-            ->layout('layouts.app');
+            ->layout('layouts.app')
+            ->title('Log Contacts: '.($this->operatingSession->station->name ?? 'Station'));
     }
 }

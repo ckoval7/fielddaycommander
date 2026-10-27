@@ -9,6 +9,7 @@ import updatedAgo from './components/updated-ago';
 import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import { confirmDialogPanel, registerConfirmDialog } from './components/confirm-dialog';
+import { registerAnnouncer } from './components/announcer';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -35,6 +36,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('flatpickr', flatpickrComponent);
     Alpine.magic('copy', () => copyToClipboard);
 });
+
+registerAnnouncer();
 
 // Suppress only the W3C-spec'd benign "ResizeObserver loop completed with
 // undelivered notifications" message. The browser raises this intentionally

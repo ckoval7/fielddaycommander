@@ -8,14 +8,14 @@
              sections lit, needed sections dim so the room can see what's left. --}}
         <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col" shadow>
             <div class="flex items-baseline justify-between gap-3 mb-3">
-                <h3 class="text-2xl font-bold text-base-content">Sections Worked</h3>
+                <h2 class="text-2xl font-bold text-base-content">Sections Worked</h2>
                 <span class="text-2xl font-bold tabular-nums text-info whitespace-nowrap">
-                    {{ $data['total_worked'] }} <span class="text-lg font-normal text-base-content/50">/ {{ $data['total_sections'] }}</span>
+                    {{ $data['total_worked'] }} <span class="text-lg font-normal text-base-content/70">/ {{ $data['total_sections'] }}</span>
                 </span>
             </div>
 
             @if (empty($data['groups']))
-                <div class="flex-1 flex flex-col items-center justify-center text-base-content/50">
+                <div class="flex-1 flex flex-col items-center justify-center text-base-content/70">
                     <x-mary-icon name="phosphor-map-trifold" class="w-16 h-16 mb-3 opacity-50" />
                     <p class="text-xl">No active event</p>
                 </div>
@@ -35,8 +35,8 @@
                                 <span
                                     title="{{ $section['name'] }}"
                                     class="px-[0.4em] py-[0.1em] rounded font-semibold leading-tight
-                                        {{ $section['worked'] ? 'bg-success text-success-content' : 'bg-base-200 text-base-content/40' }}"
-                                >{{ $section['code'] }}</span>
+                                        {{ $section['worked'] ? 'bg-success text-success-content' : 'bg-base-200 text-base-content/70' }}"
+                                >{{ $section['code'] }}<span class="sr-only">: {{ $section['name'] }}, {{ $section['worked'] ? 'worked' : 'not worked' }}</span></span>
                             @endforeach
                         </div>
                     @endforeach
@@ -70,10 +70,12 @@
                         <button
                             type="button"
                             @click="openArea = openArea === {{ $index }} ? null : {{ $index }}"
+                            :aria-expanded="(openArea === {{ $index }}).toString()"
+                            aria-controls="sections-{{ $this->getId() }}-{{ $index }}"
                             class="w-full flex items-center gap-3 px-3 py-2 pointer-coarse:min-h-11 text-left transition-colors
                                 {{ $group['worked_count'] === $group['total_count'] && $group['total_count'] > 0
                                     ? 'bg-success/10 hover:bg-success/15'
-                                    : 'hover:bg-base-200' }}"
+                                    : 'hover:bg-base-200' }} pointer-coarse:min-w-11"
                         >
                             {{-- Chevron --}}
                             <x-mary-icon
@@ -109,6 +111,7 @@
 
                         {{-- Accordion Body --}}
                         <div
+                            id="sections-{{ $this->getId() }}-{{ $index }}"
                             x-show="openArea === {{ $index }}"
                             x-collapse
                         >
@@ -120,9 +123,10 @@
                                             class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium cursor-default transition-colors
                                                 {{ $section['worked']
                                                     ? 'bg-success text-success-content'
-                                                    : 'bg-base-200 text-base-content/40 border border-base-300' }}"
+                                                    : 'bg-base-200 text-base-content/70 border border-base-300' }}"
                                         >
                                             {{ $section['code'] }}
+                                            <span class="sr-only">: {{ $section['name'] }}, {{ $section['worked'] ? 'worked' : 'not worked' }}</span>
                                         </span>
                                     @endforeach
                                 </div>

@@ -17,14 +17,14 @@
 </div>
 @else
 <div class="dropdown dropdown-end">
-    <button tabindex="0" class="btn btn-ghost btn-circle btn-md avatar">
+    <button tabindex="0" class="btn btn-ghost btn-circle btn-md avatar" aria-label="Account menu for {{ auth()->user()->effectiveCallSign() }}" aria-haspopup="menu">
         <div class="w-10 rounded-full">
             @if(auth()->user()->avatar_path && file_exists(public_path(auth()->user()->avatar_path)))
-                <img src="{{ asset(auth()->user()->avatar_path) }}" alt="{{ auth()->user()->call_sign }}" class="rounded-full">
+                <img src="{{ asset(auth()->user()->avatar_path) }}" alt="" class="rounded-full">
             @else
                 <div class="avatar avatar-placeholder">
                     <div class="bg-slate-600 text-white rounded-full w-10 flex items-center justify-center">
-                        <span class="text-sm">{{ auth()->user()->getInitials() }}</span>
+                        <span class="text-sm" aria-hidden="true">{{ auth()->user()->getInitials() }}</span>
                     </div>
                 </div>
             @endif
@@ -40,7 +40,7 @@
                     <span class="text-xs opacity-60">{{ auth()->user()->name }}</span>
                 @endif
                 @if(auth()->user()->license_class)
-                    <span class="text-xs opacity-50">{{ auth()->user()->license_class }}</span>
+                    <span class="text-xs opacity-70">{{ auth()->user()->license_class }}</span>
                 @endif
             </div>
         </li>

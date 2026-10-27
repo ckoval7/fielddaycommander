@@ -17,7 +17,7 @@
         <x-card>
             <div class="text-center py-12">
                 <x-icon name="phosphor-file-text" class="w-14 h-14 mx-auto text-base-content/25" />
-                <h3 class="mt-5 text-xl font-semibold">No event available for transcription</h3>
+                <h2 class="mt-5 text-xl font-semibold">No event available for transcription</h2>
                 <p class="mt-2 text-base-content/60 max-w-md mx-auto">
                     Enter paper logs during the event or its grace period.
                 </p>
@@ -53,9 +53,9 @@
                     {{-- Card Header --}}
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <h3 class="text-lg font-bold truncate group-hover:text-primary transition-colors">
+                            <h2 class="text-lg font-bold truncate group-hover:text-primary transition-colors">
                                 {{ $station->name }}
-                            </h3>
+                            </h2>
                         </div>
                         @if($station->is_gota)
                             <span class="badge badge-info badge-sm shrink-0 mt-0.5">GOTA</span>
@@ -74,7 +74,7 @@
                                 {{ $station->primaryRadio->model }}
                             </span>
                         @else
-                            <span class="text-base-content/40 italic">No radio configured</span>
+                            <span class="text-base-content/70 italic">No radio configured</span>
                         @endif
                     </div>
 
@@ -88,7 +88,7 @@
 
                     {{-- CTA --}}
                     <div class="mt-4 flex items-center justify-between">
-                        <span class="text-xs text-base-content/40 uppercase tracking-wide font-medium">
+                        <span class="text-xs text-base-content/70 uppercase tracking-wide font-medium">
                             {{ $station->is_gota ? 'GOTA Station' : 'Operating Station' }}
                         </span>
                         <span class="flex items-center gap-1 text-xs font-semibold text-primary opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
@@ -102,7 +102,7 @@
                     <x-card>
                         <div class="text-center py-10">
                             <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/25" />
-                            <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
+                            <h2 class="mt-4 text-lg font-semibold">No Stations Configured</h2>
                             <p class="mt-2 text-base-content/60">
                                 No stations are set up for this event. Contact your event administrator.
                             </p>

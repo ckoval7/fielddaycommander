@@ -41,7 +41,7 @@
             </div>
         @enderror
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" wire:click="$set('showBulkCommitModal', false)" class="btn-ghost" />
             <x-button label="Commit Selected" type="submit" class="btn-primary" spinner="bulkCommitEquipment" />
         </x-slot:actions>

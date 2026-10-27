@@ -3,6 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="max-w-md mx-auto">
+
     @php $device = $this->device; @endphp
 
     @if($device)
@@ -68,7 +69,7 @@
             </form>
 
             <div class="text-center mt-6 pt-4 border-t border-base-300">
-                <button type="button" wire:click="openExitModal" class="link link-hover text-xs text-base-content/60">
+                <button type="button" wire:click="openExitModal" class="link link-hover text-xs text-base-content/60 pointer-coarse:min-h-11 pointer-coarse:min-w-11">
                     Station captain: exit station mode
                 </button>
             </div>
@@ -80,7 +81,7 @@
                     <x-input label="Password" type="password" wire:model="exitPassword" autocomplete="off" icon="phosphor-lock" />
                 </div>
 
-                <x-slot:actions>
+                <x-slot:actions class="flex-wrap max-sm:w-full">
                     <x-button label="Cancel" wire:click="cancelExit" class="w-full sm:w-auto" />
                     <x-button label="Exit Station Mode" wire:click="exitStationMode" class="btn-error w-full sm:w-auto" icon="phosphor-power" spinner="exitStationMode" />
                 </x-slot:actions>

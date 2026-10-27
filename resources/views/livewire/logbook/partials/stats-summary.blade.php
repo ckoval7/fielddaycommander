@@ -45,7 +45,7 @@
                 QSOs by Mode
             </div>
             @if(empty($this->stats['by_mode']))
-                <div class="text-center text-sm text-base-content/50 py-2">
+                <div class="text-center text-sm text-base-content/70 py-2">
                     No contacts to summarize
                 </div>
             @else
@@ -70,7 +70,7 @@
                 QSOs by Band
             </div>
             @if(empty($this->stats['by_band']))
-                <div class="text-center text-sm text-base-content/50 py-2">
+                <div class="text-center text-sm text-base-content/70 py-2">
                     No contacts to summarize
                 </div>
             @else

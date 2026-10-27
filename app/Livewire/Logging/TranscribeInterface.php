@@ -776,7 +776,8 @@ class TranscribeInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.transcribe-interface')
-            ->layout('layouts.app');
+            ->layout('layouts.app')
+            ->title('Transcribe Paper Log');
     }
 
     /**

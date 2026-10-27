@@ -3,9 +3,11 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>Events</x-slot:title>
+
     <!-- Header -->
-    <x-header title="Events" subtitle="Manage Field Day and Winter Field Day events" separator progress-indicator>
-        <x-slot:actions>
+    <x-header use-h1 title="Events" subtitle="Manage Field Day and Winter Field Day events" separator progress-indicator>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             @can('create-events')
                 <x-button label="Create Event" icon="phosphor-plus" class="btn-primary" link="{{ route('events.create') }}" wire:navigate responsive />
             @endcan
@@ -25,7 +27,7 @@
     {{-- Mobile Card View --}}
     <div class="xl:hidden space-y-3">
         @forelse($events as $event)
-            <x-card wire:key="event-card-{{ $event->id }}" shadow class="{{ $event->deleted_at ? 'opacity-60' : '' }} !p-4">
+            <x-card wire:key="event-card-{{ $event->id }}" shadow class="{{ $event->deleted_at ? 'text-base-content/70' : '' }} !p-4">
                 <div class="flex items-start justify-between gap-2">
                     <div class="flex-1 min-w-0">
                         <div class="flex flex-wrap items-center gap-1.5 mb-1">
@@ -46,8 +48,8 @@
                         <div class="text-xs opacity-60 mt-0.5">{{ $event->eventType->name ?? 'N/A' }}</div>
                     </div>
                     <x-dropdown>
-                        <x-slot:trigger>
-                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost btn-square" />
+                        <x-slot:trigger class="btn btn-sm btn-ghost btn-square" aria-label="Actions for {{ $event->name }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
                         </x-slot:trigger>
                         <x-menu-item title="View Details" icon="phosphor-eye" link="{{ route('events.show', $event) }}" wire:navigate />
                         @can('edit-events')
@@ -88,15 +90,15 @@
                 <div class="flex items-center gap-4 mt-3 pt-3 border-t border-base-200 text-sm">
                     <div class="flex flex-col items-center flex-1">
                         <span class="font-semibold">{{ number_format($event->contacts_count) }}</span>
-                        <span class="text-xs opacity-50">Contacts</span>
+                        <span class="text-xs text-base-content/70">Contacts</span>
                     </div>
                     <div class="flex flex-col items-center flex-1">
                         <span class="font-semibold">{{ number_format($event->participants_count) }}</span>
-                        <span class="text-xs opacity-50">Participants</span>
+                        <span class="text-xs text-base-content/70">Participants</span>
                     </div>
                     <div class="flex flex-col items-center flex-1">
                         <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>
-                        <span class="text-xs opacity-50">Score</span>
+                        <span class="text-xs text-base-content/70">Score</span>
                     </div>
                 </div>
             </x-card>
@@ -125,34 +127,34 @@
             <table class="table table-zebra">
                 <thead>
                     <tr>
-                        <th>
-                            <button wire:click="sortBy('name')" class="flex items-center gap-1 hover:underline">
+                        <th scope="col">
+                            <button wire:click="sortBy('name')" class="flex items-center gap-1 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11">
                                 Status & Name
                                 @if($sortField === 'name')
                                     <x-icon :name="$sortDirection === 'asc' ? 'phosphor-caret-up' : 'phosphor-caret-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>
-                        <th>Type</th>
-                        <th>
-                            <button wire:click="sortBy('start_time')" class="flex items-center gap-1 hover:underline">
+                        <th scope="col">Type</th>
+                        <th scope="col">
+                            <button wire:click="sortBy('start_time')" class="flex items-center gap-1 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11">
                                 Dates
                                 @if($sortField === 'start_time')
                                     <x-icon :name="$sortDirection === 'asc' ? 'phosphor-caret-up' : 'phosphor-caret-down'" class="w-4 h-4" />
                                 @endif
                             </button>
                         </th>
-                        <th>Callsign</th>
-                        <th>Class</th>
-                        <th class="text-center">Contacts</th>
-                        <th class="text-center">Participants</th>
-                        <th class="text-center">Score</th>
-                        <th class="text-right">Actions</th>
+                        <th scope="col">Callsign</th>
+                        <th scope="col">Class</th>
+                        <th scope="col" class="text-center">Contacts</th>
+                        <th scope="col" class="text-center">Participants</th>
+                        <th scope="col" class="text-center">Score</th>
+                        <th scope="col" class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($events as $event)
-                        <tr wire:key="event-{{ $event->id }}" class="{{ $event->deleted_at ? 'opacity-60' : '' }}">
+                        <tr wire:key="event-{{ $event->id }}" class="{{ $event->deleted_at ? 'text-base-content/70' : '' }}">
                             <td>
                                 <div class="flex flex-col gap-2">
                                     <div class="flex items-center gap-2">
@@ -194,8 +196,8 @@
                             </td>
                             <td class="text-right">
                                 <x-dropdown>
-                                    <x-slot:trigger>
-                                        <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost btn-square" />
+                                    <x-slot:trigger class="btn btn-sm btn-ghost btn-square" aria-label="Actions for {{ $event->name }}">
+                                        <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
                                     </x-slot:trigger>
                                     <x-menu-item title="View Details" icon="phosphor-eye" link="{{ route('events.show', $event) }}" wire:navigate />
                                     @can('edit-events')

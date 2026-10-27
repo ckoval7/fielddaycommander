@@ -6,7 +6,7 @@
     {{-- Password Change Section --}}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h3 class="card-title">Change Password</h3>
+            <h2 class="card-title">Change Password</h2>
 
             @if($user->password_changed_at)
                 <p class="text-sm text-gray-500">
@@ -56,7 +56,7 @@
     @if(config('auth-security.2fa_mode') !== 'disabled')
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h3 class="card-title">Two-Factor Authentication</h3>
+            <h2 class="card-title">Two-Factor Authentication</h2>
 
             @if(config('auth-security.2fa_mode') === 'required' && ! $user->hasEnabledTwoFactorAuthentication() && ! $showingQrCode)
                 <x-alert icon="phosphor-warning" class="alert-error">

@@ -63,7 +63,7 @@
                         class="btn-ghost btn-sm min-h-[2.75rem] sm:min-h-[1.75rem]"
                         wire:click="undo"
                         :disabled="! $this->canUndo()"
-                        title="Undo last layout change (Ctrl+Z or Cmd+Z)"
+                        title="Undo last layout change (Ctrl+Z or Cmd+Z)" aria-label="Undo last layout change (Ctrl+Z or Cmd+Z)"
                         aria-keyshortcuts="Control+Z Meta+Z"
                         spinner="undo"
                     />
@@ -201,8 +201,9 @@
                                     <div class="relative">
                                         <button
                                             @click.stop="showSizePicker = !showSizePicker"
+                                            :aria-expanded="showSizePicker.toString()"
                                             class="btn btn-ghost btn-xs btn-square"
-                                            title="Resize widget"
+                                            title="Resize widget" aria-label="Resize widget"
                                         >
                                             <x-icon name="phosphor-arrows-out" class="w-4 h-4" />
                                         </button>
@@ -223,6 +224,7 @@
                                                         <button
                                                             wire:click="resizeWidget('{{ $widget['id'] }}', {{ $c }}, {{ $rowSpan }})"
                                                             aria-label="{{ $c }} {{ Str::plural('column', $c) }}"
+                                                            aria-pressed="{{ $colSpan === $c ? 'true' : 'false' }}"
                                                             @click="showSizePicker = false"
                                                             class="btn btn-xs flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
                                                         >
@@ -236,6 +238,7 @@
                                             <div class="flex gap-1">
                                                 @foreach([['Short', 2], ['Medium', 3], ['Tall', 6]] as [$label, $r])
                                                     <button
+                                                        aria-pressed="{{ $rowSpan === $r ? 'true' : 'false' }}"
                                                         wire:click="resizeWidget('{{ $widget['id'] }}', {{ $colSpan }}, {{ $r }})"
                                                         @click="showSizePicker = false"
                                                         class="btn btn-xs flex-1 {{ $rowSpan === $r ? 'btn-primary' : 'btn-ghost' }}"
@@ -251,7 +254,7 @@
                                     <button
                                         wire:click="configureWidget('{{ $widget['id'] }}')"
                                         class="btn btn-ghost btn-xs btn-square"
-                                        title="Configure widget"
+                                        title="Configure widget" aria-label="Configure widget"
                                     >
                                         <x-icon name="phosphor-gear-six" class="w-4 h-4" />
                                     </button>
@@ -260,7 +263,7 @@
                                     <button
                                         wire:click="toggleVisibility('{{ $widget['id'] }}')"
                                         class="btn btn-ghost btn-xs btn-square"
-                                        title="{{ $isVisible ? 'Hide widget' : 'Show widget' }}"
+                                        title="{{ $isVisible ? 'Hide widget' : 'Show widget' }}" aria-label="{{ $isVisible ? 'Hide widget' : 'Show widget' }}"
                                     >
                                         <x-icon
                                             :name="$isVisible ? 'phosphor-eye' : 'phosphor-eye-slash'"
@@ -272,7 +275,7 @@
                                     <button
                                         wire:click="confirmRemoveWidget('{{ $widget['id'] }}')"
                                         class="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
-                                        title="Remove widget"
+                                        title="Remove widget" aria-label="Remove widget"
                                     >
                                         <x-icon name="phosphor-trash" class="w-4 h-4" />
                                     </button>
@@ -377,7 +380,7 @@
 
                                 @default
                                     <x-card class="h-full">
-                                        <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
+                                        <div class="flex flex-col items-center justify-center py-8 text-base-content/70">
                                             <x-icon name="phosphor-question" class="w-12 h-12 mb-3" />
                                             <p class="text-sm">Unknown widget type: {{ $widget['type'] }}</p>
                                         </div>
@@ -392,7 +395,7 @@
                 <li x-show="editMode" x-cloak class="row-span-2 list-none" style="order: 9999">
                     <button
                         wire:click="openWidgetPicker"
-                        class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/50 hover:border-primary hover:text-primary transition-colors"
+                        class="w-full h-full min-h-[120px] border-2 border-dashed border-base-300 rounded-lg p-6 text-center text-base-content/70 hover:border-primary hover:text-primary transition-colors pointer-coarse:min-w-11"
                     >
                         <x-icon name="phosphor-plus" class="w-8 h-8 mx-auto mb-2" />
                         <p class="text-sm font-medium">Add Widget</p>
@@ -431,7 +434,7 @@
             </div>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 class="btn-ghost"

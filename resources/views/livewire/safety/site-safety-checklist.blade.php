@@ -22,6 +22,7 @@
                     <x-badge :value="$summary['required_completed'] . ' of ' . $summary['required_total'] . ' required'" class="badge-warning" />
                     {{-- wire:ignore keeps Livewire from morphing the Alpine scope away after each save (#20). --}}
                     <span
+                        role="status"
                         wire:key="autosave-indicator"
                         wire:ignore
                         x-data="{ show: false }"
@@ -110,7 +111,7 @@
                                             <div class="flex-1 min-w-0">
                                                 {{-- Label --}}
                                                 <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="text-sm {{ $item->entry?->is_completed ? 'line-through text-base-content/40' : '' }}">
+                                                    <span class="text-sm {{ $item->entry?->is_completed ? 'line-through text-base-content/70' : '' }}">
                                                         {{ $item->label }}
                                                     </span>
                                                     @if($item->is_required)
@@ -121,6 +122,7 @@
                                                             type="button"
                                                             x-on:click="expanded = !expanded"
                                                             class="btn btn-ghost btn-xs btn-circle text-info hover:text-info-content hover:bg-info"
+                                                            aria-label="Details: {{ $item->label }}"
                                                             :title="expanded ? 'Hide details' : 'What does this mean?'"
                                                             :aria-expanded="expanded"
                                                         >
@@ -152,7 +154,7 @@
 
                                                 {{-- Completed info --}}
                                                 @if($item->entry?->is_completed)
-                                                    <p class="text-xs text-base-content/50 mt-1">
+                                                    <p class="text-xs text-base-content/70 mt-1">
                                                         Completed by {{ $item->entry->completedBy?->first_name }} {{ $item->entry->completedBy?->last_name }}
                                                         on {{ $item->entry->completed_at?->format('M j, g:i A') }}
                                                     </p>

@@ -13,14 +13,14 @@
                 </x-button>
             </x-slot:menu>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Role permissions">
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Role</th>
-                            <th>Permissions</th>
-                            <th>Users</th>
-                            <th>Actions</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Permissions</th>
+                            <th scope="col">Users</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -31,7 +31,8 @@
                                 wire:key="role-{{ $role->id }}"
                             >
                                 <td>
-                                    <div class="font-medium">{{ $role->name }}</div>
+                                    {{-- The row is clickable too; this is the keyboard and screen reader way in --}}
+                                    <button type="button" class="font-medium text-left cursor-pointer" wire:click.stop="selectRole({{ $role->id }})" aria-pressed="{{ $selectedRoleId === $role->id ? 'true' : 'false' }}">{{ $role->name }}</button>
                                     @if($role->description)
                                         <div class="text-sm text-base-content/70 whitespace-normal">{{ $role->description }}</div>
                                     @endif
@@ -171,7 +172,7 @@
             </div>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button wire:click="$set('showCreateModal', false)" class="btn-ghost">
                 Cancel
             </x-button>
@@ -195,7 +196,7 @@
             hint="What this role is for, shown in the roles list"
         />
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button wire:click="$set('showEditModal', false)" class="btn-ghost">
                 Cancel
             </x-button>
@@ -214,7 +215,7 @@
     <x-modal wire:model="showDeleteModal" title="Delete Role">
         <p>Delete '{{ $roles->firstWhere('id', $roleToDelete)?->name }}'? This cannot be undone.</p>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button wire:click="$set('showDeleteModal', false)" class="btn-ghost">
                 Cancel
             </x-button>

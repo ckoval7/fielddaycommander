@@ -5,6 +5,7 @@
 
 namespace App\View\Components;
 
+use App\View\Components\Concerns\PatchesMaryTemplate;
 use BladeUI\Icons\Factory as BladeIconsFactory;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
@@ -25,9 +26,27 @@ use Mary\View\Components\Icon as MaryIcon;
  * names (and the `o-*` / `s-*` short forms) continue to receive the
  * `heroicon-` prefix exactly as before, preserving backward
  * compatibility with existing Heroicon usage throughout the app.
+ *
+ * Icons are hidden from screen readers unless they are given a name
+ * (`aria-label`, `aria-labelledby`, `title`) or a `role`, since nearly all
+ * of them sit next to text that already says what they mean.
  */
 class Icon extends MaryIcon
 {
+    use PatchesMaryTemplate;
+
+    public const SVG_ATTRIBUTES = "{{ \$attributes->class(['inline flex-shrink-0', 'w-5 h-5' => !Str::contains(\$attributes->get('class') ?? '', ['w-', 'h-']) ]) }}";
+
+    /**
+     * @return array<string, string>
+     */
+    public static function templateReplacements(): array
+    {
+        return [
+            self::SVG_ATTRIBUTES => "{{ \$attributes->merge(\$attributes->hasAny(['aria-label', 'aria-labelledby', 'title', 'role']) ? [] : ['aria-hidden' => 'true'])->class(['inline flex-shrink-0', 'w-5 h-5' => !Str::contains(\$attributes->get('class') ?? '', ['w-', 'h-']) ]) }}",
+        ];
+    }
+
     public function icon(): string|Stringable
     {
         $name = Str::of($this->name);

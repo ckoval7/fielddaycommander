@@ -37,13 +37,13 @@ Celebration features:
     @if($size === 'tv')
         <div class="flex flex-wrap items-baseline gap-x-2 font-black tabular-nums leading-none">
             <span class="text-[clamp(1.75rem,2.6vw,3rem)]" x-text="Number(displayCurrent).toLocaleString()">{{ number_format($data['current']) }}</span>
-            <span class="text-[clamp(1rem,1.1vw,1.25rem)] font-normal text-base-content/50 whitespace-nowrap">/ {{ number_format($data['target']) }}</span>
+            <span class="text-[clamp(1rem,1.1vw,1.25rem)] font-normal text-base-content/70 whitespace-nowrap">/ {{ number_format($data['target']) }}</span>
         </div>
     @else
         <div class="flex items-baseline justify-between gap-3">
             <div class="text-4xl font-black tabular-nums whitespace-nowrap min-w-0 truncate">
                 <span x-text="Number(displayCurrent).toLocaleString()">{{ number_format($data['current']) }}</span>
-                <span class="text-base font-normal text-base-content/50">
+                <span class="text-base font-normal text-base-content/70">
                     / {{ number_format($data['target']) }}
                 </span>
             </div>
@@ -71,7 +71,7 @@ Celebration features:
     <div class="@if($size === 'tv') text-lg @else text-sm @endif text-center text-base-content/70">
         @if($size === 'tv' && $showPercentage)
             <span class="font-semibold tabular-nums text-base-content"><span x-text="displayPercentage">{{ $data['percentage'] }}</span>%</span>
-            <span class="text-base-content/40">·</span>
+            <span class="text-base-content/70">·</span>
         @endif
         {{ $data['footer_label'] ?? 'Progress' }}
     </div>

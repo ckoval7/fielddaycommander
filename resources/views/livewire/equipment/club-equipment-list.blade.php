@@ -64,7 +64,7 @@
                         @can('edit-any-equipment')
                             <label class="flex items-center pt-1">
                                 <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
-                                <input type="checkbox" class="checkbox checkbox-sm" value="{{ $item->id }}" wire:model.live="selectedIds" />
+                                <input aria-label="Select {{ $item->make }} {{ $item->model }}" type="checkbox" class="checkbox checkbox-sm" value="{{ $item->id }}" wire:model.live="selectedIds" />
                             </label>
                         @endcan
                         <x-equipment.photo-thumbnail :item="$item" size="lg" />
@@ -76,9 +76,9 @@
                                 </div>
                                 @can('edit-any-equipment')
                                     <x-dropdown>
-                                        <x-slot:trigger>
-                                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />
-                                        </x-slot:trigger>
+                                        <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
                                         <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
                                         @if($item->currentCommitment)
                                             <x-menu-separator />
@@ -102,7 +102,7 @@
                                 @endcan
                             </div>
                             @if($item->managed_by_user_id && $item->manager)
-                                <div class="text-xs opacity-70 mt-1">Managed by {{ $item->manager->call_sign }}</div>
+                                <div class="text-xs text-base-content/70 mt-1">Managed by {{ $item->manager->call_sign }}</div>
                             @endif
                         </div>
                     </div>
@@ -110,7 +110,7 @@
                         <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
                         <x-equipment.status-badge :status="$item->currentCommitment?->status ?? 'available'" />
                         @if($item->serial_number)
-                            <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                            <code class="text-xs text-base-content/70">{{ $item->serial_number }}</code>
                         @endif
                     </div>
                     @if($item->tags && is_array($item->tags) && count($item->tags))
@@ -136,10 +136,10 @@
                     <thead>
                         <tr>
                             @can('edit-any-equipment')
-                                <th>
+                                <th scope="col">
                                     <label>
                                         <span class="sr-only">Select all</span>
-                                        <input
+                                        <input aria-label="Select all equipment"
                                             type="checkbox"
                                             class="checkbox checkbox-sm"
                                             x-on:change="
@@ -154,16 +154,16 @@
                                     </label>
                                 </th>
                             @endcan
-                            <th>Photo</th>
-                            <th>Make/Model</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Serial Number</th>
-                            <th>Manager</th>
-                            <th>Status</th>
-                            <th>Tags</th>
+                            <th scope="col">Photo</th>
+                            <th scope="col">Make/Model</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Serial Number</th>
+                            <th scope="col">Manager</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Tags</th>
                             @can('edit-any-equipment')
-                                <th class="text-right">Actions</th>
+                                <th scope="col" class="text-right">Actions</th>
                             @endcan
                         </tr>
                     </thead>
@@ -174,7 +174,7 @@
                                     <td>
                                         <label>
                                             <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
-                                            <input
+                                            <input aria-label="Select {{ $item->make }} {{ $item->model }}"
                                                 type="checkbox"
                                                 class="checkbox checkbox-sm"
                                                 value="{{ $item->id }}"
@@ -205,7 +205,7 @@
                                     @if($item->managed_by_user_id && $item->manager)
                                         <div class="text-sm">{{ $item->manager->call_sign }}</div>
                                     @else
-                                        <span class="text-xs opacity-50">-</span>
+                                        <span class="text-xs text-base-content/70">-</span>
                                     @endif
                                 </td>
                                 <td>
@@ -217,9 +217,9 @@
                                 @can('edit-any-equipment')
                                     <td class="text-right">
                                         <x-dropdown>
-                                            <x-slot:trigger>
-                                                <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />
-                                            </x-slot:trigger>
+                                            <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
                                             <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
 

@@ -34,7 +34,7 @@
                                     <div class="text-xs text-base-content/60 truncate">{{ $bonusType->description }}</div>
                                 </div>
                             </div>
-                            <span class="text-sm tabular-nums font-semibold shrink-0 {{ $claimed ? 'text-success' : 'text-base-content/40' }}">
+                            <span class="text-sm tabular-nums font-semibold shrink-0 {{ $claimed ? 'text-success' : 'text-base-content/70' }}">
                                 @if($claimed)
                                     @if($bonusType->objective_multiplier !== null)
                                         OM ×{{ $bonusType->objective_multiplier }}
@@ -69,7 +69,7 @@
                                             wire:model.blur="quantities.{{ $bonusType->id }}"
                                             placeholder="1"
                                         />
-                                        <span class="text-xs text-base-content/50">
+                                        <span class="text-xs text-base-content/70">
                                             ({{ $bonusType->base_points }} pts each, max {{ $bonusType->max_occurrences }})
                                         </span>
                                     </div>
@@ -131,7 +131,7 @@
                     <div class="flex items-center justify-between gap-3">
                         <label for="additional-youth" class="text-sm">
                             Youth with no account
-                            <span class="block text-xs text-base-content/50">Not in the log under their own callsign</span>
+                            <span class="block text-xs text-base-content/70">Not in the log under their own callsign</span>
                         </label>
                         <div class="flex items-center gap-2">
                             <input
@@ -150,12 +150,12 @@
 
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium">Total youth (max 5)</span>
-                        <span class="text-sm tabular-nums font-semibold {{ $youth['points'] > 0 ? 'text-success' : 'text-base-content/40' }}">
+                        <span class="text-sm tabular-nums font-semibold {{ $youth['points'] > 0 ? 'text-success' : 'text-base-content/70' }}">
                             {{ $youth['total'] }} youth = {{ $youth['points'] > 0 ? '+' : '' }}{{ $youth['points'] }} pts
                         </span>
                     </div>
 
-                    <div class="text-xs text-base-content/50">
+                    <div class="text-xs text-base-content/70">
                         20 pts per youth (age 18 or younger) who completes at least one QSO. Max 100 pts.
                     </div>
                 </div>

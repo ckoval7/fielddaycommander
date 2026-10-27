@@ -7,7 +7,7 @@
         This removes the selected accounts from the users list. These users won’t be able to sign in.
     </x-alert>
 
-    <x-slot:actions>
+    <x-slot:actions class="flex-wrap max-sm:w-full">
         <x-button label="Cancel" wire:click="$set('showBulkDeleteModal', false)" class="btn-ghost" />
         <x-button label="Delete Users" wire:click="bulkDeleteUsers" class="btn-error" icon="phosphor-trash" spinner="bulkDeleteUsers" />
     </x-slot:actions>

@@ -3,7 +3,9 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-header :title="$eventConfiguration->event->name" subtitle="Photo Gallery">
+    <x-slot:title>Photo Gallery - {{ $eventConfiguration->event->name }}</x-slot:title>
+
+    <x-header use-h1 :title="$eventConfiguration->event->name" subtitle="Photo Gallery">
         <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="All Albums" icon="phosphor-arrow-left" link="{{ route('gallery.index') }}" />
             @auth
@@ -23,7 +25,7 @@
     </x-header>
 
     @if(session('status'))
-        <div class="alert alert-info mb-4">
+        <div role="status" class="alert alert-info mb-4">
             <x-icon name="phosphor-info" class="w-5 h-5" />
             <span>{{ session('status') }}</span>
         </div>
@@ -42,7 +44,7 @@
     @else
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             @foreach($this->images as $image)
-                <div wire:key="image-{{ $image->id }}" class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden cursor-pointer" wire:click="openLightbox({{ $image->id }})">
+                <div wire:key="image-{{ $image->id }}" class="group relative aspect-square bg-base-300 rounded-lg overflow-hidden">
                     <img
                         src="{{ route('gallery.thumb', $image) }}"
                         alt="{{ $image->caption ?? 'Photo from '.$eventConfiguration->event->name }}"
@@ -57,12 +59,15 @@
                             @endif
                         </div>
                     </div>
+                    <button type="button" class="absolute inset-0 focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-primary pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+                        aria-label="Open photo: {{ $image->caption ?: 'Photo from '.$eventConfiguration->event->name }}"
+                        wire:click="openLightbox({{ $image->id }})"></button>
                     @can('delete', $image)
                         <button
                             wire:click.stop="deleteImage({{ $image->id }})"
                             wire:confirm="Delete this photo?"
                             type="button"
-                            aria-label="Delete photo"
+                            aria-label="Delete photo: {{ $image->caption ?: 'Photo from '.$eventConfiguration->event->name }}"
                             class="absolute top-2 right-2 flex items-center justify-center p-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 bg-red-700/80 text-white rounded-full opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-red-800 active:bg-red-900 touch-manipulation"
                         >
                             <x-icon name="phosphor-trash" class="w-4 h-4" />
@@ -74,7 +79,7 @@
     @endif
 
     {{-- Lightbox Modal --}}
-    <x-modal wire:model="lightboxImageId" box-class="max-w-5xl max-sm:w-full max-sm:max-w-none max-sm:px-3 max-sm:pb-3 pt-14">
+    <x-modal title="Photo viewer" wire:model="lightboxImageId" box-class="max-w-5xl max-sm:w-full max-sm:max-w-none max-sm:px-3 max-sm:pb-3 pt-14">
         @if($lightboxImageId)
             @php $currentImage = $this->images->firstWhere('id', $lightboxImageId); @endphp
             @if($currentImage)
@@ -103,7 +108,7 @@
                             <button
                                 type="button"
                                 x-ref="photo"
-                                class="block w-full"
+                                class="block w-full pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                 :class="zoomed ? 'max-w-none !w-[250%] cursor-zoom-out' : 'cursor-zoom-in'"
                                 :aria-label="zoomed ? 'Fit photo to screen' : 'Zoom into photo'"
                                 @click="toggle($event)"

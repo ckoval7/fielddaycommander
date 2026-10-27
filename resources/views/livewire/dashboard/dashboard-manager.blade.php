@@ -8,7 +8,7 @@
         @if($showCreateForm)
             {{-- Create Dashboard Form --}}
             <div class="space-y-4">
-                <x-header title="Create Dashboard" subtitle="Start with a blank dashboard or copy an existing one" size="text-lg" />
+                <x-header use-h1 title="Create Dashboard" subtitle="Start with a blank dashboard or copy an existing one" size="text-lg" />
 
                 <form wire:submit="createDashboard">
                     <div class="space-y-4">
@@ -88,7 +88,7 @@
                                     {{-- Dashboard Info --}}
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2 mb-1">
-                                            <h3 class="font-semibold text-base truncate">{{ $dashboard->title }}</h3>
+                                            <h2 class="font-semibold text-base truncate">{{ $dashboard->title }}</h2>
                                             @if($dashboard->is_default)
                                                 <span class="badge badge-primary badge-sm">Default</span>
                                             @endif
@@ -98,7 +98,7 @@
                                             <p class="text-sm text-base-content/70 mb-2">{{ $dashboard->description }}</p>
                                         @endif
 
-                                        <div class="flex items-center gap-4 text-xs text-base-content/50">
+                                        <div class="flex items-center gap-4 text-xs text-base-content/70">
                                             <span class="flex items-center gap-1">
                                                 <x-icon name="phosphor-calendar" class="w-3.5 h-3.5" />
                                                 Updated {{ $dashboard->updated_at->diffForHumans() }}
@@ -155,7 +155,7 @@
             </div>
 
             {{-- Modal Actions --}}
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button
                     label="Close"
                     @click="$wire.showModal = false"
@@ -178,7 +178,7 @@
             </div>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 class="btn-ghost"

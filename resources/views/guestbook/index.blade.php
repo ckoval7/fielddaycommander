@@ -24,7 +24,7 @@
             <div class="alert alert-info mb-8">
                 <x-icon name="phosphor-info" class="w-6 h-6" />
                 <div>
-                    <h3 class="font-bold">Guestbook Closed</h3>
+                    <h2 class="font-bold">Guestbook Closed</h2>
                     <p>The guestbook is not accepting entries. Please check back later.</p>
                 </div>
             </div>
@@ -40,7 +40,7 @@
             <div class="flex justify-end mt-4">
                 <a
                     href="{{ route('guestbook.kiosk') }}"
-                    class="btn btn-ghost btn-sm text-base-content/50 font-normal"
+                    class="btn btn-ghost btn-sm text-base-content/70 font-normal"
                 >
                     <x-icon name="phosphor-monitor" class="w-4 h-4" />
                     Kiosk mode

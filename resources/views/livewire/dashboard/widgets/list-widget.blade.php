@@ -30,7 +30,7 @@ Size variants:
 <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col" shadow>
     {{-- Card Title --}}
     <div class="@if($size === 'tv') mb-4 @else mb-3 @endif">
-        <h3 class="{{ $titleSize }} font-bold text-base-content">{{ $title }}</h3>
+        <h2 class="{{ $titleSize }} font-bold text-base-content">{{ $title }}</h2>
     </div>
 
     <div class="flex-1 min-h-0">
@@ -60,9 +60,9 @@ Size variants:
                                 {{-- Band, Mode, Operator Row --}}
                                 <div class="flex items-center gap-3 @if($size === 'tv') text-lg @else text-sm @endif text-base-content/80">
                                     <span class="font-medium">{{ $item['band'] }}</span>
-                                    <span class="text-base-content/50">•</span>
+                                    <span class="text-base-content/70">•</span>
                                     <span class="font-medium">{{ $item['mode'] }}</span>
-                                    <span class="text-base-content/50">•</span>
+                                    <span class="text-base-content/70">•</span>
                                     <span>{{ $item['operator'] }}</span>
                                 </div>
                             </div>
@@ -82,7 +82,7 @@ Size variants:
                                 {{-- Operator and Band Row --}}
                                 <div class="flex items-center gap-2 @if($size === 'tv') text-lg @else text-sm @endif text-base-content/80">
                                     <span>{{ $item['operator_name'] }}</span>
-                                    <span class="text-base-content/50">operating on</span>
+                                    <span class="text-base-content/70">operating on</span>
                                     <span class="font-medium">{{ $item['band'] }}</span>
                                     <span class="font-medium">{{ $item['mode'] }}</span>
                                 </div>
@@ -118,7 +118,7 @@ Size variants:
                                             Assigned to {{ $item['assigned_to'] }}
                                         </span>
                                     @else
-                                        <span class="@if($size === 'tv') text-lg @else text-sm @endif text-base-content/50 italic">
+                                        <span class="@if($size === 'tv') text-lg @else text-sm @endif text-base-content/70 italic">
                                             Not assigned
                                         </span>
                                     @endif
@@ -165,7 +165,7 @@ Size variants:
                         {{ $empty['title'] }}
                     </div>
                     @if($empty['message'])
-                        <div class="{{ $messageSize }} text-base-content/50">
+                        <div class="{{ $messageSize }} text-base-content/70">
                             {{ $empty['message'] }}
                         </div>
                     @endif

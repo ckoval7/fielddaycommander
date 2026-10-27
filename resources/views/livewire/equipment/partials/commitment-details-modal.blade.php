@@ -11,12 +11,18 @@
                 <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Equipment</h3>
                 <div class="flex items-start gap-4">
                     @if($detailCommitment->equipment->photo_path)
-                        <img
-                            src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
-                            alt="{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}"
-                            class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                        <button
+                            type="button"
+                            class="shrink-0 rounded cursor-pointer hover:opacity-80 transition-opacity"
                             wire:click="viewPhoto({{ Js::from($detailCommitment->equipment->photo_path) }}, {{ Js::from($detailCommitment->equipment->make.' '.$detailCommitment->equipment->model) }})"
-                        />
+                            aria-label="View photo of {{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}"
+                        >
+                            <img
+                                src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
+                                alt=""
+                                class="w-20 h-20 object-cover rounded"
+                            />
+                        </button>
                     @else
                         <div class="w-20 h-20 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
                             <x-icon name="phosphor-wrench" class="w-8 h-8 text-base-content/50" />
@@ -79,7 +85,7 @@
                             @if($detailCommitment->expected_delivery_at)
                                 {{ $detailCommitment->expected_delivery_at->format('M j, Y g:i A') }}
                             @else
-                                <span class="text-base-content/40">Not set</span>
+                                <span class="text-base-content/70">Not set</span>
                             @endif
                         </div>
                     </div>
@@ -89,7 +95,7 @@
                             @if($detailCommitment->station)
                                 <x-badge :value="$detailCommitment->station->name" class="badge-primary badge-sm" />
                             @else
-                                <span class="text-sm text-base-content/40">Not assigned</span>
+                                <span class="text-sm text-base-content/70">Not assigned</span>
                             @endif
                         </div>
                     </div>
@@ -99,7 +105,7 @@
                             @if($detailCommitment->committed_at)
                                 {{ $detailCommitment->committed_at->format('M j, Y g:i A') }}
                             @else
-                                <span class="text-base-content/40">Unknown</span>
+                                <span class="text-base-content/70">Unknown</span>
                             @endif
                         </div>
                     </div>
@@ -123,7 +129,7 @@
             @endif
 
             {{-- Metadata --}}
-            <div class="text-xs text-base-content/50 space-y-1">
+            <div class="text-xs text-base-content/70 space-y-1">
                 @if($detailCommitment->assignedBy)
                     <div>Assigned by {{ $detailCommitment->assignedBy->call_sign ?? $detailCommitment->assignedBy->first_name }}</div>
                 @endif
@@ -133,12 +139,13 @@
             </div>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <div class="flex flex-wrap gap-2 w-full justify-end">
                 <x-dropdown>
-                    <x-slot:trigger>
-                        <x-button label="Change Status" icon="phosphor-arrows-left-right" class="btn-primary btn-sm" />
-                    </x-slot:trigger>
+                    <x-slot:trigger class="btn btn-primary btn-sm">
+                            Change Status
+                            <x-icon name="phosphor-arrows-left-right" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
                     @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                         @if($status !== $detailCommitment->status)
                             <x-menu-item

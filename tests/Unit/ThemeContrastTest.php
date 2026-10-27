@@ -123,6 +123,15 @@ test('scoring chips meet WCAG AA on their fills', function (string $theme) {
     }
 })->with(['light', 'dark']);
 
+test('scoring text meets WCAG AA on the scoring backgrounds', function (string $theme) {
+    foreach (['headline', 'warning', 'text-muted'] as $text) {
+        foreach (['bg', 'surface'] as $background) {
+            expect(contrastRatio(colorsCssToken($theme, "--score-{$text}"), colorsCssToken($theme, "--score-{$background}")))
+                ->toBeGreaterThanOrEqual(4.5, "{$theme} score {$text} on {$background}");
+        }
+    }
+})->with(['light', 'dark']);
+
 test('colors.css leaves daisyUI semantic tokens to the theme', function () {
     $css = file_get_contents(resource_path('css/colors.css'));
 

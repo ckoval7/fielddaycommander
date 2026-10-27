@@ -13,7 +13,7 @@
         }
         body { font-family: 'Courier New', monospace; font-size: 12pt; }
         .radiogram, .ics213 { max-width: 7.5in; margin: 0 auto; border: 2px solid #000; padding: 0; }
-        .header { text-align: center; font-weight: bold; font-size: 14pt; padding: 8px; border-bottom: 2px solid #000; }
+        .header { margin: 0; text-align: center; font-weight: bold; font-size: 14pt; padding: 8px; border-bottom: 2px solid #000; }
         .preamble { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #000; }
         .preamble-item { padding: 4px 8px; border-right: 1px solid #000; }
         .preamble-item:last-child { border-right: none; }
@@ -33,6 +33,7 @@
     </style>
 </head>
 <body>
+    <h1 class="no-print">Messages</h1>
     <div class="no-print">
         <button onclick="window.print()">Print</button>
         <button onclick="window.close()">Close</button>
@@ -42,7 +43,7 @@
         @if($message->format->value === 'radiogram')
             {{-- ARRL Radiogram Layout --}}
             <div class="radiogram">
-                <div class="header">RADIOGRAM</div>
+                <h2 class="header">RADIOGRAM</h2>
 
                 <div class="preamble">
                     <div class="preamble-item">
@@ -123,7 +124,7 @@
         @else
             {{-- ICS-213 Layout --}}
             <div class="ics213">
-                <div class="header">ICS-213 GENERAL MESSAGE</div>
+                <h2 class="header">ICS-213 GENERAL MESSAGE</h2>
 
                 <div class="ics-field">
                     <div class="ics-field-item">

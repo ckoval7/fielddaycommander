@@ -141,7 +141,7 @@
   --score-text-muted:  hsl(220, 10%, 42%);  /* section labels, column headers */
 
   /* Headline amber — the score number color */
-  --score-headline:    hsl(38, 80%, 38%);   /* 5.8:1 on cream — WCAG AA */
+  --score-headline:    hsl(38, 80%, 25%);   /* 4.5:1+ on cream and card — WCAG AA */
   --score-headline-lg: hsl(38, 85%, 34%);   /* final score (largest text) */
 
   /* Status chips */
@@ -153,7 +153,7 @@
   --score-on-verified-fill: hsl(0, 0%, 100%);
   --score-amber-fill:       hsl(38, 88%, 52%);   /* dark ink 9.9:1 */
   --score-on-amber-fill:    hsl(220, 20%, 12%);
-  --score-warning:     hsl(38, 80%, 38%);   /* amber — claimed/unverified, high dupes */
+  --score-warning:     hsl(38, 80%, 25%);   /* amber — claimed/unverified, high dupes */
   --score-error:       hsl(2, 68%, 46%);    /* red — data errors */
   --score-opportunity: hsl(210, 65%, 42%);  /* blue — unclaimed bonus opportunity */
 

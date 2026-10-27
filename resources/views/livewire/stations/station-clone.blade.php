@@ -8,7 +8,7 @@
         <form wire:submit.prevent>
             {{-- Step 1: Event Selection --}}
             <div class="mb-6">
-                <x-header title="Step 1: Select Source Event" subtitle="Choose the event to clone stations from" size="text-lg" separator />
+                <x-header heading-level="2" title="Step 1: Select Source Event" subtitle="Choose the event to clone stations from" size="text-lg" separator />
 
                 <div class="mt-4">
                     <x-select
@@ -43,7 +43,7 @@
             {{-- Step 2: Station Selection (shown after event selected) --}}
             @if($sourceEventId && $availableStations->isNotEmpty())
                 <div class="mb-6">
-                    <x-header title="Step 2: Select Stations" subtitle="Choose which stations to clone" size="text-lg" separator />
+                    <x-header heading-level="2" title="Step 2: Select Stations" subtitle="Choose which stations to clone" size="text-lg" separator />
 
                     <div class="mt-4 space-y-3">
                         {{-- Select All / None Buttons --}}
@@ -124,7 +124,7 @@
 
                 {{-- Step 3: Clone Options --}}
                 <div class="mb-6">
-                    <x-header title="Step 3: Clone Options" subtitle="Choose the destination and what to copy" size="text-lg" separator />
+                    <x-header heading-level="2" title="Step 3: Clone Options" subtitle="Choose the destination and what to copy" size="text-lg" separator />
 
                     <div class="mt-4 space-y-4">
                         {{-- Target Event --}}
@@ -183,7 +183,7 @@
             {{-- Conflict Preview --}}
             @if($showConflicts && $conflictPreview)
                 <div class="mb-6">
-                    <x-header title="Equipment Conflicts Detected" subtitle="Some equipment cannot be assigned to the new stations" size="text-lg" separator />
+                    <x-header heading-level="2" title="Equipment Conflicts Detected" subtitle="Some equipment cannot be assigned to the new stations" size="text-lg" separator />
 
                     <div class="mt-4 space-y-4">
                         {{-- Conflict Summary Alert --}}
@@ -261,7 +261,7 @@
         </form>
 
         {{-- Modal Actions --}}
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             @if(!$showConflicts)
                 <x-button
                     label="Cancel"

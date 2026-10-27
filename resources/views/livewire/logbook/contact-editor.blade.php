@@ -101,7 +101,7 @@
                 />
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="$set('showModal', false)" class="btn-ghost" />
                 <x-button label="Save Changes" wire:click="save" class="btn-primary" spinner="save" />
             </x-slot:actions>
@@ -131,7 +131,7 @@
                 </div>
             @enderror
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="$set('showBulkLoggerModal', false)" class="btn-ghost" />
                 <x-button label="Change Logger" type="submit" class="btn-primary" spinner="bulkChangeLogger" />
             </x-slot:actions>

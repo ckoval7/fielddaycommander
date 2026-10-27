@@ -28,7 +28,7 @@ Props:
         @if($contact->uuid)
             data-contact-uuid="{{ $contact->uuid }}"
         @endif
-        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 opacity-50">
+        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-base-content/70">
         <div class="min-w-0">
             <div class="font-bold font-mono uppercase text-lg truncate">
                 {{ $contact->callsign }}
@@ -42,11 +42,11 @@ Props:
     </div>
 @elseif($contact->trashed())
     <div wire:key="card-{{ $contact->id }}"
-        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 opacity-40 line-through">
+        class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-base-content/70 line-through">
         <div class="min-w-0">
             <div class="font-bold font-mono uppercase text-lg truncate">
                 {{ $contact->callsign }}
-                <button wire:click="restoreContact({{ $contact->id }})" class="btn btn-ghost btn-xs ml-1 no-underline">Undo</button>
+                <button type="button" wire:click="restoreContact({{ $contact->id }})" class="btn btn-ghost btn-xs ml-1 no-underline" aria-label="Undo delete of {{ $contact->callsign }}">Undo</button>
             </div>
             <div class="text-xs text-base-content/60 font-mono">{{ implode(' · ', $details) }}</div>
         </div>
@@ -61,7 +61,7 @@ Props:
         :class="{ 'ring-2 ring-primary': recalledContactId === {{ $contact->id }} }"
         @class([
             'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-base-300 bg-base-100 text-left',
-            'opacity-50' => $contact->is_duplicate,
+            'text-base-content/70' => $contact->is_duplicate,
         ])
     >
         <div class="min-w-0">

@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>Message</x-slot:title>
     {{-- Header --}}
-    <x-header
+    <x-header use-h1
         title="{{ $isEditing ? 'Edit Message' : 'Log Message' }}"
         subtitle="{{ $isEditing ? 'Update message details' : ($ics213Enabled ? 'Enter a new radiogram or ICS-213 message' : 'Enter a new radiogram') }}"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             @if(\Illuminate\Support\Facades\Route::has('events.messages.index'))
                 <x-button
                     label="Back to Messages"

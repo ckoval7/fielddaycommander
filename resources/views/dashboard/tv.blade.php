@@ -41,6 +41,7 @@ Props from controller:
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-base-100">
+    <h1 class="sr-only">{{ $title }}</h1>
     {{-- Connection Monitor (Silent in TV Mode) --}}
     <x-dashboard.connection-monitor :tvMode="true" />
 
@@ -231,7 +232,7 @@ Props from controller:
 
                                 @default
                                     <x-card class="h-full flex items-center justify-center">
-                                        <div class="text-center text-base-content/50">
+                                        <div class="text-center text-base-content/70">
                                             <x-icon name="phosphor-question" class="w-16 h-16 mx-auto mb-4" />
                                             <p class="text-xl">Unknown widget type: {{ $widget['type'] }}</p>
                                         </div>

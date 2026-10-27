@@ -27,7 +27,7 @@
             </span>
         </div>
         <div class="text-right shrink-0 flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/55">
+            <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/70">
                 {{ $state === 'ended' ? 'Ended' : ($state === 'active' ? 'Ends in' : 'Starts in') }}
             </span>
             <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" @if($live) x-text="countdown" @endif>
@@ -57,7 +57,7 @@
             </span>
         </div>
 
-        <span class="text-2xl text-base-content/30">|</span>
+        <span class="text-2xl text-base-content/30" aria-hidden="true">|</span>
 
         {{-- Countdown Label and Time --}}
         <div class="flex items-center gap-2">
@@ -69,7 +69,7 @@
             </span>
         </div>
 
-        <span class="text-2xl text-base-content/30">|</span>
+        <span class="text-2xl text-base-content/30" aria-hidden="true">|</span>
 
         {{-- Clocks --}}
         <div class="flex items-center gap-4 max-[1399px]:flex-col max-[1399px]:items-start max-[1399px]:gap-1 text-lg">

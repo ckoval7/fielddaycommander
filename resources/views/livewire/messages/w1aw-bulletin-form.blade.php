@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>W1AW Bulletin</x-slot:title>
     {{-- Header --}}
-    <x-header
+    <x-header use-h1
         :title="$this->nomenclature->bulletinName"
         :subtitle="'Record the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Back to Dashboard"
                 icon="phosphor-arrow-left"
@@ -32,7 +33,7 @@
 
     {{-- Transmission Schedule --}}
     <x-card>
-        <x-slot:title>
+                    <x-slot:title>
             <div class="flex items-center gap-2">
                 <x-icon name="phosphor-radio" class="w-5 h-5" />
                 Transmission Schedule
@@ -57,26 +58,26 @@
             @endif
 
             {{-- Schedule table --}}
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Transmission schedule">
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Time (UTC)</th>
-                            <th>Mode</th>
-                            <th>Frequencies (MHz)</th>
-                            <th>Source</th>
+                            <th scope="col">Time (UTC)</th>
+                            <th scope="col">Mode</th>
+                            <th scope="col">Frequencies (MHz)</th>
+                            <th scope="col">Source</th>
                             @can('manage-bulletins')
-                                <th class="text-right">Actions</th>
+                                <th scope="col" class="text-right">Actions</th>
                             @endcan
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($this->scheduleEntries as $entry)
-                            <tr class="{{ $entry->scheduled_at->isPast() ? 'opacity-40' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
+                            <tr class="{{ $entry->scheduled_at->isPast() ? 'text-base-content/70' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
                                 <td>
                                     {{ $entry->scheduled_at->format('D M j, H:i') }}
                                     @if($entry->notes)
-                                        <div class="text-xs text-base-content/50 mt-0.5">{{ $entry->notes }}</div>
+                                        <div class="text-xs text-base-content/70 mt-0.5">{{ $entry->notes }}</div>
                                     @endif
                                 </td>
                                 <td>{{ $entry->mode_label }}</td>
@@ -90,7 +91,7 @@
                                                 class="btn-ghost btn-xs"
                                                 wire:click="editScheduleEntry({{ $entry->id }})"
                                                 spinner="editScheduleEntry({{ $entry->id }})"
-                                                title="Edit transmission"
+                                                title="Edit transmission" aria-label="Edit transmission"
                                             />
                                             <x-button
                                                 icon="phosphor-trash"
@@ -98,7 +99,7 @@
                                                 wire:click="deleteScheduleEntry({{ $entry->id }})"
                                                 wire:confirm="Delete this scheduled transmission?"
                                                 spinner="deleteScheduleEntry({{ $entry->id }})"
-                                                title="Delete transmission"
+                                                title="Delete transmission" aria-label="Delete transmission"
                                             />
                                         </div>
                                     </td>
@@ -109,15 +110,15 @@
                 </table>
             </div>
         @else
-            <p class="text-sm text-base-content/50">No transmissions scheduled yet.</p>
+            <p class="text-sm text-base-content/70">No transmissions scheduled yet.</p>
         @endif
 
         {{-- Add/Edit form (managers only) --}}
         @can('manage-bulletins')
             <div class="mt-4 pt-4 border-t border-base-300">
-                <h4 class="text-sm font-semibold mb-3">
+                <h2 class="text-sm font-semibold mb-3">
                     {{ $editingEntryId ? 'Edit Transmission' : 'Add Transmission' }}
-                </h4>
+                </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <x-flatpickr
                         label="Time (UTC)"
@@ -298,7 +299,7 @@
                                     <span class="font-medium">{{ $entry->user?->call_sign ?? $entry->user?->first_name ?? 'System' }}</span>
                                     <span>&middot;</span>
                                     <span>{{ $entry->created_at->diffForHumans() }}</span>
-                                    <span class="text-xs text-base-content/50">({{ $entry->created_at->format('M j, Y H:i') }} UTC)</span>
+                                    <span class="text-xs text-base-content/70">({{ $entry->created_at->format('M j, Y H:i') }} UTC)</span>
                                 </div>
 
                                 @if($entry->action === 'bulletin.created')
@@ -321,7 +322,7 @@
                                             <summary class="cursor-pointer text-sm font-medium text-base-content/70 hover:text-base-content">
                                                 Bulletin text changed
                                             </summary>
-                                            <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto">
+                                            <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto" tabindex="0" role="region" aria-label="Bulletin text">
                                                 @foreach($this->diffLines($entry->old_values['bulletin_text'], $entry->new_values['bulletin_text']) as $line)
                                                     <div class="{{ match($line['type']) {
                                                         'added' => 'bg-success/10 text-success border-l-2 border-success pl-2',

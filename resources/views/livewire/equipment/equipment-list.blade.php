@@ -64,7 +64,7 @@
                     <div class="flex items-start gap-3">
                         <label class="flex items-center pt-1">
                             <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
-                            <input type="checkbox" class="checkbox checkbox-sm" value="{{ $item->id }}" wire:model.live="selectedIds" />
+                            <input aria-label="Select {{ $item->make }} {{ $item->model }}" type="checkbox" class="checkbox checkbox-sm" value="{{ $item->id }}" wire:model.live="selectedIds" />
                         </label>
                         <x-equipment.photo-thumbnail :item="$item" size="lg" />
                         <div class="flex-1 min-w-0">
@@ -74,9 +74,9 @@
                                     <div class="text-sm opacity-60">{{ $item->model }}</div>
                                 </div>
                                 <x-dropdown>
-                                    <x-slot:trigger>
-                                        <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />
-                                    </x-slot:trigger>
+                                    <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
                                     <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
                                     @if($item->currentCommitment)
                                         <x-menu-separator />
@@ -104,7 +104,7 @@
                                     Club Equipment
                                 </span>
                                 @if($item->managed_by_user_id && $item->manager)
-                                    <div class="text-xs opacity-70">Managed by {{ $item->manager->full_name }}</div>
+                                    <div class="text-xs text-base-content/70">Managed by {{ $item->manager->full_name }}</div>
                                 @endif
                             @endif
                         </div>
@@ -113,7 +113,7 @@
                         <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
                         <x-equipment.status-badge :status="$item->currentCommitment?->status ?? 'available'" />
                         @if($item->serial_number)
-                            <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                            <code class="text-xs text-base-content/70">{{ $item->serial_number }}</code>
                         @endif
                     </div>
                     @if($item->tags && is_array($item->tags) && count($item->tags))
@@ -139,10 +139,10 @@
                 <table class="table table-zebra">
                     <thead>
                         <tr>
-                            <th>
+                            <th scope="col">
                                 <label>
                                     <span class="sr-only">Select all</span>
-                                    <input
+                                    <input aria-label="Select all equipment"
                                         type="checkbox"
                                         class="checkbox checkbox-sm"
                                         x-on:change="
@@ -156,14 +156,14 @@
                                     />
                                 </label>
                             </th>
-                            <th>Photo</th>
-                            <th>Make/Model</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                            <th>Serial Number</th>
-                            <th>Status</th>
-                            <th>Tags</th>
-                            <th class="text-right">Actions</th>
+                            <th scope="col">Photo</th>
+                            <th scope="col">Make/Model</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Serial Number</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Tags</th>
+                            <th scope="col" class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -172,7 +172,7 @@
                                 <td>
                                     <label>
                                         <span class="sr-only">Select {{ $item->make }} {{ $item->model }}</span>
-                                        <input
+                                        <input aria-label="Select {{ $item->make }} {{ $item->model }}"
                                             type="checkbox"
                                             class="checkbox checkbox-sm"
                                             value="{{ $item->id }}"
@@ -194,7 +194,7 @@
                                             </span>
                                         </div>
                                         @if($item->managed_by_user_id && $item->manager)
-                                            <div class="text-xs opacity-70 mt-0.5">
+                                            <div class="text-xs text-base-content/70 mt-0.5">
                                                 Managed by {{ $item->manager->full_name }}
                                             </div>
                                         @endif
@@ -219,9 +219,9 @@
                                 </td>
                                 <td class="text-right">
                                     <x-dropdown>
-                                        <x-slot:trigger>
-                                            <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />
-                                        </x-slot:trigger>
+                                        <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
                                         <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
 
@@ -310,7 +310,7 @@
                 </div>
             @endif
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="$set('showCommitModal', false)" class="btn-ghost" />
                 <x-button label="Commit Equipment" type="submit" class="btn-primary" spinner="commitEquipment" />
             </x-slot:actions>
@@ -356,7 +356,7 @@
                 </div>
             @enderror
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="$set('showBulkCommitModal', false)" class="btn-ghost" />
                 <x-button label="Commit Selected" type="submit" class="btn-primary" spinner="bulkCommitEquipment" />
             </x-slot:actions>
@@ -369,15 +369,21 @@
             <div class="space-y-6">
                 {{-- Equipment Info --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Equipment</h3>
+                    <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Equipment</h2>
                     <div class="flex items-start gap-4">
                         @if($detailCommitment->equipment->photo_path)
-                            <img
-                                src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
-                                alt="{{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}"
-                                class="w-20 h-20 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                            <button
+                                type="button"
+                                class="shrink-0 rounded cursor-pointer hover:opacity-80 transition-opacity"
                                 wire:click="viewPhoto({{ Js::from($detailCommitment->equipment->photo_path) }}, {{ Js::from($detailCommitment->equipment->make.' '.$detailCommitment->equipment->model) }})"
-                            />
+                                aria-label="View photo of {{ $detailCommitment->equipment->make }} {{ $detailCommitment->equipment->model }}"
+                            >
+                                <img
+                                    src="{{ asset('storage/' . $detailCommitment->equipment->photo_path) }}"
+                                    alt=""
+                                    class="w-20 h-20 object-cover rounded"
+                                />
+                            </button>
                         @else
                             <div class="w-20 h-20 bg-base-300 rounded flex items-center justify-center flex-shrink-0">
                                 <x-icon name="phosphor-wrench" class="w-8 h-8 text-base-content/50" />
@@ -410,7 +416,7 @@
 
                 {{-- Commitment Info --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Commitment</h3>
+                    <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-3">Commitment</h2>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <div class="text-sm text-base-content/60">Event</div>
@@ -440,7 +446,7 @@
                                 @if($detailCommitment->expected_delivery_at)
                                     {{ $detailCommitment->expected_delivery_at->format('M j, Y g:i A') }}
                                 @else
-                                    <span class="text-base-content/40">Not set</span>
+                                    <span class="text-base-content/70">Not set</span>
                                 @endif
                             </div>
                         </div>
@@ -450,7 +456,7 @@
                                 @if($detailCommitment->station)
                                     <x-badge :value="$detailCommitment->station->name" class="badge-primary badge-sm" />
                                 @else
-                                    <span class="text-sm text-base-content/40">Not assigned</span>
+                                    <span class="text-sm text-base-content/70">Not assigned</span>
                                 @endif
                             </div>
                         </div>
@@ -460,7 +466,7 @@
                                 @if($detailCommitment->committed_at)
                                     {{ $detailCommitment->committed_at->format('M j, Y g:i A') }}
                                 @else
-                                    <span class="text-base-content/40">Unknown</span>
+                                    <span class="text-base-content/70">Unknown</span>
                                 @endif
                             </div>
                         </div>
@@ -470,7 +476,7 @@
                 {{-- Delivery Notes --}}
                 @if($detailCommitment->delivery_notes)
                     <div>
-                        <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Delivery Notes</h3>
+                        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Delivery Notes</h2>
                         <div class="text-sm bg-base-200 rounded-lg p-3 whitespace-pre-wrap">{{ $detailCommitment->delivery_notes }}</div>
                     </div>
                 @endif
@@ -478,13 +484,13 @@
                 {{-- Manager Notes --}}
                 @if($detailCommitment->manager_notes)
                     <div>
-                        <h3 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Manager Notes</h3>
+                        <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wider mb-2">Manager Notes</h2>
                         <div class="text-sm bg-base-200 rounded-lg p-3 whitespace-pre-wrap font-mono text-xs">{{ $detailCommitment->manager_notes }}</div>
                     </div>
                 @endif
 
                 {{-- Metadata --}}
-                <div class="text-xs text-base-content/50 space-y-1">
+                <div class="text-xs text-base-content/70 space-y-1">
                     @if($detailCommitment->assignedBy)
                         <div>Assigned by {{ $detailCommitment->assignedBy->call_sign ?? $detailCommitment->assignedBy->first_name }}</div>
                     @endif
@@ -494,11 +500,12 @@
                 </div>
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <div class="flex flex-wrap gap-2 w-full justify-end">
                     <x-dropdown>
-                        <x-slot:trigger>
-                            <x-button label="Change Status" icon="phosphor-arrows-left-right" class="btn-primary btn-sm" />
+                        <x-slot:trigger class="btn btn-primary btn-sm">
+                            Change Status
+                            <x-icon name="phosphor-arrows-left-right" class="w-5 h-5" aria-hidden="true" />
                         </x-slot:trigger>
                         @foreach(\App\Models\EquipmentEvent::STATUSES as $status)
                             @if($status !== $detailCommitment->status)
@@ -535,7 +542,7 @@
                 rows="4"
             />
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="$set('showNotesModal', false)" class="btn-ghost" />
                 <x-button
                     label="Save Delivery Notes"

@@ -5,12 +5,12 @@
 {{-- Results View Component --}}
 <x-card class="shadow-md">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h3 class="text-lg font-semibold">
+        <h2 class="text-lg font-semibold">
             Contacts
             @if(!$this->contacts->isEmpty())
                 <span class="text-sm font-normal text-base-content/60 ml-2">({{ $this->contacts->count() }} shown)</span>
             @endif
-        </h3>
+        </h2>
         <a
             href="{{ $this->exportUrl }}"
             class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
@@ -39,7 +39,7 @@
                         class="btn-primary btn-sm flex-1 sm:flex-none"
                         wire:click="$dispatch('open-bulk-change-logger', { contactIds: $wire.selectedIds })"
                     />
-                    <x-button
+                    <x-button aria-label="Delete selected contacts"
                         label="Delete"
                         icon="phosphor-trash"
                         class="btn-error btn-sm flex-1 sm:flex-none"
@@ -55,7 +55,7 @@
         <div class="text-center py-12">
             <x-icon name="phosphor-magnifying-glass" class="w-16 h-16 mx-auto text-base-content/30" />
             <p class="mt-4 text-base-content/70">No contacts found.</p>
-            <p class="text-sm text-base-content/50 mt-2">Clear any active filters to check the full logbook.</p>
+            <p class="text-sm text-base-content/70 mt-2">Clear any active filters to check the full logbook.</p>
         </div>
     @else
         {{-- Desktop Table View --}}
@@ -82,23 +82,34 @@
                 ];
 
                 if (auth()->check() && auth()->user()->can('edit-contacts')) {
+                    array_unshift($headers, ['key' => 'selection', 'label' => 'Select contacts', 'class' => 'w-12']);
                     $headers[] = ['key' => 'actions', 'label' => 'Actions', 'class' => 'w-24'];
                 }
             @endphp
 
             @php
-                $canEdit = auth()->check() && auth()->user()->can('edit-contacts');
+                $allPageContactsSelected = $this->contacts->count() > 0 && $this->contacts->pluck('id')->diff($selectedIds)->isEmpty();
                 $noCreditReasons = $this->noCreditReasons;
                 $attentionReasons = $this->attentionReasons;
             @endphp
-            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm" :selectable="$canEdit" wire:model.live="selectedIds">
+            <x-table :headers="$headers" :rows="$this->contacts" class="table-sm">
+                @scope('header_selection', $header, $allPageContactsSelected)
+                    <span class="sr-only">Select contacts</span>
+                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="Select all contacts on this page"
+                        @checked($allPageContactsSelected)
+                        wire:click="toggleSelectAll" />
+                @endscope
+                @scope('cell_selection', $contact)
+                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="Select contact {{ $contact->callsign }}"
+                        value="{{ $contact->id }}" wire:model.live="selectedIds" />
+                @endscope
                 @scope('cell_qso_time', $contact)
                     <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : 'N/A' }}</span>
                 @endscope
 
                 @scope('cell_callsign', $contact, $noCreditReasons, $attentionReasons)
                     <div class="flex items-center gap-2">
-                        <span class="font-mono font-semibold text-lg {{ $contact->trashed() ? 'line-through text-base-content/40' : '' }}">{{ $contact->callsign }}</span>
+                        <span class="font-mono font-semibold text-lg {{ $contact->trashed() ? 'line-through text-base-content/70' : '' }}">{{ $contact->callsign }}</span>
                         @if($contact->trashed())
                             <x-badge value="DELETED" class="badge-xs badge-error" />
                         @endif
@@ -169,7 +180,7 @@
                     @can('edit-contacts')
                         <div class="flex items-center gap-1">
                             @if($contact->trashed())
-                                <x-button
+                                <x-button aria-label="Restore contact {{ $contact->callsign }}"
                                     icon="phosphor-arrow-u-up-left"
                                     wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
                                     wire:confirm="Restore this contact?"
@@ -178,14 +189,14 @@
                                     spinner
                                 />
                             @else
-                                <x-button
+                                <x-button aria-label="Edit contact {{ $contact->callsign }}"
                                     icon="phosphor-note-pencil"
                                     wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
                                     class="btn-ghost btn-xs"
                                     tooltip="Edit contact"
                                     spinner
                                 />
-                                <x-button
+                                <x-button aria-label="Delete contact {{ $contact->callsign }}"
                                     icon="phosphor-trash"
                                     wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"
                                     wire:confirm="Delete this contact? You can restore it from the logbook."
@@ -207,14 +218,14 @@
                 $attentionReasons = $this->attentionReasons;
             @endphp
             @foreach($this->contacts as $contact)
-                <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'opacity-60' : '' }}">
+                <x-card class="shadow-sm {{ $contact->is_duplicate ? 'border-l-4 border-l-warning bg-warning/5' : '' }} {{ $contact->trashed() ? 'text-base-content/70' : '' }}">
                     <div class="flex flex-col gap-3">
                         {{-- Selection and Callsign --}}
                         <div class="flex items-start justify-between gap-2">
                             @can('edit-contacts')
                                 <label class="flex items-center justify-center min-h-11 min-w-11 -m-2 flex-shrink-0 cursor-pointer">
                                     <span class="sr-only">Select {{ $contact->callsign }}</span>
-                                    <input type="checkbox" class="checkbox checkbox-sm" value="{{ $contact->id }}" wire:model.live="selectedIds" />
+                                    <input aria-label="Select contact {{ $contact->callsign }}" type="checkbox" class="checkbox checkbox-sm" value="{{ $contact->id }}" wire:model.live="selectedIds" />
                                 </label>
                             @endcan
                             <div class="flex-1 min-w-0">
@@ -264,12 +275,12 @@
                                 <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 text-base-content/50" />
                                 <span>{{ $contact->band?->name ?? 'N/A' }}</span>
                             </div>
-                            <span class="text-base-content/30">•</span>
+                            <span class="text-base-content/70">•</span>
                             <div class="flex items-center gap-1">
                                 <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/50" />
                                 <span>{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode) &middot; {{ $contact->submode }}@endif</span>
                             </div>
-                            <span class="text-base-content/30">•</span>
+                            <span class="text-base-content/70">•</span>
                             <span>{{ $contact->exchange_class ?? 'N/A' }}</span>
                             <span>{{ $contact->section?->code ?? 'N/A' }}</span>
                         </div>
@@ -295,7 +306,7 @@
                         @can('edit-contacts')
                             <div class="flex items-center gap-2 pt-2 border-t border-base-300">
                                 @if($contact->trashed())
-                                    <x-button
+                                    <x-button aria-label="Restore contact {{ $contact->callsign }}"
                                         icon="phosphor-arrow-u-up-left"
                                         label="Restore"
                                         wire:click="$dispatch('restore-contact', { contactId: {{ $contact->id }} })"
@@ -304,14 +315,14 @@
                                         spinner
                                     />
                                 @else
-                                    <x-button
+                                    <x-button aria-label="Edit contact {{ $contact->callsign }}"
                                         icon="phosphor-note-pencil"
                                         label="Edit"
                                         wire:click="$dispatch('open-edit-contact', { contactId: {{ $contact->id }} })"
                                         class="btn-ghost btn-xs"
                                         spinner
                                     />
-                                    <x-button
+                                    <x-button aria-label="Delete contact {{ $contact->callsign }}"
                                         icon="phosphor-trash"
                                         label="Delete"
                                         wire:click="$dispatch('delete-contact', { contactId: {{ $contact->id }} })"

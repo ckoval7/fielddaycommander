@@ -13,7 +13,7 @@
             rows="4"
         />
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" wire:click="$set('showNotesModal', false)" class="btn-ghost" />
             <x-button
                 label="Save Delivery Notes"

@@ -8,8 +8,8 @@
     @if (! $this->event)
         <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <x-mary-icon name="phosphor-trophy" class="w-16 h-16 opacity-30" />
-            <div class="text-2xl font-semibold opacity-50">No active event</div>
-            <p class="text-sm opacity-40">Scores appear here when an event is selected.</p>
+            <div class="text-2xl font-semibold text-base-content/70">No active event</div>
+            <p class="text-sm text-base-content/70">Scores appear here when an event is selected.</p>
         </div>
     @else
 
@@ -97,21 +97,21 @@
 
             {{-- Band/Mode Grid --}}
             @if (count($this->bandModeGrid) > 0 && collect($this->bandModeGrid)->sum('total_count') > 0)
-                <div class="overflow-x-auto mb-4">
+                <div class="overflow-x-auto mb-4" tabindex="0" role="region" aria-label="Scoring tables">
                     <table class="w-full text-xs">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--score-divider);">
-                                <th class="text-left pb-2 font-semibold uppercase tracking-wide pr-2"
+                                <th scope="col" class="text-left pb-2 font-semibold uppercase tracking-wide pr-2"
                                     style="color: var(--score-text-muted);">Mode</th>
                                 @foreach ($this->bands as $band)
-                                    <th class="text-center pb-2 font-semibold uppercase tracking-wide px-1"
+                                    <th scope="col" class="text-center pb-2 font-semibold uppercase tracking-wide px-1"
                                         style="color: var(--score-text-muted); white-space: nowrap;">
                                         {{ $band->name }}
                                     </th>
                                 @endforeach
-                                <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
+                                <th scope="col" class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
                                     style="color: var(--score-text-muted);">QSOs</th>
-                                <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
+                                <th scope="col" class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
                                     style="color: var(--score-text-muted);">QSO Points</th>
                             </tr>
                         </thead>
@@ -267,14 +267,14 @@
                 <table class="w-full text-xs">
                     <thead>
                         <tr>
-                            <th class="text-left pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Condition</th>
-                            <th class="text-right pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Multiplier</th>
+                            <th scope="col" class="text-left pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Condition</th>
+                            <th scope="col" class="text-right pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Multiplier</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($this->powerMultiplierRules as $rule)
                             <tr style="@if($rule['active']) font-weight: 700; color: var(--score-headline); @else color: var(--score-text-muted); @endif">
-                                <td class="py-1 pr-3">{{ $rule['condition'] }}</td>
+                                <td class="py-1 pr-3">{{ $rule['condition'] }}@if($rule['active'])<span class="sr-only"> (applies)</span>@endif</td>
                                 <td class="py-1 text-right font-mono">{{ $rule['multiplier'] }}</td>
                             </tr>
                         @endforeach
@@ -488,7 +488,7 @@
     @endif
 
     @if ($event?->resolved_rules_version)
-        <div class="mt-8 text-center text-xs text-base-content/50 border-t border-base-200 pt-3">
+        <div class="mt-8 text-center text-xs text-base-content/70 border-t border-base-200 pt-3">
             Scored per {{ $event->eventType->name ?? 'Field Day' }}
             rules version <span class="font-mono">{{ $event->resolved_rules_version }}</span>@if ($event->effective_rules_version !== $event->resolved_rules_version)
                 <span class="text-warning"> (event pinned to {{ $event->effective_rules_version }}, which is not yet available)</span>@endif.

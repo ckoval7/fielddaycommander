@@ -73,7 +73,7 @@ Slots:
     <div class="px-4 py-2.5 flex items-baseline justify-between border-b border-base-300">
         <h2 class="font-semibold">{{ $title }}</h2>
         @if($subtitle)
-            <span class="text-xs text-base-content/50">{{ $subtitle }}</span>
+            <span class="text-xs text-base-content/70">{{ $subtitle }}</span>
         @endif
     </div>
 
@@ -115,7 +115,7 @@ Slots:
     >
         {{-- Empty state: shown until any row (server or queued) renders --}}
         <div class="h-full flex items-center justify-center group-has-[tbody_tr]/log:hidden">
-            <div class="text-center text-base-content/50 space-y-1">
+            <div class="text-center text-base-content/70 space-y-1">
                 <p>No contacts logged yet.</p>
                 <p class="text-xs">Enter callsign, class, and section, e.g. <span class="font-mono font-bold">{{ $example }}</span></p>
             </div>

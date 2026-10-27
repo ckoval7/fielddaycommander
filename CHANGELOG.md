@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+
+- On **Log Contact**, screen readers now announce logged contacts and dupes, dupe warnings as you type, callsign, class, and section errors, connection loss and return, failed syncs, and contacts recalled for editing, saved, or deleted. The exchange box is named **Exchange** with brief instructions, and suggestions work with the arrow keys.
+- Across the app, screen readers now read field labels, hints, and errors, identify invalid fields, name icon-only buttons and dialogs, report unread notification counts, and read table column headers. Each page has a **Skip to main content** link, a browser tab title, and one main heading, with navigation separate from the main content, and the section map has a section list with worked status and contact details.
+- The header countdown no longer interrupts screen reader users every second. Pop-up messages are now read aloud and stay on screen for 5 seconds instead of 3.
+- Keyboard users can now switch tabs on the event dashboard, event equipment, schedule management, settings, and profile pages, reach row menu actions such as **Edit**, **Lock Account**, and **Delete**, filter event equipment with the status cards, select roles in settings, open equipment photos, and use the photo upload area. On phones and tablets, opening the menu moves focus inside, keeps Tab within it, and lets Escape close it and return focus to the menu button, while the collapsed sidebar keeps its link names for screen readers and its collapse button reports whether it is open.
+- Faint timestamps, hints, captions, and update notices across the app are darker and easier to read in bright light. The amber score figures on **Scoring** are darker too.
+- On **Log Contact**, recalling an already synced contact with the Up arrow and choosing **Save** with an invalid exchange silently did nothing. It now shows the error.
+
 ## 26.10.13 - 2026-10-26
 
 ### Added

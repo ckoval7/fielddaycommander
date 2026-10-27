@@ -288,7 +288,7 @@
         <x-card class="text-center">
             <div class="py-8 space-y-4">
                 <x-icon name="phosphor-check-circle" class="w-16 h-16 mx-auto text-success" />
-                <h3 class="text-xl font-semibold">Thank You!</h3>
+                <h2 class="text-xl font-semibold">Thank You!</h2>
                 <p class="text-base-content/70">Your guestbook entry has been recorded.</p>
                 {{-- On a kiosk, a ring beside the button counts down and clears the thank-you screen for the next visitor --}}
                 <div

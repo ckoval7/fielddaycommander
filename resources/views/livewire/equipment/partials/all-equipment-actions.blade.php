@@ -5,9 +5,9 @@
 {{-- Per-item actions menu for the Equipment Catalog list --}}
 @php($commitment = $item->activeCommitments->first())
 <x-dropdown>
-    <x-slot:trigger>
-        <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />
-    </x-slot:trigger>
+    <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
     <x-menu-item title="Edit" icon="phosphor-pencil-simple" link="{{ route('equipment.edit', $item) }}" wire:navigate />
 

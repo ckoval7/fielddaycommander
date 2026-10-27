@@ -11,6 +11,8 @@
  * Usage in Blade:
  *   <div x-data="contactQueue(sessionId, csrfToken)">
  */
+import { announce } from './announcer';
+
 /** Where the Advanced Fields panel's open state is kept on this device. */
 const ADVANCED_OPEN_KEY = 'fd-commander-advanced-open';
 
@@ -106,6 +108,23 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             });
 
             this.syncIntervalId = setInterval(() => this.syncNext(), 3000);
+
+            // Screen readers hear what sighted operators see change.
+            this.$watch('parseError', (message) => {
+                if (message) {
+                    announce(message, { assertive: true });
+                }
+            });
+            this.$watch('isOnline', (online) => {
+                announce(online
+                    ? 'Back online. Queued contacts are syncing.'
+                    : 'Offline. Contacts are saved on this device and sync when the connection returns.', { assertive: !online });
+            });
+            this.$watch('recalledExchange', (exchange) => {
+                if (exchange) {
+                    announce(`Editing ${exchange}. Enter saves, Delete removes it, Escape cancels.`);
+                }
+            });
 
             // Drop queued copies once the server-rendered row for the same
             // contact lands, so the log never shows both or neither.
@@ -293,6 +312,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const advanced = this.parseAdvancedFields();
             if (!advanced) return; // parseError already set
 
+            this.announceLogged(parsed.callsign, rawInput);
+
             this.enqueue({
                 band_id: sessionContext.band_id,
                 mode_id: sessionContext.mode_id,
@@ -328,6 +349,26 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         parseError: '',
+
+        /**
+         * Confirm a logged contact to screen readers, flagging a dupe when the
+         * server's dupe check was for exactly this exchange.
+         */
+        announceLogged(callsign, rawInput) {
+            const wire = this.$wire;
+            const isDupe = Boolean(wire?.isDuplicate)
+                && String(wire?.exchangeInput ?? '').trim().toUpperCase() === rawInput.toUpperCase();
+            const parts = [`Logged ${callsign}`];
+
+            if (isDupe) {
+                parts.push('dupe');
+            }
+            if (!this.isOnline) {
+                parts.push('saved on this device until the connection returns');
+            }
+
+            announce(parts.join(', '));
+        },
 
         /**
          * GOTA contacts are credited to the GOTA operator: a linked user, or a first and last name.
@@ -798,12 +839,17 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
                     candidate.last_error_code = errorData.code ?? null;
                     this.saveQueue();
+                    // Retries fail the same way; say it once.
+                    if (candidate.attempts === 1) {
+                        announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
+                    }
                 } else if (response.status === 401 || response.status === 419) {
                     // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
                     candidate.attempts = 999;
                     candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
+                    announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
                 } else {
                     // Transient server error - retry
                     candidate.status = 'pending';
@@ -1032,6 +1078,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 this.recalledUuid = null;
                 this.queue = this.queue.filter(c => c.uuid !== uuid);
                 this.saveQueue();
+                announce(`Deleted ${this.recalledExchange}`);
                 globalThis.Livewire?.dispatch('contact-discarded');
                 this.exitRecall(inputEl);
                 return;
@@ -1081,6 +1128,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     delete entry._prevStatus;
                     this.schedulePendingIndicator(entry);
                     this.saveQueue();
+                    announce(`Saved ${entry.callsign}`);
                 }
 
                 // exitRecall would try to release the lock, but we've already
