@@ -302,7 +302,7 @@
                     <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
-                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="QSO rate by hour">
+                <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">
@@ -369,7 +369,7 @@
                     <p class="text-sm" style="color: var(--reports-text-muted);">No contacts logged yet.</p>
                 </div>
             @else
-                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Contacts by logger">
+                <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--reports-border);">

@@ -58,7 +58,7 @@
             @endif
 
             {{-- Schedule table --}}
-            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Transmission schedule">
+            <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
                         <tr>
@@ -322,7 +322,7 @@
                                             <summary class="cursor-pointer text-sm font-medium text-base-content/70 hover:text-base-content">
                                                 Bulletin text changed
                                             </summary>
-                                            <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto" tabindex="0" role="region" aria-label="Bulletin text">
+                                            <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto">
                                                 @foreach($this->diffLines($entry->old_values['bulletin_text'], $entry->new_values['bulletin_text']) as $line)
                                                     <div class="{{ match($line['type']) {
                                                         'added' => 'bg-success/10 text-success border-l-2 border-success pl-2',

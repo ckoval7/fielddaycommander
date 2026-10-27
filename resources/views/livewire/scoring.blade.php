@@ -97,7 +97,7 @@
 
             {{-- Band/Mode Grid --}}
             @if (count($this->bandModeGrid) > 0 && collect($this->bandModeGrid)->sum('total_count') > 0)
-                <div class="overflow-x-auto mb-4" tabindex="0" role="region" aria-label="Scoring tables">
+                <div class="overflow-x-auto mb-4">
                     <table class="w-full text-xs">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--score-divider);">

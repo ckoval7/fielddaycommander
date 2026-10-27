@@ -737,6 +737,40 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 || (entry.last_error ?? '').includes('dated in the future');
         },
 
+        /**
+         * The server turned a queued contact down (422): re-date it once if it
+         * was stamped in the future, otherwise mark it failed.
+         */
+        handleRejectedSync(candidate, errorData) {
+            if (errorData.code === 'qso_time_in_future' && !candidate.restamped) {
+                // Stamped with a wrong clock offset (or before offsets
+                // were measured): re-date it on the server clock once
+                // and send it again.
+                if (Number.isFinite(errorData.server_time)) {
+                    this.clockOffsetMs = errorData.server_time - Date.now();
+                }
+                this.restamp(candidate);
+                candidate.restamped = true;
+                candidate.status = 'pending';
+                this.saveQueue();
+                return;
+            }
+            candidate.status = 'failed';
+            candidate.attempts++;
+            candidate.lastAttemptTime = Date.now();
+            candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
+            candidate.last_error_code = errorData.code ?? null;
+            this.saveQueue();
+            // Retries fail the same way; say it once.
+            if (candidate.attempts === 1) {
+                this.announceSyncFailure(candidate);
+            }
+        },
+
+        announceSyncFailure(candidate) {
+            announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
+        },
+
         async syncNext() {
             if (!this.isOnline) {
                 return;
@@ -819,37 +853,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     // reliable after wire:navigate SPA transitions.
                     globalThis.Livewire?.dispatch('contact-synced');
                 } else if (response.status === 422) {
-                    const errorData = await response.json();
-                    if (errorData.code === 'qso_time_in_future' && !candidate.restamped) {
-                        // Stamped with a wrong clock offset (or before offsets
-                        // were measured): re-date it on the server clock once
-                        // and send it again.
-                        if (Number.isFinite(errorData.server_time)) {
-                            this.clockOffsetMs = errorData.server_time - Date.now();
-                        }
-                        this.restamp(candidate);
-                        candidate.restamped = true;
-                        candidate.status = 'pending';
-                        this.saveQueue();
-                        return;
-                    }
-                    candidate.status = 'failed';
-                    candidate.attempts++;
-                    candidate.lastAttemptTime = Date.now();
-                    candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
-                    candidate.last_error_code = errorData.code ?? null;
-                    this.saveQueue();
-                    // Retries fail the same way; say it once.
-                    if (candidate.attempts === 1) {
-                        announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
-                    }
+                    this.handleRejectedSync(candidate, await response.json());
                 } else if (response.status === 401 || response.status === 419) {
                     // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
                     candidate.attempts = 999;
                     candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
-                    announce(`${candidate.callsign} did not sync. ${candidate.last_error}`, { assertive: true });
+                    this.announceSyncFailure(candidate);
                 } else {
                     // Transient server error - retry
                     candidate.status = 'pending';

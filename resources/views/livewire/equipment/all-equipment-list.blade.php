@@ -91,7 +91,7 @@
 
         {{-- Desktop Table View --}}
         <x-card shadow class="hidden xl:block">
-            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment catalog">
+            <div class="overflow-x-auto">
                 <table class="table table-zebra">
                     <thead>
                         <tr>

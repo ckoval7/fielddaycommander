@@ -151,8 +151,9 @@
                         type="button"
                         wire:click="$set('sortDir', '{{ $sortDir === 'asc' ? 'desc' : 'asc' }}')"
                         class="btn btn-sm btn-outline"
-                        title="{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}" aria-label="{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}"
+                        title="{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}"
                     >
+                        <span class="sr-only">{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}</span>
                         @if($sortDir === 'asc')
                             <x-icon name="phosphor-sort-ascending" class="w-4 h-4" />
                         @else

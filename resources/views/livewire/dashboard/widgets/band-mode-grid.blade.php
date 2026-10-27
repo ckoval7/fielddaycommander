@@ -14,7 +14,7 @@
                 <p>No contacts logged yet</p>
             </div>
         @else
-            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Band and mode activity">
+            <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
                         <tr>

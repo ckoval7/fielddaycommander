@@ -49,7 +49,7 @@
                 </x-alert>
             @else
                 {{-- Table of operating sessions --}}
-                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Recent operating sessions">
+                <div class="overflow-x-auto">
                     <table class="table">
                         <thead>
                             <tr>

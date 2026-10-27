@@ -248,7 +248,7 @@
                             class="select-sm"
                         />
                     </x-slot:menu>
-                    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Import records">
+                    <div class="overflow-x-auto">
                         <table class="table table-sm">
                             <thead>
                                 <tr>

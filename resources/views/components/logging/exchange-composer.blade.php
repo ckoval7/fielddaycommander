@@ -41,7 +41,12 @@ Slots:
     'error' => null,
 ])
 
-<div class="border-t border-base-300 p-3 space-y-2" x-data="{ si: -1 }">
+{{-- Arrowing through suggestions reads each one out; focus stays in the exchange box --}}
+<div
+    class="border-t border-base-300 p-3 space-y-2"
+    x-data="{ si: -1 }"
+    x-init="$watch('si', (index) => { const option = document.getElementById('exchange-suggestion-' + index); if (option) { window.fdcAnnounce?.(option.innerText) } })"
+>
     {{-- Recall Mode Indicator --}}
     <template x-if="isRecalling">
         <div class="alert alert-info py-2">
@@ -73,10 +78,10 @@ Slots:
     @endif
 
     {{-- Always rendered, so screen readers hear a dupe or error as soon as it appears --}}
-    <div id="exchange-warnings" class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+    <output id="exchange-warnings" class="sr-only" aria-live="polite" aria-atomic="true">
         @if($duplicateWarning)Dupe: {{ $duplicateWarning }}.@endif
         {{ $participantWarning }}
-    </div>
+    </output>
     <div class="sr-only" role="alert" aria-atomic="true">{{ $error }}</div>
     <p id="exchange-help" class="sr-only">Callsign, class and section, for example {{ $placeholder }}. Enter logs the contact. Up arrow recalls earlier contacts.</p>
 
@@ -134,11 +139,7 @@ Slots:
                 placeholder="{{ $placeholder }}"
                 aria-label="Exchange"
                 aria-describedby="exchange-warnings exchange-help"
-                role="combobox"
                 aria-autocomplete="list"
-                aria-controls="exchange-suggestions"
-                aria-expanded="{{ count($suggestions) > 0 ? 'true' : 'false' }}"
-                :aria-activedescendant="si >= 0 ? 'exchange-suggestion-' + si : null"
                 autocomplete="off"
                 autocapitalize="characters"
                 autocorrect="off"
@@ -147,7 +148,7 @@ Slots:
             />
 
             {{-- Autocomplete Suggestions --}}
-            <div id="exchange-suggestions" role="listbox" aria-label="Earlier exchanges" @class([
+            <div id="exchange-suggestions" @class([
                 'absolute z-50 w-full bottom-full mb-1 bg-base-100 border border-base-300 rounded-box shadow-lg max-h-48 overflow-y-auto',
                 'hidden' => count($suggestions) === 0,
             ])>
@@ -155,8 +156,6 @@ Slots:
                     @foreach($suggestions as $index => $suggestion)
                         <button
                             id="exchange-suggestion-{{ $index }}"
-                            role="option"
-                            :aria-selected="(si === {{ $index }}).toString()"
                             tabindex="-1"
                             wire:click="selectSuggestion({{ Js::from($suggestion['exchange']) }})"
                             :class="{ 'bg-primary text-primary-content': si === {{ $index }} }"

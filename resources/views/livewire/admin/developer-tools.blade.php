@@ -183,7 +183,7 @@
                                     <p class="text-sm">Create a snapshot to save the current database state</p>
                                 </div>
                             @else
-                                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Existing snapshots">
+                                <div class="overflow-x-auto">
                                     <table class="table table-zebra w-full">
                                         <thead>
                                             <tr>

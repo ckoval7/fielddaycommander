@@ -89,7 +89,7 @@
                             </svg>
                             <span x-text="failedCount + ' failed'"></span>
                         </button>
-                        <div tabindex="0" role="region" aria-label="Failed contacts" class="dropdown-content z-50 bg-base-100 border border-base-300 rounded-box shadow-lg p-3 w-72 mt-2">
+                        <div class="dropdown-content z-50 bg-base-100 border border-base-300 rounded-box shadow-lg p-3 w-72 mt-2">
                             <div class="text-sm font-semibold mb-2">Failed Contacts</div>
                             <template x-for="contact in failedContacts" :key="contact.uuid">
                                 <div class="flex items-center justify-between py-1.5 border-b border-base-200 last:border-0">

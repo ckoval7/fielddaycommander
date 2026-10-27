@@ -146,7 +146,7 @@
                 <div class="card bg-base-100 shadow mb-4">
                     <div class="card-body">
                         <h2 class="card-title text-base font-semibold text-base-content/70 uppercase tracking-wide text-xs mb-3">Next 12 Hours</h2>
-                        <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Next 12 hours">
+                        <div class="overflow-x-auto">
                             <table class="table table-sm text-center">
                                 <thead>
                                     <tr class="text-xs text-base-content/70">

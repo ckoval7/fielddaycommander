@@ -13,7 +13,7 @@
                 </x-button>
             </x-slot:menu>
 
-            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Role permissions">
+            <div class="overflow-x-auto">
                 <table class="table table-sm">
                     <thead>
                         <tr>

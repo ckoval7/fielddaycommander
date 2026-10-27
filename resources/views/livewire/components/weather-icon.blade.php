@@ -14,8 +14,9 @@
             href="{{ route('weather.index') }}"
             class="flex items-center gap-1.5 btn btn-ghost btn-md lg:btn-sm px-2 min-w-11 {{ $isGrayedOut ? 'opacity-70' : '' }}"
             title="View Weather"
-            aria-label="Weather{{ $hasData && $temperature !== null ? ', '.round($temperature).' degrees' : '' }}"
         >
+            {{-- Named by its visible text (temperature, Manual) so voice control can target it --}}
+            <span class="sr-only">Weather</span>
             <x-icon name="{{ $this->iconName() }}" class="w-6 h-6 lg:w-5 lg:h-5" />
 
             @if($hasData && $temperature !== null)

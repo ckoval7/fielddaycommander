@@ -220,7 +220,7 @@
                 {{-- Equipment List --}}
                 <x-card title="All Equipment ({{ $this->filteredCommitments->count() }})" shadow separator>
                     @if($this->filteredCommitments->count() > 0)
-                        <div class="overflow-x-auto" tabindex="0" role="region" aria-label="All equipment">
+                        <div class="overflow-x-auto">
                             <table class="table table-zebra">
                                 <thead>
                                     <tr>
@@ -443,7 +443,7 @@
                                 </div>
                             </x-slot:title>
 
-                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment from {{ $ownerGroup['owner_name'] }}">
+                            <div class="overflow-x-auto">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
@@ -630,7 +630,7 @@
                                 </div>
                             </x-slot:title>
 
-                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment at {{ $stationGroup['station_name'] }}">
+                            <div class="overflow-x-auto">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>

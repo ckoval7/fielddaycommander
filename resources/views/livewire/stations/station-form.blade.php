@@ -85,7 +85,7 @@
                                 No operating sessions logged for this station yet.
                             </x-alert>
                         @else
-                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Operating sessions">
+                            <div class="overflow-x-auto">
                                 <table class="table">
                                     <thead>
                                         <tr>

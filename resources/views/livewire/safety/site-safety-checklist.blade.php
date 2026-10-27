@@ -21,8 +21,7 @@
                     <x-badge :value="$summary['completed'] . ' of ' . $summary['total'] . ' complete'" class="badge-info" />
                     <x-badge :value="$summary['required_completed'] . ' of ' . $summary['required_total'] . ' required'" class="badge-warning" />
                     {{-- wire:ignore keeps Livewire from morphing the Alpine scope away after each save (#20). --}}
-                    <span
-                        role="status"
+                    <output
                         wire:key="autosave-indicator"
                         wire:ignore
                         x-data="{ show: false }"
@@ -38,7 +37,7 @@
                         style="display: none;"
                     >
                         <x-icon name="phosphor-check" class="w-3.5 h-3.5 inline" /> Saved
-                    </span>
+                    </output>
                 </div>
             @endif
         </div>

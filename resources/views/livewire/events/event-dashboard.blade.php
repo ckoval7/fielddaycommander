@@ -352,7 +352,7 @@
                             <p>No contacts logged yet.</p>
                         </div>
                     @else
-                        <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Recent contacts">
+                        <div class="overflow-x-auto">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
@@ -432,7 +432,7 @@
                         </div>
 
                         @if(count($this->bandModeGrid) > 0 && collect($this->bandModeGrid)->sum('total_count') > 0)
-                            <div class="overflow-x-auto" tabindex="0" role="region" aria-label="QSO points">
+                            <div class="overflow-x-auto">
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
@@ -597,7 +597,7 @@
                                     <p>No equipment was committed to this event.</p>
                                 </div>
                             @else
-                                <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Equipment used">
+                                <div class="overflow-x-auto">
                                     <table class="table table-sm">
                                         <thead>
                                             <tr>

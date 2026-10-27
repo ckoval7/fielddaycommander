@@ -3,5 +3,5 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- Screen reader announcements; written by resources/js/components/announcer.js --}}
-<div id="fdc-announce-polite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<output id="fdc-announce-polite" class="sr-only" aria-live="polite" aria-atomic="true"></output>
 <div id="fdc-announce-assertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>

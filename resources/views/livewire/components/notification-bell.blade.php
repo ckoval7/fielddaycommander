@@ -15,15 +15,15 @@
         @click="open = !open"
         class="btn btn-ghost btn-circle btn-md lg:btn-sm relative"
         title="Notifications"
-        aria-label="Notifications{{ $unreadCount > 0 ? ', '.$unreadCount.' unread' : '' }}"
         aria-haspopup="true"
         :aria-expanded="open.toString()"
         aria-expanded="false"
     >
+        <span class="sr-only">Notifications</span>
         <x-icon name="phosphor-bell" class="w-6 h-6 lg:w-5 lg:h-5" aria-hidden="true" />
         @if($unreadCount > 0)
-            <span aria-hidden="true" class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
-                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+            <span class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}<span class="sr-only"> unread</span>
             </span>
         @endif
     </button>

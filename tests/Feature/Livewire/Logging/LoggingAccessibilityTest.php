@@ -92,16 +92,15 @@ test('the logging page is headed by the station name', function () {
         ->assertSeeInOrder(['<h1', 'Phone 1', '</h1>'], false);
 });
 
-test('the exchange input is a named combobox with its help and warnings', function () {
+test('the exchange input is named and linked to its help and warnings', function () {
     $this->actingAs($this->user);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->assertSeeHtml('aria-label="Exchange"')
-        ->assertSeeHtml('role="combobox"')
         ->assertSeeHtml('aria-describedby="exchange-warnings exchange-help"')
-        ->assertSeeHtml('id="exchange-warnings" class="sr-only" role="status" aria-live="polite"')
+        ->assertSeeHtml('<output id="exchange-warnings" class="sr-only" aria-live="polite"')
         ->assertSeeHtml('id="exchange-help" class="sr-only"')
-        ->assertSeeHtml('id="exchange-suggestions" role="listbox"');
+        ->assertSeeHtml("x-init=\"\$watch('si'");
 });
 
 test('a dupe is put in the announced warning region', function () {

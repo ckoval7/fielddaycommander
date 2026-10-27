@@ -30,10 +30,10 @@
     </x-header>
 
     @if(session('status'))
-        <div role="status" class="alert alert-info mb-4">
+        <output class="alert alert-info mb-4">
             <x-icon name="phosphor-info" class="w-5 h-5" />
             <span>{{ session('status') }}</span>
-        </div>
+        </output>
     @endif
 
     @if($this->events->isEmpty())

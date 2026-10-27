@@ -27,7 +27,7 @@ test('layouts have the announcement regions', function (string $layout) {
     $html = view($layout, ['slot' => ''])->render();
 
     expect($html)
-        ->toContain('id="fdc-announce-polite" class="sr-only" role="status" aria-live="polite"')
+        ->toContain('<output id="fdc-announce-polite" class="sr-only" aria-live="polite"')
         ->toContain('id="fdc-announce-assertive" class="sr-only" role="alert" aria-live="assertive"');
 })->with(['components.layouts.app', 'components.layouts.guest']);
 
@@ -103,7 +103,7 @@ test('the header controls have names', function () {
 
     expect($html)
         ->toContain('aria-label="Account menu for K1ABC"')
-        ->toContain('aria-label="Notifications');
+        ->toContain('<span class="sr-only">Notifications</span>');
 });
 
 test('guest pages with their own heading do not get a second one', function () {

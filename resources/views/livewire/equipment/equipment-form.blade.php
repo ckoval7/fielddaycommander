@@ -256,24 +256,21 @@
                         </div>
                     @else
                         {{-- Upload placeholder --}}
-                        <div
-                            class="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-base-300 rounded-lg bg-base-200/30 hover:bg-base-200/50 hover:border-primary/50 transition-colors cursor-pointer"
-                            role="button"
-                            tabindex="0"
+                        <button
+                            type="button"
+                            class="w-full flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-base-300 rounded-lg bg-base-200/30 hover:bg-base-200/50 hover:border-primary/50 transition-colors cursor-pointer"
                             x-on:click="$refs.photoInput.click()"
-                            x-on:keydown.enter.prevent="$refs.photoInput.click()"
-                            x-on:keydown.space.prevent="$refs.photoInput.click()"
                         >
-                            <div wire:loading.remove wire:target="photo">
+                            <span class="flex flex-col items-center" wire:loading.remove wire:target="photo">
                                 <x-icon name="phosphor-image" class="w-12 h-12 text-base-content/40 mb-3" />
-                                <p class="text-base font-medium text-base-content mb-1">Choose a photo</p>
-                                <p class="text-sm text-base-content/60">PNG or JPEG up to 5 MB</p>
-                            </div>
-                            <div wire:loading wire:target="photo" class="flex items-center gap-2">
+                                <span class="text-base font-medium text-base-content mb-1">Choose a photo</span>
+                                <span class="text-sm text-base-content/60">PNG or JPEG up to 5 MB</span>
+                            </span>
+                            <span wire:loading wire:target="photo" class="flex items-center gap-2">
                                 <span class="loading loading-spinner loading-md"></span>
                                 <span class="text-base-content/70">Uploading...</span>
-                            </div>
-                        </div>
+                            </span>
+                        </button>
                     @endif
 
                     @error('photo')

@@ -150,7 +150,7 @@
             </div>
         @else
             {{-- Desktop Table View --}}
-            <div class="hidden lg:block overflow-x-auto" tabindex="0" role="region" aria-label="Messages">
+            <div class="hidden lg:block overflow-x-auto">
                 <table class="table table-zebra">
                     <thead>
                         <tr>
@@ -227,8 +227,8 @@
                                                     <button
                                                         class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                                         wire:click="editSentBy({{ $message->id }})"
-                                                        title="Change sender" aria-label="Change sender"
-                                                    >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}</button>
+                                                        title="Change sender"
+                                                    >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}<span class="sr-only">, change sender</span></button>
                                                 @endif
                                             </div>
                                             <x-button aria-label="Delete message {{ $message->message_number }}"
