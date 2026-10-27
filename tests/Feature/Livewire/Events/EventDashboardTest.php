@@ -220,7 +220,7 @@ test('event dashboard displays guestbook stats when guestbook is enabled', funct
         ->assertSee('Elected Official')
         ->assertSee('Served Agency')
         ->assertDontSee('Media Publicity')
-        ->assertSee('200 pts'); // elected official + agency = 200
+        ->assertSeeHtml('200 <span aria-hidden="true">pts</span><span class="sr-only">points</span>'); // elected official + agency = 200
 });
 
 test('event dashboard hides guestbook stats when guestbook is disabled', function () {
@@ -748,7 +748,7 @@ test('scoring tab follows Winter Field Day rules for a WFD event', function () {
     expect($labels)->toBe(['QSO Points', 'OM + 1'])
         ->and($component->get('scoringTotals')['final_score'])->toBe(6); // 6 QSO pts x (0 + 1)
 
-    $component->assertSee('Phone = 3 pts')
+    $component->assertSeeHtml('Phone = 3 <span aria-hidden="true">pts</span><span class="sr-only">points</span>')
         ->assertDontSee('Phone = 1 pt')
         ->assertSee('OM + 1')
         ->assertDontSee('Power Multi')

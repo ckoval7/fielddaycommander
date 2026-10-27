@@ -278,7 +278,7 @@
                                                     <span class="badge badge-warning badge-sm">Skipped</span>
                                                     @break
                                                 @case('imported')
-                                                    <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 pts)' : 'Imported' }}</span>
+                                                    <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 points)' : 'Imported' }}</span>
                                                     @break
                                                 @case('invalid')
                                                     <span class="badge badge-error badge-sm" title="{{ $record->notes }}">Invalid</span>

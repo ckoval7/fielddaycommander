@@ -24,7 +24,7 @@
             <div class="text-2xl sm:text-3xl font-bold text-success mt-1">{{ number_format($this->stats['total_points']) }}</div>
             @if($this->stats['gota_points'] > 0)
                 <div class="text-xs text-base-content/60 mt-1">
-                    Plus {{ number_format($this->stats['gota_points']) }} GOTA bonus pts
+                    Plus {{ number_format($this->stats['gota_points']) }} GOTA bonus <x-points-unit />
                 </div>
             @endif
         </div>

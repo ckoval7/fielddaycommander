@@ -254,7 +254,7 @@
                                 $contact->band->name ?? '—',
                                 $contact->mode->name ?? '—',
                                 $contact->section->code ?? '—',
-                                $contact->points.'pt',
+                                $contact->points.' '.Str::plural('point', $contact->points),
                             ]"
                         />
                     @endforeach

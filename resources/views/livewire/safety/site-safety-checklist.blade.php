@@ -78,7 +78,7 @@
                                 <div class="flex items-center gap-2">
                                     <x-icon name="phosphor-shield-check" class="w-5 h-5" />
                                     <span>{{ $type->label() }}</span>
-                                    <x-badge :value="$type->bonusPoints() . ' bonus pts'" class="badge-warning badge-sm" />
+                                    <x-badge :value="$type->bonusPoints() . ' bonus points'" class="badge-warning badge-sm" />
                                 </div>
                             </x-slot:title>
 

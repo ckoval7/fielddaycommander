@@ -396,7 +396,8 @@ describe('stats', function () {
 
         Livewire::test(LogbookBrowser::class)
             ->assertSeeText('1 dupe not counted')
-            ->assertSeeText('Plus 5 GOTA bonus pts');
+            ->assertSeeText('Plus 5 GOTA bonus')
+            ->assertSeeHtml('<span aria-hidden="true">pts</span><span class="sr-only">points</span>');
     });
 });
 

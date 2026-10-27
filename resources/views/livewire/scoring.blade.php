@@ -90,7 +90,7 @@
                     @php $modePoints = $this->pointsForMode($mode); @endphp
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
                           style="background: var(--score-surface-alt); color: var(--score-text);">
-                        {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
+                        {{ $mode->name }} = {{ $modePoints }} <x-points-unit :count="$modePoints" />
                     </span>
                 @endforeach
             </div>
@@ -322,7 +322,7 @@
                         @if ($this->awardsAreMultipliers)
                             OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                         @else
-                            {{ number_format($this->bonusSummary['verified_pts']) }} pts
+                            {{ number_format($this->bonusSummary['verified_pts']) }} <x-points-unit />
                         @endif
                     </div>
                 </div>
@@ -335,7 +335,7 @@
                         @if ($this->awardsAreMultipliers)
                             OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                         @else
-                            {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
+                            {{ number_format($this->bonusSummary['claimed_pts']) }} <x-points-unit /> pending
                         @endif
                     </div>
                 </div>
@@ -360,11 +360,11 @@
                             </x-bonus-rule-help>
                             @if ($item['type']->is_per_occurrence && $item['bonus'])
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} pts
+                                    {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} <x-points-unit />
                                 </div>
                             @elseif ($item['type']->is_per_transmitter && $item['points'] > 0)
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ min($this->event->eventConfiguration->transmitter_count, 20) }} {{ Str::plural('transmitter', min($this->event->eventConfiguration->transmitter_count, 20)) }} × {{ $item['type']->base_points }} pts
+                                    {{ min($this->event->eventConfiguration->transmitter_count, 20) }} {{ Str::plural('transmitter', min($this->event->eventConfiguration->transmitter_count, 20)) }} × {{ $item['type']->base_points }} <x-points-unit />
                                 </div>
                             @endif
                         </div>
@@ -374,11 +374,11 @@
                                 @if ($item['type']->objective_multiplier !== null)
                                     OM ×{{ $item['type']->objective_multiplier }}
                                 @elseif ($item['status'] === 'claimed')
-                                    {{ $item['points'] }} pts
+                                    {{ $item['points'] }} <x-points-unit />
                                 @elseif ($item['points'] > 0)
                                     +{{ $item['points'] }}
                                 @else
-                                    {{ $item['type']->base_points }} pts
+                                    {{ $item['type']->base_points }} <x-points-unit />
                                 @endif
                             </span>
 
@@ -416,7 +416,7 @@
                                     <span class="text-sm font-medium" style="color: var(--score-text);">GOTA QSO Bonus</span>
                                 </x-bonus-rule-help>
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ $this->gotaContactCount }} contacts × 5 pts
+                                    {{ $this->gotaContactCount }} contacts × 5 <x-points-unit />
                                 </div>
                             </div>
                             <span class="text-xs tabular-nums font-semibold" style="color: var(--score-headline);">

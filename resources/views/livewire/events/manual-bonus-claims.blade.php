@@ -39,14 +39,14 @@
                                     @if($bonusType->objective_multiplier !== null)
                                         OM ×{{ $bonusType->objective_multiplier }}
                                     @else
-                                        +{{ $bonus->calculated_points }} pts
+                                        +{{ $bonus->calculated_points }} <x-points-unit />
                                     @endif
                                 @elseif($bonusType->objective_multiplier !== null)
                                     OM ×{{ $bonusType->objective_multiplier }}
                                 @elseif($bonusType->is_per_occurrence && $bonusType->max_occurrences)
-                                    {{ $bonusType->base_points }}-{{ $bonusType->max_points }} pts
+                                    {{ $bonusType->base_points }}-{{ $bonusType->max_points }} <x-points-unit />
                                 @else
-                                    {{ $bonusType->base_points }} pts
+                                    {{ $bonusType->base_points }} <x-points-unit />
                                 @endif
                             </span>
                         </div>
@@ -70,7 +70,7 @@
                                             placeholder="1"
                                         />
                                         <span class="text-xs text-base-content/70">
-                                            ({{ $bonusType->base_points }} pts each, max {{ $bonusType->max_occurrences }})
+                                            ({{ $bonusType->base_points }} <x-points-unit /> each, max {{ $bonusType->max_occurrences }})
                                         </span>
                                     </div>
                                 @endif
@@ -151,12 +151,12 @@
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium">Total youth (max 5)</span>
                         <span class="text-sm tabular-nums font-semibold {{ $youth['points'] > 0 ? 'text-success' : 'text-base-content/70' }}">
-                            {{ $youth['total'] }} youth = {{ $youth['points'] > 0 ? '+' : '' }}{{ $youth['points'] }} pts
+                            {{ $youth['total'] }} youth = {{ $youth['points'] > 0 ? '+' : '' }}{{ $youth['points'] }} <x-points-unit />
                         </span>
                     </div>
 
                     <div class="text-xs text-base-content/70">
-                        20 pts per youth (age 18 or younger) who completes at least one QSO. Max 100 pts.
+                        20 <x-points-unit /> per youth (age 18 or younger) who completes at least one QSO. Max 100 <x-points-unit />.
                     </div>
                 </div>
             </x-card>

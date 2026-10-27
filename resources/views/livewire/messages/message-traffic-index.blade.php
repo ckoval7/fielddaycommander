@@ -51,7 +51,7 @@
                 @endif
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">SM/SEC</div>
-                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['sm_points'] }} pts</div>
+                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['sm_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -63,7 +63,7 @@
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">Message Handling</div>
                     <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['traffic_count'] }}/10</div>
-                    <div class="text-xs text-base-content/60">{{ $this->bonusSummary['traffic_points'] }} pts</div>
+                    <div class="text-xs text-base-content/60">{{ $this->bonusSummary['traffic_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -78,7 +78,7 @@
                 @endif
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">W1AW</div>
-                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['w1aw_points'] }} pts</div>
+                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['w1aw_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -89,7 +89,7 @@
                 <x-icon name="phosphor-trophy" class="w-6 h-6 lg:w-8 lg:h-8 text-primary shrink-0" />
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide">Total</div>
-                    <div class="text-xl lg:text-2xl font-bold text-primary">{{ $this->bonusSummary['total'] }} pts</div>
+                    <div class="text-xl lg:text-2xl font-bold text-primary">{{ $this->bonusSummary['total'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>

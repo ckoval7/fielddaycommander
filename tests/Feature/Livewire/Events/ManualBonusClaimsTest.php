@@ -227,7 +227,7 @@ test('youth section shows auto-detected youth count', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
         ->assertSee('Registered youth with QSOs')
-        ->assertSee('20 pts');
+        ->assertSeeHtml('20 <span aria-hidden="true">pts</span><span class="sr-only">points</span>');
 });
 
 test('elected_official_visit and agency_visit are derived and not shown as manual claims', function () {

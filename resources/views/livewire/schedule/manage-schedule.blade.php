@@ -328,7 +328,7 @@
                                                 <div class="flex flex-col gap-1 mt-1 text-sm text-base-content/70">
                                                     <div class="flex items-center gap-3">
                                                         @if($role->bonus_points)
-                                                            <span>Bonus: {{ $role->bonus_points }} pts</span>
+                                                            <span>Bonus: {{ $role->bonus_points }} <x-points-unit /></span>
                                                             @if($role->getBonusTypeCode())
                                                                 <x-badge value="Auto-awarded on confirmation" class="badge-success badge-sm badge-outline" />
                                                             @endif

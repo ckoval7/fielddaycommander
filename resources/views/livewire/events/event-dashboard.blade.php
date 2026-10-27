@@ -320,7 +320,7 @@
                                 <!-- Bonus Points Total -->
                                 <div>
                                     <div class="text-sm text-base-content/60">Guestbook Bonus</div>
-                                    <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
+                                    <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} <x-points-unit /></div>
                                 </div>
                             @endif
 
@@ -426,7 +426,7 @@
                             @foreach($this->modes as $mode)
                                 @php $modePoints = $this->pointsForMode($mode); @endphp
                                 <span class="badge badge-outline badge-sm">
-                                    {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
+                                    {{ $mode->name }} = {{ $modePoints }} <x-points-unit :count="$modePoints" />
                                 </span>
                             @endforeach
                         </div>
@@ -493,7 +493,7 @@
                                     @if($this->terms->awardsAreMultipliers)
                                         OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                                     @else
-                                        {{ number_format($this->bonusSummary['verified_pts']) }} pts
+                                        {{ number_format($this->bonusSummary['verified_pts']) }} <x-points-unit />
                                     @endif
                                 </div>
                             </div>
@@ -504,7 +504,7 @@
                                     @if($this->terms->awardsAreMultipliers)
                                         OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                                     @else
-                                        {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
+                                        {{ number_format($this->bonusSummary['claimed_pts']) }} <x-points-unit /> pending
                                     @endif
                                 </div>
                             </div>
@@ -522,13 +522,13 @@
                                         <div class="text-sm font-medium truncate">{{ $item['type']->name }}</div>
                                         @if($item['type']->is_per_occurrence && $item['bonus'])
                                             <div class="text-xs text-base-content/60">
-                                                {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} pts
+                                                {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} <x-points-unit />
                                             </div>
                                         @endif
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/70' }}">
-                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} pts @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} <x-points-unit /> @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} <x-points-unit /> @endif
                                         </span>
                                         @if($item['status'] === 'verified')
                                             <x-badge value="Verified" class="badge-success badge-xs" />
