@@ -262,7 +262,7 @@ test('seeder creates organization and sets default_organization_id', function ()
     expect((int) $settingId)->toBe($org->id);
 });
 
-test('seeder claims setup bonuses before the event and leaves media publicity pending', function () {
+test('seeder claims setup bonuses before the event and verifies the media publicity claim once on the air', function () {
     $event = Event::where('is_active', true)->firstOrFail();
 
     EventBonus::with('bonusType')->get()->each(function (EventBonus $bonus) use ($event) {
@@ -274,8 +274,8 @@ test('seeder claims setup bonuses before the event and leaves media publicity pe
         }
 
         if ($bonus->bonusType->code === 'media_publicity') {
-            expect($bonus->is_verified)->toBeFalse();
-            expect($bonus->verified_at)->toBeNull();
+            expect($bonus->is_verified)->toBeTrue();
+            expect($bonus->calculated_points)->toBe($bonus->bonusType->base_points);
             expect($bonus->created_at->gt($event->start_time))->toBeTrue();
             expect($bonus->created_at->isFuture())->toBeFalse();
 

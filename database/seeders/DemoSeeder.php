@@ -943,8 +943,8 @@ class DemoSeeder extends Seeder
      * Claim the bonuses a club would have in hand by now.
      *
      * Emergency power and the public location are set up and signed off
-     * during setup. The media publicity claim went in after the event started
-     * and is still waiting on the manager's review.
+     * during setup. The media publicity claim went in after the event started,
+     * and like any manual claim in the app it is verified when it is made.
      */
     private function seedBonuses(EventConfiguration $config, User $manager, Event $event): void
     {
@@ -980,16 +980,20 @@ class DemoSeeder extends Seeder
 
         $mediaBonusType = BonusType::resolveFor($event, 'media_publicity');
         if ($mediaBonusType) {
+            $claimedAt = $event->start_time->copy()->addMinutes(random_int(40, 100))->min(now()->subMinutes(5));
+
             $bonus = EventBonus::create([
                 'event_configuration_id' => $config->id,
                 'bonus_type_id' => $mediaBonusType->id,
                 'claimed_by_user_id' => $manager->id,
                 'quantity' => 1,
-                'calculated_points' => 0,
-                'notes' => 'Local newspaper article submitted for review',
-                'is_verified' => false,
+                'calculated_points' => $mediaBonusType->base_points,
+                'notes' => 'Local newspaper article on the club\'s Field Day setup',
+                'is_verified' => true,
+                'verified_by_user_id' => $manager->id,
+                'verified_at' => $claimedAt,
             ]);
-            $this->backdate($bonus, $event->start_time->copy()->addMinutes(random_int(40, 100))->min(now()->subMinutes(5)));
+            $this->backdate($bonus, $claimedAt);
         }
     }
 
