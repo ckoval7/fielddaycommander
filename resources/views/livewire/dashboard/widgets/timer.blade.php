@@ -17,14 +17,14 @@ Props from component:
      if the client-side refresh at zero is missed. --}}
 <div class="h-full" wire:poll.visible.60s>
     <x-card body-class="flex flex-col min-h-0" class="h-full flex flex-col p-6 sm:p-8" shadow>
-        <div class="flex-1 flex flex-col items-center justify-center">
+        <div class="@container flex-1 flex flex-col items-center justify-center">
             @if ($data['is_ended'])
                 {{-- Event has ended --}}
                 <div class="text-center">
                     <div class="{{ $size === 'tv' ? 'text-xl' : 'text-sm' }} text-base-content/60 mb-2">
                         {{ $data['label'] }}
                     </div>
-                    <div class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : 'text-3xl sm:text-4xl' }} text-base-content/70">
+                    <div class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : 'text-[clamp(1.5rem,16cqi,3rem)]' }} text-base-content/70">
                         00:00:00
                     </div>
                 </div>
@@ -44,8 +44,13 @@ Props from component:
 
                     <div>
                         <div
-                            class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : 'text-4xl sm:text-5xl' }}"
-                            :class="isCritical ? 'text-error' : (isWarning ? 'text-warning' : 'text-primary')"
+                            class="font-mono font-black whitespace-nowrap {{ $size === 'tv' ? 'text-[clamp(1.75rem,2.4vw,3.75rem)]' : '' }}"
+                            {{-- Sized to the tile's width so the clock never runs off a narrow tile;
+                                 the longer DD:HH:MM:SS form gets a smaller size. --}}
+                            :class="[
+                                isCritical ? 'text-error' : (isWarning ? 'text-warning' : 'text-primary'),
+                                @js($size === 'tv') ? '' : (formattedTime.length > 8 ? 'text-[clamp(1.25rem,11cqi,2.25rem)]' : 'text-[clamp(1.5rem,16cqi,3rem)]'),
+                            ]"
                             x-text="formattedTime"
                         >
                             --:--:--
