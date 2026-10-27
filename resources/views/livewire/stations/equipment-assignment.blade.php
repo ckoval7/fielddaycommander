@@ -574,7 +574,7 @@
                     @if($this->detailsEquipment->power_output_watts)
                         <div>
                             <span class="text-base-content/70">Power Output</span>
-                            <div class="font-medium">{{ $this->detailsEquipment->power_output_watts }}W</div>
+                            <div class="font-medium">{{ spokenWatts($this->detailsEquipment->power_output_watts) }}</div>
                         </div>
                     @endif
                     @if($this->detailsEquipment->serial_number)

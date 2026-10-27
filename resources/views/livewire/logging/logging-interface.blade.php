@@ -29,7 +29,7 @@
                 <h1 class="font-bold text-lg sm:text-xl truncate block">
                     {{ $operatingSession->station->name ?? 'Station' }}
                     {{-- Narrow screens show power here; the band/mode row below has no room for it. --}}
-                    <span class="xl:hidden font-mono font-normal text-sm text-base-content/70">{{ $operatingSession->power_watts }}W</span>
+                    <span class="xl:hidden font-mono font-normal text-sm text-base-content/70">{{ spokenWatts($operatingSession->power_watts) }}</span>
                 </h1>
             </div>
 
@@ -42,7 +42,7 @@
                     :shortcuts="true"
                 />
                 <span class="text-base-content/30" aria-hidden="true">|</span>
-                <span class="text-base-content/70">{{ $operatingSession->power_watts }}W</span>
+                <span class="text-base-content/70">{{ spokenWatts($operatingSession->power_watts) }}</span>
                 <span class="text-base-content/30" aria-hidden="true">|</span>
                 {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts. Mirrored in the mobile row. --}}
                 <input

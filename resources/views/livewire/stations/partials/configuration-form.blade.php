@@ -113,7 +113,7 @@
         @if($selectedRadio && isset($selectedRadio['power_output_watts']))
             <div class="mt-2">
                 <x-alert icon="phosphor-info" class="alert-info">
-                    Radio capability: {{ $selectedRadio['power_output_watts'] }}W
+                    Radio capability: {{ spokenWatts($selectedRadio['power_output_watts']) }}
                 </x-alert>
             </div>
         @endif
@@ -140,7 +140,7 @@
         @if($this->maxPowerLimit && $max_power_watts)
             @if($max_power_watts > $this->maxPowerLimit)
                 <x-alert icon="phosphor-warning" class="alert-warning">
-                    <span class="font-semibold">Scoring impact:</span> This station's power ({{ $max_power_watts }}W) exceeds the event's {{ $this->maxPowerLimit }}W setting.
+                    <span class="font-semibold">Scoring impact:</span> This station's power ({{ spokenWatts($max_power_watts) }}) exceeds the event's {{ spokenWatts($this->maxPowerLimit) }} setting.
                     For ARRL Field Day, the highest station power sets the power multiplier for the <span class="font-semibold">entire entry</span>.
                     @if($max_power_watts > 100)
                         This will reduce it to 1&times;.
@@ -152,7 +152,7 @@
                 </x-alert>
             @else
                 <x-alert icon="phosphor-check-circle" class="alert-success">
-                    Power level is within the event's {{ $this->maxPowerLimit }}W limit.
+                    Power level is within the event's {{ spokenWatts($this->maxPowerLimit) }} limit.
                 </x-alert>
             @endif
         @endif

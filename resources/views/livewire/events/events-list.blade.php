@@ -45,7 +45,7 @@
                             @endif
                         </div>
                         <div class="font-semibold">{{ $event->name }}</div>
-                        <div class="text-xs opacity-60 mt-0.5">{{ $event->eventType->name ?? 'N/A' }}</div>
+                        <div class="text-xs opacity-60 mt-0.5">{{ $event->eventType->name ?? spoken('N/A', 'not available') }}</div>
                     </div>
                     <x-dropdown>
                         <x-slot:trigger class="btn btn-sm btn-ghost btn-square" aria-label="Actions for {{ $event->name }}">
@@ -174,7 +174,7 @@
                                     <span class="font-semibold">{{ $event->name }}</span>
                                 </div>
                             </td>
-                            <td>{{ $event->eventType->name ?? 'N/A' }}</td>
+                            <td>{{ $event->eventType->name ?? spoken('N/A', 'not available') }}</td>
                             <td>
                                 <div class="text-sm">
                                     <div>{{ $event->start_time ? toLocalTime($event->start_time)->format('M j, Y H:i T') : 'Not set' }}</div>
@@ -184,7 +184,7 @@
                             <td>
                                 <span class="font-mono text-sm">{{ $event->eventConfiguration->callsign ?? 'Not configured' }}</span>
                             </td>
-                            <td>{{ $event->eventConfiguration?->operatingClass?->code ?? 'N/A' }}</td>
+                            <td>{{ $event->eventConfiguration?->operatingClass?->code ?? spoken('N/A', 'not available') }}</td>
                             <td class="text-center">
                                 <span class="font-semibold">{{ number_format($event->contacts_count) }}</span>
                             </td>

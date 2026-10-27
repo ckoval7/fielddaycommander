@@ -425,7 +425,8 @@
             <p class="text-center mb-2">{{ $footerText }}</p>
         @endif
         <div class="flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-1">
-            <span>Field Day Commander v{{ config('app.version') }}</span>
+            {{-- Screen readers read "26.10.13" as a date --}}
+            <span>Field Day Commander {{ spoken('v'.config('app.version'), 'version '.str_replace('.', ' point ', config('app.version'))) }}</span>
             <span class="hidden sm:inline text-base-content/30" aria-hidden="true">&middot;</span>
             <span>Powered by Laravel {{ app()->version() }}</span>
             <span class="hidden sm:inline text-base-content/30" aria-hidden="true">&middot;</span>

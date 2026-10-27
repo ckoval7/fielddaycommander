@@ -30,9 +30,9 @@
             <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/70">
                 {{ $state === 'ended' ? 'Ended' : ($state === 'active' ? 'Ends in' : 'Starts in') }}
             </span>
-            <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" @if($live) x-text="countdown" @endif>
+            <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" aria-hidden="true" @if($live) x-text="countdown" @endif>
                 {{ $formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
-            </span>
+            </span><span class="sr-only" @if($live) x-text="window.fdcSpokenDuration?.(countdown) ?? countdown" @endif>{{ spokenDuration($formattedCountdown.($state === 'ended' ? ' ago' : '')) }}</span>
         </div>
     </div>
 
@@ -64,9 +64,9 @@
             <span class="text-lg font-semibold">
                 {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
             </span>
-            <span class="text-2xl font-mono font-bold {{ $textClass }}" @if($live) x-text="countdown" @endif>
+            <span class="text-2xl font-mono font-bold {{ $textClass }}" aria-hidden="true" @if($live) x-text="countdown" @endif>
                 {{ $formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
-            </span>
+            </span><span class="sr-only" @if($live) x-text="window.fdcSpokenDuration?.(countdown) ?? countdown" @endif>{{ spokenDuration($formattedCountdown.($state === 'ended' ? ' ago' : '')) }}</span>
         </div>
 
         <span class="text-2xl text-base-content/30" aria-hidden="true">|</span>

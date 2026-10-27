@@ -112,7 +112,7 @@
                                                         <x-badge value="Active" class="badge-success" />
                                                     @endif
                                                 </td>
-                                                <td>{{ $session->duration ?? '—' }}</td>
+                                                <td>{{ $session->duration ? spoken($session->duration, spokenDuration($session->duration)) : '—' }}</td>
                                                 <td>{{ $session->qso_count ?? 0 }}</td>
                                             </tr>
                                         @endforeach

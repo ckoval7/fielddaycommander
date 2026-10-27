@@ -47,7 +47,7 @@ Each item: id, icon, title, message, time_ago, read
                                 {{ $item['title'] }}
                             </span>
                             <span class="text-base text-base-content/70 flex-shrink-0">
-                                {{ $item['time_ago'] }}
+                                {{ spoken($item['time_ago'], spokenDuration($item['time_ago'])) }}
                             </span>
                         </div>
                         <p class="text-base mt-1 line-clamp-2 {{ $item['read'] ? 'text-base-content/70' : 'text-base-content/80' }}">
@@ -91,7 +91,7 @@ Each item: id, icon, title, message, time_ago, read
                                 {{ $item['title'] }}
                             </span>
                             <span class="text-xs text-base-content/70 flex-shrink-0">
-                                {{ $item['time_ago'] }}
+                                {{ spoken($item['time_ago'], spokenDuration($item['time_ago'])) }}
                             </span>
                         </div>
                         <p class="text-xs truncate {{ $item['read'] ? 'text-base-content/70' : 'text-base-content/70' }}">

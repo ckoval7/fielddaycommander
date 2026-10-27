@@ -54,7 +54,7 @@ Size variants:
                                         {{ $item['callsign'] }}
                                     </div>
                                     <div class="@if($size === 'tv') text-base @else text-xs @endif text-base-content/70 flex-shrink-0">
-                                        {{ $item['time_ago'] }}
+                                        {{ spoken($item['time_ago'], spokenDuration($item['time_ago'])) }}
                                     </div>
                                 </div>
                                 {{-- Band, Mode, Operator Row --}}

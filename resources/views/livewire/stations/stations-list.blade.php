@@ -156,7 +156,7 @@
                                 <div class="text-xs text-base-content/60 mb-1">Primary Radio</div>
                                 <div class="font-semibold text-sm sm:text-base">{{ $station->primaryRadio->make }} {{ $station->primaryRadio->model }}</div>
                                 @if($station->max_power_watts)
-                                    <div class="text-xs sm:text-sm text-base-content/70">{{ $station->max_power_watts }}W</div>
+                                    <div class="text-xs sm:text-sm text-base-content/70">{{ spokenWatts($station->max_power_watts) }}</div>
                                 @endif
                             </div>
                         @else

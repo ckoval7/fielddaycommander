@@ -82,7 +82,7 @@
                     @if($station->max_power_watts)
                         <div class="flex items-center gap-2 text-sm mt-2">
                             <x-icon name="phosphor-lightning" class="w-4 h-4 text-base-content/40 shrink-0" />
-                            <span class="text-base-content/70">{{ $station->max_power_watts }} W max</span>
+                            <span class="text-base-content/70">{{ spokenWatts($station->max_power_watts) }} max</span>
                         </div>
                     @endif
 

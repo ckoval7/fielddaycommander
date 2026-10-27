@@ -289,7 +289,7 @@
                                         <div class="text-xs text-base-content/60">{{ $formatRange($gap['start'], $gap['end']) }}</div>
                                     </div>
                                     <div class="flex flex-col items-end gap-1 shrink-0">
-                                        <span class="text-sm font-semibold">{{ $formatDuration($gap['minutes']) }}</span>
+                                        <span class="text-sm font-semibold">{{ spoken($formatDuration($gap['minutes']), spokenDuration($formatDuration($gap['minutes']))) }}</span>
                                         <div class="flex gap-1">
                                             @if($isCurrent)
                                                 <x-badge value="Now" class="badge-error badge-xs" />
@@ -314,7 +314,7 @@
                             @foreach($pastGaps as $gap)
                                 <li class="flex items-center justify-between gap-2 text-xs">
                                     <span class="truncate">{{ $gap['role']->name }} · {{ $formatRange($gap['start'], $gap['end']) }}</span>
-                                    <span class="shrink-0">{{ $formatDuration($gap['minutes']) }}</span>
+                                    <span class="shrink-0">{{ spoken($formatDuration($gap['minutes']), spokenDuration($formatDuration($gap['minutes']))) }}</span>
                                 </li>
                             @endforeach
                         </ul>

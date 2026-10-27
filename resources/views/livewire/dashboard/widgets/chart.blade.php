@@ -201,7 +201,7 @@
             </h2>
             @if(!empty($chartData['summary_value']))
                 <span class="shrink-0 whitespace-nowrap {{ $size === 'tv' ? 'text-2xl' : 'text-lg' }} font-bold tabular-nums text-primary">
-                    {{ $chartData['summary_value'] }}
+                    {{ spoken($chartData['summary_value'], spokenAbbreviations($chartData['summary_value'])) }}
                 </span>
             @endif
         </div>

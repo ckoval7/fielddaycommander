@@ -6,6 +6,8 @@
 use App\Models\Setting;
 use App\Services\DeveloperClockService;
 use Carbon\Carbon;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 if (! function_exists('appNow')) {
     /**
@@ -104,5 +106,59 @@ if (! function_exists('formatTimeAgo')) {
             $diffInSeconds < 86400 => (int) $time->diffInHours(appNow()).'h ago',
             default => (int) $time->diffInDays(appNow()).'d ago',
         };
+    }
+}
+
+if (! function_exists('spoken')) {
+    /**
+     * Show $visible on screen but give screen readers $say instead, for
+     * short forms they misread ("N/A" as "N slash A", "5m" as "5 meters").
+     */
+    function spoken(string $visible, string $say): HtmlString
+    {
+        return new HtmlString('<span aria-hidden="true">'.e($visible).'</span><span class="sr-only">'.e($say).'</span>');
+    }
+}
+
+if (! function_exists('spokenDuration')) {
+    /**
+     * Spell out the d/h/m/s units of a short duration: "2h 5m ago" becomes
+     * "2 hours 5 minutes ago". Only for durations, since "20m" is also a band.
+     */
+    function spokenDuration(string $duration): string
+    {
+        $units = ['d' => 'day', 'h' => 'hour', 'm' => 'minute', 's' => 'second'];
+
+        return preg_replace_callback(
+            '/\b(\d+)([dhms])\b/',
+            fn (array $match): string => $match[1].' '.Str::plural($units[$match[2]], (int) $match[1]),
+            $duration,
+        );
+    }
+}
+
+if (! function_exists('spokenWatts')) {
+    /**
+     * A power level shown as "100W" but read as "100 watts".
+     */
+    function spokenWatts(int|float|string|null $watts): HtmlString
+    {
+        return spoken("{$watts}W", "{$watts} ".Str::plural('watt', (int) $watts));
+    }
+}
+
+if (! function_exists('spokenAbbreviations')) {
+    /**
+     * Expand the short forms screen readers spell out or misread, for labels
+     * that come from frozen rule sets ("QSO Base Pts", "Power Multi.") and
+     * dashboard summaries ("12.5/hr", "45 Qs").
+     */
+    function spokenAbbreviations(string $text): string
+    {
+        return preg_replace(
+            ['/\bPts\b/i', '/\bPt\b/i', '/\bMulti?\.(?=\s|$)/i', '/\bN\/A\b/', '/\/hr\b/', '/\bQs\b/'],
+            ['points', 'point', 'multiplier', 'not available', ' per hour', 'contacts'],
+            $text,
+        );
     }
 }

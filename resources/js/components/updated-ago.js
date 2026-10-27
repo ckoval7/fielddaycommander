@@ -18,9 +18,15 @@
  *
  * Usage in Blade: <x-dashboard.updated-at :at="$data['last_updated_at']" />
  */
+import { spokenDuration } from '../spoken';
+
 export default function updatedAgo() {
     return {
         label: '',
+        // The label as screen readers should hear it ("5 minutes ago", not "5m ago").
+        get spokenLabel() {
+            return spokenDuration(this.label);
+        },
         intervalId: null,
         lastServerNow: null,
         serverClientOffset: 0,

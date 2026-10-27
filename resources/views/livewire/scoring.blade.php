@@ -54,7 +54,7 @@
                             {{ $part->value }}
                         </div>
                         <div class="text-xs uppercase tracking-widest mt-1" style="color: var(--score-text-muted);">
-                            {{ $part->label }}
+                            {{ spoken($part->label, spokenAbbreviations($part->label)) }}
                         </div>
                     </a>
                 @endif

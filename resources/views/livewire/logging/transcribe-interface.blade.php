@@ -263,7 +263,7 @@
                 <x-slot:extra-columns>
                     <th>Band</th>
                     <th>Mode</th>
-                    <th>Pts</th>
+                    <th>{{ spoken('Pts', 'Points') }}</th>
                 </x-slot:extra-columns>
 
                 <x-slot:rows>

@@ -396,7 +396,7 @@
                                 <div class="text-sm"><span class="text-base-content/60">Serial:</span> {{ $detailCommitment->equipment->serial_number }}</div>
                             @endif
                             @if($detailCommitment->equipment->power_output_watts)
-                                <div class="text-sm"><span class="text-base-content/60">Power:</span> {{ $detailCommitment->equipment->power_output_watts }}W</div>
+                                <div class="text-sm"><span class="text-base-content/60">Power:</span> {{ spokenWatts($detailCommitment->equipment->power_output_watts) }}</div>
                             @endif
                             @if($detailCommitment->equipment->value_usd)
                                 <div class="text-sm"><span class="text-base-content/60">Value:</span> ${{ number_format($detailCommitment->equipment->value_usd, 2) }}</div>

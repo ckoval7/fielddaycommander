@@ -137,19 +137,19 @@
                             <!-- Club Name -->
                             <div>
                                 <div class="text-sm text-base-content/60">Club Name</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->club_name ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->club_name ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Section -->
                             <div>
                                 <div class="text-sm text-base-content/60">Section</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->section->code ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->section->code ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Operating Class -->
                             <div>
                                 <div class="text-sm text-base-content/60">Operating Class</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->operatingClass->code ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->operatingClass->code ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Transmitters -->
@@ -161,7 +161,7 @@
                             <!-- Power -->
                             <div>
                                 <div class="text-sm text-base-content/60">Max Power</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->max_power_watts }}W</div>
+                                <div class="font-semibold">{{ spokenWatts($event->eventConfiguration->max_power_watts) }}</div>
                             </div>
 
                             {{-- Power multiplier: Field Day rulebooks only --}}
@@ -243,7 +243,7 @@
                         @foreach($this->scoringHeadline as $term)
                             @if($term instanceof \App\Scoring\Dto\ScoreTerm)
                                 <div>
-                                    <div class="text-sm text-base-content/60">{{ $term->label }}</div>
+                                    <div class="text-sm text-base-content/60">{{ spoken($term->label, spokenAbbreviations($term->label)) }}</div>
                                     <div class="text-2xl font-bold">{{ $term->value }}</div>
                                 </div>
                             @endif
@@ -405,7 +405,7 @@
                             @else
                                 <div class="text-center">
                                     <div class="text-3xl font-black tabular-nums">{{ $part->value }}</div>
-                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ $part->label }}</div>
+                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ spoken($part->label, spokenAbbreviations($part->label)) }}</div>
                                 </div>
                             @endif
                         @endforeach
@@ -441,7 +441,7 @@
                                                 <th scope="col" class="text-center">{{ $band->name }}</th>
                                             @endforeach
                                             <th scope="col" class="text-right">QSOs</th>
-                                            <th scope="col" class="text-right">Pts</th>
+                                            <th scope="col" class="text-right">{{ spoken('Pts', 'Points') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

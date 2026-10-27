@@ -104,7 +104,7 @@
                         value="{{ $contact->id }}" wire:model.live="selectedIds" />
                 @endscope
                 @scope('cell_qso_time', $contact)
-                    <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : 'N/A' }}</span>
+                    <span class="text-xs">{{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('Y-m-d H:i') . ' UTC' : spoken('N/A', 'not available') }}</span>
                 @endscope
 
                 @scope('cell_callsign', $contact, $noCreditReasons, $attentionReasons)
@@ -129,19 +129,19 @@
                 @endscope
 
                 @scope('cell_band', $contact)
-                    <span class="text-sm">{{ $contact->band?->name ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->band?->name ?? spoken('N/A', 'not available') }}</span>
                 @endscope
 
                 @scope('cell_mode', $contact)
-                    <span class="text-sm">{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode)<span class="text-base-content/60"> &middot; {{ $contact->submode }}</span>@endif</span>
+                    <span class="text-sm">{{ $contact->mode?->name ?? spoken('N/A', 'not available') }}@if($contact->submode)<span class="text-base-content/60"> &middot; {{ $contact->submode }}</span>@endif</span>
                 @endscope
 
                 @scope('cell_class', $contact)
-                    <span class="text-sm">{{ $contact->exchange_class ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->exchange_class ?? spoken('N/A', 'not available') }}</span>
                 @endscope
 
                 @scope('cell_section', $contact)
-                    <span class="text-sm">{{ $contact->section?->code ?? 'N/A' }}</span>
+                    <span class="text-sm">{{ $contact->section?->code ?? spoken('N/A', 'not available') }}</span>
                 @endscope
 
                 @scope('cell_points', $contact)
@@ -152,7 +152,7 @@
 
                 @scope('cell_station', $contact)
                     <div class="flex items-center gap-1">
-                        <span class="text-sm truncate">{{ $contact->operatingSession?->station?->name ?? 'N/A' }}</span>
+                        <span class="text-sm truncate">{{ $contact->operatingSession?->station?->name ?? spoken('N/A', 'not available') }}</span>
                         @if($contact->operatingSession?->station?->is_gota ?? false)
                             <x-badge value="GOTA" class="badge-xs badge-info" />
                         @endif
@@ -173,7 +173,7 @@
                 @endscope
 
                 @scope('cell_logger', $contact)
-                    <span class="text-sm truncate">{{ $contact->logger ? $contact->logger->first_name . ' ' . $contact->logger->last_name : 'N/A' }}</span>
+                    <span class="text-sm truncate">{{ $contact->logger ? $contact->logger->first_name . ' ' . $contact->logger->last_name : spoken('N/A', 'not available') }}</span>
                 @endscope
 
                 @scope('cell_actions', $contact)
@@ -231,7 +231,7 @@
                             <div class="flex-1 min-w-0">
                                 <div class="font-mono font-bold text-xl truncate {{ $contact->trashed() ? 'line-through' : '' }}">{{ $contact->callsign }}</div>
                                 <div class="text-xs text-base-content/60 mt-1">
-                                    {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') . ' UTC' : 'N/A' }}
+                                    {{ $contact->qso_time ? \Carbon\Carbon::parse($contact->qso_time)->format('M d, Y H:i') . ' UTC' : spoken('N/A', 'not available') }}
                                 </div>
                             </div>
                             <div class="flex flex-col items-end gap-1 flex-shrink-0">
@@ -273,16 +273,16 @@
                         <div class="flex items-center gap-2 text-sm flex-wrap">
                             <div class="flex items-center gap-1">
                                 <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 text-base-content/50" />
-                                <span>{{ $contact->band?->name ?? 'N/A' }}</span>
+                                <span>{{ $contact->band?->name ?? spoken('N/A', 'not available') }}</span>
                             </div>
                             <span class="text-base-content/70">•</span>
                             <div class="flex items-center gap-1">
                                 <x-icon name="phosphor-radio" class="w-4 h-4 text-base-content/50" />
-                                <span>{{ $contact->mode?->name ?? 'N/A' }}@if($contact->submode) &middot; {{ $contact->submode }}@endif</span>
+                                <span>{{ $contact->mode?->name ?? spoken('N/A', 'not available') }}@if($contact->submode) &middot; {{ $contact->submode }}@endif</span>
                             </div>
                             <span class="text-base-content/70">•</span>
-                            <span>{{ $contact->exchange_class ?? 'N/A' }}</span>
-                            <span>{{ $contact->section?->code ?? 'N/A' }}</span>
+                            <span>{{ $contact->exchange_class ?? spoken('N/A', 'not available') }}</span>
+                            <span>{{ $contact->section?->code ?? spoken('N/A', 'not available') }}</span>
                         </div>
 
                         {{-- Points, Station, Logger --}}
@@ -295,10 +295,10 @@
                             </div>
                             <div class="min-w-0 flex-1 break-words">
                                 <span class="text-xs text-base-content/60">Station:</span>
-                                <span class="ml-1">{{ $contact->operatingSession?->station?->name ?? 'N/A' }}</span>
+                                <span class="ml-1">{{ $contact->operatingSession?->station?->name ?? spoken('N/A', 'not available') }}</span>
                             </div>
                             <div class="text-xs text-base-content/60 break-words">
-                                {{ $contact->logger ? $contact->logger->first_name : 'N/A' }}
+                                {{ $contact->logger ? $contact->logger->first_name : spoken('N/A', 'not available') }}
                             </div>
                         </div>
 
