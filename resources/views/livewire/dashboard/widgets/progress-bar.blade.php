@@ -41,9 +41,9 @@ Celebration features:
         </div>
     @else
         <div class="flex items-baseline justify-between gap-3">
-            <div class="text-4xl font-black tabular-nums whitespace-nowrap min-w-0 truncate">
+            <div class="flex flex-wrap items-baseline gap-x-2 text-4xl font-black tabular-nums min-w-0">
                 <span x-text="Number(displayCurrent).toLocaleString()">{{ number_format($data['current']) }}</span>
-                <span class="text-base font-normal text-base-content/50">
+                <span class="text-base font-normal text-base-content/50 whitespace-nowrap">
                     / {{ number_format($data['target']) }}
                 </span>
             </div>

@@ -86,6 +86,23 @@ test('shows stations for active event', function () {
         ->assertSee('Available');
 });
 
+test('station cards size their columns to the space beside the sidebar', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    Station::factory()->create(['event_configuration_id' => $config->id]);
+
+    // A viewport breakpoint gave three ~210px columns on an iPad with the sidebar open.
+    Livewire::test(StationSelect::class)
+        ->assertSeeHtml('class="@container"')
+        ->assertSeeHtml('@3xl:grid-cols-3')
+        ->assertDontSeeHtml('lg:grid-cols-3');
+});
+
 test('shows station as occupied when active session exists', function () {
     $this->actingAs($this->user);
 

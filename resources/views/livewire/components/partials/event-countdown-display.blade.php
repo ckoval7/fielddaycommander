@@ -52,15 +52,17 @@
                 @endif
                 {{ $state === 'active' ? 'LIVE' : strtoupper($state) }}
             </span>
-            <span class="text-2xl font-bold {{ $textClass }}">
+            {{-- The brand beside this already names the event, so the name only
+                 shows once the header has room for it on one line. --}}
+            <span class="text-2xl font-bold whitespace-nowrap max-xl:hidden {{ $textClass }}">
                 {{ $event->name }}
             </span>
         </div>
 
-        <span class="text-2xl text-base-content/30">|</span>
+        <span class="text-2xl text-base-content/30 max-xl:hidden">|</span>
 
         {{-- Countdown Label and Time --}}
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 whitespace-nowrap">
             <span class="text-lg font-semibold">
                 {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
             </span>
