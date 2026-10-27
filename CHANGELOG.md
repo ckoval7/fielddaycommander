@@ -9,7 +9,7 @@
 - Screen readers now hear rule numbers such as 7.3.1 as "7 point 3 point 1", score labels with "points" and "multiplier", times with "hours" and "minutes", power with "watts", N/A as "not available", and dashboard rates as "per hour". The footer version is read with "point" between numbers too. The short forms stay on screen.
 - The header countdown no longer interrupts screen reader users every second. Pop-up messages are now read aloud and stay on screen for 5 seconds instead of 3.
 - Keyboard users can now switch tabs on the event dashboard, event equipment, schedule management, settings, and profile pages, reach row menu actions such as **Edit**, **Lock Account**, and **Delete**, filter event equipment with the status cards, select roles in settings, open equipment photos, and use the photo upload area. On phones and tablets, opening the menu moves focus inside, keeps the page behind it out of reach, and lets Escape close it and return focus to the menu button, while the collapsed sidebar keeps its link names for screen readers and its collapse button reports whether it is open.
-- Faint timestamps, hints, captions, and update notices across the app are darker and easier to read in bright light. The amber score figures on **Scoring** are darker too.
+- Faint timestamps, hints, captions, and update notices across the app are darker and easier to read in bright light. In light mode, **Scoring** now has a light newspaper-gray background, with gray cards and striped rows.
 - On **Log Contact**, recalling an already synced contact with the Up arrow and choosing **Save** with an invalid exchange silently did nothing. It now shows the error.
 
 ## 26.10.13 - 2026-10-26
