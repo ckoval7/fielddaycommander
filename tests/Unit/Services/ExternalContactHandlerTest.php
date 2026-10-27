@@ -415,7 +415,7 @@ test('flags contacts from the GOTA station as GOTA contacts and dupe-checks them
 
     expect($contact->is_gota_contact)->toBeTrue()
         ->and($contact->is_duplicate)->toBeFalse()
-        ->and($contact->points)->toBe(5);
+        ->and($contact->points)->toBe((int) $this->modeCw->points_fd);
 });
 
 test('retries a contact once when the event lock wait times out instead of dropping it', function () {

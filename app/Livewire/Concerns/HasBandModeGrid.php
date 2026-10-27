@@ -7,6 +7,7 @@ namespace App\Livewire\Concerns;
 
 use App\Models\Mode;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 
 trait HasBandModeGrid
@@ -14,14 +15,17 @@ trait HasBandModeGrid
     /**
      * Return the base Contact query for the band/mode grid.
      *
-     * Each consumer applies its own scopes (e.g. excluding GOTA contacts).
+     * Each consumer applies its own scopes (e.g. leaving out dupes). GOTA
+     * contacts are split into their own row, as the ARRL breakdown lists them.
      */
     abstract protected function bandModeGridQuery(): Builder;
 
     /**
-     * Aggregate contacts by band and mode into a grid structure.
+     * Aggregate contacts by band and mode into a grid structure: one row per
+     * mode for the primary stations, then a GOTA row when the GOTA station
+     * made contacts.
      *
-     * @return array<int, array{mode: Mode, cells: array<int, int>, total_count: int, total_points: int}>
+     * @return array<int, array{label: string, mode: Mode|null, cells: array<int, int>, total_count: int, total_points: int}>
      */
     #[Computed]
     public function bandModeGrid(): array
@@ -31,36 +35,47 @@ trait HasBandModeGrid
         }
 
         $counts = $this->bandModeGridQuery()
-            ->selectRaw('band_id, mode_id, count(*) as contact_count, sum(points) as total_points')
-            ->groupBy('band_id', 'mode_id')
-            ->get()
-            ->groupBy('mode_id');
+            ->selectRaw('band_id, mode_id, is_gota_contact, count(*) as contact_count, sum(points) as total_points')
+            ->groupBy('band_id', 'mode_id', 'is_gota_contact')
+            ->get();
+
+        $primary = $counts->filter(fn ($entry) => ! $entry->is_gota_contact)->groupBy('mode_id');
+        $gota = $counts->filter(fn ($entry) => (bool) $entry->is_gota_contact);
 
         $data = [];
 
         foreach ($this->modes as $mode) {
-            $modeCounts = $counts->get($mode->id, collect());
-            $cells = [];
-            $totalCount = 0;
-            $totalPoints = 0;
+            $data[] = ['label' => $mode->name, 'mode' => $mode, ...$this->bandModeGridRow($primary->get($mode->id, collect()))];
+        }
 
-            foreach ($this->bands as $band) {
-                $entry = $modeCounts->firstWhere('band_id', $band->id);
-                $count = $entry ? (int) $entry->contact_count : 0;
-                $cells[$band->id] = $count;
-                $totalCount += $count;
-                $totalPoints += $entry ? (int) $entry->total_points : 0;
-            }
-
-            $data[] = [
-                'mode' => $mode,
-                'cells' => $cells,
-                'total_count' => $totalCount,
-                'total_points' => $totalPoints,
-            ];
+        if ($gota->isNotEmpty()) {
+            $data[] = ['label' => 'GOTA', 'mode' => null, ...$this->bandModeGridRow($gota)];
         }
 
         return $data;
+    }
+
+    /**
+     * Per-band counts and row totals for one grid row's aggregate entries.
+     *
+     * @param  Collection<int, mixed>  $entries
+     * @return array{cells: array<int, int>, total_count: int, total_points: int}
+     */
+    private function bandModeGridRow(Collection $entries): array
+    {
+        $cells = [];
+        $totalCount = 0;
+        $totalPoints = 0;
+
+        foreach ($this->bands as $band) {
+            $bandEntries = $entries->where('band_id', $band->id);
+            $count = (int) $bandEntries->sum('contact_count');
+            $cells[$band->id] = $count;
+            $totalCount += $count;
+            $totalPoints += (int) $bandEntries->sum('total_points');
+        }
+
+        return ['cells' => $cells, 'total_count' => $totalCount, 'total_points' => $totalPoints];
     }
 
     /**

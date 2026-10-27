@@ -68,12 +68,13 @@ class FieldDay2025 implements FieldDayRuleSet
         return 'FD';
     }
 
+    /**
+     * QSO points for a contact by mode. GOTA station contacts score the same
+     * as the primary station's (ARRL GOTA scoring FAQ); their 5-point GOTA
+     * bonus is counted separately by calculateGotaBonus().
+     */
     public function pointsForContact(Mode $mode, Station $station): int
     {
-        if ($station->is_gota) {
-            return $this->gotaPointsPerContact();
-        }
-
         $override = ModeRulePoint::query()
             ->whereHas('eventType', fn ($q) => $q->where('code', $this->eventTypeCode()))
             ->where('rules_version', $this->version())
@@ -124,8 +125,8 @@ class FieldDay2025 implements FieldDayRuleSet
     /**
      * ARRL Field Day score: (QSO points x power multiplier) + GOTA + bonuses.
      *
-     * GOTA points and bonus points are explicitly outside the power multiplier
-     * per rule 7.3.13.1.
+     * QSO points include GOTA station contacts. The GOTA bonus and the other
+     * bonus points are explicitly outside the power multiplier per rule 7.3.13.1.
      */
     public function score(EventConfiguration $config): ScoreBreakdown
     {

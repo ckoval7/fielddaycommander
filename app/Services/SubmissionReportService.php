@@ -6,9 +6,11 @@
 namespace App\Services;
 
 use App\Models\Band;
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\ShiftAssignment;
 use App\Models\User;
 use Carbon\CarbonInterface;
 
@@ -49,7 +51,7 @@ class SubmissionReportService
             'uses_other_power' => $config->uses_other_power,
 
             // Section 3: Claimed Score
-            'qso_base_points' => (int) $config->contacts()->notDuplicate()->where('is_gota_contact', false)->sum('points'),
+            'qso_base_points' => $config->qsoBasePoints(),
             'power_multiplier' => $config->calculatePowerMultiplier(),
             'qso_score' => $config->calculateQsoScore(),
             'bonus_score' => $config->calculateBonusScore(),
@@ -61,6 +63,7 @@ class SubmissionReportService
             'bands' => $bands,
             'modes' => $modes,
             'band_mode_grid' => $this->bandModeGrid($config, $bands, $modes),
+            'gota_mode_row' => $this->gotaModeRow($config),
 
             // Section 5: Bonus Points — full ARRL checklist
             'bonus_checklist' => $this->bonusChecklist($config),
@@ -109,7 +112,9 @@ class SubmissionReportService
     }
 
     /**
-     * Count unique participants (operators + GOTA operators), excluding the SYSTEM user.
+     * Count unique participants: everyone who logged, operated GOTA or worked
+     * a volunteer shift (as the volunteer report counts them, so no-shows are
+     * left out), excluding the SYSTEM user.
      */
     private function participantCount(EventConfiguration $config): int
     {
@@ -139,7 +144,14 @@ class SubmissionReportService
             ->get()
             ->count();
 
-        return $loggerIds->merge($gotaUserIds)->unique()->count() + $gotaFreeTextCount;
+        $volunteerIds = ShiftAssignment::query()
+            ->whereHas('shift', fn ($query) => $query->where('event_configuration_id', $config->id))
+            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
+            ->whereNotIn('user_id', $systemUserIds)
+            ->distinct()
+            ->pluck('user_id');
+
+        return $loggerIds->merge($gotaUserIds)->merge($volunteerIds)->unique()->count() + $gotaFreeTextCount;
     }
 
     /**
@@ -200,12 +212,29 @@ class SubmissionReportService
             }
         }
 
+        // Bonuses this entry class can't earn (site responsibilities on a
+        // Class A sheet, say) are left off unless something was claimed.
+        $bonusTypes = BonusType::query()
+            ->where('event_type_id', $config->event?->event_type_id)
+            ->where('rules_version', $rulesVersion)
+            ->get()
+            ->keyBy('code');
+
         $checklist = [];
         $rendered = [];
         foreach ($arrlOrder as $item) {
             $code = $item['code'];
             $match = $claimed[$code] ?? null;
             $rendered[$code] = true;
+            $bonusType = $bonusTypes->get($code);
+
+            if ($match === null && $bonusType && ! $config->isClassEligibleForBonus($bonusType)) {
+                continue;
+            }
+
+            if ($match === null && $code === '_gota' && ! $config->has_gota_station) {
+                continue;
+            }
 
             $checklist[] = [
                 'name' => $item['name'],
@@ -278,6 +307,37 @@ class SubmissionReportService
         }
 
         return $grid;
+    }
+
+    /**
+     * GOTA station QSO count and max power per mode category, for the GOTA
+     * row of the band/mode breakdown. GOTA QSOs earn QSO points like the
+     * primary station's, and ARRL asks for them on their own row.
+     *
+     * @return array<string, array{qsos: int, power: int}>
+     */
+    private function gotaModeRow(EventConfiguration $config): array
+    {
+        $counts = Contact::query()
+            ->where('contacts.event_configuration_id', $config->id)
+            ->notDuplicate()
+            ->where('is_gota_contact', true)
+            ->join('modes', 'modes.id', '=', 'contacts.mode_id')
+            ->selectRaw('modes.category as category, count(*) as contact_count, max(contacts.power_watts) as max_power')
+            ->groupBy('modes.category')
+            ->get()
+            ->keyBy('category');
+
+        $row = [];
+        foreach (['CW', 'Digital', 'Phone'] as $category) {
+            $entry = $counts->get($category);
+            $row[$category] = [
+                'qsos' => $entry ? (int) $entry->contact_count : 0,
+                'power' => $entry ? (int) $entry->max_power : 0,
+            ];
+        }
+
+        return $row;
     }
 
     /**

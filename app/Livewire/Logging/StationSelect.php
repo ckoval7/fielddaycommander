@@ -168,7 +168,7 @@ class StationSelect extends Component
 
             return [
                 'type' => 'warning',
-                'message' => "Selected band ({$selectedBand->name}) is not supported by this station's radio ({$radioName}). Supported bands: {$supportedList}.",
+                'message' => "Selected band ({$selectedBand->name}) is outside this radio's coverage. The {$radioName} covers {$supportedList}.",
             ];
         }
 

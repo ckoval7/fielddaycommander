@@ -119,7 +119,7 @@
                             @foreach ($this->bandModeGrid as $row)
                                 <tr style="border-bottom: 1px solid var(--score-divider);">
                                     <td class="py-2 pr-2 font-semibold" style="color: var(--score-text);">
-                                        {{ $row['mode']->name }}
+                                        {{ $row['label'] }}
                                     </td>
                                     @foreach ($this->bands as $band)
                                         <td class="py-2 text-center px-1 tabular-nums">
@@ -152,7 +152,7 @@
                                     </td>
                                 @endforeach
                                 <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
-                                    {{ $this->mainStationContacts }}
+                                    {{ collect($this->bandModeGrid)->sum('total_count') }}
                                 </td>
                                 <td class="pt-2 text-right pl-2 tabular-nums" style="color: var(--score-text);">
                                     {{ $this->qsoBasePoints }}
@@ -161,11 +161,6 @@
                         </tfoot>
                     </table>
                 </div>
-                @if ($this->gotaContactCount > 0)
-                    <p class="text-xs -mt-2 mb-4" style="color: var(--score-text-muted);">
-                        GOTA contacts aren't in this table. They score as the GOTA bonus.
-                    </p>
-                @endif
             @else
                 <div class="text-sm py-4 text-center mb-4" style="color: var(--score-text-muted);">
                     No contacts logged yet.

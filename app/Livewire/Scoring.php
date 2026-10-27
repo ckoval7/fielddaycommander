@@ -259,23 +259,6 @@ class Scoring extends Component
             ->count();
     }
 
-    /**
-     * Non-duplicate contacts outside the GOTA station: the rows the band/mode
-     * grid and QSO points cover, since GOTA contacts score as a bonus.
-     */
-    #[Computed]
-    public function mainStationContacts(): int
-    {
-        if (! $this->config()) {
-            return 0;
-        }
-
-        return $this->config()->contacts()
-            ->where('is_duplicate', false)
-            ->where('is_gota_contact', false)
-            ->count();
-    }
-
     #[Computed]
     public function duplicateCount(): int
     {
@@ -332,7 +315,6 @@ class Scoring extends Component
 
         return $this->config()->contacts()
             ->where('is_duplicate', false)
-            ->where('is_gota_contact', false)
             ->where('points', 0)
             ->count();
     }
@@ -344,8 +326,7 @@ class Scoring extends Component
     protected function bandModeGridQuery(): Builder
     {
         return Contact::where('event_configuration_id', $this->config()->id)
-            ->notDuplicate()
-            ->where('is_gota_contact', false);
+            ->notDuplicate();
     }
 
     // ========================================================================
@@ -694,7 +675,6 @@ class Scoring extends Component
 
         $bandIdsWithQsos = Contact::where('event_configuration_id', $this->config()->id)
             ->notDuplicate()
-            ->where('is_gota_contact', false)
             ->distinct()
             ->pluck('band_id')
             ->all();

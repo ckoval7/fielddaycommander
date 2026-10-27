@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Fixed
+
+- During ARRL Field Day, GOTA contacts earned their 5-point bonus but were left out of QSO points on **Scoring**, the event dashboard, **Logbook**, and the ARRL submission sheet. They now earn QSO points by mode with the power multiplier applied, plus the unchanged GOTA bonus. Upgrading automatically rescores existing events with GOTA contacts, raising affected Field Day scores.
+- On **Scoring** and the event dashboard, the band/mode tables now show GOTA contacts on their own **GOTA** row. The ARRL submission sheet's **Band/Mode QSO Breakdown** also includes a **GOTA** row instead of telling you to leave those contacts out.
+- On **Logbook**, the GOTA bonus line below **QSO Points** could show the wrong total for contacts brought into the log. It now uses the same contact count times 5 as **Scoring**.
+- The dashboard's **Bonus Points** tile and bonus progress bar could disagree with **Scoring** because they included unverified claims and missed bonuses earned from the log, including emergency power, youth participation, and satellite QSOs. Both now show the same verified bonus total as **Scoring**.
+- The ARRL submission sheet's **Bonus Points** list included bonuses the entry class couldn't earn, such as Site Responsibilities for Class A, and a GOTA bonus line without a GOTA station. Unclaimed bonuses that don't apply are now left off.
+- The ARRL submission sheet's **Participants** count left out volunteers who worked a shift but didn't log contacts or operate GOTA. It now includes those volunteers, with no-shows excluded, as the volunteer hours report does.
+- On **Start Session**, picking a band the radio didn't cover showed a warning whose supported-band list could include bands missing from **Station supports** above it. The warning now identifies its list as the radio's coverage, while **Station supports** lists bands covered by both the radio and an antenna.
+
 ## 26.10.13 - 2026-10-26
 
 ### Added

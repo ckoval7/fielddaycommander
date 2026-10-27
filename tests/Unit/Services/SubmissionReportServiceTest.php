@@ -13,6 +13,8 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
 use App\Models\User;
 use App\Models\W1awBulletin;
 use App\Services\SubmissionReportService;
@@ -294,4 +296,86 @@ test('bonus_checklist appends ruleset-specific bonuses not in the ARRL form orde
         ->and($custom['claimed'])->toBeTrue()
         ->and($custom['points'])->toBe(100)
         ->and($custom['is_verified'])->toBeTrue();
+});
+
+test('GOTA QSOs count in QSO points and get their own breakdown row', function () {
+    $config = makeSubmissionConfig(['has_gota_station' => true]);
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);
+    $phone = Mode::factory()->create(['name' => 'Phone', 'category' => 'Phone', 'points_fd' => 1]);
+    $attributes = [
+        'event_configuration_id' => $config->id,
+        'band_id' => $band->id,
+        'mode_id' => $phone->id,
+        'is_duplicate' => false,
+        'points' => 1,
+    ];
+
+    Contact::factory()->count(4)->create($attributes + ['is_gota_contact' => false, 'power_watts' => 100]);
+    Contact::factory()->count(3)->create($attributes + ['is_gota_contact' => true, 'power_watts' => 20]);
+
+    $data = app(SubmissionReportService::class)->getData($config);
+
+    expect($data['qso_base_points'])->toBe(7)
+        ->and($data['band_mode_grid'][$phone->id][$band->id]['qsos'])->toBe(4)
+        ->and($data['gota_mode_row']['Phone'])->toBe(['qsos' => 3, 'power' => 20])
+        ->and($data['gota_mode_row']['CW'])->toBe(['qsos' => 0, 'power' => 0])
+        ->and($data['gota_bonus'])->toBe(15);
+
+    $html = view('reports.submission-sheet-pdf', $data)->render();
+
+    expect($html)->toContain('>GOTA</td>')
+        ->not->toContain('do not list GOTA QSOs');
+});
+
+test('bonus_checklist leaves off unclaimed bonuses the entry class cannot earn', function () {
+    $config = makeSubmissionConfig();
+
+    BonusType::factory()->create([
+        'event_type_id' => $config->event->event_type_id,
+        'rules_version' => $config->event->resolved_rules_version,
+        'code' => 'site_responsibilities',
+        'eligible_classes' => ['B', 'C', 'D', 'E', 'F'],
+    ]);
+
+    BonusType::factory()->create([
+        'event_type_id' => $config->event->event_type_id,
+        'rules_version' => $config->event->resolved_rules_version,
+        'code' => 'public_location',
+        'eligible_classes' => ['A', 'B', 'F'],
+    ]);
+
+    $codes = collect(app(SubmissionReportService::class)->getData($config)['bonus_checklist'])->pluck('code');
+
+    expect($codes)->not->toContain('site_responsibilities')
+        ->not->toContain('_gota')
+        ->toContain('public_location');
+});
+
+test('participant count includes volunteers who worked a shift but did not log', function () {
+    $config = makeSubmissionConfig();
+    $band = Band::factory()->create(['name' => '20m', 'frequency_mhz' => 14.2, 'allowed_fd' => true, 'sort_order' => 2]);
+    $mode = Mode::factory()->create(['name' => 'Phone', 'category' => 'Phone']);
+    $logger = User::factory()->create(['call_sign' => 'W1LOG']);
+    $volunteer = User::factory()->create(['call_sign' => 'W1VOL']);
+    $noShow = User::factory()->create(['call_sign' => 'W1NOS']);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'logger_user_id' => $logger->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+        'is_duplicate' => false,
+    ]);
+
+    $shift = Shift::factory()->create(['event_configuration_id' => $config->id]);
+
+    foreach ([
+        [$logger, ShiftAssignment::STATUS_CHECKED_OUT],
+        [$volunteer, ShiftAssignment::STATUS_CHECKED_IN],
+        [$noShow, ShiftAssignment::STATUS_NO_SHOW],
+    ] as [$user, $status]) {
+        ShiftAssignment::factory()->create(['shift_id' => $shift->id, 'user_id' => $user->id, 'status' => $status]);
+    }
+
+    expect(app(SubmissionReportService::class)->getData($config)['participant_count'])->toBe(2);
 });

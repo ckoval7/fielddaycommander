@@ -377,9 +377,9 @@ class LogbookBrowser extends Component
     /**
      * Summary figures for the filtered logbook, counted the way the scoring
      * page counts them: QSOs and the band and mode tallies leave out dupes,
-     * QSO points also leave out GOTA contacts (they score as the GOTA bonus)
-     * and any contact the rulebook gives no credit. The dupes and GOTA bonus
-     * points are reported alongside so the differences are visible.
+     * and QSO points also leave out any contact the rulebook gives no credit.
+     * The dupes and the GOTA bonus the GOTA contacts earn on top of their QSO
+     * points are reported alongside.
      *
      * @return array{total_qsos: int, duplicate_count: int, total_points: int, gota_points: int, unique_sections: int, by_band: array<string, int>, by_mode: array<string, int>}
      */
@@ -405,10 +405,11 @@ class LogbookBrowser extends Component
         $duplicateCount = $filters->query($this->eventConfigurationId)->reorder()->duplicatesOnly()->count();
         $uniqueSections = $counted()->distinct('section_id')->count('section_id');
 
-        $pointsQuery = $counted()->where('is_gota_contact', false);
-        EventConfiguration::find($this->eventConfigurationId)?->contactCreditRules()?->constrainToCreditable($pointsQuery);
+        $config = EventConfiguration::find($this->eventConfigurationId);
+        $pointsQuery = $counted();
+        $config?->contactCreditRules()?->constrainToCreditable($pointsQuery);
         $totalPoints = (int) $pointsQuery->sum('points');
-        $gotaPoints = (int) $counted()->where('is_gota_contact', true)->sum('points');
+        $gotaPoints = $counted()->where('is_gota_contact', true)->count() * ($config?->gotaBonusPointsPerContact() ?? 0);
 
         $byBand = $counted()
             ->select('band_id', \DB::raw('count(*) as count'))
