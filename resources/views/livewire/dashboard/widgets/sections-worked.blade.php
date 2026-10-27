@@ -46,9 +46,9 @@
     @else
     <x-mary-card shadow separator>
         <x-slot:title>
-            <div class="flex items-center justify-between w-full">
+            <div class="flex items-center justify-between gap-2 w-full">
                 <span>Sections Worked</span>
-                <span class="text-sm font-normal text-base-content/60">
+                <span class="text-sm font-normal text-base-content/60 whitespace-nowrap">
                     {{ $data['total_worked'] }} / {{ $data['total_sections'] }}
                 </span>
             </div>
@@ -88,7 +88,7 @@
                             </span>
 
                             {{-- Progress Bar --}}
-                            <div class="flex-1 h-2 bg-base-300 rounded-full overflow-hidden">
+                            <div class="flex-1 min-w-8 h-2 bg-base-300 rounded-full overflow-hidden">
                                 @php
                                     $pct = $group['total_count'] > 0
                                         ? round(($group['worked_count'] / $group['total_count']) * 100)

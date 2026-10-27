@@ -14,7 +14,9 @@
             </div>
         </x-card>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {{-- Columns follow the space beside the sidebar, not the screen width. --}}
+        <div class="@container">
+        <div class="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-3 gap-4 sm:gap-6">
             @forelse($this->stations as $station)
                 @php
                     $status = $station->computed_status;
@@ -123,6 +125,7 @@
                     </x-card>
                 </div>
             @endforelse
+        </div>
         </div>
     @endif
 

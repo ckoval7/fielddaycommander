@@ -11,6 +11,7 @@
 - The ARRL submission sheet's **Bonus Points** list included bonuses the entry class couldn't earn, such as Site Responsibilities for Class A, and a GOTA bonus line without a GOTA station. Unclaimed bonuses that don't apply are now left off.
 - The ARRL submission sheet's **Participants** count left out volunteers who worked a shift but didn't log contacts or operate GOTA. It now includes those volunteers, with no-shows excluded, as the volunteer hours report does.
 - On **Start Session**, picking a band the radio didn't cover showed a warning whose supported-band list could include bands missing from **Station supports** above it. The warning now identifies its list as the radio's coverage, while **Station supports** lists bands covered by both the radio and an antenna.
+- On screens 1024–1279px wide with the desktop sidebar showing, especially when expanded, the header's event name wrapped and crowded the title. On **My Dashboard**, three narrow columns left the **Time Remaining** clock overflowing, milestone counts cut off, and **Sections Worked** bars reduced to dots. **Select Station** also cut off station names. The countdown now hides the repeated event name below 1280px and keeps **Ends in** on one line. Dashboard and station cards now use two columns with the sidebar expanded, and the clock sizes itself to fit. On touchscreens, the clipped **Log Contact** sub-mode placeholder also has a wider box.
 
 ## 26.10.13 - 2026-10-26
 

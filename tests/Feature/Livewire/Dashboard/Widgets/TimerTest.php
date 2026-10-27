@@ -275,3 +275,19 @@ it('handles event with more than 24 hours remaining', function () {
             return $now->diffInHours($endTime) >= 24;
         });
 });
+
+it('sizes the countdown to the tile width so it never overflows a narrow tile', function () {
+    Event::factory()->create([
+        'event_type_id' => EventType::where('code', 'FD')->first()->id,
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(6),
+    ]);
+
+    Livewire::test(Timer::class, [
+        'config' => ['timer_type' => 'event_countdown'],
+        'size' => 'normal',
+    ])
+        ->assertSeeHtml('@container')
+        ->assertSeeHtml('16cqi')
+        ->assertDontSeeHtml('sm:text-5xl');
+});

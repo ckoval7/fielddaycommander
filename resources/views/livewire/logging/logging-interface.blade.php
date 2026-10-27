@@ -55,7 +55,7 @@
                     list="log-submodes"
                     maxlength="20"
                     x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                    class="input input-xs w-28 pointer-coarse:w-36 uppercase font-mono"
+                    class="input input-xs w-28 pointer-coarse:w-40 uppercase font-mono"
                     placeholder="Sub-mode"
                     aria-label="Sub-mode (optional)"
                 />
@@ -137,7 +137,7 @@
                 list="log-submodes"
                 maxlength="20"
                 x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                class="input input-xs w-28 uppercase font-mono"
+                class="input input-xs w-28 pointer-coarse:w-40 uppercase font-mono"
                 placeholder="Sub-mode"
                 aria-label="Sub-mode (optional)"
                 autocapitalize="characters"

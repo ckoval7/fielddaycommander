@@ -340,3 +340,16 @@ test('lazy placeholder renders the countdown so the header does not shift when i
         ->toContain('LIVE')
         ->not->toContain('x-text="countdown"');
 });
+
+test('the desktop header hides the event name until it fits on one line', function () {
+    Event::factory()->create([
+        'event_type_id' => $this->eventType->id,
+        'start_time' => now()->subHours(2),
+        'end_time' => now()->addHours(22),
+    ]);
+
+    // The brand beside the countdown already names the event; on an iPad the
+    // repeated name wrapped onto three lines.
+    Livewire::test(EventCountdown::class)
+        ->assertSeeHtml('whitespace-nowrap max-xl:hidden');
+});
