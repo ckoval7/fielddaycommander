@@ -7,10 +7,14 @@ namespace App\Services;
 
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
 /**
  * Service class for generating equipment reports across 7 different report types.
+ *
+ * Reports load soft-deleted equipment too: a commitment records gear that went
+ * to the event, so an item deleted after the event still appears in its reports.
  */
 class EquipmentReportService
 {
@@ -44,6 +48,7 @@ class EquipmentReportService
         $commitments = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'equipment.owningOrganization',
                 'equipment.bands',
@@ -158,6 +163,7 @@ class EquipmentReportService
             ->where('event_id', $eventId)
             ->whereIn('status', ['committed', 'delivered'])
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'equipment.owningOrganization',
             ])
@@ -205,6 +211,7 @@ class EquipmentReportService
             ->where('event_id', $eventId)
             ->whereIn('status', ['committed', 'delivered'])
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'equipment.bands',
                 'station',
@@ -279,6 +286,7 @@ class EquipmentReportService
         $commitments = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
             ])
             ->get();
@@ -337,6 +345,7 @@ class EquipmentReportService
             ->where('event_id', $eventId)
             ->whereIn('status', ['delivered'])
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'station',
             ])
@@ -395,6 +404,7 @@ class EquipmentReportService
             ->where('event_id', $eventId)
             ->whereIn('status', ['lost', 'damaged', 'cancelled'])
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'statusChangedBy',
                 'station',
@@ -457,6 +467,7 @@ class EquipmentReportService
         $equipmentRecords = EquipmentEvent::query()
             ->where('event_id', $eventId)
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'equipment.bands',
                 'station',

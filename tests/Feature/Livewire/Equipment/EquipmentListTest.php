@@ -7,6 +7,8 @@ use App\Livewire\Equipment\EquipmentList;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
+use App\Models\EventConfiguration;
+use App\Models\Station;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -1310,4 +1312,150 @@ test('current commitment is the soonest of several future events', function () {
     $equipment = Equipment::find($equipment->id);
     expect($equipment->current_commitment->event_id)->toBe($sooner->id)
         ->and($equipment->activeCommitments->pluck('event_id')->all())->toBe([$sooner->id, $later->id]);
+});
+
+test('deleting a radio that is a station primary radio is blocked and names the station', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => '20m Phone']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(EquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Icom IC-7300 is the primary radio for 20m Phone in {$eventName}. Assign another radio to that station first.");
+
+    expect(Equipment::where('id', $radio->id)->exists())->toBeTrue();
+    expect($station->fresh()->radio_equipment_id)->toBe($radio->id);
+});
+
+test('bulk delete skips radios that are a station primary radio', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+    ]);
+    $other = Equipment::factory()->create(['owner_user_id' => $this->user->id]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => 'Digital Station']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$radio->id, $other->id])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success'
+            && $params['description'] === '1 item deleted.')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Yaesu FT-991A is the primary radio for Digital Station in {$eventName}. Assign another radio to that station first.");
+
+    expect(Equipment::where('id', $radio->id)->exists())->toBeTrue();
+    expect(Equipment::where('id', $other->id)->exists())->toBeFalse();
+});
+
+/**
+ * Create a station whose event ended last month, using the given radio as
+ * its primary radio.
+ */
+function makePastEventStation(Equipment $radio, string $name): Station
+{
+    $event = Event::factory()->create([
+        'name' => 'Field Day Last Year',
+        'start_time' => now()->subYear(),
+        'end_time' => now()->subYear()->addDay(),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    return Station::factory()->create([
+        'event_configuration_id' => $config->id,
+        'radio_equipment_id' => $radio->id,
+        'name' => $name,
+    ]);
+}
+
+test('a radio that is only a past event station primary radio can be deleted', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $station = makePastEventStation($radio, '20m Phone');
+
+    Livewire::test(EquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success')
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error');
+
+    expect(Equipment::find($radio->id))->toBeNull()
+        ->and($station->fresh()->radio_equipment_id)->toBe($radio->id);
+});
+
+test('a radio that is primary for an upcoming event station is still refused even if a past station used it', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    makePastEventStation($radio, 'Old Station');
+    $upcoming = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => '20m Phone']);
+    $eventName = $upcoming->eventConfiguration->event->name;
+
+    Livewire::test(EquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Icom IC-7300 is the primary radio for 20m Phone in {$eventName}. Assign another radio to that station first.");
+
+    expect(Equipment::find($radio->id))->not->toBeNull();
+});
+
+test('a radio that is primary for an in-progress event station is still refused', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+    ]);
+    $event = Event::factory()->create([
+        'start_time' => now()->subHour(),
+        'end_time' => now()->addDay(),
+    ]);
+    Station::factory()->create([
+        'event_configuration_id' => EventConfiguration::factory()->create(['event_id' => $event->id])->id,
+        'radio_equipment_id' => $radio->id,
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error');
+
+    expect(Equipment::find($radio->id))->not->toBeNull();
+});
+
+test('bulk delete removes a radio used only by a past event station', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create(['owner_user_id' => $this->user->id, 'type' => 'radio']);
+    makePastEventStation($radio, 'Old Station');
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$radio->id])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success'
+            && $params['description'] === '1 item deleted.')
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error');
+
+    expect(Equipment::find($radio->id))->toBeNull();
 });

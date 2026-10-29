@@ -20,7 +20,7 @@ use Livewire\WithPagination;
 
 class AllEquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
+    use AuthorizesRequests, GuardsPrimaryRadioDeletion, ManagesEquipmentCommitments, WithPagination;
 
     public string $search = '';
 
@@ -187,6 +187,14 @@ class AllEquipmentList extends Component
         $equipment = Equipment::findOrFail($equipmentId);
 
         $this->authorize('delete', $equipment);
+
+        $blockedMessage = $this->primaryRadioDeletionBlocker($equipment);
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+
+            return;
+        }
 
         AuditLog::log(
             action: 'equipment.deleted',

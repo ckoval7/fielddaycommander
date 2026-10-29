@@ -8,6 +8,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Models\Station;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -469,4 +470,24 @@ test('the photo viewer title is escaped exactly once', function () {
         ->assertSeeHtml('O&#039;Brien &lt;b&gt;Radio&lt;/b&gt;')
         ->assertDontSeeHtml('&amp;#039;')
         ->assertDontSeeHtml('&amp;lt;');
+});
+
+test('equipment manager cannot delete a radio that is a station primary radio', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => User::factory()->create()->id,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-705',
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => 'VHF/UHF Rig']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(AllEquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Icom IC-705 is the primary radio for VHF/UHF Rig in {$eventName}. Assign another radio to that station first.");
+
+    expect(Equipment::find($radio->id))->not->toBeNull();
 });

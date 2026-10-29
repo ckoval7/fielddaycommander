@@ -12,6 +12,7 @@ use App\Models\Station;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -135,6 +136,9 @@ class EventEquipmentDashboard extends Component
     /**
      * Get all equipment commitments for this event with relationships.
      *
+     * Includes equipment deleted since it was committed, so a past event's
+     * dashboard still lists the gear that was there.
+     *
      * @return Collection<int, EquipmentEvent>
      */
     #[Computed]
@@ -143,6 +147,7 @@ class EventEquipmentDashboard extends Component
         return EquipmentEvent::query()
             ->forEvent($this->event->id)
             ->with([
+                'equipment' => fn (BelongsTo $query): BelongsTo => $query->withTrashed(),
                 'equipment.owner',
                 'equipment.owningOrganization',
                 'equipment.manager',

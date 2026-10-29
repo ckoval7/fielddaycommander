@@ -307,11 +307,20 @@ class StationCloneService
                 );
             }
 
+            // A past event's primary radio may have been deleted since; don't carry it over
+            $radioEquipmentId = $sourceStation->primaryRadio?->id;
+            if ($sourceStation->radio_equipment_id && ! $radioEquipmentId) {
+                $result['warnings'][] = sprintf(
+                    'The primary radio for station "%s" was deleted. Assign a radio to the cloned station before logging.',
+                    $sourceStation->name
+                );
+            }
+
             // Create the cloned station
             $clonedStation = Station::create([
                 'event_configuration_id' => $targetEventId,
                 'name' => $newName,
-                'radio_equipment_id' => $sourceStation->radio_equipment_id,
+                'radio_equipment_id' => $radioEquipmentId,
                 'is_gota' => $isGota,
                 'is_vhf_only' => $sourceStation->is_vhf_only,
                 'is_satellite' => $sourceStation->is_satellite,

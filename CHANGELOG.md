@@ -46,6 +46,9 @@
 - Signing someone up for a shift that overlapped another of their shifts gave no warning, whether they signed up on **Shift Schedule** or a manager assigned them on **Manage Schedule** or **Shift Dashboard**. The signup still goes through, but now warns about the overlap and names the other shift.
 - On **Reports** and **My Shifts**, hours worked showed zero for volunteers still checked in. Their time so far now counts, up to the shift's length.
 - Photos added with **Upload Photo** kept the GPS location and other camera details from the original file, so anyone who could open the gallery could download them. Uploaded JPEG, PNG, and WebP photos now have those details removed. Phone photos taken sideways are stored upright, and their gallery thumbnails, which could show sideways, now show upright too. Photos uploaded before this update keep their original details.
+- On **My Equipment**, **Club Equipment**, and **Equipment Catalog**, deleting a radio that a station in a current or upcoming event used as its primary radio left the station showing **Primary Radio: Not assigned**, which the station form doesn't allow. Deleting that radio, alone or with **Delete** on a selection, is now refused with a message naming the station and asking you to assign it another radio first. Other selected items are still deleted, and radios used only at stations in events that have ended can still be deleted.
+- After an item committed to an event was deleted, that event's **Event Equipment** page and equipment reports failed to open. They now open and still list the deleted item.
+- Cloning a station whose primary radio had been deleted copied that radio to the new station. The clone now leaves **Primary Radio** empty and warns you to assign one.
 
 ## 26.10.13 - 2026-10-26
 

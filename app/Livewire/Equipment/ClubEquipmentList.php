@@ -19,7 +19,7 @@ use Livewire\WithPagination;
 
 class ClubEquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
+    use AuthorizesRequests, GuardsPrimaryRadioDeletion, ManagesEquipmentCommitments, WithPagination;
 
     public string $search = '';
 
@@ -135,7 +135,10 @@ class ClubEquipmentList extends Component
     {
         $this->authorizeCommitAction();
 
-        $clubEquipment = $this->scopeSelectedEquipment($this->selectedIds);
+        [
+            'deletable' => $clubEquipment,
+            'blockedMessage' => $blockedMessage,
+        ] = $this->partitionPrimaryRadios($this->scopeSelectedEquipment($this->selectedIds));
 
         $count = $clubEquipment->count();
 
@@ -153,7 +156,13 @@ class ClubEquipmentList extends Component
             $equipment->delete();
         }
 
-        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
+        if ($count > 0 || $blockedMessage === null) {
+            $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
+        }
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+        }
 
         $this->selectedIds = [];
 
@@ -168,6 +177,14 @@ class ClubEquipmentList extends Component
         $equipment = Equipment::findOrFail($equipmentId);
 
         $this->authorize('delete', $equipment);
+
+        $blockedMessage = $this->primaryRadioDeletionBlocker($equipment);
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+
+            return;
+        }
 
         AuditLog::log(
             action: 'equipment.deleted',
