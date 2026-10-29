@@ -236,6 +236,7 @@ test('calculateQsoScore returns total QSO points with power multiplier', functio
         'points' => 1,
         'is_duplicate' => false,
         'power_watts' => 5,
+        'power_source' => PowerSource::Battery,
     ]);
 
     // Create 1 duplicate (should not count)
@@ -244,6 +245,7 @@ test('calculateQsoScore returns total QSO points with power multiplier', functio
         'points' => 1,
         'is_duplicate' => true,
         'power_watts' => 5,
+        'power_source' => PowerSource::Battery,
     ]);
 
     // 3 contacts × 1 point × 5 multiplier = 15

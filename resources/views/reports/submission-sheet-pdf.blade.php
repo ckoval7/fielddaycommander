@@ -161,7 +161,7 @@
             <tr>
                 <td class="val">{{ $participant_count }}</td>
                 <td class="val">{{ $transmitter_count }}</td>
-                <td class="val">{{ $entry_class }}</td>
+                <td class="val">{{ $entry_class }}@if (! empty($entry_category)) <span style="font-size: 9px; font-weight: normal; color: #64748b;">{{ $entry_category }}</span>@endif</td>
                 <td class="val">{{ $power_multiplier }}×</td>
             </tr>
         </table>

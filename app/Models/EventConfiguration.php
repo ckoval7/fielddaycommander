@@ -426,10 +426,67 @@ class EventConfiguration extends Model
     }
 
     /**
+     * Station power sources the entry has used: the source recorded on each
+     * contact when it was made, plus every station's current source.
+     *
+     * Contacts keep the source their station had at the time, so switching a
+     * station back from commercial mains doesn't erase the contacts made on
+     * mains. Event-level power flags are separate; see usesPowerSource().
+     *
+     * @return list<PowerSource>
+     */
+    public function stationPowerSourcesUsed(): array
+    {
+        $values = $this->contacts()
+            ->whereNotNull('power_source')
+            ->distinct()
+            ->toBase()
+            ->pluck('power_source')
+            ->merge($this->stations()->whereNotNull('power_source')->distinct()->toBase()->pluck('power_source'));
+
+        return $values
+            ->map(fn (string $value): ?PowerSource => PowerSource::tryFrom($value))
+            ->filter()
+            ->unique(fn (PowerSource $source): string => $source->value)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Whether the entry used a power source, from the event's power flags or
+     * any station's power source (current, or recorded on a contact).
+     *
+     * @param  list<PowerSource>|null  $stationSources  Pass stationPowerSourcesUsed() to reuse it.
+     */
+    public function usesPowerSource(PowerSource $source, ?array $stationSources = null): bool
+    {
+        $eventFlag = match ($source) {
+            PowerSource::CommercialMains => (bool) $this->uses_commercial_power,
+            PowerSource::Generator => (bool) $this->uses_generator,
+            PowerSource::Battery => (bool) $this->uses_battery,
+            PowerSource::Solar => (bool) $this->uses_solar,
+            PowerSource::Other => filled($this->uses_other_power),
+        };
+
+        return $eventFlag || in_array($source, $stationSources ?? $this->stationPowerSourcesUsed(), true);
+    }
+
+    /**
+     * Whether any contact or setting puts the entry on commercial mains.
+     * A Class A entry on mains is listed as A-Commercial and loses the
+     * emergency power bonus.
+     */
+    public function usesCommercialMains(): bool
+    {
+        return $this->usesPowerSource(PowerSource::CommercialMains);
+    }
+
+    /**
      * Check if station qualifies for QRP natural power bonus (5x multiplier).
      *
      * Requires natural power sources at event level and no commercial/generator power.
-     * Also checks that all stations with a power_source set use natural power.
+     * Every station power source used, current or recorded on a contact, must
+     * also be natural power.
      */
     public function hasQrpNaturalPowerBonus(): bool
     {
@@ -444,18 +501,13 @@ class EventConfiguration extends Model
             return false;
         }
 
-        // Check station-level power sources: any non-natural station disqualifies
-        $naturalValues = collect(PowerSource::cases())
-            ->filter(fn (PowerSource $ps) => $ps->isNaturalPower())
-            ->map(fn (PowerSource $ps) => $ps->value)
-            ->all();
+        foreach ($this->stationPowerSourcesUsed() as $source) {
+            if (! $source->isNaturalPower()) {
+                return false;
+            }
+        }
 
-        $hasDisqualifyingStation = $this->stations()
-            ->whereNotNull('power_source')
-            ->whereNotIn('power_source', $naturalValues)
-            ->exists();
-
-        return ! $hasDisqualifyingStation;
+        return true;
     }
 
     /**
@@ -605,25 +657,19 @@ class EventConfiguration extends Model
      *
      * Awarded when running 100% on emergency power (no commercial power)
      * and the operating class is eligible for the bonus.
-     * Disqualified if the event config uses commercial power OR any station
-     * has its power_source set to CommercialMains.
+     * Disqualified if the event config uses commercial power, any station is
+     * set to CommercialMains, or any contact was made while its station was.
      */
     public function calculateEmergencyPowerBonus(): int
     {
         $rules = $this->fieldDayRules();
         $bonusType = $rules?->bonus('emergency_power');
 
-        $hasCommercialStation = ! $this->uses_commercial_power
-            && $this->stations()
-                ->where('power_source', PowerSource::CommercialMains->value)
-                ->exists();
-
         $disqualified = ! $rules
             || ! $bonusType
             || ! $bonusType->is_active
-            || $this->uses_commercial_power
-            || $hasCommercialStation
-            || ! $this->isClassEligibleForBonus($bonusType);
+            || ! $this->isClassEligibleForBonus($bonusType)
+            || $this->usesCommercialMains();
 
         if ($disqualified) {
             return 0;

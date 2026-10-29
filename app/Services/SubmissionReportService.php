@@ -5,6 +5,7 @@
 
 namespace App\Services;
 
+use App\Enums\PowerSource;
 use App\Models\Band;
 use App\Models\BonusType;
 use App\Models\Contact;
@@ -29,6 +30,12 @@ class SubmissionReportService
         $modes = Mode::orderBy('id')->get();
         $bulletin = $this->bulletinCopy($config);
 
+        // Power sources come from the event's flags and from the stations,
+        // including the source recorded on each contact when it was made.
+        $stationSources = $config->stationPowerSourcesUsed();
+        $usesCommercial = $config->usesPowerSource(PowerSource::CommercialMains, $stationSources);
+        $classCode = $config->operatingClass->code;
+
         return [
             // Section 1: Station Identification
             'callsign' => $config->callsign,
@@ -36,19 +43,25 @@ class SubmissionReportService
             'club_name' => $config->club_name,
             'section' => $config->section->code,
             'section_name' => $config->section->name,
-            'entry_class' => $config->transmitter_count.$config->operatingClass->code,
-            'operating_class_code' => $config->operatingClass->code,
+            'entry_class' => $config->transmitter_count.$classCode,
+            // A Class A entry that used commercial mains for any contact is
+            // listed as A-Commercial.
+            'entry_category' => $classCode === 'A' && $usesCommercial ? 'A-Commercial' : null,
+            'operating_class_code' => $classCode,
             'transmitter_count' => $config->transmitter_count,
             'participant_count' => $this->participantCount($config),
 
-            // Section 2: Power Source
-            'uses_commercial_power' => $config->uses_commercial_power,
-            'uses_generator' => $config->uses_generator,
-            'uses_battery' => $config->uses_battery,
-            'uses_solar' => $config->uses_solar,
-            'uses_wind' => $config->uses_wind,
-            'uses_water' => $config->uses_water,
-            'uses_other_power' => $config->uses_other_power,
+            // Section 2: Power Source (the ARRL form's five boxes; wind and
+            // water go under Other)
+            'uses_commercial_power' => $usesCommercial,
+            'uses_generator' => $config->usesPowerSource(PowerSource::Generator, $stationSources),
+            'uses_battery' => $config->usesPowerSource(PowerSource::Battery, $stationSources),
+            'uses_solar' => $config->usesPowerSource(PowerSource::Solar, $stationSources),
+            'uses_wind' => (bool) $config->uses_wind,
+            'uses_water' => (bool) $config->uses_water,
+            'uses_other_power' => $config->usesPowerSource(PowerSource::Other, $stationSources)
+                || $config->uses_wind
+                || $config->uses_water,
 
             // Section 3: Claimed Score
             'qso_base_points' => $config->qsoBasePoints(),
@@ -205,10 +218,14 @@ class SubmissionReportService
             ];
         }
 
-        // Auto-determined bonuses
+        // Auto-determined bonuses replace any saved row for the same code, as
+        // they do in the score: a computed 0 (emergency power lost to a
+        // station on mains, say) leaves the bonus unclaimed.
         foreach ($this->autoBonusPoints($config) as $code => $points) {
             if ($points > 0) {
                 $claimed[$code] = ['points' => $points, 'is_verified' => true];
+            } else {
+                unset($claimed[$code]);
             }
         }
 

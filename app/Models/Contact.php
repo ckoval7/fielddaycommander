@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use App\Enums\PowerSource;
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,7 @@ class Contact extends Model
         'section_id',
         'exchange_class',
         'power_watts',
+        'power_source',
         'rst_sent',
         'rst_received',
         'grid_square',
@@ -62,6 +64,7 @@ class Contact extends Model
             'frequency_hz' => 'integer',
             'adif_fields' => 'array',
             'is_gota_contact' => 'boolean',
+            'power_source' => PowerSource::class,
             'is_natural_power' => 'boolean',
             'is_satellite' => 'boolean',
             'is_duplicate' => 'boolean',

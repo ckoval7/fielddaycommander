@@ -31,6 +31,8 @@ class ContactObserver
      */
     public function saving(Contact $contact): void
     {
+        $this->recordStationPowerSource($contact);
+
         if ($contact->is_duplicate || (int) $contact->points === 0 || $contact->event_configuration_id === null) {
             return;
         }
@@ -51,6 +53,26 @@ class ContactObserver
             }
         } catch (UnknownRuleSet) {
             // No rulebook to judge by: leave the points as priced.
+        }
+    }
+
+    /**
+     * Copy the station's power source onto a new contact, so the source in
+     * use when it was made still counts after the station is switched.
+     */
+    protected function recordStationPowerSource(Contact $contact): void
+    {
+        if ($contact->exists || $contact->power_source !== null || $contact->operating_session_id === null) {
+            return;
+        }
+
+        $source = DB::table('operating_sessions')
+            ->join('stations', 'stations.id', '=', 'operating_sessions.station_id')
+            ->where('operating_sessions.id', $contact->operating_session_id)
+            ->value('stations.power_source');
+
+        if ($source !== null) {
+            $contact->power_source = $source;
         }
     }
 
