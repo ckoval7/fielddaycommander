@@ -25,6 +25,10 @@ class UserManagement extends Component
 {
     private const BULK_LIMIT_ERROR = 'Please select no more than 50 users for a bulk action.';
 
+    private const SYSTEM_ACCOUNT_PROTECTED = 'The SYSTEM account is protected and can\'t be changed.';
+
+    private const SYSTEM_ACCOUNT_SKIPPED = 'The SYSTEM account is protected and was skipped.';
+
     private const FIRST_NAME_REQUIRED = 'Enter a first name.';
 
     private const LAST_NAME_REQUIRED = 'Enter a last name.';
@@ -632,8 +636,9 @@ class UserManagement extends Component
             ]);
         });
 
+        $skippedSystem = $this->selectionIncludesSystemUser();
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
-        $this->dispatch('toast', title: 'Success', description: "Role assigned to {$count} ".str('user')->plural($count).'.', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->dispatchBulkResult($count, "Role assigned to {$count} ".str('user')->plural($count).'.', 'phosphor-check-circle', $skippedSystem);
     }
 
     public function bulkLockAccounts(): void
@@ -656,7 +661,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
+        $userIds = User::whereIn('id', $this->selectedUsers)->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
@@ -691,7 +696,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
+        $userIds = User::whereIn('id', $this->selectedUsers)->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
@@ -756,9 +761,39 @@ class UserManagement extends Component
         User::whereIn('id', $userIds)->delete();
 
         $count = count($userIds);
+        $skippedSystem = $this->selectionIncludesSystemUser();
         $this->showBulkDeleteModal = false;
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('user')->plural($count).' deleted.', icon: 'phosphor-trash', css: 'alert-success');
+        $this->dispatchBulkResult($count, "{$count} ".str('user')->plural($count).' deleted.', 'phosphor-trash', $skippedSystem);
+    }
+
+    /**
+     * Whether the current bulk selection includes the protected SYSTEM account.
+     */
+    private function selectionIncludesSystemUser(): bool
+    {
+        return User::whereIn('id', $this->selectedUsers)
+            ->where('call_sign', User::SYSTEM_CALL_SIGN)
+            ->exists();
+    }
+
+    /**
+     * Toast the outcome of a bulk action, warning instead of claiming success
+     * when the protected SYSTEM account was the only user selected.
+     */
+    private function dispatchBulkResult(int $count, string $description, string $icon, bool $skippedSystem): void
+    {
+        if ($skippedSystem && $count === 0) {
+            $this->dispatch('toast', title: 'Nothing changed', description: self::SYSTEM_ACCOUNT_PROTECTED, icon: 'phosphor-warning', css: 'alert-warning');
+
+            return;
+        }
+
+        if ($skippedSystem) {
+            $description .= ' '.self::SYSTEM_ACCOUNT_SKIPPED;
+        }
+
+        $this->dispatch('toast', title: 'Success', description: $description, icon: $icon, css: 'alert-success');
     }
 
     public function render()
