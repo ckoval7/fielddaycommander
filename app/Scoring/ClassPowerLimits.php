@@ -55,10 +55,8 @@ final class ClassPowerLimits
                 : null;
         }
 
-        if ($rules->eventTypeCode() === 'WFD') {
-            return self::WINTER_FIELD_DAY_LIMIT_WATTS;
-        }
-
-        return null;
+        return $rules->eventTypeCode() === 'WFD'
+            ? self::WINTER_FIELD_DAY_LIMIT_WATTS
+            : null;
     }
 }

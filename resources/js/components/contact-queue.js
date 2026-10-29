@@ -64,6 +64,23 @@ function writeStorage(storage, key, value) {
 const QUEUE_KEY_PREFIX = 'fd-commander-queue-';
 
 /**
+ * Session ids of the unsynced contacts in the stored queue under this key.
+ * An unreadable queue can't be vouched for, so it keeps its own session.
+ */
+function unsyncedSessionIds(storage, key) {
+    let entries;
+    try {
+        entries = JSON.parse(storage.getItem(key) ?? '[]');
+    } catch {
+        const id = Number.parseInt(key.slice(QUEUE_KEY_PREFIX.length), 10);
+        return Number.isInteger(id) ? [id] : [];
+    }
+    return (Array.isArray(entries) ? entries : [])
+        .filter(c => c?.status !== 'synced' && Number.isInteger(c?.operating_session_id))
+        .map(c => c.operating_session_id);
+}
+
+/**
  * Ids of every session this browser still holds unsynced contacts for,
  * across all stored queues (a band/mode switch carries contacts into the
  * next session's queue). Null when localStorage can't be read.
@@ -76,21 +93,8 @@ export function queuedSessionIds(storage = localStorage) {
             if (!key?.startsWith(QUEUE_KEY_PREFIX)) {
                 continue;
             }
-            let entries = [];
-            try {
-                entries = JSON.parse(storage.getItem(key) ?? '[]');
-            } catch {
-                // An unreadable queue can't be vouched for: keep its session.
-                const id = Number.parseInt(key.slice(QUEUE_KEY_PREFIX.length), 10);
-                if (Number.isInteger(id)) {
-                    ids.add(id);
-                }
-                continue;
-            }
-            for (const c of Array.isArray(entries) ? entries : []) {
-                if (c?.status !== 'synced' && Number.isInteger(c?.operating_session_id)) {
-                    ids.add(c.operating_session_id);
-                }
+            for (const id of unsyncedSessionIds(storage, key)) {
+                ids.add(id);
             }
         }
         return [...ids];
@@ -1159,70 +1163,82 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const exchange = inputEl.value.trim();
             if (!exchange) return;
 
-            // Queue-sourced edit: parse client-side, mutate queue entry in place,
-            // clear the sync lock back to 'pending' and kick sync.
             if (this.recalledUuid) {
-                const parsed = this.parseExchange(exchange);
-                if (!parsed) {
-                    // parseError is already set by parseExchange; stay in recall mode.
-                    return;
-                }
-                const advanced = this.parseAdvancedFields();
-                if (!advanced) {
-                    return;
-                }
-
-                const entry = this.queue.find(c => c.uuid === this.recalledUuid);
-                if (entry) {
-                    Object.assign(entry, this.emptyToNull(advanced));
-                    entry.callsign = parsed.callsign;
-                    entry.section_id = parsed.section_id;
-                    entry.section_code = parsed.section_code;
-                    entry.exchange_class = (parsed.transmitter_count + parsed.class_code).toUpperCase();
-                    entry.status = 'pending';
-                    entry.attempts = 0;
-                    entry.last_error = null;
-                    entry.lastAttemptTime = 0;
-                    delete entry._prevStatus;
-                    this.schedulePendingIndicator(entry);
-                    this.saveQueue();
-                }
-
-                // exitRecall would try to release the lock, but we've already
-                // transitioned the entry to 'pending'. Clear recalledUuid first
-                // so _releaseRecallLock is a no-op.
-                this.recalledUuid = null;
-                this.exitRecall(inputEl);
-                void this.syncNext();
+                this._saveQueuedEdit(inputEl, exchange);
                 return;
             }
 
-            // Server-sourced edit: delegate to Livewire.
             if (this.recalledContactId) {
-                const advanced = this.parseAdvancedFields();
-                if (!advanced) {
-                    return;
-                }
-                const contactId = this.recalledContactId;
-                const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
-                if (!wire) {
-                    return;
-                }
-                // Stay in edit mode until the server accepts the edit, so a
-                // rejected one keeps its text and shows why.
-                let error;
-                try {
-                    error = await wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
-                } catch {
-                    error = 'The edit wasn\'t saved. Check the connection and try again.';
-                }
-                if (error) {
-                    this.parseError = error;
-                    return;
-                }
-                this.parseError = '';
-                this.exitRecall(inputEl);
+                await this._saveServerEdit(inputEl, exchange);
             }
+        },
+
+        /**
+         * Queue-sourced edit: parse client-side, mutate the queue entry in
+         * place, clear the sync lock back to 'pending' and kick sync.
+         */
+        _saveQueuedEdit(inputEl, exchange) {
+            const parsed = this.parseExchange(exchange);
+            if (!parsed) {
+                // parseError is already set by parseExchange; stay in recall mode.
+                return;
+            }
+            const advanced = this.parseAdvancedFields();
+            if (!advanced) {
+                return;
+            }
+
+            const entry = this.queue.find(c => c.uuid === this.recalledUuid);
+            if (entry) {
+                Object.assign(entry, this.emptyToNull(advanced));
+                entry.callsign = parsed.callsign;
+                entry.section_id = parsed.section_id;
+                entry.section_code = parsed.section_code;
+                entry.exchange_class = (parsed.transmitter_count + parsed.class_code).toUpperCase();
+                entry.status = 'pending';
+                entry.attempts = 0;
+                entry.last_error = null;
+                entry.lastAttemptTime = 0;
+                delete entry._prevStatus;
+                this.schedulePendingIndicator(entry);
+                this.saveQueue();
+            }
+
+            // exitRecall would try to release the lock, but we've already
+            // transitioned the entry to 'pending'. Clear recalledUuid first
+            // so _releaseRecallLock is a no-op.
+            this.recalledUuid = null;
+            this.exitRecall(inputEl);
+            void this.syncNext();
+        },
+
+        /**
+         * Server-sourced edit: delegate to Livewire.
+         */
+        async _saveServerEdit(inputEl, exchange) {
+            const advanced = this.parseAdvancedFields();
+            if (!advanced) {
+                return;
+            }
+            const contactId = this.recalledContactId;
+            const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
+            if (!wire) {
+                return;
+            }
+            // Stay in edit mode until the server accepts the edit, so a
+            // rejected one keeps its text and shows why.
+            let error;
+            try {
+                error = await wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
+            } catch {
+                error = 'The edit wasn\'t saved. Check the connection and try again.';
+            }
+            if (error) {
+                this.parseError = error;
+                return;
+            }
+            this.parseError = '';
+            this.exitRecall(inputEl);
         },
 
         /**
