@@ -300,6 +300,46 @@ class LoggingInterface extends Component
     }
 
     /**
+     * Event bands this station can't use, each with the reason, so a band
+     * typed in the exchange box ("20M" at a VHF/UHF Only station) gets that
+     * reason instead of a parse error.
+     *
+     * @return array<int, array{name: string, message: string}>
+     */
+    #[Computed]
+    public function restrictedSwitchBands(): array
+    {
+        $station = $this->operatingSession->station;
+
+        if (! $station->is_vhf_only) {
+            return [];
+        }
+
+        return Band::query()
+            ->allowedForFieldDay()
+            ->ordered()
+            ->get()
+            ->map(fn (Band $band): array => ['name' => $band->name, 'message' => $station->bandRestrictionMessage($band)])
+            ->filter(fn (array $band): bool => $band['message'] !== null)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Band shown in the "type band/mode alone" shortcut hint: 40M, or the
+     * first band the station can use when 40m isn't one of them.
+     */
+    #[Computed]
+    public function switchExampleBand(): string
+    {
+        $name = $this->switchBands->firstWhere('name', '40m')?->name
+            ?? $this->switchBands->first()?->name
+            ?? '40m';
+
+        return strtoupper($name);
+    }
+
+    /**
      * @return Collection<int, Mode>
      */
     #[Computed]

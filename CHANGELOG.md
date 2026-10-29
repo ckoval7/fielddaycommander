@@ -53,6 +53,10 @@
 - On phones, **Cancel** ran off the left edge of the **Start Logging Session** window on **Select Station** and of the **Exit Station Mode** window. The buttons now stack and fit.
 - On **Guestbook Manager** at laptop widths with the sidebar showing, the **Guestbook Bonuses** panel was squeezed into a narrow column, and the entries table ran past its card, hiding the edit and delete buttons. The panel now sits beside the totals only on wide screens, and entries show as cards until the table fits.
 - On **Club Equipment** at about 1280px with the sidebar showing, the table ran past its card, the page scrolled sideways and **Actions** was off the edge. Items now show as cards until the whole table fits.
+- On **Scoring**, the power limit warning for a single contact said "They score 0 points." It now says "It scores 0 points."
+- On **Log Contact** at a **VHF/UHF Only** station, typing a lower band such as `20m` gave the general "Enter callsign, class, and section" error. It now says the station is VHF/UHF Only and to choose 6m or higher. The shortcut hint also showed `40M` there. It now shows a usable band such as `6M`.
+- On **My Equipment** and **Club Equipment**, deleting a selection that included a station's primary radio showed "items deleted" and then immediately replaced it with "Radio still in use", so you couldn't tell what was deleted. One **Some items kept** warning now gives the number deleted and names the radio that was kept and why.
+- When cloning stations, a warning such as a deleted primary radio replaced the **Stations Cloned** summary. The summary now includes the warnings.
 
 ## 26.10.13 - 2026-10-26
 

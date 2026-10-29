@@ -156,13 +156,7 @@ class ClubEquipmentList extends Component
             $equipment->delete();
         }
 
-        if ($count > 0 || $blockedMessage === null) {
-            $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
-        }
-
-        if ($blockedMessage !== null) {
-            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
-        }
+        $this->notifyBulkDeleteResult($count, $blockedMessage);
 
         $this->selectedIds = [];
 

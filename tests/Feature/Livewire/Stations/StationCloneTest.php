@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Stations\StationClone;
+use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Station;
@@ -392,6 +393,47 @@ test('proceedWithClone creates stations in target event', function () {
         ->assertSet('showModal', false);
 
     expect(Station::where('event_configuration_id', $targetConfig->id)->count())->toBe(2);
+});
+
+test('proceedWithClone puts clone warnings in the same toast as the summary', function () {
+    $sourceEvent = Event::factory()->create([
+        'start_time' => appNow()->subDays(10),
+        'end_time' => appNow()->subDays(9),
+        'is_active' => false,
+    ]);
+    $sourceConfig = EventConfiguration::factory()->create(['event_id' => $sourceEvent->id]);
+    $radio = Equipment::factory()->create(['type' => 'radio']);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $sourceConfig->id,
+        'name' => 'Phone 1',
+        'radio_equipment_id' => $radio->id,
+    ]);
+    $radio->delete();
+
+    $targetEvent = Event::factory()->create([
+        'start_time' => appNow()->addDays(5),
+        'end_time' => appNow()->addDays(6),
+        'is_active' => false,
+    ]);
+    $targetConfig = EventConfiguration::factory()->create(['event_id' => $targetEvent->id]);
+
+    $toasts = Livewire::test(StationClone::class)
+        ->set('sourceEventId', $sourceEvent->id)
+        ->set('selectedStationIds', [$station->id])
+        ->set('targetEventId', $targetConfig->id)
+        ->set('copyEquipmentAssignments', false)
+        ->call('proceedWithClone')
+        ->assertHasNoErrors()
+        ->effects['dispatches'];
+
+    $toasts = collect($toasts)->where('name', 'toast')->values();
+
+    expect($toasts)->toHaveCount(1)
+        ->and($toasts[0]['params'][0]['title'])->toBe('Stations Cloned')
+        ->and($toasts[0]['params'][0]['css'])->toBe('alert-warning')
+        ->and($toasts[0]['params'][0]['description'])->toBe(
+            "Stations Created: 1\nEquipment Assigned: 0\nThe primary radio for station \"Phone 1\" was deleted. Assign a radio to the cloned station before logging."
+        );
 });
 
 test('proceedWithClone requires authorized user', function () {

@@ -241,6 +241,32 @@ test('event form multiplier preview follows the selected rules version', functio
     expect($component->get('powerMultiplier'))->toBe('2');
 });
 
+test('default scoring rules preview the year\'s rules, not the TEST rulebook', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id)
+        ->set('year', 2026)
+        ->set('rules_version', null)
+        ->set('max_power_watts', 50);
+
+    expect($component->get('powerMultiplier'))->toBe('2')
+        ->and(collect($component->get('powerMultiplierTiers'))->pluck('multiplier')->all())->not->toContain('3');
+
+    $component->assertSeeHtml('<strong>2×:</strong>')
+        ->assertDontSeeHtml('<strong>3×:</strong>');
+});
+
+test('a year with no rules of its own defaults to the newest year\'s rules, not TEST', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('year', 2099)
+        ->set('event_type_id', $this->eventType->id);
+
+    expect($component->get('rules_version'))->toBe('2026');
+});
+
 test('the power multiplier box shows the selected rules version\'s thresholds', function () {
     $this->actingAs($this->user);
 

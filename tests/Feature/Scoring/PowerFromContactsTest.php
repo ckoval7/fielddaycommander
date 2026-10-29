@@ -141,7 +141,18 @@ test('the scoring page warns about contacts above the power limit', function () 
 
     Livewire::test(Scoring::class)
         ->assertSet('zeroPointContactCount', 0)
-        ->assertSee('1 contact logged above the 500W limit for Class A. They score 0 points.');
+        ->assertSee('1 contact logged above the 500W limit for Class A. It scores 0 points.');
+});
+
+test('the power limit warning uses the plural for more than one contact', function () {
+    ($this->logContactAt)(1500);
+    ($this->logContactAt)(1000);
+
+    app(EventContextService::class)->clearCache();
+    $this->actingAs($this->user);
+
+    Livewire::test(Scoring::class)
+        ->assertSee('2 contacts logged above the 500W limit for Class A. They score 0 points.');
 });
 
 test('classes without a power limit keep the points of a high-power contact', function () {

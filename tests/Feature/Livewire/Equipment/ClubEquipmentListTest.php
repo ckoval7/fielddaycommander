@@ -716,3 +716,32 @@ test('club bulk delete skips radios used as station primary radios and names eve
     expect(Equipment::find($radio1->id))->not->toBeNull();
     expect(Equipment::find($radio2->id))->not->toBeNull();
 });
+
+test('club bulk delete that keeps a primary radio reports the deleted items in the same toast', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $others = Equipment::factory()->count(2)->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => 'Station 1']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', [$radio->id, ...$others->pluck('id')->all()])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'warning'
+            && $params['description'] === "2 items deleted. Icom IC-7300 is the primary radio for Station 1 in {$eventName}. Assign another radio to that station first.")
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => in_array($params['type'], ['success', 'error'], true));
+
+    expect(Equipment::find($radio->id))->not->toBeNull()
+        ->and(Equipment::whereIn('id', $others->pluck('id'))->count())->toBe(0);
+});

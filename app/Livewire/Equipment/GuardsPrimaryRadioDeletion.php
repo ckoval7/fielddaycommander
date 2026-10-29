@@ -55,6 +55,30 @@ trait GuardsPrimaryRadioDeletion
     }
 
     /**
+     * Report a bulk delete in one toast. Toasts show one at a time, so when
+     * some items were deleted and a radio was kept, both facts go in a
+     * single warning rather than an error that replaces the success.
+     */
+    protected function notifyBulkDeleteResult(int $deletedCount, ?string $blockedMessage): void
+    {
+        $deleted = $deletedCount.' '.str('item')->plural($deletedCount).' deleted.';
+
+        if ($blockedMessage === null) {
+            $this->dispatch('notify', title: 'Success', description: $deleted, type: 'success');
+
+            return;
+        }
+
+        if ($deletedCount === 0) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+
+            return;
+        }
+
+        $this->dispatch('notify', title: 'Some items kept', description: $deleted.' '.$blockedMessage, type: 'warning', timeout: 8000);
+    }
+
+    /**
      * @param  Collection<int, Equipment>  $blocked
      * @param  Collection<int, EloquentCollection<int, Station>>  $stationsByRadio
      */
