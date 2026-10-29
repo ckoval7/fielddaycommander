@@ -248,7 +248,7 @@ test('debounce updates title to reflect count when count exceeds 1', function ()
     );
 
     $user->refresh();
-    expect($user->notifications->first()->data['title'])->toBe('2 New Sections Worked');
+    expect($user->notifications->first()->data['title'])->toBe('2 New Sections Worked!');
 
     $this->service->notify(
         user: $user,
@@ -259,7 +259,7 @@ test('debounce updates title to reflect count when count exceeds 1', function ()
     );
 
     $user->refresh();
-    expect($user->notifications->first()->data['title'])->toBe('3 New Sections Worked');
+    expect($user->notifications->first()->data['title'])->toBe('3 New Sections Worked!');
 });
 
 test('notification data structure matches contract', function () {
