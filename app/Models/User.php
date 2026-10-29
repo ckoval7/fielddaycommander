@@ -74,6 +74,18 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'email',
+        'email_verified_at',
+        'account_locked_at',
+        'approval_requested_at',
+        'failed_login_attempts',
+        'last_login_at',
+        'last_login_ip',
+        'password_changed_at',
+        'requires_password_change',
+        'preferred_timezone',
+        'notification_preferences',
     ];
 
     /**

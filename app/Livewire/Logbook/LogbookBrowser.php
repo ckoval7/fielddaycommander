@@ -359,7 +359,7 @@ class LogbookBrowser extends Component
     public function operators()
     {
         return User::orderBy('call_sign')
-            ->get()
+            ->get(['id', 'call_sign', 'first_name'])
             ->map(function (User $user) {
                 $user->display_name = $user->first_name
                     ? "{$user->first_name}, {$user->call_sign}"

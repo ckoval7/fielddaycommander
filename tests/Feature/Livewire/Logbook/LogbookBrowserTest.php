@@ -676,3 +676,37 @@ test('contact cards show the full station name instead of a fixed-width truncati
         ->assertSeeHtml('min-w-0 flex-1 break-words')
         ->assertDontSeeHtml('truncate max-w-[120px]');
 });
+
+test('logger filter does not expose other members account details', function () {
+    $member = User::factory()->create([
+        'call_sign' => 'W1LEAK',
+        'first_name' => 'Pat',
+        'email' => 'pat-private@example.com',
+        'last_login_ip' => '203.0.113.77',
+        'failed_login_attempts' => 3,
+    ]);
+
+    Livewire::test(LogbookBrowser::class)
+        ->assertSee('Pat, W1LEAK')
+        ->assertDontSee('pat-private@example.com')
+        ->assertDontSee('203.0.113.77')
+        ->assertDontSee('failed_login_attempts')
+        ->assertDontSee('last_login_at');
+
+    expect($member->toArray())->not->toHaveKeys(['email', 'last_login_ip', 'failed_login_attempts', 'account_locked_at']);
+});
+
+test('logger filter does not expose account details to signed-out visitors', function () {
+    auth()->logout();
+
+    User::factory()->create([
+        'call_sign' => 'W1LEAK',
+        'email' => 'pat-private@example.com',
+        'last_login_ip' => '203.0.113.77',
+    ]);
+
+    Livewire::test(LogbookBrowser::class)
+        ->assertSee('W1LEAK')
+        ->assertDontSee('pat-private@example.com')
+        ->assertDontSee('203.0.113.77');
+});
