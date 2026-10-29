@@ -45,6 +45,7 @@
 - On **Manage Schedule**, the **Confirmations** tab offered **Confirm** for shifts nobody had checked in to, including ones that hadn't started, and confirming could award the role's bonus. The tab now lists only shifts someone has checked in to, and a shift without a check-in can't be confirmed.
 - Signing someone up for a shift that overlapped another of their shifts gave no warning, whether they signed up on **Shift Schedule** or a manager assigned them on **Manage Schedule** or **Shift Dashboard**. The signup still goes through, but now warns about the overlap and names the other shift.
 - On **Reports** and **My Shifts**, hours worked showed zero for volunteers still checked in. Their time so far now counts, up to the shift's length.
+- Photos added with **Upload Photo** kept the GPS location and other camera details from the original file, so anyone who could open the gallery could download them. Uploaded JPEG, PNG, and WebP photos now have those details removed. Phone photos taken sideways are stored upright, and their gallery thumbnails, which could show sideways, now show upright too. Photos uploaded before this update keep their original details.
 
 ## 26.10.13 - 2026-10-26
 
