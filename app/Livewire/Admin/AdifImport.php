@@ -69,7 +69,7 @@ class AdifImport extends Component
     /** @var array{total: int, date_range: string, bands: array<string>, modes: array<string>, stations: array<string>} */
     public array $uploadSummary = [];
 
-    /** @var array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>} */
+    /** @var array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>, missing_operators: int, missing_sections: int, missing_stations: int} */
     public array $mappingReport = [];
 
     /** @var array<string, array{exchange_class?: array<string>, section_code?: array<string>}> */
@@ -95,6 +95,13 @@ class AdifImport extends Component
 
     /** @var array<string, int> User-selected operator mappings */
     public array $operatorMappings = [];
+
+    /**
+     * Defaults for records whose file has no operator, section or station at all.
+     *
+     * @var array{operator_user_id?: int|string|null, section_id?: int|string|null, station_id?: int|string|null}
+     */
+    public array $missingDefaults = [];
 
     /** @var array<string, array{exchange_class?: string, section_code?: string}> User-chosen resolutions */
     public array $resolutions = [];
@@ -159,10 +166,10 @@ class AdifImport extends Component
                 'qso_time' => $qsoTime?->format('Y-m-d H:i:s'),
                 'band_name' => $record['BAND'] ?? null,
                 'mode_name' => $record['MODE'] ?? null,
-                'section_code' => $record['ARRL_SECT'] ?? null,
+                'section_code' => $this->filledOrNull($record['ARRL_SECT'] ?? null),
                 'exchange_class' => $record['APP_N1MM_EXCHANGE1'] ?? $record['CLASS'] ?? null,
-                'station_identifier' => $record['APP_N1MM_NETBIOSNAME'] ?? $record['STATION_CALLSIGN'] ?? null,
-                'operator_callsign' => $record['OPERATOR'] ?? null,
+                'station_identifier' => $this->filledOrNull($record['APP_N1MM_NETBIOSNAME'] ?? null) ?? $this->filledOrNull($record['STATION_CALLSIGN'] ?? null),
+                'operator_callsign' => $this->filledOrNull($record['OPERATOR'] ?? null),
                 'status' => AdifRecordStatus::Pending->value,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -181,6 +188,7 @@ class AdifImport extends Component
         $mapper = app(AdifFieldMapperService::class);
         $this->mappingReport = $mapper->autoMap($import);
         $this->inconsistencies = $mapper->detectInconsistencies($import);
+        $this->missingDefaults = $this->suggestMissingDefaults();
 
         $this->uploadSummary = $this->buildUploadSummary($import, $result);
 
@@ -202,6 +210,10 @@ class AdifImport extends Component
         $this->sectionMappings = $this->withoutBlankSelections($this->sectionMappings);
         $this->stationMappings = $this->withoutBlankSelections($this->stationMappings);
         $this->operatorMappings = $this->withoutBlankSelections($this->operatorMappings);
+        $this->missingDefaults = $this->withoutBlankSelections(array_intersect_key(
+            $this->missingDefaults,
+            array_flip(['operator_user_id', 'section_id', 'station_id']),
+        ));
 
         if (! $this->mappingsReferenceValidRecords($import)) {
             $this->addError('mapping', 'One or more field mappings are invalid for this event. Please review your selections.');
@@ -228,6 +240,11 @@ class AdifImport extends Component
 
         if (! empty($fieldMappings)) {
             $mapper->applyFieldMapping($import, $fieldMappings);
+        }
+
+        if (! empty($this->missingDefaults)) {
+            $mapper->applyMissingDefaults($import, array_map('intval', $this->missingDefaults));
+            $fieldMappings['missing'] = array_map('intval', $this->missingDefaults);
         }
 
         if (! empty($this->resolutions)) {
@@ -471,7 +488,10 @@ class AdifImport extends Component
     #[Computed]
     public function availableOperators()
     {
-        return User::query()->whereNotNull('call_sign')->orderBy('call_sign')->get();
+        return User::query()
+            ->where(fn ($query) => $query->whereNotNull('call_sign')->orWhereKey(auth()->id()))
+            ->orderBy('call_sign')
+            ->get(['id', 'call_sign', 'first_name', 'last_name']);
     }
 
     #[Computed]
@@ -522,6 +542,9 @@ class AdifImport extends Component
             [$this->sectionMappings, Section::query()],
             [$this->stationMappings, Station::query()->where('event_configuration_id', $import->event_configuration_id)],
             [$this->operatorMappings, User::query()],
+            [array_filter([$this->missingDefaults['operator_user_id'] ?? null]), User::query()],
+            [array_filter([$this->missingDefaults['section_id'] ?? null]), Section::query()->where('is_active', true)],
+            [array_filter([$this->missingDefaults['station_id'] ?? null]), Station::query()->where('event_configuration_id', $import->event_configuration_id)],
         ];
 
         foreach ($checks as [$mappings, $query]) {
@@ -543,6 +566,38 @@ class AdifImport extends Component
         }
 
         return true;
+    }
+
+    /**
+     * Preselect defaults for records with no operator, section or station:
+     * the importing user as operator, and the event's station when it has
+     * only one. Section has no safe guess, so the person picks it.
+     *
+     * @return array{operator_user_id?: int, station_id?: int}
+     */
+    private function suggestMissingDefaults(): array
+    {
+        $defaults = [];
+
+        if (($this->mappingReport['missing_operators'] ?? 0) > 0) {
+            $defaults['operator_user_id'] = (int) auth()->id();
+        }
+
+        if (($this->mappingReport['missing_stations'] ?? 0) > 0 && $this->availableStations->count() === 1) {
+            $defaults['station_id'] = $this->availableStations->first()->id;
+        }
+
+        return $defaults;
+    }
+
+    /**
+     * Trim an ADIF value, treating an empty one as absent.
+     */
+    private function filledOrNull(?string $value): ?string
+    {
+        $value = $value !== null ? trim($value) : null;
+
+        return $value === '' ? null : $value;
     }
 
     private function parseQsoTime(?string $date, ?string $time): ?Carbon

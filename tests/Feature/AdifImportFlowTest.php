@@ -484,3 +484,118 @@ test('the review table shows the remapped section, not the one in the file', fun
         ->assertSeeHtml('<td>NNJ</td>')
         ->assertDontSeeHtml('<td>XYZ</td>');
 });
+
+/**
+ * A WSJT-X style ADIF file: no OPERATOR, and optionally no section or station.
+ */
+function adifWithoutOperator(bool $withSection = true, bool $withStation = true): UploadedFile
+{
+    $qsoDate = now()->format('Ymd');
+    $section = $withSection ? '<ARRL_SECT:2>CT ' : '';
+    $station = $withStation ? '<STATION_CALLSIGN:15>DESKTOP-11-2024 ' : '';
+    $records = '';
+
+    foreach (['W1AW', 'W2WSX', 'K1ABC'] as $i => $call) {
+        $records .= sprintf(
+            ' <CALL:%d>%s <QSO_DATE:8>%s <TIME_ON:6>12%02d00 %s<BAND:3>20M %s<MODE:3>FT8 <CLASS:2>3A <EOR>'."\n",
+            strlen($call), $call, $qsoDate, $i, $section, $station,
+        );
+    }
+
+    return UploadedFile::fake()->createWithContent('wsjtx.adi', "WSJT-X ADIF Export\n<EOH>\n".$records);
+}
+
+test('offers the importing user as operator for records without one', function () {
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator())
+        ->call('uploadFile')
+        ->assertSet('mappingReport.missing_operators', 3)
+        ->assertSet('missingDefaults.operator_user_id', $this->user->id)
+        ->assertSee('Missing Fields')
+        ->assertSee('Operator for 3 records with no operator')
+        ->assertSeeHtml('id="missing-operator"');
+});
+
+test('imports records without an operator under the chosen default', function () {
+    $operator = User::factory()->create(['call_sign' => 'W9OP']);
+
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator())
+        ->call('uploadFile')
+        ->set('missingDefaults.operator_user_id', (string) $operator->id)
+        ->call('applyMappingsAndContinue')
+        ->assertHasNoErrors()
+        ->assertSet('step', 3)
+        ->call('executeImport')
+        ->assertSet('importStatus', 'completed');
+
+    expect(Contact::count())->toBe(3)
+        ->and(Contact::pluck('logger_user_id')->unique()->values()->all())->toBe([$operator->id]);
+});
+
+test('still blocks records without an operator when the default is cleared', function () {
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator())
+        ->call('uploadFile')
+        ->set('missingDefaults.operator_user_id', '')
+        ->call('applyMappingsAndContinue')
+        ->assertHasErrors('mapping')
+        ->assertSet('step', 2);
+});
+
+test('rejects a missing-operator default that is not a real user', function () {
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator())
+        ->call('uploadFile')
+        ->set('missingDefaults.operator_user_id', 999999)
+        ->call('applyMappingsAndContinue')
+        ->assertHasErrors('mapping')
+        ->assertSet('step', 2);
+
+    expect(AdifImportRecord::whereNotNull('operator_user_id')->exists())->toBeFalse();
+});
+
+test('offers defaults for records without a section or station', function () {
+    $section = Section::where('code', 'NNJ')->first();
+
+    $component = Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator(withSection: false, withStation: false))
+        ->call('uploadFile')
+        ->assertSet('mappingReport.missing_sections', 3)
+        ->assertSet('mappingReport.missing_stations', 3)
+        ->assertSet('mappingReport.unmapped_sections', [])
+        ->assertSet('mappingReport.unmapped_stations', [])
+        ->assertSet('missingDefaults.station_id', $this->station->id)
+        ->assertSee('Section for 3 records with no section')
+        ->assertSee('Station for 3 records with no station');
+
+    // Section has no safe guess, so it blocks until the person picks one.
+    $component->call('applyMappingsAndContinue')
+        ->assertHasErrors('mapping')
+        ->assertSet('step', 2);
+
+    $component->set('missingDefaults.section_id', (string) $section->id)
+        ->call('applyMappingsAndContinue')
+        ->assertHasNoErrors()
+        ->assertSet('step', 3);
+
+    expect(AdifImportRecord::where('section_id', $section->id)->where('station_id', $this->station->id)->count())->toBe(3);
+});
+
+test('rejects a missing-station default from another event', function () {
+    $foreignStation = Station::factory()->create(['event_configuration_id' => EventConfiguration::factory()->create()->id]);
+
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', adifWithoutOperator(withStation: false))
+        ->call('uploadFile')
+        ->set('missingDefaults.station_id', $foreignStation->id)
+        ->call('applyMappingsAndContinue')
+        ->assertHasErrors('mapping')
+        ->assertSet('step', 2);
+});

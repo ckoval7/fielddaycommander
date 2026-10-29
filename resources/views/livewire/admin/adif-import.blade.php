@@ -135,6 +135,50 @@
                     </x-card>
                 @endif
 
+                {{-- Records with no operator, section or station in the file --}}
+                @php($missingOperators = $mappingReport['missing_operators'] ?? 0)
+                @php($missingSections = $mappingReport['missing_sections'] ?? 0)
+                @php($missingStations = $mappingReport['missing_stations'] ?? 0)
+                @if ($missingOperators > 0 || $missingSections > 0 || $missingStations > 0)
+                    <x-card title="Missing Fields">
+                        <p class="text-sm text-base-content/70 mb-4">Some records in this file leave these fields out. Choose what to use for those records.</p>
+                        <div class="space-y-4">
+                            @if ($missingOperators > 0)
+                                <div>
+                                    <label for="missing-operator" class="block text-sm font-semibold mb-1">Operator for {{ $missingOperators }} {{ str('record')->plural($missingOperators) }} with no operator</label>
+                                    <select id="missing-operator" wire:model="missingDefaults.operator_user_id" class="select select-sm w-full sm:w-72">
+                                        <option value="">Select operator...</option>
+                                        @foreach ($this->availableOperators as $operator)
+                                            <option value="{{ $operator->id }}">{{ $operator->call_sign ?? trim($operator->first_name.' '.$operator->last_name) }}{{ $operator->id === auth()->id() ? ' (you)' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            @if ($missingSections > 0)
+                                <div>
+                                    <label for="missing-section" class="block text-sm font-semibold mb-1">Section for {{ $missingSections }} {{ str('record')->plural($missingSections) }} with no section</label>
+                                    <select id="missing-section" wire:model="missingDefaults.section_id" class="select select-sm w-full sm:w-72">
+                                        <option value="">Select section...</option>
+                                        @foreach ($this->availableSections as $section)
+                                            <option value="{{ $section->id }}">{{ $section->code }} - {{ $section->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            @if ($missingStations > 0)
+                                <div>
+                                    <label for="missing-station" class="block text-sm font-semibold mb-1">Station for {{ $missingStations }} {{ str('record')->plural($missingStations) }} with no station</label>
+                                    <select id="missing-station" wire:model="missingDefaults.station_id" class="select select-sm w-full sm:w-72">
+                                        <option value="">Select station...</option>
+                                        @foreach ($this->availableStations as $station)
+                                            <option value="{{ $station->id }}">{{ $station->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
+                    </x-card>
+                @endif
 
                 {{-- Inconsistencies --}}
                 @if (!empty($inconsistencies))
