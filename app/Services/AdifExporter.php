@@ -231,17 +231,22 @@ class AdifExporter
     }
 
     /**
-     * One ADIF data specifier. The length is in bytes, as ADIF requires, and
-     * empty values are skipped.
+     * One ADIF data specifier. The length counts characters, not UTF-8 bytes,
+     * and empty values are skipped.
+     *
+     * Anything shaped like a tag in free text (`<EOR>`, `<CALL:4>`) has its
+     * angle brackets turned into square ones, so an importer that scans for
+     * tags without honoring lengths can't end the record early or pick up a
+     * field smuggled in through a note.
      */
     protected function field(string $name, ?string $value): string
     {
-        $value = trim((string) $value);
+        $value = trim(preg_replace('/<([^<>]*)>/', '[$1]', (string) $value));
 
         if ($value === '') {
             return '';
         }
 
-        return '<'.$name.':'.strlen($value).'>'.$value.' ';
+        return '<'.$name.':'.mb_strlen($value, 'UTF-8').'>'.$value.' ';
     }
 }
