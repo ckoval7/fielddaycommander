@@ -10,7 +10,13 @@ use Mary\View\Components\Table as MaryTable;
 
 /**
  * Mary UI's <x-table> with column headers scoped to their columns, named
- * selection checkboxes, and its unlabelled spacer headers hidden.
+ * selection checkboxes, its unlabelled spacer headers hidden, and without a
+ * copy of every row in each checkbox.
+ *
+ * Mary writes the whole row as JSON into each selectable checkbox, only to
+ * pass it along with its `row-selection` event. A logbook row's contact
+ * record, with its logger and relations, came to ~3 KB a row. Nothing here
+ * listens for that event, so the checkbox now sends just the row's key.
  */
 class Table extends MaryTable
 {
@@ -24,6 +30,8 @@ class Table extends MaryTable
 
     public const ROW_CHECKBOX = 'id="checkbox-{{ $uuid }}-{{ $k }}"';
 
+    public const ROW_SELECTION = '@click.stop="toggleCheck($el.checked, {{ json_encode($row) }})"';
+
     /**
      * @return array<string, string>
      */
@@ -34,6 +42,7 @@ class Table extends MaryTable
             self::SPACER_HEADER => '<th class="w-1" aria-hidden="true"></th>',
             self::CHECK_ALL => self::CHECK_ALL.' aria-label="Select all rows"',
             self::ROW_CHECKBOX => self::ROW_CHECKBOX.' aria-label="Select row {{ $k + 1 }}"',
+            self::ROW_SELECTION => '@click.stop="toggleCheck($el.checked, {{ json_encode(data_get($row, $selectableKey)) }})"',
         ];
     }
 }

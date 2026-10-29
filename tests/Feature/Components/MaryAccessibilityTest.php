@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Providers\AppServiceProvider;
-use App\View\Components\Icon;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\ViewErrorBag;
@@ -39,7 +38,7 @@ it('still finds every patched snippet in the Mary templates', function (string $
 
         expect($template)->toContain($snippet);
     }
-})->with(array_merge(array_values(AppServiceProvider::ACCESSIBLE_MARY_COMPONENTS), [Icon::class]));
+})->with(array_values(AppServiceProvider::ACCESSIBLE_MARY_COMPONENTS));
 
 it('registers the accessible components under their Mary aliases', function () {
     $aliases = Blade::getClassComponentAliases();

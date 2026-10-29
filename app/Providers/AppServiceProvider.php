@@ -7,6 +7,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\EnforceStationMode;
+use App\Livewire\Hooks\LeanComponentHtml;
 use App\Livewire\Hooks\ReportValidationFailures;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
@@ -36,6 +37,7 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\Support\IconSprite;
 use App\Support\StationMode;
 use App\View\Components\Breadcrumbs;
 use App\View\Components\Button;
@@ -79,7 +81,6 @@ class AppServiceProvider extends ServiceProvider
         'button' => Button::class,
         'checkbox' => Checkbox::class,
         'choices' => Choices::class,
-        'choices-offline' => ChoicesOffline::class,
         'datetime' => DateTime::class,
         'file' => File::class,
         'header' => Header::class,
@@ -110,10 +111,16 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleSetFactory::class);
 
+        // Per-request icon sprite frames (see App\Support\IconSprite).
+        $this->app->scoped(IconSprite::class);
+
         // Flag Livewire actions that fail validation so the frontend can show the
         // floating error summary (resources/js/components/form-error-summary.js).
         // Must be registered before Livewire boots its component hooks.
         Livewire::componentHook(ReportValidationFailures::class);
+
+        // Sprite icons and strip whitespace in every component render.
+        Livewire::componentHook(LeanComponentHtml::class);
     }
 
     /**
@@ -137,11 +144,13 @@ class AppServiceProvider extends ServiceProvider
             Blade::component('mary-icon', Icon::class);
         });
 
-        // Mary components patched for screen readers and keyboards, plus
-        // null-safe getters for <x-choices-offline>; see each class docblock.
-        // Mary's own templates use the `mary-` aliases, so cover those too.
+        // Mary components patched for screen readers and keyboards, and a
+        // leaner <x-choices-offline>; see each class docblock. Mary's own
+        // templates use the `mary-` aliases, so cover those too.
         $this->app->booted(function (): void {
             $prefix = config('mary.prefix');
+
+            Blade::component($prefix.'choices-offline', ChoicesOffline::class);
 
             foreach (self::ACCESSIBLE_MARY_COMPONENTS as $alias => $component) {
                 Blade::component($prefix.$alias, $component);

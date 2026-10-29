@@ -6,6 +6,7 @@ import dashboardSortable from './components/dashboard-sortable';
 import contactQueue, { stampQueuedSessions } from './components/contact-queue';
 import transcribeRecall from './components/transcribe-recall';
 import updatedAgo from './components/updated-ago';
+import choicesOffline from './components/choices-offline';
 import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import { confirmDialogPanel, registerConfirmDialog } from './components/confirm-dialog';
@@ -35,6 +36,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('contactQueue', contactQueue);
     Alpine.data('transcribeRecall', transcribeRecall);
     Alpine.data('updatedAgo', updatedAgo);
+    Alpine.data('choicesOffline', choicesOffline);
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('confirmDialogPanel', confirmDialogPanel);
     Alpine.data('flatpickr', flatpickrComponent);

@@ -74,10 +74,25 @@ class AdifParserService
             $tagName = strtoupper($matches[1][$i][0]);
             $length = (int) $matches[2][$i][0];
             $valueStart = $matches[0][$i][1] + strlen($matches[0][$i][0]);
-            $value = trim(substr($text, $valueStart, $length));
-            $tags[$tagName] = $value;
+            $valueEnd = $matches[0][$i + 1][1] ?? strlen($text);
+            $tags[$tagName] = trim($this->readValue(substr($text, $valueStart, $valueEnd - $valueStart), $length));
         }
 
         return $tags;
+    }
+
+    /**
+     * The first $length units of the text before the next tag. Loggers
+     * disagree on whether ADIF lengths count characters or UTF-8 bytes, so
+     * valid UTF-8 is read by character; stopping at the next tag keeps a
+     * byte count from running into the following field.
+     */
+    private function readValue(string $segment, int $length): string
+    {
+        if (mb_check_encoding($segment, 'UTF-8')) {
+            return mb_substr($segment, 0, $length, 'UTF-8');
+        }
+
+        return substr($segment, 0, $length);
     }
 }

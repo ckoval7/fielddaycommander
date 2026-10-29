@@ -1,6 +1,6 @@
 ---
 name: branch-workflow
-description: Use this skill for any of these tasks in Field Day Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging feature branches into dev or dev into feature/demo-mode; the GitHub branch protection rulesets; starting or fixing the local Sail container; running artisan, tests or Pint; or setting up the demo worktree from scratch.
+description: Use this skill for any of these tasks in Field Day Commander: choosing which checkout (main or the demo worktree) and which branch work belongs on; starting, committing or merging work; merging feature branches into dev or dev into feature/demo-mode; the GitHub branch protection rulesets; starting or fixing the local Sail container; running artisan, tests, Pint or a local Sonar scan of a branch; or setting up the demo worktree from scratch.
 ---
 
 # Branch & Worktree Workflow
@@ -106,6 +106,19 @@ docker run --rm -v "$PWD":/var/www/html -w /var/www/html -u 1000:1000 \
 docker run --rm -v "$PWD":/var/www/html -w /var/www/html -u 1000:1000 \
   --entrypoint vendor/bin/pint sail-8.4/app --dirty --format agent
 ```
+
+## Checking a branch with Sonar
+
+Always scan with SonarCloud's **Sonar way comprehensive** profiles, never the `sonarqube:community` defaults, which miss much of what SonarCloud flags. `.claude/skills/release/scripts/sonar-local.sh` imports them on `up`:
+
+```bash
+S=.claude/skills/release/scripts/sonar-local.sh
+$S up && $S scan     # whole checkout, HEAD plus uncommitted changes
+git diff --name-only dev..HEAD   # the files this branch owns; findings elsewhere are pre-existing
+$S down
+```
+
+The branch is clean when none of its files have issues or hotspots and the "SonarCloud-only rule checks" print `none`. Step 1 of the `release` skill lists what the local scan still misses (ignore entries in `sonar-project.properties`, shell and workflow files, unused closure parameters), so hand-check the branch's files for those.
 
 ## Setting up the demo worktree from scratch
 

@@ -5,8 +5,10 @@
 
 namespace App\View\Components;
 
-use App\View\Components\Concerns\PatchesMaryTemplate;
+use App\Support\IconSprite;
 use BladeUI\Icons\Factory as BladeIconsFactory;
+use Closure;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Mary\View\Components\Icon as MaryIcon;
@@ -27,26 +29,15 @@ use Mary\View\Components\Icon as MaryIcon;
  * `heroicon-` prefix exactly as before, preserving backward
  * compatibility with existing Heroicon usage throughout the app.
  *
+ * Icons render through IconSprite, so a page carries each icon's shape once
+ * and repeats only a short `<use>` reference.
+ *
  * Icons are hidden from screen readers unless they are given a name
  * (`aria-label`, `aria-labelledby`, `title`) or a `role`, since nearly all
  * of them sit next to text that already says what they mean.
  */
 class Icon extends MaryIcon
 {
-    use PatchesMaryTemplate;
-
-    public const SVG_ATTRIBUTES = "{{ \$attributes->class(['inline flex-shrink-0', 'w-5 h-5' => !Str::contains(\$attributes->get('class') ?? '', ['w-', 'h-']) ]) }}";
-
-    /**
-     * @return array<string, string>
-     */
-    public static function templateReplacements(): array
-    {
-        return [
-            self::SVG_ATTRIBUTES => "{{ \$attributes->merge(\$attributes->hasAny(['aria-label', 'aria-labelledby', 'title', 'role']) ? [] : ['aria-hidden' => 'true'])->class(['inline flex-shrink-0', 'w-5 h-5' => !Str::contains(\$attributes->get('class') ?? '', ['w-', 'h-']) ]) }}",
-        ];
-    }
-
     public function icon(): string|Stringable
     {
         $name = Str::of($this->name);
@@ -60,6 +51,41 @@ class Icon extends MaryIcon
         }
 
         return "heroicon-{$this->name}";
+    }
+
+    /**
+     * The icon markup, as a sprite reference where IconSprite has a frame open.
+     */
+    public function svg(): string
+    {
+        $named = $this->attributes->hasAny(['aria-label', 'aria-labelledby', 'title', 'role']);
+
+        $attributes = $this->attributes->merge($named ? [] : ['aria-hidden' => 'true'])->class([
+            'inline flex-shrink-0',
+            'w-5 h-5' => ! Str::contains($this->attributes->get('class') ?? '', ['w-', 'h-']),
+        ])->getAttributes();
+
+        $class = $attributes['class'] ?? '';
+        unset($attributes['class']);
+
+        return app(IconSprite::class)->render((string) $this->icon(), $class, $attributes);
+    }
+
+    public function render(): View|Closure|string
+    {
+        return <<<'BLADE'
+                @if(strlen($label ?? '') > 0)
+                    <div class="inline-flex items-center gap-1">
+                @endif
+                    {!! $svg() !!}
+
+                @if(strlen($label ?? '') > 0)
+                        <div class="{{ $labelClasses() }}" {{ $attributes->whereStartsWith('@') }}>
+                            {{ $label }}
+                        </div>
+                    </div>
+                @endif
+            BLADE;
     }
 
     protected function hasRegisteredPrefix(string $name): bool
