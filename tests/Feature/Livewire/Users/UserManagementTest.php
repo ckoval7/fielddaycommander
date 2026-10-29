@@ -871,6 +871,18 @@ test('bulk actions toolbar appears when users selected', function () {
         ->assertSeeHtml('btn-primary border-white/70');
 });
 
+test('bulk assign role button enables in the browser when a role is picked', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create();
+
+    // The role select is a deferred wire:model, so the server never re-renders
+    // when a role is picked. The disabled state has to follow $wire client-side.
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$user->id])
+        ->assertSeeHtml('x-bind:disabled="!$wire.bulk_role_id"');
+});
+
 test('can bulk assign role to multiple users', function () {
     $this->actingAs($this->admin);
 
