@@ -6,6 +6,7 @@
 namespace App\Support;
 
 use App\Models\Event;
+use App\Models\Section;
 
 /**
  * Which sections an event recognises on its own.
@@ -65,10 +66,65 @@ class EventSections
      */
     public static function countedCode(string $code, ?Event $event): string
     {
-        if (self::recognisesWfdSections($event)) {
+        return self::countedCodeForType($code, $event?->eventType?->code);
+    }
+
+    /**
+     * The section a logged section code counts as for an event of the given
+     * type code, for callers that know the type but not the event.
+     */
+    public static function countedCodeForType(string $code, ?string $eventTypeCode): string
+    {
+        if ($eventTypeCode === 'WFD') {
             return $code;
         }
 
-        return self::WFD_ONLY[$code] ?? $code;
+        return self::WFD_ONLY[strtoupper($code)] ?? $code;
+    }
+
+    /**
+     * Point each folded code in a code-to-id section map at the id of the
+     * section it counts as, so a lookup by the logged code stores the
+     * counted section.
+     *
+     * @param  array<string, int>  $idsByCode
+     * @return array<string, int>
+     */
+    public static function foldIdsByCode(array $idsByCode, ?Event $event): array
+    {
+        foreach (self::foldedCodes($event) as $code) {
+            $countedCode = self::WFD_ONLY[$code];
+
+            if (isset($idsByCode[$code], $idsByCode[$countedCode])) {
+                $idsByCode[$code] = $idsByCode[$countedCode];
+            }
+        }
+
+        return $idsByCode;
+    }
+
+    /**
+     * The id of the section a logged section id counts as for the event.
+     *
+     * Falls back to the given id when the section isn't folded or the
+     * counted section isn't active.
+     */
+    public static function countedSectionId(int $sectionId, ?Event $event): int
+    {
+        if (self::recognisesWfdSections($event)) {
+            return $sectionId;
+        }
+
+        $code = Section::query()->whereKey($sectionId)->value('code');
+        $countedCode = self::WFD_ONLY[$code ?? ''] ?? null;
+
+        if ($countedCode === null) {
+            return $sectionId;
+        }
+
+        return Section::query()
+            ->where('code', $countedCode)
+            ->where('is_active', true)
+            ->value('id') ?? $sectionId;
     }
 }

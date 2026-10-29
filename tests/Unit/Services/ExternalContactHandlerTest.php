@@ -11,6 +11,7 @@ use App\Events\ExternalContactUpdated;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Section;
@@ -484,3 +485,53 @@ test('does not retry errors other than lock contention', function () {
         ->toThrow(RuntimeException::class, 'boom')
         ->and($failingDupes->calls)->toBe(1);
 });
+
+/**
+ * Seed YT, MX and the sections ARRL counts them as.
+ */
+function seedFoldedSections(): void
+{
+    Section::firstOrCreate(['code' => 'TER'], ['name' => 'Territories', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'DX'], ['name' => 'DX', 'region' => 'DX', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'YT'], ['name' => 'Yukon', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'MX'], ['name' => 'Mexico', 'region' => 'DX', 'is_active' => true]);
+}
+
+test('stores YT and MX from an external logger as TER and DX for a Field Day event', function (string $logged, string $counted) {
+    seedFoldedSections();
+
+    $contact = $this->handler->handleContact(new ExternalContactDto(
+        callsign: 'VY1AA',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        sectionCode: $logged,
+        externalId: "fold-{$logged}",
+    ), $this->config);
+
+    expect($contact->section_id)->toBe(Section::where('code', $counted)->value('id'));
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['mx', 'DX'],
+]);
+
+test('stores YT and MX from an external logger as logged for a Winter Field Day event', function (string $logged) {
+    seedFoldedSections();
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'description' => 'Winter Field Day']);
+    $this->config->event->update(['event_type_id' => $wfd->id]);
+
+    $contact = $this->handler->handleContact(new ExternalContactDto(
+        callsign: 'VY1AA',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        sectionCode: $logged,
+        externalId: "keep-{$logged}",
+    ), $this->config->fresh());
+
+    expect($contact->section_id)->toBe(Section::where('code', $logged)->value('id'));
+})->with(['YT', 'MX']);

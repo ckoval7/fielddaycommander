@@ -10,6 +10,7 @@ use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Section;
 use App\Models\Station;
+use App\Support\EventSections;
 use Illuminate\Support\Collection;
 
 class AdifFieldMapperService
@@ -30,7 +31,11 @@ class AdifFieldMapperService
             'unmapped_stations' => [],
         ];
 
-        $sections = Section::query()->where('is_active', true)->pluck('id', 'code')->toArray();
+        // YT and MX map to TER and DX unless the event recognises them.
+        $sections = EventSections::foldIdsByCode(
+            Section::query()->where('is_active', true)->pluck('id', 'code')->toArray(),
+            $import->eventConfiguration?->event,
+        );
 
         $stations = Station::query()
             ->where('event_configuration_id', $import->event_configuration_id)
@@ -167,11 +172,15 @@ class AdifFieldMapperService
         }
 
         if (isset($mappings['sections'])) {
+            $event = $import->eventConfiguration?->event;
+
             foreach ($mappings['sections'] as $sectionCode => $sectionId) {
+                // A YT or MX picked by hand stores as TER or DX unless the
+                // event recognises it, as auto-mapping does.
                 $import->records()
                     ->where('section_code', $sectionCode)
                     ->whereNull('section_id')
-                    ->update(['section_id' => $sectionId]);
+                    ->update(['section_id' => EventSections::countedSectionId((int) $sectionId, $event)]);
             }
         }
 

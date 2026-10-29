@@ -501,6 +501,47 @@ test('syncing a contact accepts Winter Field Day exchange classes', function (st
     ]);
 })->with(['1H', '2I', '3O', '10M']);
 
+test('syncing a Field Day contact stores YT and MX as TER and DX', function (string $logged, string $counted) {
+    $countedSection = Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    $loggedSection = Section::firstOrCreate(['code' => $logged], ['name' => $logged, 'region' => 'VE', 'is_active' => true]);
+    $payload = [...syncPayload($this, now()), 'section_id' => $loggedSection->id];
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', $payload)
+        ->assertCreated();
+
+    expect(Contact::where('uuid', $payload['uuid'])->value('section_id'))->toBe($countedSection->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
+test('syncing a Winter Field Day contact keeps YT and MX as logged', function (string $logged, string $counted) {
+    Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    $loggedSection = Section::firstOrCreate(['code' => $logged], ['name' => $logged, 'region' => 'VE', 'is_active' => true]);
+    $session = wfdSession($this->user, $this->band, $this->mode);
+    $uuid = fake()->uuid();
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', [
+            'uuid' => $uuid,
+            'operating_session_id' => $session->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->mode->id,
+            'callsign' => 'W1AW',
+            'section_id' => $loggedSection->id,
+            'exchange_class' => '1H',
+            'power_watts' => 100,
+            'qso_time' => now()->toISOString(),
+        ])
+        ->assertCreated();
+
+    expect(Contact::where('uuid', $uuid)->value('section_id'))->toBe($loggedSection->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
 test('syncing a contact rejects an unknown exchange class letter', function () {
     $this->actingAs($this->user)
         ->postJson('/logging/contacts', [

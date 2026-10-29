@@ -17,6 +17,7 @@ use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Section;
 use App\Models\Station;
+use App\Support\EventSections;
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Support\Facades\Cache;
@@ -139,7 +140,7 @@ class ExternalContactHandler
 
         $modeName = $dto->modeName ?? $cachedRadioInfo?->modeName;
         $modeId = $this->modeResolver->resolve($modeName, $dto->parentModeName);
-        $sectionId = $this->resolveSection($dto->sectionCode);
+        $sectionId = $this->resolveSection($dto->sectionCode, $config);
 
         $session = $this->sessionResolver->resolve(
             stationId: $station->id,
@@ -351,7 +352,7 @@ class ExternalContactHandler
         }
 
         $modeId = $this->modeResolver->resolve($dto->modeName, $dto->parentModeName) ?? $contact->mode_id;
-        $sectionId = $this->resolveSection($dto->sectionCode) ?? $contact->section_id;
+        $sectionId = $this->resolveSection($dto->sectionCode, $config) ?? $contact->section_id;
 
         $previousKey = $this->dupes->keyFor($contact);
 
@@ -446,12 +447,25 @@ class ExternalContactHandler
         return $this->userResolver->resolveOrCreate($callsign)->id;
     }
 
-    private function resolveSection(?string $code): ?int
+    /**
+     * Resolve a logged section code to the id of the section it counts as for
+     * the event, so YT and MX outside Winter Field Day store as TER and DX.
+     */
+    private function resolveSection(?string $code, EventConfiguration $config): ?int
     {
         if ($code === null) {
             return null;
         }
 
-        return Section::where('code', strtoupper($code))->where('is_active', true)->value('id');
+        $code = strtoupper($code);
+        $countedCode = EventSections::countedCode($code, $config->event);
+
+        $countedId = Section::where('code', $countedCode)->where('is_active', true)->value('id');
+
+        if ($countedId !== null || $countedCode === $code) {
+            return $countedId;
+        }
+
+        return Section::where('code', $code)->where('is_active', true)->value('id');
     }
 }

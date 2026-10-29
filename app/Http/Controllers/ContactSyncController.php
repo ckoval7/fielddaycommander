@@ -11,6 +11,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
 use App\Support\AdvancedContactFields;
+use App\Support\EventSections;
 use App\Support\StationMode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -74,7 +75,7 @@ class ContactSyncController extends Controller
             'submode' => $request->submode,
             'qso_time' => $request->qso_time,
             'callsign' => $request->callsign,
-            'section_id' => $request->section_id,
+            'section_id' => EventSections::countedSectionId((int) $request->section_id, $session->station->eventConfiguration?->event),
             'exchange_class' => $request->exchange_class,
             'power_watts' => $request->power_watts,
             ...$request->safe()->only(AdvancedContactFields::FIELDS),
