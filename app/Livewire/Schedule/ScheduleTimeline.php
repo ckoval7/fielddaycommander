@@ -173,6 +173,11 @@ class ScheduleTimeline extends Component
         unset($this->myAssignments);
 
         $this->dispatch('toast', title: 'Success', description: 'You have been signed up for the shift.', icon: 'phosphor-check-circle', css: 'alert-success');
+
+        $overlapping = $shift->overlappingAssignmentsFor(auth()->id());
+        if ($overlapping->isNotEmpty()) {
+            $this->dispatch('toast', title: 'Overlapping shifts', description: 'This overlaps another shift you signed up for: '.Shift::describeAssignments($overlapping).'.', icon: 'phosphor-warning', css: 'alert-warning');
+        }
     }
 
     /**

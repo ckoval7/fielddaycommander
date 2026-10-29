@@ -6,6 +6,7 @@
 use App\Livewire\Schedule\ManageSchedule;
 use App\Models\AuditLog;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\Setting;
 use App\Models\Shift;
@@ -257,7 +258,7 @@ describe('shift management', function () {
             ->errors();
 
         expect($errors->first('shiftRoleId'))->toBe('The role field is required.')
-            ->and($errors->first('shiftCapacity'))->toBe('The capacity field must be at least 1.');
+            ->and($errors->first('shiftCapacity'))->toBe('Capacity must be at least 1.');
     });
 
     test('can delete a shift', function () {
@@ -1630,5 +1631,214 @@ describe('phone layout', function () {
             ->assertSeeHtml('aria-label="Back to Shift Schedule"')
             ->assertSeeHtml('aria-label="Remove Assignment"')
             ->assertSeeHtml('aria-label="Edit Shift"');
+    });
+});
+
+// =============================================================================
+// Shift Boundaries
+// =============================================================================
+
+describe('shift boundaries', function () {
+    test('saving a shift outside the event window warns but still saves it', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', toLocalTime(appNow()->addDays(3))->format('Y-m-d H:i'))
+            ->set('shiftEndTime', toLocalTime(appNow()->addDays(3)->addHours(2))->format('Y-m-d H:i'))
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertHasNoErrors()
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created')
+            ->assertDispatched('toast', fn (string $name, array $params): bool => $params['title'] === 'Outside the event'
+                && str_ends_with($params['description'], 'It was saved anyway.'));
+
+        expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(1);
+    });
+
+    test('saving a shift inside the event window does not warn', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', toLocalTime(appNow()->addHour())->format('Y-m-d H:i'))
+            ->set('shiftEndTime', toLocalTime(appNow()->addHours(3))->format('Y-m-d H:i'))
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created')
+            ->assertNotDispatched('toast', title: 'Outside the event');
+    });
+
+    test('shifts during setup before the event start do not warn', function () {
+        $this->event->update(['setup_allowed_from' => appNow()->subDay()]);
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal')
+            ->set('shiftRoleId', $this->role->id)
+            ->set('shiftStartTime', toLocalTime(appNow()->subHours(20))->format('Y-m-d H:i'))
+            ->set('shiftEndTime', toLocalTime(appNow()->subHours(18))->format('Y-m-d H:i'))
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertDispatched('toast', title: 'Success', description: 'Shift created')
+            ->assertNotDispatched('toast', title: 'Outside the event');
+    });
+
+    test('editing a shift to end after the event warns but still saves it', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+        ]);
+        $newEnd = toLocalTime(appNow()->addHours(14))->format('Y-m-d H:i');
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal', $shift->id)
+            ->set('shiftEndTime', $newEnd)
+            ->call('saveShift')
+            ->assertDispatched('toast', title: 'Success', description: 'Shift updated')
+            ->assertDispatched('toast', title: 'Outside the event');
+
+        expect(toLocalTime($shift->fresh()->end_time)->format('Y-m-d H:i'))->toBe($newEnd);
+    });
+
+    test('creating multiple shifts past the event end warns but still creates them', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openBulkModal')
+            ->set('bulkRoleId', $this->role->id)
+            ->set('bulkStartTime', toLocalTime(appNow()->addHours(10))->format('Y-m-d H:i'))
+            ->set('bulkEndTime', toLocalTime(appNow()->addHours(14))->format('Y-m-d H:i'))
+            ->set('bulkDurationMinutes', 120)
+            ->set('bulkCapacity', 1)
+            ->call('createBulkShifts')
+            ->assertDispatched('toast', title: 'Success', description: '2 shifts created')
+            ->assertDispatched('toast', fn (string $name, array $params): bool => $params['title'] === 'Outside the event'
+                && str_ends_with($params['description'], 'They were saved anyway.'));
+
+        expect(Shift::where('shift_role_id', $this->role->id)->count())->toBe(2);
+    });
+
+    test('a shift nobody has checked in to cannot be confirmed', function () {
+        $bonusRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Public Information Table',
+            'requires_confirmation' => true,
+            'bonus_points' => 100,
+        ]);
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $bonusRole->id,
+        ]);
+        $assignment = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+            'checked_in_at' => null,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('confirmCheckIn', $assignment->id)
+            ->assertDispatched('toast', title: 'Not checked in')
+            ->assertNotDispatched('toast', title: 'Success');
+
+        expect($assignment->fresh()->confirmed_by_user_id)->toBeNull()
+            ->and(EventBonus::count())->toBe(0);
+    });
+
+    test('the confirmation queue lists only shifts someone has checked in to', function () {
+        $confirmRole = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'requires_confirmation' => true,
+        ]);
+        $shift = Shift::factory()->withCapacity(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $confirmRole->id,
+        ]);
+        $scheduled = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->regularUser->id,
+            'status' => ShiftAssignment::STATUS_SCHEDULED,
+        ]);
+        $checkedIn = ShiftAssignment::factory()->create([
+            'shift_id' => $shift->id,
+            'user_id' => $this->admin->id,
+            'status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => appNow(),
+        ]);
+
+        $this->actingAs($this->admin);
+
+        $pending = Livewire::test(ManageSchedule::class)->instance()->pendingConfirmations();
+
+        expect($pending->pluck('id')->all())->toBe([$checkedIn->id])
+            ->and($pending->pluck('id'))->not->toContain($scheduled->id);
+    });
+
+    test('assigning someone to an overlapping shift warns but still assigns them', function () {
+        $first = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+        ]);
+        $second = Shift::factory()->withCapacity(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(2),
+            'end_time' => appNow()->addHours(4),
+        ]);
+        ShiftAssignment::factory()->create([
+            'shift_id' => $first->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $second->id)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser')
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer assigned to shift')
+            ->assertDispatched('toast', title: 'Overlapping shifts');
+
+        expect(ShiftAssignment::where('shift_id', $second->id)
+            ->where('user_id', $this->regularUser->id)->exists())->toBeTrue();
+    });
+
+    test('back-to-back shifts do not count as overlapping', function () {
+        $first = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHour(),
+            'end_time' => appNow()->addHours(3),
+        ]);
+        $second = Shift::factory()->withCapacity(2)->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'start_time' => appNow()->addHours(3),
+            'end_time' => appNow()->addHours(5),
+        ]);
+        ShiftAssignment::factory()->create([
+            'shift_id' => $first->id,
+            'user_id' => $this->regularUser->id,
+        ]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openAssignModal', $second->id)
+            ->set('assignUserId', $this->regularUser->id)
+            ->call('assignUser')
+            ->assertDispatched('toast', title: 'Success', description: 'Volunteer assigned to shift')
+            ->assertNotDispatched('toast', title: 'Overlapping shifts');
     });
 });

@@ -174,3 +174,24 @@ test('wallClockHoursScheduled equals sum when signups do not overlap', function 
 
     expect(VolunteerHours::wallClockHoursScheduled(collect([$a, $b])))->toBe(4.0);
 });
+
+test('worked hours count open check-ins up to now in both modes', function () {
+    $base = now()->startOfHour();
+    $closed = vhMakeAssignment(
+        ['start_time' => $base, 'end_time' => $base->copy()->addHours(2)],
+        ['status' => ShiftAssignment::STATUS_CHECKED_OUT,
+            'checked_in_at' => $base,
+            'checked_out_at' => $base->copy()->addHours(2)],
+    );
+    $open = vhMakeAssignment(
+        ['start_time' => $base->copy()->addHours(3), 'end_time' => $base->copy()->addHours(6)],
+        ['status' => ShiftAssignment::STATUS_CHECKED_IN,
+            'checked_in_at' => $base->copy()->addHours(3),
+            'checked_out_at' => null],
+    );
+
+    $this->travelTo($base->copy()->addHours(4));
+
+    expect(VolunteerHours::sumHoursWorked(collect([$closed, $open])))->toBe(3.0)
+        ->and(VolunteerHours::wallClockHoursWorked(collect([$closed, $open])))->toBe(3.0);
+});

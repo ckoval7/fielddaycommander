@@ -47,7 +47,8 @@ class VolunteerHours
     }
 
     /**
-     * Merge overlapping check-in/check-out intervals (clamped to each shift window)
+     * Merge overlapping check-in/check-out intervals (clamped to each shift window,
+     * with open check-ins counted up to now)
      * and return the total wall-clock hours on site, rounded to 0.1.
      *
      * @param  Collection<int, ShiftAssignment>  $assignments
@@ -55,10 +56,10 @@ class VolunteerHours
     public static function wallClockHoursWorked(Collection $assignments): float
     {
         $intervals = $assignments
-            ->filter(fn (ShiftAssignment $a) => $a->checked_in_at !== null && $a->checked_out_at !== null)
+            ->filter(fn (ShiftAssignment $a) => $a->workedUntil() !== null)
             ->map(function (ShiftAssignment $a) {
                 $start = $a->checked_in_at->max($a->shift->start_time);
-                $end = $a->checked_out_at->min($a->shift->end_time);
+                $end = $a->workedUntil()->min($a->shift->end_time);
 
                 return [$start, $end];
             })
