@@ -60,6 +60,7 @@
 - On **My Equipment** at laptop widths with the sidebar showing, items with long descriptions pushed the table past its card, the page scrolled sideways and **Actions** was off the edge. Items now show as cards until the whole table fits, as on **Club Equipment**.
 - On **Equipment Catalog** at laptop widths with the sidebar showing, the table was wider than its card, so you had to scroll it sideways to reach **Actions**. Items now show as cards until the whole table fits.
 - Deleting several selected items at once on **My Equipment** left nothing in **Audit Logs**. Each deleted item now gets an entry, as it does on **Club Equipment**.
+- In the ADIF export from **Reports** (the `.adi` file), a contact name or note with accented letters, emoji or non-Latin text, such as José or Ωμέγα, was written with the wrong length, so other loggers importing the file could garble that field and the rest of that contact. The length is now right, and Field Day Commander's own ADIF import reads it back correctly. It still reads files from loggers that count lengths the other way. A name or note containing ADIF tags such as `<EOR>` or `<CALL:4>` could also make another logger end the contact early or import an extra, fake contact. Those tags are now written with square brackets so they import as plain text.
 
 ## 26.10.13 - 2026-10-26
 

@@ -62,6 +62,8 @@ import_cloud_profiles() {
     echo "Importing SonarCloud quality profiles:"
     while IFS=$'\t' read -r lang name; do
         grep -qx "${lang}" <<<"${local_langs}" || continue
+        [[ "${name}" = "Sonar way comprehensive" ]] \
+            || echo "  WARNING: SonarCloud uses '${name}' for ${lang}, not 'Sonar way comprehensive'" >&2
         curl -fsS -u "${token}:" -G "${CLOUD_API}/qualityprofiles/backup" \
             --data-urlencode "language=${lang}" --data-urlencode "qualityProfile=${name}" \
             --data-urlencode "organization=${CLOUD_ORG}" -o "${STATE_DIR}/profiles/${lang}.xml"

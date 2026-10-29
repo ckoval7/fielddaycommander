@@ -143,3 +143,13 @@ test('extracts header metadata', function () {
     expect($result['header']['PROGRAMID'])->toBe('N1M')
         ->and($result['header']['ADIF_VER'])->toBe('3.1.4');
 });
+
+test('reads multibyte values whether lengths count characters or bytes', function () {
+    $adif = "<EOH>\n<CALL:4>W1AW <NAME:4>José <COMMENT:6>Café ☕ <EOR>\n"
+        .'<CALL:4>K1AB <NAME:5>José <COMMENT:8>Café ☕ <EOR>';
+
+    $records = $this->parser->parse($adif)['records'];
+
+    expect($records[0])->toMatchArray(['NAME' => 'José', 'COMMENT' => 'Café ☕'])
+        ->and($records[1])->toMatchArray(['CALL' => 'K1AB', 'NAME' => 'José', 'COMMENT' => 'Café ☕']);
+});

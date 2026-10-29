@@ -98,7 +98,7 @@ beforeEach(function () {
 });
 
 describe('ADIF export', function () {
-    test('maps bands and modes and measures field lengths in bytes', function () {
+    test('maps bands and modes and writes the header and records', function () {
         $config = makeReportEvent('WFD', '2027');
         logReportContact($config, 'Phone', '20m', ['callsign' => 'W0MET', 'submode' => 'USB', 'qso_time' => '2027-01-23 20:21:20']);
         logReportContact($config, 'Digital', '2200m', ['callsign' => 'W4OPS', 'submode' => 'PSK31', 'qso_time' => '2027-01-23 21:00:00']);
@@ -141,6 +141,41 @@ describe('ADIF export', function () {
 
         $plain = substr($adif, strpos($adif, 'W4NRR'));
         expect($plain)->not->toContain('<FREQ')->not->toContain('<RST_SENT');
+    });
+
+    test('counts field lengths in characters for multibyte text', function () {
+        $config = makeReportEvent('WFD', '2027');
+        logReportContact($config, 'Phone', '20m', ['callsign' => 'W0MET', 'contact_name' => 'José 🎙 Ωμέγα', 'notes' => 'Café ☕']);
+
+        $adif = app(AdifExporter::class)->export($config);
+
+        expect($adif)->toContain('<NAME:12>José 🎙 Ωμέγα ')
+            ->toContain('<COMMENT:6>Café ☕ ');
+
+        $parsed = app(AdifParserService::class)->parse($adif);
+
+        expect($parsed['records'][0])->toMatchArray(['NAME' => 'José 🎙 Ωμέγα', 'COMMENT' => 'Café ☕']);
+    });
+
+    test('defuses tags typed into free text so they cannot add a contact', function () {
+        $config = makeReportEvent('WFD', '2027');
+        logReportContact($config, 'Phone', '20m', [
+            'callsign' => 'W0MET',
+            'contact_name' => '<eor>Bob',
+            'notes' => 'ok <EOR><CALL:4>HACK<BAND:3>20M<EOR> 5 < 6 > 4',
+        ]);
+
+        $adif = app(AdifExporter::class)->export($config);
+
+        expect(substr_count(strtoupper($adif), '<EOR>'))->toBe(1)
+            ->and($adif)->not->toContain('<CALL:4>')
+            ->toContain('<NAME:8>[eor]Bob ')
+            ->toContain('<COMMENT:46>ok [EOR][CALL:4]HACK[BAND:3]20M[EOR] 5 [ 6 ] 4 ');
+
+        $parsed = app(AdifParserService::class)->parse($adif);
+
+        expect($parsed['records'])->toHaveCount(1)
+            ->and($parsed['records'][0]['CALL'])->toBe('W0MET');
     });
 
     test('maps sub-modes to ADIF mode and submode', function (?string $submode, string $category, ?string $mode, ?string $adifSubmode) {
