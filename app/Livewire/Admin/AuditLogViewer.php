@@ -48,7 +48,7 @@ class AuditLogViewer extends Component
 
         return view('livewire.admin.audit-log-viewer', [
             'logs' => $logs,
-            'users' => User::all(),
+            'users' => User::orderBy('call_sign')->get(['id', 'call_sign']),
             'actionTypeGroups' => $this->getActionTypeGroups(),
         ])->layout('layouts.app', ['title' => 'Audit Logs']);
     }

@@ -14,6 +14,7 @@ use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
 use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\LeanHtmlResponse;
 use App\Http\Middleware\SecurityHeaders;
 use App\Support\LocalNetworkPusherServer;
 use App\Support\TrustedHosts;
@@ -48,6 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trusted proxies come from config('trustedproxy.proxies'), which TrustProxies reads per request.
         $middleware->trustHosts(at: fn (): array => TrustedHosts::patterns(), subdomains: false);
         $middleware->append(SecurityHeaders::class);
+        $middleware->append(LeanHtmlResponse::class);
         $middleware->web(append: [
             DemoMiddleware::class,
             DemoAnalyticsMiddleware::class,

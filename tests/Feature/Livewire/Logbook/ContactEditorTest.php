@@ -375,3 +375,19 @@ describe('sections Field Day folds', function () {
         expect($this->contact->fresh()->section_id)->toBe($this->yt->id);
     });
 });
+
+test('edit dialog renders its form only while open', function () {
+    Livewire::test(ContactEditor::class)
+        ->assertDontSeeHtml('wire:model="callsign"')
+        ->call('openEdit', $this->contact->id)
+        ->assertSeeHtml('wire:model="callsign"')
+        ->set('showModal', false)
+        ->assertDontSeeHtml('wire:model="callsign"');
+});
+
+test('change logger dialog renders its picker only while open', function () {
+    Livewire::test(ContactEditor::class)
+        ->assertDontSeeHtml("entangle('bulkLoggerUserId')")
+        ->call('openBulkChangeLogger', [$this->contact->id])
+        ->assertSeeHtml("entangle('bulkLoggerUserId')");
+});
