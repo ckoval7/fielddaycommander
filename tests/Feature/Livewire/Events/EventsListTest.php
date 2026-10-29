@@ -7,6 +7,8 @@ use App\Livewire\Events\EventsList;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -223,4 +225,33 @@ test('events list shows cards below xl so the wide table never scrolls the page 
     Livewire::test(EventsList::class)
         ->assertSeeHtml('<div class="xl:hidden space-y-3">')
         ->assertSeeHtml('hidden xl:block');
+});
+
+test('events list counts participants as the submission sheet does', function () {
+    $this->actingAs($this->user);
+
+    $config = EventConfiguration::factory()->create();
+    $logger = User::factory()->create();
+    $dupeOnly = User::factory()->create();
+
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $config->id,
+        'logger_user_id' => $logger->id,
+        'is_duplicate' => false,
+    ]);
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'logger_user_id' => $dupeOnly->id,
+        'is_duplicate' => true,
+    ]);
+
+    $shift = Shift::factory()->create(['event_configuration_id' => $config->id]);
+    ShiftAssignment::factory()->count(2)->create([
+        'shift_id' => $shift->id,
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+    ]);
+
+    // The logger and both volunteers. The duplicate-only logger doesn't count.
+    Livewire::test(EventsList::class)
+        ->assertViewHas('participantCounts', fn (array $counts): bool => $counts[$config->id] === 3);
 });

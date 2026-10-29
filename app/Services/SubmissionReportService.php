@@ -11,12 +11,13 @@ use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
-use App\Models\ShiftAssignment;
 use App\Models\User;
 use Carbon\CarbonInterface;
 
 class SubmissionReportService
 {
+    public function __construct(private ParticipantCountService $participantCounts) {}
+
     /**
      * Assemble all data needed to render the ARRL Field Day submission sheet PDF.
      *
@@ -49,7 +50,7 @@ class SubmissionReportService
             'entry_category' => $classCode === 'A' && $usesCommercial ? 'A-Commercial' : null,
             'operating_class_code' => $classCode,
             'transmitter_count' => $config->transmitter_count,
-            'participant_count' => $this->participantCount($config),
+            'participant_count' => $this->participantCounts->forConfiguration($config),
 
             // Section 2: Power Source (the ARRL form's five boxes; wind and
             // water go under Other)
@@ -122,49 +123,6 @@ class SubmissionReportService
             'mode' => $bulletin->mode,
             'received_at' => $bulletin->received_at,
         ];
-    }
-
-    /**
-     * Count unique participants: everyone who logged, operated GOTA or worked
-     * a volunteer shift (as the volunteer report counts them, so no-shows are
-     * left out), excluding the SYSTEM user.
-     */
-    private function participantCount(EventConfiguration $config): int
-    {
-        $systemUserIds = User::where('call_sign', User::SYSTEM_CALL_SIGN)->pluck('id');
-
-        $loggerIds = Contact::where('event_configuration_id', $config->id)
-            ->notDuplicate()
-            ->whereNotNull('logger_user_id')
-            ->whereNotIn('logger_user_id', $systemUserIds)
-            ->distinct()
-            ->pluck('logger_user_id');
-
-        $gotaUserIds = Contact::where('event_configuration_id', $config->id)
-            ->where('is_gota_contact', true)
-            ->notDuplicate()
-            ->whereNotNull('gota_operator_user_id')
-            ->whereNotIn('gota_operator_user_id', $systemUserIds)
-            ->distinct()
-            ->pluck('gota_operator_user_id');
-
-        $gotaFreeTextCount = Contact::where('event_configuration_id', $config->id)
-            ->where('is_gota_contact', true)
-            ->notDuplicate()
-            ->whereNull('gota_operator_user_id')
-            ->whereNotNull('gota_operator_first_name')
-            ->selectRaw('DISTINCT gota_operator_first_name, gota_operator_last_name')
-            ->get()
-            ->count();
-
-        $volunteerIds = ShiftAssignment::query()
-            ->whereHas('shift', fn ($query) => $query->where('event_configuration_id', $config->id))
-            ->where('status', '!=', ShiftAssignment::STATUS_NO_SHOW)
-            ->whereNotIn('user_id', $systemUserIds)
-            ->distinct()
-            ->pluck('user_id');
-
-        return $loggerIds->merge($gotaUserIds)->merge($volunteerIds)->unique()->count() + $gotaFreeTextCount;
     }
 
     /**

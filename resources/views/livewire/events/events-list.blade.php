@@ -91,7 +91,7 @@
                         <span class="text-xs opacity-50">Contacts</span>
                     </div>
                     <div class="flex flex-col items-center flex-1">
-                        <span class="font-semibold">{{ number_format($event->participants_count) }}</span>
+                        <span class="font-semibold">{{ number_format($participantCounts[$event->eventConfiguration?->id] ?? 0) }}</span>
                         <span class="text-xs opacity-50">Participants</span>
                     </div>
                     <div class="flex flex-col items-center flex-1">
@@ -187,7 +187,7 @@
                                 <span class="font-semibold">{{ number_format($event->contacts_count) }}</span>
                             </td>
                             <td class="text-center">
-                                <span class="font-semibold">{{ number_format($event->participants_count) }}</span>
+                                <span class="font-semibold">{{ number_format($participantCounts[$event->eventConfiguration?->id] ?? 0) }}</span>
                             </td>
                             <td class="text-center">
                                 <span class="font-bold text-primary">{{ number_format($event->final_score) }}</span>

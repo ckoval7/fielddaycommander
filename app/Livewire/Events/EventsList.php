@@ -7,6 +7,7 @@ namespace App\Livewire\Events;
 
 use App\Models\AuditLog;
 use App\Models\Event;
+use App\Services\ParticipantCountService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -104,8 +105,13 @@ class EventsList extends Component
 
     public function render(): View
     {
+        $events = $this->events;
+
         return view('livewire.events.events-list', [
-            'events' => $this->events,
+            'events' => $events,
+            'participantCounts' => app(ParticipantCountService::class)->forConfigurations(
+                $events->getCollection()->pluck('eventConfiguration.id')
+            ),
         ])->layout('layouts.app', ['title' => 'Events']);
     }
 }
