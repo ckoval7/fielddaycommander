@@ -45,7 +45,6 @@ beforeEach(function () {
         'code' => '2A',
         'name' => 'Class 2A',
         'allows_gota' => true,
-        'max_power_watts' => 150,
         'requires_emergency_power' => false,
     ]);
 
@@ -212,7 +211,6 @@ test('allows gota station only if operating class allows it', function () {
         'code' => '1E',
         'name' => 'Class 1E',
         'allows_gota' => false,
-        'max_power_watts' => 150,
         'requires_emergency_power' => true,
     ]);
 
@@ -268,7 +266,6 @@ test('maxPowerLimit falls back to event config power when operating class has no
         'code' => '1B',
         'name' => 'Class 1B',
         'allows_gota' => false,
-        'max_power_watts' => null,
         'requires_emergency_power' => true,
     ]);
 
@@ -295,13 +292,47 @@ test('maxPowerLimit falls back to event config power when operating class has no
         ->assertSee('Scoring impact');
 });
 
+test('maxPowerLimit holds the event power to the rules version class limit', function () {
+    $classA = OperatingClass::firstOrCreate(
+        ['event_type_id' => $this->event->event_type_id, 'code' => 'A'],
+        ['name' => 'Class A'],
+    );
+
+    $classD = OperatingClass::firstOrCreate(
+        ['event_type_id' => $this->event->event_type_id, 'code' => 'D'],
+        ['name' => 'Class D'],
+    );
+
+    $makeConfig = fn (OperatingClass $class): EventConfiguration => EventConfiguration::factory()->create([
+        'event_id' => Event::factory()->create([
+            'event_type_id' => $this->event->event_type_id,
+            'rules_version' => '2026',
+            'is_active' => true,
+        ])->id,
+        'operating_class_id' => $class->id,
+        'section_id' => Section::first()->id,
+        'max_power_watts' => 1500,
+    ]);
+
+    // ARRL Field Day holds Class A to 500 W, even when the event was saved higher.
+    $component = Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $makeConfig($classA)->id);
+
+    expect($component->instance()->maxPowerLimit)->toBe(500);
+
+    // Class D has no class limit, so the event's own power stands.
+    $component = Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $makeConfig($classD)->id);
+
+    expect($component->instance()->maxPowerLimit)->toBe(1500);
+});
+
 test('power warning displays when station exceeds event config power', function () {
     $noLimitClass = OperatingClass::create([
         'event_type_id' => $this->event->event_type_id,
         'code' => '1C',
         'name' => 'Class 1C',
         'allows_gota' => false,
-        'max_power_watts' => null,
         'requires_emergency_power' => false,
     ]);
 
@@ -471,7 +502,6 @@ test('clears gota flag when event does not allow gota', function () {
         'code' => '1D',
         'name' => 'Class 1D',
         'allows_gota' => false,
-        'max_power_watts' => 150,
         'requires_emergency_power' => false,
     ]);
 

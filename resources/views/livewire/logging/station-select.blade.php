@@ -202,7 +202,7 @@
                 wire:model="powerWatts"
                 type="number"
                 min="1"
-                max="1500"
+                :max="$this->maxPowerWatts"
                 suffix="W"
             />
 

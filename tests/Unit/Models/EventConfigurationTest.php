@@ -230,11 +230,12 @@ test('calculateQsoScore returns total QSO points with power multiplier', functio
         'uses_generator' => false,
     ]);
 
-    // Create 3 contacts worth 1 point each = 3 points
+    // Create 3 contacts worth 1 point each = 3 points, all at QRP power
     Contact::factory(3)->create([
         'event_configuration_id' => $config->id,
         'points' => 1,
         'is_duplicate' => false,
+        'power_watts' => 5,
     ]);
 
     // Create 1 duplicate (should not count)
@@ -242,6 +243,7 @@ test('calculateQsoScore returns total QSO points with power multiplier', functio
         'event_configuration_id' => $config->id,
         'points' => 1,
         'is_duplicate' => true,
+        'power_watts' => 5,
     ]);
 
     // 3 contacts × 1 point × 5 multiplier = 15

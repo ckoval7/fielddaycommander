@@ -53,12 +53,12 @@ beforeEach(function () {
 
     OperatingClass::firstOrCreate(
         ['event_type_id' => $eventType->id, 'code' => 'A'],
-        ['name' => 'Class A', 'description' => 'Class A', 'allows_gota' => false, 'allows_free_vhf' => false, 'max_power_watts' => 1500, 'requires_emergency_power' => false],
+        ['name' => 'Class A', 'description' => 'Class A', 'allows_gota' => false, 'allows_free_vhf' => false, 'requires_emergency_power' => false],
     );
 
     OperatingClass::firstOrCreate(
         ['event_type_id' => $eventType->id, 'code' => 'B'],
-        ['name' => 'Class B', 'description' => 'Class B', 'allows_gota' => false, 'allows_free_vhf' => false, 'max_power_watts' => 1500, 'requires_emergency_power' => false],
+        ['name' => 'Class B', 'description' => 'Class B', 'allows_gota' => false, 'allows_free_vhf' => false, 'requires_emergency_power' => false],
     );
 
     $this->event = Event::factory()->create([

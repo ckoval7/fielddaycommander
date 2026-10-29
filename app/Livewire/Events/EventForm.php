@@ -13,6 +13,7 @@ use App\Models\OperatingClass;
 use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
+use App\Scoring\ClassPowerLimits;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\PowerContext;
@@ -652,10 +653,22 @@ class EventForm extends Component
         return $this->selectedOperatingClass?->allows_gota ?? false;
     }
 
+    /**
+     * Most power the selected operating class allows under the rulebook the
+     * form's event type and rules version resolve to, or null when the class
+     * has no limit or no class or rulebook is chosen yet.
+     */
     #[Computed]
     public function maxPowerLimit(): ?int
     {
-        return $this->selectedOperatingClass?->max_power_watts;
+        $classCode = $this->selectedOperatingClass?->code;
+        $rules = $this->selectedRuleSet();
+
+        if ($classCode === null || $rules === null) {
+            return null;
+        }
+
+        return ClassPowerLimits::for($rules, $classCode);
     }
 
     public function updating($property, $value): void

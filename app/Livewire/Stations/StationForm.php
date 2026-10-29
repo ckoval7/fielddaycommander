@@ -126,11 +126,25 @@ class StationForm extends Component
         return EventConfiguration::with('operatingClass')->find($this->event_configuration_id);
     }
 
+    /**
+     * The event's planned maximum power, held to the operating class limit of
+     * the event's rulebook when that is lower, or null with no event chosen.
+     */
     #[Computed]
     public function maxPowerLimit(): ?int
     {
-        return $this->selectedEvent?->operatingClass?->max_power_watts
-            ?? $this->selectedEvent?->max_power_watts;
+        $config = $this->selectedEvent;
+
+        if ($config === null) {
+            return null;
+        }
+
+        $limits = array_map('intval', array_filter(
+            [$config->max_power_watts, $config->powerCapWatts()],
+            fn (mixed $watts): bool => $watts !== null,
+        ));
+
+        return $limits === [] ? null : min($limits);
     }
 
     #[Computed]

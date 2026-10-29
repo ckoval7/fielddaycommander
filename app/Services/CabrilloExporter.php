@@ -175,7 +175,7 @@ class CabrilloExporter
      */
     private function winterPowerCategory(EventConfiguration $config): string
     {
-        $fallbackWatts = $config->effectiveMaxPowerWatts();
+        $fallbackWatts = $config->plannedMaxPowerWatts();
 
         $exceeded = $config->contacts()
             ->notDuplicate()

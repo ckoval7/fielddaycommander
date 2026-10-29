@@ -25,6 +25,9 @@ class ContactObserver
      * one place that sees the finished contact (sub-mode, satellite flag, band),
      * so a WFD 2027 FT8 or satellite contact is zeroed here whichever way it
      * arrived. Anything summing `contacts.points` then agrees with the score.
+     *
+     * A contact made above the operating class's power limit is logged too,
+     * but scores 0 points.
      */
     public function saving(Contact $contact): void
     {
@@ -35,6 +38,12 @@ class ContactObserver
         $config = $contact->relationLoaded('eventConfiguration')
             ? $contact->eventConfiguration
             : EventConfiguration::query()->find($contact->event_configuration_id);
+
+        if ($config?->exceedsPowerCap($contact)) {
+            $contact->points = 0;
+
+            return;
+        }
 
         try {
             if ($config?->contactNoCreditReason($contact) !== null) {

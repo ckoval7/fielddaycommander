@@ -6,12 +6,14 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use App\Scoring\ClassPowerLimits;
 use App\Scoring\Contracts\DeterminesContactCredit;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\PowerContext;
 use App\Scoring\Dto\ScoreBreakdown;
+use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -337,17 +339,90 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Get the effective max power considering both event config and station power levels.
+     * The power the entry is scored at: the highest power on any contact.
      *
-     * Per ARRL Field Day rules, the power multiplier applies to the entire entry.
-     * If any station uses higher power than the event config, that becomes the
-     * effective power for scoring purposes.
+     * Per ARRL Field Day rules, the power multiplier applies to the entire
+     * entry and follows the most power any transmitter actually used. Until a
+     * contact with a power is logged, the planned power (the higher of the
+     * event setting and any station's maximum) stands in, so the Scoring page,
+     * submission sheet and Cabrillo header show what the entry is set up for.
      */
     public function effectiveMaxPowerWatts(): int
     {
+        return $this->highestContactPowerWatts() ?? $this->plannedMaxPowerWatts();
+    }
+
+    /**
+     * Highest power logged on any contact, or null when none records a power.
+     * Duplicates count: they were still transmitted at that power.
+     */
+    public function highestContactPowerWatts(): ?int
+    {
+        $watts = $this->contacts()->max('power_watts');
+
+        return $watts === null ? null : (int) $watts;
+    }
+
+    /**
+     * The higher of the event's power setting and any station's maximum power.
+     */
+    public function plannedMaxPowerWatts(): int
+    {
         $stationMaxPower = $this->stations()->max('max_power_watts') ?? 0;
 
-        return max($this->max_power_watts, $stationMaxPower);
+        return max((int) $this->max_power_watts, (int) $stationMaxPower);
+    }
+
+    /**
+     * Most power a contact may be made at under the event's rulebook for the
+     * operating class, or null when the class has no limit (ARRL Field Day
+     * Classes A, B and C are limited to 500 W PEP; Winter Field Day caps every
+     * class at 100 W PEP). The limit is a rule of the event's rules version;
+     * with no rulebook to judge by, there is no limit.
+     */
+    public function powerCapWatts(): ?int
+    {
+        $classCode = $this->operatingClass?->code;
+
+        if ($classCode === null) {
+            return null;
+        }
+
+        try {
+            return ClassPowerLimits::for($this->ruleSet(), $classCode);
+        } catch (UnknownRuleSet) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether a contact was made above the operating class's power limit.
+     * Such contacts are logged but score 0 points.
+     */
+    public function exceedsPowerCap(Contact $contact): bool
+    {
+        $cap = $this->powerCapWatts();
+
+        return $cap !== null
+            && $contact->power_watts !== null
+            && (int) $contact->power_watts > $cap;
+    }
+
+    /**
+     * Number of non-duplicate contacts made above the operating class's power limit.
+     */
+    public function overPowerCapContactCount(): int
+    {
+        $cap = $this->powerCapWatts();
+
+        if ($cap === null) {
+            return 0;
+        }
+
+        return $this->contacts()
+            ->where('is_duplicate', false)
+            ->where('power_watts', '>', $cap)
+            ->count();
     }
 
     /**

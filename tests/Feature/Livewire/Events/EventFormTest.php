@@ -57,7 +57,6 @@ beforeEach(function () {
         'name' => 'Class A',
         'description' => 'Portable emergency power',
         'allows_gota' => true,
-        'max_power_watts' => 500,
         'requires_emergency_power' => true,
     ]);
 
@@ -67,7 +66,6 @@ beforeEach(function () {
         'name' => 'Class D',
         'description' => 'Home stations using emergency power',
         'allows_gota' => false,
-        'max_power_watts' => 100,
         'requires_emergency_power' => true,
     ]);
 });
@@ -362,11 +360,10 @@ test('event form locks fields when event has contacts', function () {
     expect($component->get('isLocked'))->toBeTrue();
 });
 
-test('event form validates power based on operating class', function () {
+test('event form caps Field Day Class A at the rules version limit of 500 W', function () {
     $this->actingAs($this->user);
 
-    // Class A allows max 500W
-    Livewire::test(EventForm::class, ['mode' => 'create'])
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('name', 'Test Event')
         ->set('event_type_id', $this->eventType->id)
         ->set('operating_class_id', $this->operatingClassA->id)
@@ -375,12 +372,24 @@ test('event form validates power based on operating class', function () {
         ->set('callsign', 'W1AW')
         ->set('section_id', $this->section->id)
         ->set('transmitter_count', 1)
-        ->set('max_power_watts', 600) // Exceeds Class A limit
+        ->set('uses_generator', true);
+
+    expect($component->instance()->maxPowerLimit)->toBe(500);
+
+    $component->assertSee('Class limit: 500W')
+        ->set('max_power_watts', 600)
         ->call('save')
         ->assertHasErrors(['max_power_watts']);
 
-    // Class D allows max 100W
-    Livewire::test(EventForm::class, ['mode' => 'create'])
+    $component->set('max_power_watts', 500)
+        ->call('save')
+        ->assertHasNoErrors(['max_power_watts']);
+});
+
+test('event form sets no class power limit for Field Day Class D', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('name', 'Test Event 2')
         ->set('event_type_id', $this->eventType->id)
         ->set('operating_class_id', $this->operatingClassD->id)
@@ -389,9 +398,66 @@ test('event form validates power based on operating class', function () {
         ->set('callsign', 'W1AW')
         ->set('section_id', $this->section->id)
         ->set('transmitter_count', 1)
-        ->set('max_power_watts', 150) // Exceeds Class D limit
+        ->set('uses_commercial_power', true);
+
+    expect($component->instance()->maxPowerLimit)->toBeNull();
+
+    $component->assertDontSee('Class limit:')
+        ->set('max_power_watts', 1500)
+        ->call('save')
+        ->assertHasNoErrors(['max_power_watts']);
+});
+
+test('event form caps every Winter Field Day class at 100 W', function () {
+    $wfdType = EventType::create([
+        'code' => 'WFD',
+        'name' => 'Winter Field Day',
+        'description' => 'Winter Field Day event',
+        'is_active' => true,
+        'setup_offset_hours' => null,
+    ]);
+
+    $wfdClass = OperatingClass::create([
+        'event_type_id' => $wfdType->id,
+        'code' => 'O',
+        'name' => 'Outdoor',
+        'description' => 'Outdoor operation',
+        'allows_gota' => false,
+        'requires_emergency_power' => false,
+    ]);
+
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $wfdType->id)
+        ->set('name', 'Test WFD 2027')
+        ->set('start_time', '2027-01-30 18:00')
+        ->set('end_time', '2027-01-31 20:59')
+        ->set('callsign', 'W1AW')
+        ->set('section_id', $this->section->id)
+        ->set('operating_class_id', $wfdClass->id)
+        ->set('transmitter_count', 1)
+        ->set('uses_battery', true)
+        ->set('uses_commercial_power', false);
+
+    expect($component->instance()->maxPowerLimit)->toBe(100);
+
+    $component->set('max_power_watts', 150)
         ->call('save')
         ->assertHasErrors(['max_power_watts']);
+});
+
+test('event form has no class power limit before an operating class is chosen', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id);
+
+    expect($component->instance()->maxPowerLimit)->toBeNull();
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create']);
+
+    expect($component->instance()->maxPowerLimit)->toBeNull();
 });
 
 test('event form can edit existing event', function () {
@@ -1177,7 +1243,6 @@ test('creating a WFD event leaves setup_allowed_from null', function () {
         'name' => 'Indoor',
         'description' => 'Indoor operation',
         'allows_gota' => false,
-        'max_power_watts' => 500,
         'requires_emergency_power' => false,
     ]);
 
@@ -1219,7 +1284,6 @@ test('creating a WFD event sets setup_allowed_from 24 hours before the 1600Z sta
         'name' => 'Indoor',
         'description' => 'Indoor operation',
         'allows_gota' => false,
-        'max_power_watts' => 500,
         'requires_emergency_power' => false,
     ]);
 
