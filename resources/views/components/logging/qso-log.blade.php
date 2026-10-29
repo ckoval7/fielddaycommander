@@ -131,11 +131,11 @@ Slots:
             <table class="table table-sm table-pin-rows">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>{{ $timeHeading }}</th>
-                        <th>Callsign</th>
-                        <th>Class</th>
-                        <th>Section</th>
+                        <th scope="col">#</th>
+                        <th scope="col">{{ $timeHeading }}</th>
+                        <th scope="col">Callsign</th>
+                        <th scope="col">Class</th>
+                        <th scope="col">Section</th>
                         {{ $extraColumns ?? '' }}
                     </tr>
                 </thead>

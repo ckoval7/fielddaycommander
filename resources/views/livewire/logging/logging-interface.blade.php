@@ -311,7 +311,7 @@
             </x-slot:cards>
 
             <x-slot:extraColumns>
-                <th>Details</th>
+                <th scope="col">Details</th>
             </x-slot:extraColumns>
 
             <x-slot:rows>

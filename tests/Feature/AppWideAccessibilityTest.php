@@ -170,6 +170,27 @@ it('gives browser-printed messages a primary heading', function () {
         ->assertSee('<h1 class="no-print">Messages</h1>', false);
 });
 
+it('gives every hand-written table header a scope', function () {
+    $violations = [];
+
+    foreach (File::allFiles(resource_path('views')) as $file) {
+        $path = str_replace('\\', '/', $file->getRelativePathname());
+        if (! str_ends_with($path, '.blade.php') || preg_match('#^(reports/|equipment/reports/)#', $path)) {
+            continue;
+        }
+
+        preg_match_all('/<th(?:\s[^>]*)?>/', $file->getContents(), $headers);
+
+        foreach ($headers[0] as $header) {
+            if (! str_contains($header, 'scope=')) {
+                $violations[] = "{$path}: {$header}";
+            }
+        }
+    }
+
+    expect($violations)->toBe([]);
+});
+
 it('keeps text-bearing page elements above the muted contrast floor', function () {
     $violations = [];
 

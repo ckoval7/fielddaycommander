@@ -261,9 +261,9 @@
                 </x-slot:cards>
 
                 <x-slot:extra-columns>
-                    <th>Band</th>
-                    <th>Mode</th>
-                    <th>{{ spoken('Pts', 'Points') }}</th>
+                    <th scope="col">Band</th>
+                    <th scope="col">Mode</th>
+                    <th scope="col">{{ spoken('Pts', 'Points') }}</th>
                 </x-slot:extra-columns>
 
                 <x-slot:rows>
