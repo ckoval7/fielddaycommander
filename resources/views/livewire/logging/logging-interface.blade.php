@@ -16,6 +16,7 @@
         get gota_operator_user_id() { return @this.gotaOperatorUserId || null },
         mode_category: {{ Js::from($operatingSession->mode?->category) }},
         bands: {{ Js::from($this->switchBands->map->only(['id', 'name'])->values()) }},
+        restricted_bands: {{ Js::from($this->restrictedSwitchBands) }},
         modes: {{ Js::from($this->switchModes->map->only(['id', 'name', 'category'])->values()) }},
         band_ranges: {{ Js::from((object) $this->bandRanges) }},
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }},
@@ -401,7 +402,7 @@
             </x-logging.exchange-composer>
         </x-logging.qso-log>
 
-        <x-logging.keyboard-shortcuts :live="true" />
+        <x-logging.keyboard-shortcuts :live="true" :example-band="$this->switchExampleBand" />
     </div>
 </div>
 </div>

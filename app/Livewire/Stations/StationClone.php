@@ -254,7 +254,10 @@ class StationClone extends Component
             ]
         );
 
-        // Show success message with detailed summary
+        $clonedWithWarnings = false;
+
+        // Show success message with detailed summary. Toasts show one at a
+        // time, so warnings go in the same toast rather than replacing it.
         if ($result['success'] && $result['stations_cloned'] > 0) {
             $description = sprintf(
                 "Stations Created: %d\nEquipment Assigned: %d%s",
@@ -263,11 +266,16 @@ class StationClone extends Component
                 $result['equipment_skipped'] > 0 ? "\nEquipment Skipped: {$result['equipment_skipped']} (conflicts)" : ''
             );
 
+            $clonedWithWarnings = ! empty($result['warnings']);
+
             $this->dispatch('toast', [
                 'title' => 'Stations Cloned',
-                'description' => $description,
-                'icon' => 'phosphor-check-circle',
-                'css' => 'alert-success',
+                'description' => $clonedWithWarnings
+                    ? $description."\n".implode("\n", $result['warnings'])
+                    : $description,
+                'icon' => $clonedWithWarnings ? 'phosphor-warning' : 'phosphor-check-circle',
+                'css' => $clonedWithWarnings ? 'alert-warning' : 'alert-success',
+                'timeout' => $clonedWithWarnings ? 8000 : 3000,
             ]);
 
             // Emit event to parent component
@@ -278,7 +286,7 @@ class StationClone extends Component
         }
 
         // Show warnings
-        if (! empty($result['warnings'])) {
+        if (! $clonedWithWarnings && ! empty($result['warnings'])) {
             foreach ($result['warnings'] as $warning) {
                 $this->dispatch('toast', [
                     'title' => 'Warning',

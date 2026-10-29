@@ -56,8 +56,8 @@
             @endif
         @endcan
 
-        {{-- Mobile Card View --}}
-        <div class="xl:hidden space-y-3">
+        {{-- Card View until the table fits --}}
+        <div class="2xl:hidden grid grid-cols-1 xl:grid-cols-2 gap-3 items-start">
             @forelse($equipment as $item)
                 <x-card wire:key="equipment-card-{{ $item->id }}" shadow class="!p-4">
                     <div class="flex items-start gap-3">
@@ -120,18 +120,20 @@
                     @endif
                 </x-card>
             @empty
-                <x-equipment.empty-state message="No club equipment found. Try changing the filters." />
+                <div class="xl:col-span-2">
+                    <x-equipment.empty-state message="No club equipment found. Try changing the filters." />
+                </div>
             @endforelse
 
             @if($equipment->hasPages())
-                <div class="pt-4">
+                <div class="pt-4 xl:col-span-2">
                     {{ $equipment->links() }}
                 </div>
             @endif
         </div>
 
-        {{-- Desktop Table View --}}
-        <x-card shadow class="hidden xl:block">
+        {{-- Desktop Table View: it needs about 1,100px, so it only fits beside the open sidebar from 2xl --}}
+        <x-card shadow class="hidden 2xl:block">
                 <table class="table table-zebra">
                     <thead>
                         <tr>
@@ -191,12 +193,12 @@
                                     <div class="text-sm opacity-60">{{ $item->model }}</div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-primary badge-sm">
+                                    <span class="badge badge-primary badge-sm whitespace-nowrap">
                                         {{ ucfirst(str_replace('_', ' ', $item->type)) }}
                                     </span>
                                 </td>
-                                <td class="max-w-xs">
-                                    <p class="truncate text-sm">{{ $item->description ?? '-' }}</p>
+                                <td class="min-w-40 max-w-xs">
+                                    <p class="line-clamp-2 text-sm">{{ $item->description ?? '-' }}</p>
                                 </td>
                                 <td>
                                     <code class="text-xs">{{ $item->serial_number ?? '-' }}</code>

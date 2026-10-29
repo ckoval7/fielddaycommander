@@ -472,6 +472,14 @@
     padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
 }
 
+/* While the floating validation summary is open, open modals end above it so
+   it never covers their action buttons. form-error-summary.js sets the
+   attribute and the height to keep clear. */
+:root[data-form-error-summary="open"] .modal-box {
+    max-height: calc(100dvh - 2rem - var(--form-error-summary-reserve, 0px));
+    margin-bottom: var(--form-error-summary-reserve, 0px);
+}
+
 .toast.toast-top {
     top: max(1rem, env(safe-area-inset-top));
 }

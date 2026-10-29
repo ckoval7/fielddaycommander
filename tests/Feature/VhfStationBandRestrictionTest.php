@@ -171,6 +171,28 @@ describe('band switch', function () {
         expect($bandNames)->not->toContain('20m')->toContain('6m', '2m');
     });
 
+    test('gives the browser the VHF/UHF Only reason for each band the station cannot switch to', function () {
+        $this->actingAs($this->user);
+
+        $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+        $restricted = collect($component->instance()->restrictedSwitchBands);
+
+        expect($restricted->firstWhere('name', '20m'))->toBe(['name' => '20m', 'message' => $this->vhfMessage])
+            ->and($restricted->pluck('name')->all())->not->toContain('6m', '2m', 'Satellite');
+
+        $component->assertSeeHtml('restricted_bands:');
+    });
+
+    test('shows a band the station can use in the band switch hint', function () {
+        Band::updateOrCreate(['name' => '40m'], ['meters' => 40, 'frequency_mhz' => 7.0, 'allowed_fd' => true, 'sort_order' => 5]);
+        $this->actingAs($this->user);
+
+        Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+            ->assertSeeHtml('<span class="font-mono font-semibold text-base-content">6M</span>')
+            ->assertDontSeeHtml('<span class="font-mono font-semibold text-base-content">40M</span>');
+    });
+
     test('switches the free VHF station to another VHF band', function () {
         $this->actingAs($this->user);
 

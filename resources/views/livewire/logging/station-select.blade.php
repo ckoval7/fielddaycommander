@@ -228,18 +228,21 @@
         </div>
 
         <x-slot:actions>
-            <x-button
-                label="Cancel"
-                wire:click="cancelSetup"
-                class="w-full sm:w-auto"
-            />
-            <x-button
-                label="Start Session"
-                wire:click="startSession"
-                class="btn-primary w-full sm:w-auto"
-                icon="phosphor-play"
-                spinner="startSession"
-            />
+            {{-- Stacked on phones: two full-width buttons side by side push Cancel off the left edge --}}
+            <div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">
+                <x-button
+                    label="Cancel"
+                    wire:click="cancelSetup"
+                    class="w-full sm:w-auto"
+                />
+                <x-button
+                    label="Start Session"
+                    wire:click="startSession"
+                    class="btn-primary w-full sm:w-auto"
+                    icon="phosphor-play"
+                    spinner="startSession"
+                />
+            </div>
         </x-slot:actions>
     </x-modal>
 

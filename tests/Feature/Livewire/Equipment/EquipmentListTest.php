@@ -1351,13 +1351,34 @@ test('bulk delete skips radios that are a station primary radio', function () {
     Livewire::test(EquipmentList::class)
         ->set('selectedIds', [$radio->id, $other->id])
         ->call('bulkDeleteEquipment')
-        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success'
-            && $params['description'] === '1 item deleted.')
-        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
-            && $params['description'] === "Yaesu FT-991A is the primary radio for Digital Station in {$eventName}. Assign another radio to that station first.");
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'warning'
+            && $params['title'] === 'Some items kept'
+            && $params['description'] === "1 item deleted. Yaesu FT-991A is the primary radio for Digital Station in {$eventName}. Assign another radio to that station first.")
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => in_array($params['type'], ['success', 'error'], true));
 
     expect(Equipment::where('id', $radio->id)->exists())->toBeTrue();
     expect(Equipment::where('id', $other->id)->exists())->toBeFalse();
+});
+
+test('bulk delete of only a station primary radio shows just the error', function () {
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'radio',
+        'make' => 'Yaesu',
+        'model' => 'FT-991A',
+    ]);
+    Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => 'Digital Station']);
+
+    Livewire::test(EquipmentList::class)
+        ->set('selectedIds', [$radio->id])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['title'] === 'Radio still in use')
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => in_array($params['type'], ['success', 'warning'], true));
+
+    expect(Equipment::where('id', $radio->id)->exists())->toBeTrue();
 });
 
 /**

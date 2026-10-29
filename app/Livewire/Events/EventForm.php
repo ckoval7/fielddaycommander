@@ -243,16 +243,7 @@ class EventForm extends Component
             return;
         }
 
-        $versions = $this->availableRulesVersions();
-
-        if ($versions === []) {
-            return;
-        }
-
-        $default = (string) $this->year;
-        $fallback = end($versions);
-
-        $this->rules_version = in_array($default, $versions, true) ? $default : $fallback;
+        $this->rules_version = $this->defaultRuleSet()?->version();
     }
 
     /**
@@ -496,17 +487,37 @@ class EventForm extends Component
      */
     protected function selectedRuleSet(): ?RuleSet
     {
-        $code = $this->event_type_id
-            ? EventType::query()->whereKey($this->event_type_id)->value('code')
-            : null;
+        if ($this->rules_version === null) {
+            return $this->defaultRuleSet();
+        }
 
-        $versions = $code ? app(RuleSetFactory::class)->versionsFor($code) : [];
+        $code = $this->selectedEventTypeCode();
 
-        if ($code === null || $versions === []) {
+        return $code === null ? null : app(RuleSetFactory::class)->resolve($code, $this->rules_version);
+    }
+
+    /**
+     * The ruleset an event of the selected type gets with no rules version
+     * set ("Default" on the form): the one for its year, or the newest year
+     * registered, the same as RuleSetFactory picks when scoring it. Never a
+     * synthetic version like TEST.
+     */
+    protected function defaultRuleSet(): ?RuleSet
+    {
+        $code = $this->selectedEventTypeCode();
+
+        if ($code === null || app(RuleSetFactory::class)->versionsFor($code) === []) {
             return null;
         }
 
-        return app(RuleSetFactory::class)->resolve($code, $this->rules_version ?? end($versions));
+        return app(RuleSetFactory::class)->resolve($code, (string) $this->year);
+    }
+
+    protected function selectedEventTypeCode(): ?string
+    {
+        return $this->event_type_id
+            ? EventType::query()->whereKey($this->event_type_id)->value('code')
+            : null;
     }
 
     /**

@@ -151,6 +151,28 @@ test('opens setup modal when selecting available station', function () {
         ->assertSet('selectedStationId', $station->id);
 });
 
+test('setup modal stacks its buttons on phones so cancel stays on screen', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertSeeHtmlInOrder([
+            'Start Logging Session',
+            '<div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">',
+            'Cancel',
+            'Start Session',
+        ]);
+});
+
 test('default power is capped by radio power limit when selecting station', function () {
     $this->actingAs($this->user);
 

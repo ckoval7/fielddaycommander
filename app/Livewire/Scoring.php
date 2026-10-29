@@ -648,7 +648,7 @@ class Scoring extends Component
             $notices[] = [
                 'severity' => 'error',
                 'section' => 'power',
-                'message' => "{$overCapCount} ".str('contact')->plural($overCapCount)." logged above the {$cap}W limit for {$className}. They score 0 points.",
+                'message' => "{$overCapCount} ".str('contact')->plural($overCapCount)." logged above the {$cap}W limit for {$className}. ".($overCapCount === 1 ? 'It scores' : 'They score').' 0 points.',
             ];
         }
 

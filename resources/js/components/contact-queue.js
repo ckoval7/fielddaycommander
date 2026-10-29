@@ -354,6 +354,12 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 return;
             }
 
+            const restriction = this.restrictedBandCommand(rawInput);
+            if (restriction) {
+                this.parseError = restriction;
+                return;
+            }
+
             if (sessionContext.is_gota && !this.hasGotaOperator()) {
                 this.parseError = 'Enter the GOTA operator in the GOTA Operator panel before logging.';
                 return;
@@ -612,6 +618,32 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 band_id: bandId ?? sessionContext.band_id,
                 mode_id: modeId ?? sessionContext.mode_id,
             };
+        },
+
+        /**
+         * Why a band typed alone ("20M", "20M CW") can't be used at this
+         * station, or null when the input isn't such a band.
+         */
+        restrictedBandCommand(input) {
+            const tokens = input.toUpperCase().trim().split(/\s+/);
+            if (tokens.length === 0 || tokens.length > 2) {
+                return null;
+            }
+
+            let restricted = null;
+            for (const token of tokens) {
+                const band = (sessionContext.restricted_bands ?? []).find(b =>
+                    b.name.toUpperCase() === token || b.name.toUpperCase() === `${token}M`
+                );
+
+                if (band && restricted === null) {
+                    restricted = band;
+                } else if (!MODE_COMMANDS[token]) {
+                    return null;
+                }
+            }
+
+            return restricted?.message ?? null;
         },
 
         /**

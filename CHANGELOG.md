@@ -49,6 +49,14 @@
 - After an item committed to an event was deleted, that event's **Event Equipment** page and equipment reports failed to open. They now open and still list the deleted item.
 - Cloning a station whose primary radio had been deleted copied that radio to the new station. The clone now leaves **Primary Radio** empty and warns you to assign one.
 - On **Log Contact**, changing band and then mode with a mouse or touch left an empty session in the session list, and so did **End Session** before logging anything. Sessions that ended any other way with no contacts stayed too, such as station-mode **Sign Out**, **Take Over**, **End Sessions** or **Mark Unavailable** on the stations page, and the event ending. Empty sessions are now removed, and after a switch the log still shows the contacts from before it. **End Session**, a band or mode change, and station-mode **Sign Out** remove them right away. The others go six hours later, so a logging tab that was offline has time to sync. A session is kept if any of its contacts were deleted or are still waiting to sync.
+- On phones, the **Please fix the following errors** box covered the buttons in pop-up forms such as **Add Shift** on **Manage Schedule**, so tapping **Save Shift** again hit the box. The buttons now stay clear of it.
+- On phones, **Cancel** ran off the left edge of the **Start Logging Session** window on **Select Station** and of the **Exit Station Mode** window. The buttons now stack and fit.
+- On **Guestbook Manager** at laptop widths with the sidebar showing, the **Guestbook Bonuses** panel was squeezed into a narrow column, and the entries table ran past its card, hiding the edit and delete buttons. The panel now sits beside the totals only on wide screens, and entries show as cards until the table fits.
+- On **Club Equipment** at about 1280px with the sidebar showing, the table ran past its card, the page scrolled sideways and **Actions** was off the edge. Items now show as cards until the whole table fits.
+- On **Scoring**, the power limit warning for a single contact said "They score 0 points." It now says "It scores 0 points."
+- On **Log Contact** at a **VHF/UHF Only** station, typing a lower band such as `20m` gave the general "Enter callsign, class, and section" error. It now says the station is VHF/UHF Only and to choose 6m or higher. The shortcut hint also showed `40M` there. It now shows a usable band such as `6M`.
+- On **My Equipment** and **Club Equipment**, deleting a selection that included a station's primary radio showed "items deleted" and then immediately replaced it with "Radio still in use", so you couldn't tell what was deleted. One **Some items kept** warning now gives the number deleted and names the radio that was kept and why.
+- When cloning stations, a warning such as a deleted primary radio replaced the **Stations Cloned** summary. The summary now includes the warnings.
 
 ## 26.10.13 - 2026-10-26
 
