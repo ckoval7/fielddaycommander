@@ -8,6 +8,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Organization;
 use App\Models\Station;
 use App\Models\User;
 use Livewire\Livewire;
@@ -412,6 +413,50 @@ test('equipment list shows empty state when no equipment', function () {
 
     $equipment = $component->get('equipment');
     expect($equipment->total())->toBe(0);
+
+    $component
+        ->assertSee('No equipment found. Add equipment or change the filters.')
+        ->assertSeeHtml('colspan="9"')
+        ->assertSeeHtml('href="'.route('equipment.create').'"');
+});
+
+test('my equipment shows cards until the table fits beside the open sidebar at 2xl', function () {
+    $this->actingAs($this->user);
+
+    $item = Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'type' => 'power_supply',
+        'description' => str_repeat('A long description that would stretch the table. ', 4),
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->assertSeeHtmlInOrder([
+            '2xl:hidden grid grid-cols-1 xl:grid-cols-2',
+            'wire:key="equipment-card-'.$item->id.'"',
+            'hidden 2xl:block',
+            '<span class="badge badge-primary badge-sm whitespace-nowrap">',
+            'Power supply',
+            '<td class="min-w-40 max-w-xs">',
+            '<p class="line-clamp-2 text-sm">',
+            'aria-label="Actions for '.e($item->make.' '.$item->model).'"',
+        ])
+        ->assertDontSeeHtml('hidden xl:block')
+        ->assertDontSeeHtml('overflow-x-auto');
+});
+
+test('my equipment marks an item the club also owns and names its manager under make and model', function () {
+    $this->actingAs($this->user);
+
+    $manager = User::factory()->create(['first_name' => 'Pat', 'last_name' => 'Manager']);
+    Equipment::factory()->create([
+        'owner_user_id' => $this->user->id,
+        'owner_organization_id' => Organization::factory()->create()->id,
+        'managed_by_user_id' => $manager->id,
+    ]);
+
+    Livewire::test(EquipmentList::class)
+        ->assertSeeHtmlInOrder(['badge-club', 'Club Equipment', 'Managed by '.$manager->full_name, 'badge-club', 'Club Equipment', 'Managed by '.$manager->full_name])
+        ->assertDontSeeHtml('<th>Manager</th>');
 });
 
 test('search works with partial matches', function () {

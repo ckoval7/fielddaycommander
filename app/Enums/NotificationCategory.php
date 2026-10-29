@@ -85,7 +85,7 @@ enum NotificationCategory: string
     public function batchedTitle(int $count): ?string
     {
         return match ($this) {
-            self::NewSection => "{$count} New Sections Worked",
+            self::NewSection => "{$count} New Sections Worked!",
             self::ShiftConfirmation => "{$count} Shift Check-ins to Confirm",
             default => null,
         };
