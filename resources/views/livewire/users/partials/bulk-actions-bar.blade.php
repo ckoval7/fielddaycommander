@@ -22,7 +22,7 @@
                 icon="phosphor-users-three"
                 class="btn-sm btn-primary border-white/70"
                 wire:click="bulkAssignRole"
-                :disabled="!$bulk_role_id"
+                x-bind:disabled="!$wire.bulk_role_id"
                 spinner="bulkAssignRole"
             />
 
