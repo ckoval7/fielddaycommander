@@ -59,7 +59,9 @@
                         spellcheck="false"
                         class="input input-sm bg-base-100 text-base-content w-36 uppercase"
                         placeholder="e.g. W1AW"
+                        aria-describedby="dev-callsign-example"
                     />
+                    <span id="dev-callsign-example" hidden>{{ spokenPlaceholder('e.g. W1AW') }}</span>
                 </div>
 
                 @if($isActive)

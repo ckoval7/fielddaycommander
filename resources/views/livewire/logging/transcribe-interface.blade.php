@@ -296,7 +296,7 @@
                 >
                     @if($parseError)
                         <x-alert icon="phosphor-warning" class="alert-error">
-                            {{ $parseError }}
+                            {{ spoken($parseError, spokenAbbreviations($parseError)) }}
                         </x-alert>
                     @endif
 

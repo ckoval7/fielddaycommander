@@ -350,7 +350,7 @@
                         <div class="flex-1 min-w-0">
                             <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($item['type']->code)">
                                 <span class="text-sm font-medium leading-tight" style="color: var(--score-text);">
-                                    {{ $item['type']->name }}
+                                    {{ spoken($item['type']->name, spokenAbbreviations($item['type']->name)) }}
                                 </span>
                             </x-bonus-rule-help>
                             @if ($item['type']->is_per_occurrence && $item['bonus'])

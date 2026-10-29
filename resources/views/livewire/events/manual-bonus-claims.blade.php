@@ -18,7 +18,7 @@
                                 <input
                                     type="checkbox"
                                     class="checkbox checkbox-sm checkbox-success"
-                                    aria-label="Claim {{ strtolower($this->terms->awardSingular) }}: {{ $bonusType->name }}"
+                                    aria-label="Claim {{ strtolower($this->terms->awardSingular) }}: {{ spokenAbbreviations($bonusType->name) }}"
                                     wire:key="bonus-checkbox-{{ $bonusType->id }}-{{ $claimed ? 'claimed' : 'unclaimed' }}"
                                     @checked($claimed)
                                     @if($claimed)
@@ -29,7 +29,7 @@
                                 />
                                 <div class="min-w-0 flex-1">
                                     <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($bonusType->code)">
-                                        <span class="text-sm font-medium">{{ $bonusType->name }}</span>
+                                        <span class="text-sm font-medium">{{ spoken($bonusType->name, spokenAbbreviations($bonusType->name)) }}</span>
                                     </x-bonus-rule-help>
                                     <div class="text-xs text-base-content/60 truncate">{{ $bonusType->description }}</div>
                                 </div>
@@ -78,7 +78,7 @@
                                     type="text"
                                     class="input input-xs w-full max-w-sm"
                                     placeholder="{{ $bonusType->code === 'social_media' ? 'Paste social media URL (optional)' : 'Notes (optional)' }}"
-                                    aria-label="Notes for {{ $bonusType->name }}"
+                                    aria-label="Notes for {{ spokenAbbreviations($bonusType->name) }}"
                                     wire:model.blur="notes.{{ $bonusType->id }}"
                                 />
                             </div>

@@ -49,7 +49,8 @@
             <div class="flex items-center justify-between gap-2 w-full">
                 <span>Sections Worked</span>
                 <span class="text-sm font-normal text-base-content/60 whitespace-nowrap">
-                    {{ $data['total_worked'] }} / {{ $data['total_sections'] }}
+                    <span aria-hidden="true">{{ $data['total_worked'] }} / {{ $data['total_sections'] }}</span>
+                    <span class="sr-only">{{ $data['total_worked'] }} of {{ $data['total_sections'] }} worked</span>
                 </span>
             </div>
         </x-slot:title>
@@ -85,9 +86,10 @@
                             />
 
                             {{-- Call Area Label --}}
-                            <span class="font-bold text-sm whitespace-nowrap">
+                            <span class="font-bold text-sm whitespace-nowrap" aria-hidden="true">
                                 {{ $group['label'] }}
                             </span>
+                            <span class="sr-only">{{ $group['spoken_label'] }}</span>
 
                             {{-- Progress Bar --}}
                             <div class="flex-1 min-w-8 h-2 bg-base-300 rounded-full overflow-hidden">
@@ -104,9 +106,10 @@
                             </div>
 
                             {{-- Fraction --}}
-                            <span class="text-xs font-medium tabular-nums text-base-content/70 min-w-[3rem] text-right">
+                            <span class="text-xs font-medium tabular-nums text-base-content/70 min-w-[3rem] text-right" aria-hidden="true">
                                 {{ $group['worked_count'] }}/{{ $group['total_count'] }}
                             </span>
+                            <span class="sr-only">, {{ $group['worked_count'] }} of {{ $group['total_count'] }} worked</span>
                         </button>
 
                         {{-- Accordion Body --}}

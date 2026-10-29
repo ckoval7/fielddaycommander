@@ -77,7 +77,7 @@
                     <x-icon name="phosphor-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
                 @endif
                 <div class="min-w-0">
-                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">W1AW</div>
+                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">{{ spoken('W1AW', spokenAbbreviations('W1AW')) }}</div>
                     <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['w1aw_points'] }} <x-points-unit /></div>
                 </div>
             </div>

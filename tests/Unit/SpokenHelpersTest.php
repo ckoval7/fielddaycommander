@@ -40,3 +40,25 @@ test('spokenAbbreviations expands scoring and dashboard short forms', function (
     ['45 Qs', '45 contacts'],
     ['OM + 1', 'OM + 1'],
 ]);
+
+test('spokenCallsigns spells callsigns phonetically', function (string $text, string $said) {
+    expect(spokenCallsigns($text))->toBe($said);
+})->with([
+    ['W1AW Bulletin', 'Whiskey One Alpha Whiskey Bulletin'],
+    ['K6KPH', 'Kilo Six Kilo Papa Hotel'],
+    ['Copied from VE3XYZ', 'Copied from Victor Echo Three X-ray Yankee Zulu'],
+    ['3A CT', '3A CT'],
+    ['FT8 on 20m', 'FT8 on 20m'],
+    ['w1aw', 'w1aw'],
+]);
+
+test('spokenAbbreviations spells callsigns and WFD', function () {
+    expect(spokenAbbreviations('WFD Bulletin'))->toBe('W F D Bulletin')
+        ->and(spokenAbbreviations('e.g. W1AW 3A CT'))->toBe('e.g. Whiskey One Alpha Whiskey 3A CT');
+});
+
+test('spokenPlaceholder is null when screen readers already read it right', function () {
+    expect(spokenPlaceholder('For example, W1AW'))->toBe('For example, Whiskey One Alpha Whiskey')
+        ->and(spokenPlaceholder('Last name'))->toBeNull()
+        ->and(spokenPlaceholder(null))->toBeNull();
+});

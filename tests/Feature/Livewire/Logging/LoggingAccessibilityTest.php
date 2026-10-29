@@ -167,7 +167,7 @@ test('editing a synced contact with a bad exchange shows and announces the error
     $error = $component->get('parseError');
 
     expect($error)->not->toBe('')
-        ->and($component->html())->toContain('<div class="sr-only" role="alert" aria-atomic="true">'.e($error).'</div>');
+        ->and($component->html())->toContain('<div class="sr-only" role="alert" aria-atomic="true">'.e(spokenAbbreviations($error)).'</div>');
 });
 
 test('saving and deleting a synced contact are announced', function () {

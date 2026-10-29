@@ -101,6 +101,29 @@ it('names selects and textareas by their label', function (string $blade) {
     'textarea' => '<x-textarea label="Notes" wire:model="notes" />',
 ]);
 
+it('describes an input by its placeholder spelled out when it holds a callsign', function () {
+    $html = renderWithErrors('<x-input label="Callsign" wire:model="call_sign" placeholder="e.g. W1AW" hint="As licensed" />');
+
+    preg_match('/<legend id="([^"]+)-label"/', $html, $legend);
+    $uuid = $legend[1];
+
+    expect($html)
+        ->toContain('<span id="'.$uuid.'-placeholder" hidden>e.g. Whiskey One Alpha Whiskey</span>')
+        ->toContain('aria-describedby="'.$uuid.'-hint '.$uuid.'-placeholder"');
+});
+
+it('leaves plain placeholders alone', function () {
+    $html = renderWithErrors('<x-input label="Name" wire:model="name" placeholder="Last name" />');
+
+    expect($html)->not->toContain('-placeholder')->not->toContain('aria-describedby');
+});
+
+it('gives select options their own spoken name', function () {
+    $html = renderWithErrors('<x-select label="Source" wire:model="source" :options="[[\'id\' => \'W1AW\', \'name\' => \'W1AW\', \'aria-label\' => \'Whiskey One Alpha Whiskey\']]" />');
+
+    expect($html)->toMatch('~<option value="W1AW"\s+aria-label="Whiskey One Alpha Whiskey"\s*>W1AW</option>~');
+});
+
 it('links a checkbox error without replacing its label', function () {
     $html = renderWithErrors('<x-checkbox label="Remember me" wire:model="remember" />', ['remember' => 'Required.']);
 

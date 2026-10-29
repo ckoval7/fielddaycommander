@@ -13,10 +13,27 @@ use Mary\View\Components\Select as MarySelect;
  */
 class Select extends MarySelect
 {
-    use LabelsFormControl;
+    use LabelsFormControl {
+        templateReplacements as formControlReplacements;
+    }
+
+    public const OPTION = '<option value="{{ data_get($option, $optionValue) }}" @if(data_get($option, \'disabled\')) disabled @endif>';
 
     public static function controlNeedle(): string
     {
         return '<select id="{{ $uuid }}"';
+    }
+
+    /**
+     * An option can carry an `aria-label` for screen readers, such as a
+     * callsign spelled phonetically.
+     *
+     * @return array<string, string>
+     */
+    public static function templateReplacements(): array
+    {
+        return self::formControlReplacements() + [
+            self::OPTION => '<option value="{{ data_get($option, $optionValue) }}" @if(data_get($option, \'disabled\')) disabled @endif @if(data_get($option, \'aria-label\')) aria-label="{{ data_get($option, \'aria-label\') }}" @endif>',
+        ];
     }
 }

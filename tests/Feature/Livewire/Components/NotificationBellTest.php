@@ -29,6 +29,18 @@ test('component shows unread count when notifications exist', function () {
         ->assertSee('2');
 });
 
+test('unread count is announced outside the badge so the badge stays its visual size', function () {
+    $user = User::factory()->create();
+
+    createNotification($user, ['title' => 'Test 1']);
+    createNotification($user, ['title' => 'Test 2']);
+
+    $html = Livewire::actingAs($user)->test(NotificationBell::class)->html();
+
+    expect($html)->toContain('<span class="sr-only">, 2 unread</span>')
+        ->and($html)->toMatch('~<span aria-hidden="true" class="[^"]*\bbadge\b[^"]*">\s*2\s*</span>~');
+});
+
 test('component hides badge when no unread notifications', function () {
     $user = User::factory()->create();
 

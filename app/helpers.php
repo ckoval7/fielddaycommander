@@ -5,6 +5,7 @@
 
 use App\Models\Setting;
 use App\Services\DeveloperClockService;
+use App\Support\Phonetics;
 use Carbon\Carbon;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -150,14 +151,47 @@ if (! function_exists('spokenWatts')) {
 if (! function_exists('spokenAbbreviations')) {
     /**
      * Expand the short forms screen readers spell out or misread, for labels
-     * that come from frozen rule sets ("QSO Base Pts", "Power Multi.") and
-     * dashboard summaries ("12.5/hr", "45 Qs").
+     * that come from frozen rule sets ("QSO Base Pts", "Power Multi.", "WFD
+     * Bulletin"), dashboard summaries ("12.5/hr", "45 Qs") and callsigns.
      */
     function spokenAbbreviations(string $text): string
     {
-        return preg_replace(
-            ['/\bPts\b/i', '/\bPt\b/i', '/\bMulti?\.(?=\s|$)/i', '/\bN\/A\b/', '/\/hr\b/', '/\bQs\b/'],
-            ['points', 'point', 'multiplier', 'not available', ' per hour', 'contacts'],
+        return spokenCallsigns(preg_replace(
+            ['/\bPts\b/i', '/\bPt\b/i', '/\bMulti?\.(?=\s|$)/i', '/\bN\/A\b/', '/\/hr\b/', '/\bQs\b/', '/\bWFD\b/'],
+            ['points', 'point', 'multiplier', 'not available', ' per hour', 'contacts', 'W F D'],
+            $text,
+        ));
+    }
+}
+
+if (! function_exists('spokenPlaceholder')) {
+    /**
+     * A placeholder as screen readers should hear it, or null when they
+     * already read it right.
+     */
+    function spokenPlaceholder(?string $placeholder): ?string
+    {
+        if ($placeholder === null || $placeholder === '') {
+            return null;
+        }
+
+        $spoken = spokenAbbreviations($placeholder);
+
+        return $spoken === $placeholder ? null : $spoken;
+    }
+}
+
+if (! function_exists('spokenCallsigns')) {
+    /**
+     * Spell callsigns in the phonetic alphabet, since screen readers say
+     * "W1AW" as "W 1 ah": "W1AW Bulletin" becomes "Whiskey One Alpha
+     * Whiskey Bulletin". Only uppercase prefix-digit-suffix words match.
+     */
+    function spokenCallsigns(string $text): string
+    {
+        return preg_replace_callback(
+            '/\b(?:[A-Z]{1,2}|\d[A-Z])\d[A-Z]{1,4}\b/',
+            fn (array $match): string => Phonetics::spell($match[0]),
             $text,
         );
     }

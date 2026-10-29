@@ -61,9 +61,14 @@ trait LabelsFormControl
     {
         $hasError = '$errorFieldName() && ! $omitError && $errors->has($errorFieldName())';
 
+        // A spoken placeholder ($spokenPlaceholder, set by controls that
+        // render one) is read after the hint.
+        $describedBy = "trim(({$hasError} ? \$uuid.'-error ' : '').(\$hint ? \$uuid.'-hint ' : '').((\$spokenPlaceholder ?? null) !== null ? \$uuid.'-placeholder' : ''))";
+
         $aria = static::labelledByLegend()
             ? ' @if($label && ! ($inline ?? false) && ! $attributes->hasAny([\'aria-label\', \'aria-labelledby\'])) aria-labelledby="{{ $uuid }}-label" @endif'
-                ." @if({$hasError}) aria-invalid=\"true\" aria-describedby=\"{{ \$uuid }}-error{{ \$hint ? ' '.\$uuid.'-hint' : '' }}\" @elseif(\$hint) aria-describedby=\"{{ \$uuid }}-hint\" @endif"
+                ." @if({$hasError}) aria-invalid=\"true\" @endif"
+                ." @if({$describedBy} !== '') aria-describedby=\"{{ {$describedBy} }}\" @endif"
             : " @if({$hasError}) aria-invalid=\"true\" aria-describedby=\"{{ \$uuid }}-error\" @endif";
 
         $errorId = '@if($loop->first && ($loop->parent?->first ?? true)) id="{{ $uuid }}-error" @endif ';

@@ -6,11 +6,11 @@
     <x-slot:title>W1AW Bulletin</x-slot:title>
     {{-- Header --}}
     <x-header use-h1
-        :title="$this->nomenclature->bulletinName"
-        :subtitle="'Record the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
         separator
         progress-indicator
     >
+        <x-slot:title>{{ spoken($this->nomenclature->bulletinName, spokenAbbreviations($this->nomenclature->bulletinName)) }}</x-slot:title>
+        <x-slot:subtitle>{{ spoken($subtitle = 'Record the '.$this->nomenclature->bulletinName.' as copied over the air', spokenAbbreviations($subtitle)) }}</x-slot:subtitle>
         <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Back to Dashboard"
@@ -82,7 +82,7 @@
                                 </td>
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
-                                <td>{{ $entry->source }}</td>
+                                <td>{{ spoken($entry->source, spokenAbbreviations($entry->source)) }}</td>
                                 @can('manage-bulletins')
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
@@ -147,7 +147,7 @@
                         <x-select
                             label="Source"
                             wire:model="scheduleSource"
-                            :options="collect($this->nomenclature->bulletinSources)->map(fn ($source) => ['id' => $source, 'name' => $source])->all()"
+                            :options="collect($this->nomenclature->bulletinSources)->map(fn ($source) => ['id' => $source, 'name' => $source, 'aria-label' => spokenAbbreviations($source)])->all()"
                             option-value="id"
                             option-label="name"
                         />

@@ -11,7 +11,7 @@ import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import { confirmDialogPanel, registerConfirmDialog } from './components/confirm-dialog';
 import { registerAnnouncer } from './components/announcer';
-import { spokenDuration } from './spoken';
+import { spokenAbbreviations, spokenDuration } from './spoken';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
 
@@ -47,6 +47,7 @@ registerAnnouncer();
 
 // For inline Alpine expressions that can't import it (the header countdown).
 globalThis.fdcSpokenDuration = spokenDuration;
+globalThis.fdcSpokenAbbreviations = spokenAbbreviations;
 
 // Suppress only the W3C-spec'd benign "ResizeObserver loop completed with
 // undelivered notifications" message. The browser raises this intentionally

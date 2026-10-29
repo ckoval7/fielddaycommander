@@ -300,10 +300,10 @@
                         <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                             <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></span>
                             <template x-if="contact.status === 'failed'">
-                                <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL<span class="sr-only" x-text="': ' + contact.last_error"></span></span>
+                                <span><span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span><span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>
                             <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
-                                <span class="badge badge-xs badge-info">SYNC<span class="sr-only">: waiting to sync</span></span>
+                                <span><span class="badge badge-xs badge-info">SYNC</span><span class="sr-only">: waiting to sync</span></span>
                             </template>
                         </div>
                     </button>
@@ -355,10 +355,10 @@
                         <td class="font-bold font-mono uppercase">
                             <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
                             <template x-if="contact.status === 'failed'">
-                                <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL<span class="sr-only" x-text="': ' + contact.last_error"></span></span>
+                                <span><span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span><span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>
                             <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
-                                <span class="badge badge-xs badge-info ml-1">SYNC<span class="sr-only">: waiting to sync</span></span>
+                                <span><span class="badge badge-xs badge-info ml-1">SYNC</span><span class="sr-only">: waiting to sync</span></span>
                             </template>
                         </td>
                         <td class="font-mono" x-text="contact.exchange_class"></td>
@@ -378,7 +378,7 @@
                 {{-- Server-side errors, from editing a contact that has already synced --}}
                 @if($parseError)
                     <x-alert icon="phosphor-warning" class="alert-error">
-                        {{ $parseError }}
+                        {{ spoken($parseError, spokenAbbreviations($parseError)) }}
                     </x-alert>
                 @endif
                 <template x-if="parseError">
@@ -386,7 +386,8 @@
                         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                         </svg>
-                        <span x-text="parseError"></span>
+                        <span x-text="parseError" aria-hidden="true"></span>
+                        <span class="sr-only" x-text="fdcSpokenAbbreviations(parseError)"></span>
                     </div>
                 </template>
                 <template x-if="offBandSuggestion">

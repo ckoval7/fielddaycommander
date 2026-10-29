@@ -321,9 +321,9 @@
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     exact :active="request()->routeIs('events.messages.*')" />
                             @endcan
-                            <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"
+                            <x-menu-item icon="phosphor-radio"
                                 link="{{ route('events.w1aw-bulletin') }}"
-                                exact :active="request()->routeIs('events.w1aw-bulletin')" />
+                                exact :active="request()->routeIs('events.w1aw-bulletin')">{{ spoken($activeEvent->nomenclature()->bulletinName, spokenAbbreviations($activeEvent->nomenclature()->bulletinName)) }}</x-menu-item>
                         @endif
 
                         @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-roles', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])

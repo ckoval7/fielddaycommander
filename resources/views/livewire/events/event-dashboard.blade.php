@@ -519,7 +519,7 @@
                             @foreach($this->bonusList as $item)
                                 <div class="flex items-center justify-between gap-2 py-2">
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium truncate">{{ $item['type']->name }}</div>
+                                        <div class="text-sm font-medium truncate">{{ spoken($item['type']->name, spokenAbbreviations($item['type']->name)) }}</div>
                                         @if($item['type']->is_per_occurrence && $item['bonus'])
                                             <div class="text-xs text-base-content/60">
                                                 {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} <x-points-unit />

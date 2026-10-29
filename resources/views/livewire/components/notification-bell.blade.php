@@ -22,8 +22,9 @@
         <span class="sr-only">Notifications</span>
         <x-icon name="phosphor-bell" class="w-6 h-6 lg:w-5 lg:h-5" aria-hidden="true" />
         @if($unreadCount > 0)
-            <span class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
-                {{ $unreadCount > 99 ? '99+' : $unreadCount }}<span class="sr-only"> unread</span>
+            <span class="sr-only">, {{ $unreadCount }} unread</span>
+            <span aria-hidden="true" class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
             </span>
         @endif
     </button>

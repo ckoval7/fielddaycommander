@@ -276,7 +276,7 @@
 
             @if($this->isWinterFieldDay)
                 <div class="collapse collapse-arrow bg-base-200 mt-4" data-testid="wfd-rules-guidance">
-                    <input type="checkbox" aria-label="Toggle WFD rules guidance" />
+                    <input type="checkbox" aria-label="Toggle W F D rules guidance" />
                     <div class="collapse-title text-sm font-medium">
                         <x-icon name="phosphor-info" class="w-4 h-4 inline" />
                         WFD rules: class, category, and location

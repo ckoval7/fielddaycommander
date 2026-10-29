@@ -82,8 +82,8 @@ Slots:
         @if($duplicateWarning)Dupe: {{ $duplicateWarning }}.@endif
         {{ $participantWarning }}
     </output>
-    <div class="sr-only" role="alert" aria-atomic="true">{{ $error }}</div>
-    <p id="exchange-help" class="sr-only">Callsign, class, and section, for example {{ $placeholder }}. Enter logs. Up arrow in an empty exchange recalls earlier contacts.</p>
+    <div class="sr-only" role="alert" aria-atomic="true">{{ $error ? spokenAbbreviations($error) : '' }}</div>
+    <p id="exchange-help" class="sr-only">Callsign, class, and section, for example {{ spokenAbbreviations($placeholder) }}. Enter logs. Up arrow in an empty exchange recalls earlier contacts.</p>
 
     <div class="flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1">

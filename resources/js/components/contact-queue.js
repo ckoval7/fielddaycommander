@@ -12,6 +12,7 @@
  *   <div x-data="contactQueue(sessionId, csrfToken)">
  */
 import { announce } from './announcer';
+import { spokenAbbreviations } from '../spoken';
 
 /** Where the Advanced Fields panel's open state is kept on this device. */
 const ADVANCED_OPEN_KEY = 'fd-commander-advanced-open';
@@ -179,7 +180,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             // Screen readers hear what sighted operators see change.
             this.$watch('parseError', (message) => {
                 if (message) {
-                    announce(message, { assertive: true });
+                    announce(spokenAbbreviations(message), { assertive: true });
                 }
             });
             this.$watch('isOnline', (online) => {

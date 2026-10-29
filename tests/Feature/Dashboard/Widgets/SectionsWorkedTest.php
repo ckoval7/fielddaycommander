@@ -250,3 +250,34 @@ test('region rows grow to a 44px tap target on touch devices', function () {
     Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal'])
         ->assertSeeHtml('pointer-coarse:min-h-11');
 });
+
+test('reads area counts as "of" so the area name and count stay apart', function () {
+    $event = Event::factory()->create([
+        'start_time' => appNow()->subHours(12),
+        'end_time' => appNow()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal'])
+        ->assertSeeHtml('aria-hidden="true">0 /')
+        ->assertSeeHtml('<span class="sr-only">0 of ')
+        ->assertSeeHtml('<span class="sr-only">, 0 of ');
+});
+
+test('reads call areas phonetically', function () {
+    $event = Event::factory()->create([
+        'start_time' => appNow()->subHours(12),
+        'end_time' => appNow()->addHours(12),
+    ]);
+    EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $component = Livewire::test(SectionsWorked::class, ['config' => [], 'size' => 'normal']);
+    $spoken = collect($component->instance()->getData()['groups'])->pluck('spoken_label', 'label');
+
+    expect($spoken['W1'])->toBe('Whiskey One')
+        ->and($spoken['KH6 / KL7 / KP4'])->toBe('Kilo Hotel Six, Kilo Lima Seven, Kilo Papa Four')
+        ->and($spoken['VE'])->toBe('Victor Echo')
+        ->and($spoken['DX'])->toBe('DX');
+
+    $component->assertSeeHtml('<span class="sr-only">Whiskey One</span>');
+});
