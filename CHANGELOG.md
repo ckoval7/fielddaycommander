@@ -6,6 +6,10 @@
 
 - On **Create Event** and **Edit Event** for ARRL Field Day, a new **Setup started before the contest** switch is for stations that began setting up before 1800 UTC Saturday. When it's on, the operating period ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first. Contacts after that time earn no points, aren't accepted from **Log Contact**, **Transcribe Paper Log**, or external loggers, and are left out of the Cabrillo log. **Select Station** stops new sessions. The header countdown and the dashboard's **Time Remaining** count down to the new end once the first contact is logged. The switch is off by default, so existing events don't change.
 
+### Changed
+
+- Pages are much smaller to download, so they load faster on phones, slow Wi-Fi, and a Raspberry Pi server. On a test event, **Logbook** went from about 1 MB to about 235 KB, **Profile** from about 1.3 MB to about 175 KB, **System Settings** from about 1.35 MB to about 225 KB, and **Audit Logs** from about 450 KB to about 150 KB. Every other page is 15–35% smaller. Pages look and work the same, except searchable pickers for time zone, section, logger, band, mode, station, volunteer, owner, and the audit log filters show the first 100 matches and how many more there are. Typing narrows the list.
+
 ### Fixed
 
 - During ARRL Field Day, GOTA contacts earned their 5-point bonus but were left out of QSO points on **Scoring**, the event dashboard, **Logbook**, and the ARRL submission sheet. They now earn QSO points by mode with the power multiplier applied, plus the unchanged GOTA bonus. Upgrading automatically rescores existing events with GOTA contacts, raising affected Field Day scores.

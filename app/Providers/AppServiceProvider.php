@@ -7,6 +7,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\EnforceStationMode;
+use App\Livewire\Hooks\LeanComponentHtml;
 use App\Livewire\Hooks\ReportValidationFailures;
 use App\Models\Contact;
 use App\Models\EquipmentEvent;
@@ -36,9 +37,11 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\Support\IconSprite;
 use App\Support\StationMode;
 use App\View\Components\ChoicesOffline;
 use App\View\Components\Icon;
+use App\View\Components\Table;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
@@ -61,10 +64,16 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleSetFactory::class);
 
+        // Per-request icon sprite frames (see App\Support\IconSprite).
+        $this->app->scoped(IconSprite::class);
+
         // Flag Livewire actions that fail validation so the frontend can show the
         // floating error summary (resources/js/components/form-error-summary.js).
         // Must be registered before Livewire boots its component hooks.
         Livewire::componentHook(ReportValidationFailures::class);
+
+        // Sprite icons and strip whitespace in every component render.
+        Livewire::componentHook(LeanComponentHtml::class);
     }
 
     /**
@@ -88,9 +97,10 @@ class AppServiceProvider extends ServiceProvider
             Blade::component('mary-icon', Icon::class);
         });
 
-        // Null-safe getters for <x-choices-offline>; see the class docblock.
+        // Leaner <x-choices-offline> and <x-table>; see the class docblocks.
         $this->app->booted(function (): void {
             Blade::component(config('mary.prefix').'choices-offline', ChoicesOffline::class);
+            Blade::component(config('mary.prefix').'table', Table::class);
         });
 
         $this->configureStationMode();
