@@ -63,6 +63,54 @@ test('bulk role assign skips SYSTEM user', function () {
     expect($this->admin->fresh()->roles->first()->name)->toBe('Operator');
 });
 
+test('bulk actions on only the SYSTEM user warn instead of reporting success', function (string $action) {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$this->systemUser->id])
+        ->set('bulk_role_id', Role::where('name', 'Operator')->first()->id)
+        ->call($action)
+        ->assertDispatched('toast', fn ($name, $params) => $params['css'] === 'alert-warning'
+            && str_contains($params['description'], 'SYSTEM account is protected'))
+        ->assertNotDispatched('toast', fn ($name, $params) => $params['css'] === 'alert-success');
+
+    expect($this->systemUser->fresh())->not->toBeNull()
+        ->and($this->systemUser->fresh()->roles->first()->name)->toBe('Config Only');
+})->with(['bulkAssignRole', 'bulkDeleteUsers']);
+
+test('bulk actions that include the SYSTEM user say it was skipped', function () {
+    $other = User::factory()->create();
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$this->systemUser->id, $other->id])
+        ->set('bulk_role_id', Role::where('name', 'Operator')->first()->id)
+        ->call('bulkAssignRole')
+        ->assertDispatched('toast', fn ($name, $params) => $params['css'] === 'alert-success'
+            && str_contains($params['description'], 'Role assigned to 1 user.')
+            && str_contains($params['description'], 'was skipped'));
+
+    expect($other->fresh()->hasRole('Operator'))->toBeTrue();
+});
+
+test('bulk lock and unlock include the SYSTEM user, like the row menu', function () {
+    $other = User::factory()->create();
+    $this->actingAs($this->admin);
+
+    $component = Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$this->systemUser->id, $other->id])
+        ->call('bulkLockAccounts')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '2 accounts locked.');
+
+    expect($this->systemUser->fresh()->isLocked())->toBeTrue();
+
+    $component->set('selectedUsers', [$this->systemUser->id, $other->id])
+        ->call('bulkUnlockAccounts')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '2 accounts unlocked.');
+
+    expect($this->systemUser->fresh()->isLocked())->toBeFalse();
+});
+
 test('cannot modify Config Only role permissions', function () {
     $this->actingAs($this->admin);
 
