@@ -84,6 +84,23 @@ test('hostname hint explains how each external logger matches a station', functi
         ->assertSee('WSJT-X, JTDX, and ADIF loggers match on the station callsign');
 });
 
+test('says to add a radio when every radio is already in use', function () {
+    Station::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'radio_equipment_id' => $this->radio->id,
+    ]);
+
+    Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->assertSee('Every radio is already the primary radio at another station.');
+});
+
+test('does not mention adding a radio while one is free', function () {
+    Livewire::test(StationForm::class)
+        ->set('event_configuration_id', $this->eventConfig->id)
+        ->assertDontSee('Every radio is already the primary radio at another station.');
+});
+
 test('component can render for edit mode', function () {
     $station = Station::factory()->create([
         'event_configuration_id' => $this->eventConfig->id,

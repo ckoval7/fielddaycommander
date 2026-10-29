@@ -162,6 +162,24 @@ test('event form can create new event with configuration', function () {
     expect($event->eventConfiguration->operating_class_id)->toBe($this->operatingClassA->id);
 });
 
+test('Field Day events cannot use the WFD-only sections as their own', function () {
+    $this->actingAs($this->user);
+
+    $yukon = Section::firstOrCreate(
+        ['code' => 'YT'],
+        ['name' => 'Yukon', 'region' => 'VE', 'country' => 'CA', 'is_active' => true],
+    );
+
+    $component = Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->eventType->id);
+
+    expect($component->get('sections')->pluck('code'))->not->toContain('YT')->toContain('CT');
+
+    $component->set('section_id', $yukon->id)
+        ->call('save')
+        ->assertHasErrors(['section_id']);
+});
+
 test('event form calculates power multiplier correctly', function () {
     $this->actingAs($this->user);
 

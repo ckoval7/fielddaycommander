@@ -661,7 +661,7 @@ class EventEquipmentDashboard extends Component
      */
     public function render(): View
     {
-        return view('livewire.equipment.event-equipment-dashboard')->layout('layouts.app');
+        return view('livewire.equipment.event-equipment-dashboard')->layout('layouts.app', ['title' => 'Equipment Dashboard']);
     }
 
     /**

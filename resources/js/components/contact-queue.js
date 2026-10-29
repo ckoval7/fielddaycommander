@@ -493,6 +493,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         clearAdvanced() {
             this.advanced = emptyAdvancedFields(this.advanced.frequency);
             this.offBandSuggestion = null;
+            this.parseError = '';
         },
 
         toggleAdvanced(focusFirst = false) {
@@ -1048,7 +1049,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             }
         },
 
-        saveRecalled(inputEl) {
+        async saveRecalled(inputEl) {
             if (!this.isRecalling) return;
 
             const exchange = inputEl.value.trim();
@@ -1100,9 +1101,22 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 }
                 const contactId = this.recalledContactId;
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
-                if (wire) {
-                    wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
+                if (!wire) {
+                    return;
                 }
+                // Stay in edit mode until the server accepts the edit, so a
+                // rejected one keeps its text and shows why.
+                let error;
+                try {
+                    error = await wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
+                } catch {
+                    error = 'The edit wasn\'t saved. Check the connection and try again.';
+                }
+                if (error) {
+                    this.parseError = error;
+                    return;
+                }
+                this.parseError = '';
                 this.exitRecall(inputEl);
             }
         },

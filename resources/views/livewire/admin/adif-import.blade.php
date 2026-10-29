@@ -287,9 +287,10 @@
                                         </td>
                                         <td class="font-mono font-bold">{{ $record->callsign }}</td>
                                         <td>{{ $record->qso_time?->format('Y-m-d H:i') }}</td>
-                                        <td>{{ $record->band_name }}</td>
-                                        <td>{{ $record->mode_name }}</td>
-                                        <td>{{ $record->section_code }}</td>
+                                        {{-- Show what each field maps to, so a remapped value doesn't show as it was typed --}}
+                                        <td>{{ $record->band?->name ?? $record->band_name }}</td>
+                                        <td>{{ $record->mode?->name ?? $record->mode_name }}</td>
+                                        <td>{{ $record->section?->code ?? $record->section_code }}</td>
                                         <td>{{ $record->exchange_class }}</td>
                                         <td class="font-mono">{{ $record->operator_callsign }}</td>
                                         <td>

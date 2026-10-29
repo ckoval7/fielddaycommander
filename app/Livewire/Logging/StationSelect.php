@@ -376,7 +376,7 @@ class StationSelect extends Component
     public function render(): View
     {
         return view('livewire.logging.station-select')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Logging']);
     }
 
     /**

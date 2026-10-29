@@ -326,6 +326,6 @@ class SiteSafetyChecklist extends Component
     public function render(): View
     {
         return view('livewire.safety.site-safety-checklist')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Site Safety Checklist']);
     }
 }

@@ -31,7 +31,7 @@ class ManageSchedule extends Component
     use WithScheduleFilters;
     use WithShiftAssignment;
 
-    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
+    private const DATETIME_LOCAL_FORMAT = 'Y-m-d H:i';
 
     private const DEFAULT_ROLE_COLOR = '#64748b';
 
@@ -340,15 +340,21 @@ class ManageSchedule extends Component
     {
         Gate::authorize('manage-shifts');
 
+        // Capacity can't drop below the people already signed up.
+        $slotsTaken = $this->editingShiftId ? Shift::findOrFail($this->editingShiftId)->slotsTaken() : 0;
+
         $this->validate([
             'shiftRoleId' => ['required', 'exists:shift_roles,id'],
             'shiftStartTime' => ['required', 'date'],
             'shiftEndTime' => ['required', 'date', 'after:shiftStartTime'],
-            'shiftCapacity' => ['required', 'integer', 'min:1'],
+            'shiftCapacity' => ['required', 'integer', 'min:'.max(1, $slotsTaken)],
             'shiftIsOpen' => ['boolean'],
             'shiftNotes' => ['nullable', 'string', 'max:1000'],
         ], [
             'shiftEndTime.after' => 'End time must be after start time.',
+            'shiftCapacity.min' => $slotsTaken > 1
+                ? "{$slotsTaken} people are signed up for this shift. Remove some before lowering the capacity below {$slotsTaken}."
+                : 'Capacity must be at least 1.',
         ]);
 
         $tz = localTimezone();
@@ -881,7 +887,7 @@ class ManageSchedule extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.manage-schedule')->layout('layouts.app');
+        return view('livewire.schedule.manage-schedule')->layout('layouts.app', ['title' => 'Manage Schedule']);
     }
 
     /**

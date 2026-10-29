@@ -65,7 +65,7 @@ class W1awBulletinForm extends Component
             $this->bulletinId = $bulletin->id;
             $this->frequency = $bulletin->frequency;
             $this->mode = $bulletin->mode;
-            $this->receivedAt = $bulletin->received_at->format('Y-m-d\TH:i');
+            $this->receivedAt = $bulletin->received_at->format('Y-m-d H:i');
             $this->bulletinText = $bulletin->bulletin_text;
         }
     }
@@ -241,7 +241,7 @@ class W1awBulletinForm extends Component
         $this->scheduleMode = $entry->mode;
         $this->scheduleFrequencies = $entry->frequencies;
         $this->scheduleSource = $entry->source;
-        $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d\TH:i');
+        $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d H:i');
         $this->scheduleNotes = $entry->notes ?? '';
     }
 
@@ -373,7 +373,7 @@ class W1awBulletinForm extends Component
     public function render(): View
     {
         return view('livewire.messages.w1aw-bulletin-form')
-            ->layout('components.layouts.app');
+            ->layout('components.layouts.app', ['title' => 'W1AW Bulletin']);
     }
 
     /**

@@ -106,6 +106,13 @@
         required
     />
 
+    @unless($this->hasUnassignedRadio)
+        <x-alert icon="phosphor-info" class="alert-info mt-3">
+            Every radio is already the primary radio at another station.
+            <a href="{{ route('equipment.create') }}" class="link" wire:navigate>Add a radio</a> to use here.
+        </x-alert>
+    @endunless
+
     @if($radio_equipment_id)
         @php
             $selectedRadio = $availableRadios->firstWhere('id', $radio_equipment_id);

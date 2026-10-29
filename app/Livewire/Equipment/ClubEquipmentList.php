@@ -193,6 +193,6 @@ class ClubEquipmentList extends Component
     {
         return view('livewire.equipment.club-equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Club Equipment']);
     }
 }

@@ -376,11 +376,12 @@ class LoggingInterface extends Component
 
     /**
      * Save an edit to a recalled contact: its exchange and, when the
-     * Advanced Fields are sent, those too.
+     * Advanced Fields are sent, those too. Returns the error when the edit
+     * is rejected, or null once it is saved.
      *
      * @param  array<string, mixed>|null  $advanced
      */
-    public function updateContact(int $contactId, string $exchangeInput, ?array $advanced = null): void
+    public function updateContact(int $contactId, string $exchangeInput, ?array $advanced = null): ?string
     {
         $this->operatingSession->refresh();
 
@@ -402,7 +403,7 @@ class LoggingInterface extends Component
         if (! $parsed['success']) {
             $this->parseError = $parsed['errors'][0] ?? 'Invalid exchange';
 
-            return;
+            return $this->parseError;
         }
 
         $advancedValues = [];
@@ -410,7 +411,7 @@ class LoggingInterface extends Component
             $advancedValues = $this->validatedAdvancedFields($advanced);
 
             if ($advancedValues === null) {
-                return;
+                return $this->parseError;
             }
         }
 
@@ -441,6 +442,8 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
+
+        return null;
     }
 
     /**
@@ -637,6 +640,7 @@ class LoggingInterface extends Component
             ->withTrashed()
             ->with('section')
             ->latest('qso_time')
+            ->latest('id')
             ->limit(50)
             ->get();
     }
@@ -649,6 +653,6 @@ class LoggingInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.logging-interface')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Logging']);
     }
 }

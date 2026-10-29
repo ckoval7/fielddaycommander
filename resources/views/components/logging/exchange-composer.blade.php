@@ -229,7 +229,7 @@ Slots:
                         id="log-frequency"
                         type="text"
                         x-model="advanced.frequency"
-                        @input="offBandSuggestion = null"
+                        @input="offBandSuggestion = null; parseError = ''"
                         @keydown.shift.tab="$event.preventDefault(); $refs.exchangeInput.focus()"
                         {!! $fieldKeys !!}
                         inputmode="decimal"

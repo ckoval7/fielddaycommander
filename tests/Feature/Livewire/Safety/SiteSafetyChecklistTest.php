@@ -396,7 +396,7 @@ describe('cpr/aed trained personnel', function () {
 
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'label' => 'First Aid - CPR - AED versed else trained participant/s on site for full Field Day period',
+            'label' => 'First Aid - CPR - AED versed or trained participant/s on site for full Field Day period',
         ]);
         SafetyChecklistEntry::factory()->create([
             'safety_checklist_item_id' => $item->id,
@@ -412,7 +412,7 @@ describe('cpr/aed trained personnel', function () {
     test('does not show trained users section when no users are trained', function () {
         $item = SafetyChecklistItem::factory()->safetyOfficer()->create([
             'event_configuration_id' => $this->eventConfig->id,
-            'label' => 'First Aid - CPR - AED versed else trained participant/s on site for full Field Day period',
+            'label' => 'First Aid - CPR - AED versed or trained participant/s on site for full Field Day period',
         ]);
         SafetyChecklistEntry::factory()->create([
             'safety_checklist_item_id' => $item->id,

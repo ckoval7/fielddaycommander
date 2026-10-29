@@ -46,7 +46,18 @@ class EventSections
      */
     public static function foldedCodes(?Event $event): array
     {
-        return self::recognisesWfdSections($event) ? [] : array_keys(self::WFD_ONLY);
+        return self::foldedCodesForType($event?->eventType?->code);
+    }
+
+    /**
+     * Section codes an event of the given type code does not list as
+     * sections of their own, for forms where the event isn't saved yet.
+     *
+     * @return list<string>
+     */
+    public static function foldedCodesForType(?string $eventTypeCode): array
+    {
+        return $eventTypeCode === 'WFD' ? [] : array_keys(self::WFD_ONLY);
     }
 
     /**

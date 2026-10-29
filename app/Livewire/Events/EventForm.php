@@ -18,6 +18,7 @@ use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\PowerContext;
 use App\Scoring\PowerMultiplierTiers;
 use App\Scoring\RuleSetFactory;
+use App\Support\EventSections;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -595,8 +596,21 @@ class EventForm extends Component
     public function sections()
     {
         return Section::where('is_active', true)
+            ->whereNotIn('code', $this->foldedSectionCodes())
             ->orderBy('code')
             ->get();
+    }
+
+    /**
+     * WFD-only section codes the selected event type can't use as its own.
+     *
+     * @return list<string>
+     */
+    private function foldedSectionCodes(): array
+    {
+        $typeCode = $this->event_type_id ? EventType::find($this->event_type_id)?->code : null;
+
+        return EventSections::foldedCodesForType($typeCode);
     }
 
     #[Computed]
@@ -976,7 +990,7 @@ class EventForm extends Component
             'end_time' => ['required', 'date', 'after:start_time'],
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/i'],
             'club_name' => ['nullable', 'string', 'max:255'],
-            'section_id' => ['required', 'exists:sections,id'],
+            'section_id' => ['required', Rule::exists('sections', 'id')->whereNotIn('code', $this->foldedSectionCodes())],
             'operating_class_id' => ['required', 'exists:operating_classes,id'],
             'transmitter_count' => ['required', 'integer', 'min:1', 'max:99'],
             'rules_version' => ['nullable', 'string', 'max:16', 'regex:/^[A-Za-z0-9._-]+$/'],
@@ -1188,7 +1202,7 @@ class EventForm extends Component
 
     public function render(): View
     {
-        return view('livewire.events.event-form')->layout('layouts.app');
+        return view('livewire.events.event-form')->layout('layouts.app', ['title' => 'Event']);
     }
 
     /**

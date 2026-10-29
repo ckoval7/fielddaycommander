@@ -159,6 +159,30 @@ class StationForm extends Component
     }
 
     /**
+     * Whether any radio is left to pick, so the form can say to add one
+     * rather than show an empty picker.
+     */
+    #[Computed]
+    public function hasUnassignedRadio(): bool
+    {
+        if ($this->radio_equipment_id) {
+            return true;
+        }
+
+        $assignedRadioIds = $this->event_configuration_id
+            ? Station::where('event_configuration_id', $this->event_configuration_id)
+                ->whereNotNull('radio_equipment_id')
+                ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
+                ->pluck('radio_equipment_id')
+            : collect();
+
+        return Equipment::query()
+            ->where('type', 'radio')
+            ->whereNotIn('id', $assignedRadioIds)
+            ->exists();
+    }
+
+    /**
      * Search for available radio equipment.
      * Called on mount and when user types in the searchable select.
      */
@@ -434,7 +458,7 @@ class StationForm extends Component
 
     public function render(): View
     {
-        return view('livewire.stations.station-form')->layout('layouts.app');
+        return view('livewire.stations.station-form')->layout('layouts.app', ['title' => 'Station']);
     }
 
     /**

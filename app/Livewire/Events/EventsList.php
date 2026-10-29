@@ -106,6 +106,6 @@ class EventsList extends Component
     {
         return view('livewire.events.events-list', [
             'events' => $this->events,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Events']);
     }
 }

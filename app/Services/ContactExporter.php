@@ -52,7 +52,7 @@ class ContactExporter
                     $contact->exchange_class ?? '',
                     $contact->points ?? 0,
                     $contact->is_duplicate ? 'Yes' : 'No',
-                    $contact->logger?->name ?? '',
+                    $contact->logger?->call_sign ?? '',
                     $contact->operatingSession?->station?->name ?? '',
                 ]);
             }

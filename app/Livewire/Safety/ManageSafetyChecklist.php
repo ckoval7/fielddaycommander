@@ -265,7 +265,7 @@ class ManageSafetyChecklist extends Component
     public function render(): View
     {
         return view('livewire.safety.manage-safety-checklist')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Manage Safety Checklist']);
     }
 
     /**

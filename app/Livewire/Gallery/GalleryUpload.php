@@ -96,6 +96,6 @@ class GalleryUpload extends Component
     public function render(): View
     {
         return view('livewire.gallery.gallery-upload')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Upload Photo']);
     }
 }

@@ -444,6 +444,6 @@ class LogbookBrowser extends Component
 
     public function render(): View
     {
-        return view('livewire.logbook.logbook-browser')->layout('layouts.app');
+        return view('livewire.logbook.logbook-browser')->layout('layouts.app', ['title' => 'Logbook']);
     }
 }

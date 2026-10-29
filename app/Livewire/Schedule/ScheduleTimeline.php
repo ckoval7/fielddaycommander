@@ -249,6 +249,6 @@ class ScheduleTimeline extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.schedule-timeline')->layout('layouts.app');
+        return view('livewire.schedule.schedule-timeline')->layout('layouts.app', ['title' => 'Shift Schedule']);
     }
 }

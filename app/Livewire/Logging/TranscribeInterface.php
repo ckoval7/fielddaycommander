@@ -45,6 +45,10 @@ class TranscribeInterface extends Component
 
     private const OUT_OF_WINDOW_ERROR = 'Contact time must be within the event window (±5 minutes).';
 
+    private const FUTURE_TIME_ERROR = 'Contact time is in the future. Check the time and the UTC/local setting.';
+
+    private const INVALID_TIME_ERROR = 'Invalid time format. Try 1423, 14:23, or 2:23pm.';
+
     public Station $station;
 
     public string $workingDate = '';
@@ -170,6 +174,12 @@ class TranscribeInterface extends Component
             return;
         }
 
+        if ($this->hasUnreadableLeadingTime($this->exchangeInput)) {
+            $this->parseError = self::INVALID_TIME_ERROR;
+
+            return;
+        }
+
         // Extract inline time from exchange (e.g. "1423 W1AW 3A CT")
         $inlineTime = $this->extractInlineTime();
         if ($inlineTime !== null) {
@@ -178,13 +188,14 @@ class TranscribeInterface extends Component
 
         $resolvedTime = $this->resolveContactDateTime();
         if ($resolvedTime === null) {
-            $this->parseError = 'Invalid time format. Try 1423, 14:23, or 2:23pm.';
+            $this->parseError = self::INVALID_TIME_ERROR;
 
             return;
         }
 
-        if (! $this->withinTranscriptionWindow($resolvedTime)) {
-            $this->parseError = self::OUT_OF_WINDOW_ERROR;
+        $timeError = $this->contactTimeError($resolvedTime);
+        if ($timeError !== null) {
+            $this->parseError = $timeError;
 
             return;
         }
@@ -467,6 +478,12 @@ class TranscribeInterface extends Component
 
         $this->authorizeContactChange($contact);
 
+        if ($this->hasUnreadableLeadingTime($exchangeInput)) {
+            $this->parseError = self::INVALID_TIME_ERROR;
+
+            return;
+        }
+
         // Check for inline time prefix (e.g. "1423 W1AW 3A CT")
         $inlineTime = null;
         $exchange = trim($exchangeInput);
@@ -507,8 +524,9 @@ class TranscribeInterface extends Component
             $baseDate = $contact->qso_time->copy()->setTimezone($tz)->format('Y-m-d');
             $updateData['qso_time'] = Carbon::parse($baseDate.' '.$inlineTime, $tz)->utc();
 
-            if (! $this->withinTranscriptionWindow($updateData['qso_time'])) {
-                $this->parseError = self::OUT_OF_WINDOW_ERROR;
+            $timeError = $this->contactTimeError($updateData['qso_time']);
+            if ($timeError !== null) {
+                $this->parseError = $timeError;
 
                 return;
             }
@@ -540,14 +558,38 @@ class TranscribeInterface extends Component
     }
 
     /**
-     * Whether a contact time is inside the event, give or take the clock-drift allowance.
+     * Why a contact time can't be used, or null when it can: it must be
+     * inside the event and not ahead of the clock, give or take the
+     * clock-drift allowance.
      */
-    private function withinTranscriptionWindow(Carbon $time): bool
+    private function contactTimeError(Carbon $time): ?string
     {
         $earliest = $this->event->start_time->copy()->subMinutes(self::CLOCK_DRIFT_MINUTES);
         $latest = $this->event->end_time->copy()->addMinutes(self::CLOCK_DRIFT_MINUTES);
 
-        return ! $time->lt($earliest) && ! $time->gt($latest);
+        if ($time->lt($earliest) || $time->gt($latest)) {
+            return self::OUT_OF_WINDOW_ERROR;
+        }
+
+        if ($time->gt(appNow()->addMinutes(self::CLOCK_DRIFT_MINUTES))) {
+            return self::FUTURE_TIME_ERROR;
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the exchange starts with something meant as a time that
+     * doesn't read as one, like "2575". Callsigns always have a letter, so
+     * a leading all-digit token is a time attempt.
+     */
+    private function hasUnreadableLeadingTime(string $input): bool
+    {
+        $tokens = preg_split(self::WHITESPACE_PATTERN, trim($input));
+
+        return count($tokens) >= 2
+            && preg_match('/^\d{1,2}:?\d{0,2}\s*([aApP][mM]?|[zZ])?$/', $tokens[0]) === 1
+            && $this->parseFlexibleTime($tokens[0]) === null;
     }
 
     /**
@@ -571,6 +613,7 @@ class TranscribeInterface extends Component
             ->withTrashed()
             ->with('section', 'band', 'mode')
             ->latest('qso_time')
+            ->latest('id')
             ->limit(50)
             ->get();
     }
@@ -776,7 +819,7 @@ class TranscribeInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.transcribe-interface')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Transcribe Paper Log']);
     }
 
     /**

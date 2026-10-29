@@ -13,6 +13,23 @@
 - On **Start Session**, picking a band the radio didn't cover showed a warning whose supported-band list could include bands missing from **Station supports** above it. The warning now identifies its list as the radio's coverage, while **Station supports** lists bands covered by both the radio and an antenna.
 - On screens 1024–1279px wide with the desktop sidebar showing, especially when expanded, the header's event name wrapped and crowded the title. On **My Dashboard**, three narrow columns left the **Time Remaining** clock overflowing, milestone counts cut off, and **Sections Worked** bars reduced to dots. **Select Station** also cut off station names. The countdown now hides the repeated event name below 1280px and keeps **Ends in** on one line. Dashboard and station cards now use two columns with the sidebar expanded, and the clock sizes itself to fit. On touchscreens, the clipped **Log Contact** sub-mode placeholder also has a wider box.
 
+- On **Log Contact**, recalling a contact with the up arrow and pressing Enter with an exchange the server rejected silently closed the edit. Typing again logged a new contact. The edit now stays open with the error shown, and a connection failure says the edit wasn't saved.
+- On **Transcribe Paper Log**, contact times ahead of the clock were accepted. Times more than five minutes ahead are now refused. An unreadable leading time, such as `2575 W1AW 3A CT`, now reports an invalid time format instead of asking for only a callsign, class, and section.
+- In **Logbook** CSV exports, **Logger** was empty on every row. It now contains the logger's callsign, as ADIF exports do.
+- On **Log Contact**, an off-band frequency error stayed on screen after you changed the frequency or cleared the entry with Esc. It now clears with those changes.
+- On **Log Contact**, contacts waiting to sync showed the browser's local time, then changed to UTC after syncing. They now show UTC throughout.
+- In the W1AW bulletin, radiogram **Filed At (UTC)**, message **Reply Date/Time (UTC)**, and other date-time pickers, pressing **Now** at a minute such as 12:18 silently blocked saving. Saving now works at any minute.
+- On **Manage Schedule**, **Add Shift** showed dates such as `2026-10-28 14:00`, while **Create Multiple Shifts** and **Edit Shift** used a `T` between the date and time. All now use the first format.
+- On **Guestbook Manager**, the bonus points panel stayed unchanged after verifying, unverifying, or deleting entries until a reload or background poll. It now updates right away.
+- On **Site Safety Checklist**, the CPR/AED item read "versed else trained." It now reads "versed or trained," and upgrading corrects existing events too.
+- On **Manage Schedule**, editing a shift could lower its capacity below the number already signed up, leaving counts such as "5/1 filled." Saving now refuses that change with a message.
+- On **Reports**, **Sections Worked** counted YT, MX, and DX separately during ARRL Field Day, giving a higher count than the dashboard, public page, and section map. It now counts YT as TER and MX as DX, matching those pages.
+- In event setup, YT (Yukon) and MX (Mexico) were offered as the event's own section for ARRL Field Day. They are now offered only for Winter Field Day.
+- In the ADIF import review table, remapping a section, band, or mode left the original file value on screen even though the import used the mapping. The table now shows the mapped value.
+- On logging, station, message, report, dashboard, section map, gallery, equipment, schedule, and other pages, browser tabs showed only the site name. Each page now has its own title.
+- In the station form, the radio picker was empty without an explanation when every radio was already the primary radio at another station. The form now explains this and links to adding a radio.
+- On **Log Contact**, contacts logged in the same second could appear in the wrong order in the QSO list with their QSO numbers swapped, and the up arrow could recall the earlier contact instead of the latest. The same list problem affected **Transcribe Paper Log** when contacts shared a time, recorded to the minute. Tied contacts now appear in the order they were logged, and the up arrow on **Log Contact** recalls the latest. Stored data and exports were not affected.
+
 ## 26.10.13 - 2026-10-26
 
 ### Added

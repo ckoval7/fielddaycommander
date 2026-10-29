@@ -434,6 +434,7 @@ class AdifImport extends Component
         return AdifImportRecord::query()
             ->where('adif_import_id', $this->findOwnedImport()->id)
             ->when($statuses !== null, fn ($query) => $query->whereIn('status', $statuses))
+            ->with(['band:id,name', 'mode:id,name', 'section:id,code'])
             ->orderBy('qso_time')
             ->orderBy('id')
             ->paginate(self::RECORDS_PER_PAGE);
@@ -482,7 +483,7 @@ class AdifImport extends Component
     public function render(): View
     {
         return view('livewire.admin.adif-import')
-            ->layout('components.layouts.app');
+            ->layout('components.layouts.app', ['title' => 'ADIF Import']);
     }
 
     /**

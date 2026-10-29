@@ -988,7 +988,8 @@ test('updateContact updates contact fields', function () {
     ]);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->call('updateContact', $contact->id, 'W1NEW 1D STX');
+        ->call('updateContact', $contact->id, 'W1NEW 1D STX')
+        ->assertReturned(null);
 
     $contact->refresh();
     expect($contact->callsign)->toBe('W1NEW')
@@ -1040,7 +1041,8 @@ test('updateContact rejects invalid exchange', function () {
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
         ->call('updateContact', $contact->id, 'INVALID')
-        ->assertSet('parseError', 'Enter callsign, class, and section (e.g. W1AW 3A CT)');
+        ->assertSet('parseError', 'Enter callsign, class, and section (e.g. W1AW 3A CT)')
+        ->assertReturned('Enter callsign, class, and section (e.g. W1AW 3A CT)');
 
     expect($contact->fresh()->callsign)->toBe('W1OLD');
 });
@@ -1221,6 +1223,28 @@ test('recentContacts includes trashed contacts during active session', function 
 
     expect($callsigns)->toContain('W1ACT')
         ->and($callsigns)->toContain('W1DEL');
+});
+
+test('recentContacts puts the later of two same-second contacts first', function () {
+    $this->actingAs($this->user);
+
+    $qsoTime = now()->startOfSecond();
+
+    foreach (['W1FST', 'W1SND'] as $callsign) {
+        Contact::factory()->create([
+            'event_configuration_id' => $this->config->id,
+            'operating_session_id' => $this->session->id,
+            'logger_user_id' => $this->user->id,
+            'band_id' => $this->band->id,
+            'mode_id' => $this->phoneMode->id,
+            'callsign' => $callsign,
+            'qso_time' => $qsoTime,
+        ]);
+    }
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    expect($component->get('recentContacts')->pluck('callsign')->all())->toBe(['W1SND', 'W1FST']);
 });
 
 test('QSO history renders oldest to newest on both mobile and desktop', function () {

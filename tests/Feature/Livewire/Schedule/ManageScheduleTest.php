@@ -211,6 +211,25 @@ describe('shift management', function () {
         expect($shift->fresh()->capacity)->toBe(5);
     });
 
+    test('cannot lower capacity below the people signed up', function () {
+        $shift = Shift::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $this->role->id,
+            'capacity' => 3,
+        ]);
+        ShiftAssignment::factory()->count(3)->create(['shift_id' => $shift->id]);
+
+        $this->actingAs($this->admin);
+
+        Livewire::test(ManageSchedule::class)
+            ->call('openShiftModal', $shift->id)
+            ->set('shiftCapacity', 1)
+            ->call('saveShift')
+            ->assertHasErrors(['shiftCapacity' => 'min']);
+
+        expect($shift->fresh()->capacity)->toBe(3);
+    });
+
     test('validates end time after start time', function () {
         $this->actingAs($this->admin);
 
@@ -1550,8 +1569,8 @@ describe('timezone handling', function () {
 
         Livewire::test(ManageSchedule::class)
             ->call('openShiftModal', $shift->id)
-            ->assertSet('shiftStartTime', '2026-06-28T10:00')
-            ->assertSet('shiftEndTime', '2026-06-28T12:00');
+            ->assertSet('shiftStartTime', '2026-06-28 10:00')
+            ->assertSet('shiftEndTime', '2026-06-28 12:00');
     });
 
     test('bulk create saves shifts as UTC when system timezone is non-UTC', function () {
@@ -1579,8 +1598,8 @@ describe('timezone handling', function () {
         $this->actingAs($this->admin);
 
         // The pre-fill should use the local timezone, not raw UTC
-        $expectedStart = toLocalTime($this->event->start_time)->format('Y-m-d\TH:i');
-        $expectedEnd = toLocalTime($this->event->end_time)->format('Y-m-d\TH:i');
+        $expectedStart = toLocalTime($this->event->start_time)->format('Y-m-d H:i');
+        $expectedEnd = toLocalTime($this->event->end_time)->format('Y-m-d H:i');
 
         Livewire::test(ManageSchedule::class)
             ->call('openBulkModal')

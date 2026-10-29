@@ -195,6 +195,6 @@ class EquipmentList extends Component
     {
         return view('livewire.equipment.equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'My Equipment']);
     }
 }

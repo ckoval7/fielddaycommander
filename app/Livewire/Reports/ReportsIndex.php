@@ -8,9 +8,11 @@ namespace App\Livewire\Reports;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Section;
 use App\Models\Setting;
 use App\Models\ShiftAssignment;
 use App\Services\EventContextService;
+use App\Support\EventSections;
 use App\Support\VolunteerHours;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -159,17 +161,24 @@ class ReportsIndex extends Component
             return [];
         }
 
-        return Contact::where('event_configuration_id', $this->config()->id)
+        $rows = Contact::where('event_configuration_id', $this->config()->id)
             ->notDuplicate()
             ->whereNotNull('section_id')
             ->selectRaw('section_id, count(*) as contact_count')
             ->groupBy('section_id')
             ->with('section')
-            ->get()
-            ->map(fn ($row) => [
-                'code' => $row->section?->code ?? '?',
-                'name' => $row->section?->name ?? 'Unknown',
-                'count' => (int) $row->contact_count,
+            ->get();
+
+        // Fold WFD-only codes into the section the event counts them as, so
+        // this list agrees with the dashboard and the section map.
+        $grouped = $rows->groupBy(fn ($row) => EventSections::countedCode($row->section?->code ?? '?', $this->event));
+        $names = Section::whereIn('code', $grouped->keys())->pluck('name', 'code');
+
+        return $grouped
+            ->map(fn ($sectionRows, $code) => [
+                'code' => $code,
+                'name' => $names[$code] ?? $sectionRows->first()->section?->name ?? 'Unknown',
+                'count' => (int) $sectionRows->sum('contact_count'),
             ])
             ->sortByDesc('count')
             ->values()
@@ -246,6 +255,6 @@ class ReportsIndex extends Component
 
     public function render(): View
     {
-        return view('livewire.reports.index')->layout('layouts.app');
+        return view('livewire.reports.index')->layout('layouts.app', ['title' => 'Reports']);
     }
 }

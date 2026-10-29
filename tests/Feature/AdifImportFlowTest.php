@@ -466,3 +466,21 @@ test('the progress poll picks up completion written to the database', function (
         ->assertSee('1 imported')
         ->assertDontSeeHtml('wire:poll');
 });
+
+test('the review table shows the remapped section, not the one in the file', function () {
+    $adif = UploadedFile::fake()->createWithContent('test.adi', "ADIF Export\n<EOH>\n".sprintf(
+        ' <CALL:5>K1ABC <QSO_DATE:8>%s <TIME_ON:6>120000 <ARRL_SECT:3>XYZ <BAND:3>20M <STATION_CALLSIGN:5>K3CPK <MODE:3>SSB <OPERATOR:5>K3CPK <APP_N1MM_EXCHANGE1:2>3A <APP_N1MM_NETBIOSNAME:15>DESKTOP-11-2024 <EOR>',
+        now()->format('Ymd'),
+    ));
+    $nnj = Section::where('code', 'NNJ')->first();
+
+    Livewire::actingAs($this->user)
+        ->test(AdifImport::class)
+        ->set('adifFile', $adif)
+        ->call('uploadFile')
+        ->set('sectionMappings.XYZ', $nnj->id)
+        ->call('applyMappingsAndContinue')
+        ->assertSet('step', 3)
+        ->assertSeeHtml('<td>NNJ</td>')
+        ->assertDontSeeHtml('<td>XYZ</td>');
+});
