@@ -12,9 +12,11 @@ use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Section;
+use App\Models\Station;
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Support\Facades\Cache;
@@ -133,6 +135,8 @@ class ExternalContactHandler
         $bandId = $frequencyHz
             ? $this->bandResolver->resolveByFrequencyHz($frequencyHz)
             : $this->bandResolver->resolveByName($dto->bandName);
+
+        $this->assertBandAllowedAtStation($station, $bandId, $dto);
 
         $modeName = $dto->modeName ?? $cachedRadioInfo?->modeName;
         $modeId = $this->modeResolver->resolve($modeName, $dto->parentModeName);
@@ -312,11 +316,42 @@ class ExternalContactHandler
         throw new InvalidExternalContactException('Invalid callsign');
     }
 
+    /**
+     * Drop contacts the free VHF station logs below 50 MHz: it operates
+     * exclusively on 6m and up, so an HF contact there would be another
+     * transmitter the entry class doesn't count.
+     *
+     * @throws InvalidExternalContactException
+     */
+    private function assertBandAllowedAtStation(Station $station, ?int $bandId, ExternalContactDto $dto): void
+    {
+        $band = $bandId !== null ? Band::find($bandId) : null;
+
+        if ($band === null || $band->isAllowedAtStation($station)) {
+            return;
+        }
+
+        Log::warning('Dropped external contact below 50 MHz at the free VHF station', [
+            'source' => $dto->source,
+            'external_id' => $dto->externalId,
+            'callsign' => mb_substr($dto->callsign, 0, 40),
+            'station' => $station->name,
+            'band' => $band->name,
+        ]);
+
+        throw new InvalidExternalContactException('Band not allowed at the free VHF station', 'below 50 MHz at VHF station');
+    }
+
     private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
     {
         $bandId = $dto->frequencyHz
             ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz)
             : ($this->bandResolver->resolveByName($dto->bandName) ?? $contact->band_id);
+        $station = $contact->operatingSession?->station;
+        if ($station !== null) {
+            $this->assertBandAllowedAtStation($station, $bandId, $dto);
+        }
+
         $modeId = $this->modeResolver->resolve($dto->modeName, $dto->parentModeName) ?? $contact->mode_id;
         $sectionId = $this->resolveSection($dto->sectionCode) ?? $contact->section_id;
 

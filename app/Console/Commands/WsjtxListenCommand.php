@@ -80,8 +80,8 @@ class WsjtxListenCommand extends BaseUdpListenerCommand
             $this->writeLastLogEntry($lastLogKey, $dto, true);
         } catch (OutOfPeriodContactException) {
             $this->rejectOutOfPeriod($lastLogKey, $dto);
-        } catch (InvalidExternalContactException) {
-            $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
+        } catch (InvalidExternalContactException $exception) {
+            $this->writeLastLogEntry($lastLogKey, $dto, false, $exception->rejectionReason);
         }
 
         return 1;

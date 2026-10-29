@@ -265,14 +265,19 @@ class LoggingInterface extends Component
     }
 
     /**
-     * Bands an operator can switch to, in band-plan order.
+     * Bands an operator can switch to, in band-plan order. A free VHF
+     * station only gets 6m and up.
      *
      * @return Collection<int, Band>
      */
     #[Computed]
     public function switchBands(): Collection
     {
-        return Band::query()->allowedForFieldDay()->ordered()->get(['id', 'name']);
+        return Band::query()
+            ->allowedForFieldDay()
+            ->allowedAtStation($this->operatingSession->station)
+            ->ordered()
+            ->get(['id', 'name']);
     }
 
     /**

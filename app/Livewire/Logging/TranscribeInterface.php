@@ -207,6 +207,13 @@ class TranscribeInterface extends Component
             'submode' => 'nullable|string|max:20',
         ]);
 
+        $bandRestriction = $this->station->bandRestrictionMessage(Band::findOrFail($this->selectedBandId));
+        if ($bandRestriction !== null) {
+            $this->parseError = $bandRestriction;
+
+            return;
+        }
+
         if ($this->station->is_gota && ! $this->hasGotaOperator()) {
             $this->parseError = 'Enter the GOTA operator in the GOTA Operator panel before logging.';
 
@@ -379,10 +386,13 @@ class TranscribeInterface extends Component
         return null;
     }
 
+    /**
+     * Bands this station can log on. A free VHF station only gets 6m and up.
+     */
     #[Computed]
     public function bands()
     {
-        return Band::query()->allowedForFieldDay()->ordered()->get();
+        return Band::query()->allowedForFieldDay()->allowedAtStation($this->station)->ordered()->get();
     }
 
     #[Computed]

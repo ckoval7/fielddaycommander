@@ -5,6 +5,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Band;
 use App\Models\OperatingClass;
 use App\Models\OperatingSession;
 use App\Services\BandResolverService;
@@ -88,7 +89,7 @@ class StoreContactSyncRequest extends FormRequest
      *
      * GOTA contacts are credited to the GOTA operator, so one must be named,
      * and a session operates on one band and mode, so contacts (and any dial
-     * frequency) must match it.
+     * frequency) must match it. The free VHF station can't log below 50 MHz.
      *
      * @return array{0: string, 1: string}|null
      */
@@ -103,6 +104,10 @@ class StoreContactSyncRequest extends FormRequest
                 'band_id',
                 'The band does not match this operating session.',
             ],
+            $session !== null && ($bandRestriction = $this->bandRestriction($session)) !== null => [
+                'band_id',
+                $bandRestriction,
+            ],
             $session?->mode_id !== null && (int) $this->mode_id !== (int) $session->mode_id => [
                 'mode_id',
                 'The mode does not match this operating session.',
@@ -114,6 +119,16 @@ class StoreContactSyncRequest extends FormRequest
                 ],
             default => null,
         };
+    }
+
+    /**
+     * Why the session's station can't log on this contact's band, or null.
+     */
+    private function bandRestriction(OperatingSession $session): ?string
+    {
+        $band = Band::find($this->band_id);
+
+        return $band === null ? null : $session->station->bandRestrictionMessage($band);
     }
 
     /**

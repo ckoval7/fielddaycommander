@@ -124,10 +124,16 @@ class StationSelect extends Component
             });
     }
 
+    /**
+     * Bands the selected station can start a session on. A free VHF station
+     * only gets 6m and up.
+     */
     #[Computed]
     public function bands()
     {
-        return Band::query()->allowedForFieldDay()->ordered()->get();
+        $station = $this->selectedStationId ? $this->stations->firstWhere('id', $this->selectedStationId) : null;
+
+        return Band::query()->allowedForFieldDay()->allowedAtStation($station)->ordered()->get();
     }
 
     #[Computed]
@@ -244,6 +250,7 @@ class StationSelect extends Component
 
         if ($station->computed_status === 'available') {
             $this->selectedStationId = $stationId;
+            unset($this->bands);
             $this->powerWatts = $this->defaultPowerWattsFor($station);
             $this->showSetupModal = true;
         } elseif ($station->computed_status === 'idle') {
@@ -311,6 +318,14 @@ class StationSelect extends Component
 
         if ($station?->isUnavailable()) {
             $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
+
+            return;
+        }
+
+        $bandRestriction = $station?->bandRestrictionMessage(Band::findOrFail($this->selectedBandId));
+
+        if ($bandRestriction !== null) {
+            $this->addError('selectedBandId', $bandRestriction);
 
             return;
         }
@@ -383,6 +398,7 @@ class StationSelect extends Component
 
         // Open setup modal for the new session
         $this->selectedStationId = $this->takeoverStationId;
+        unset($this->bands);
         $station = $this->stations->firstWhere('id', $this->takeoverStationId);
         if ($station) {
             $this->powerWatts = $this->defaultPowerWattsFor($station);

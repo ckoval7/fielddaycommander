@@ -8,8 +8,11 @@ namespace App\Services;
 use App\Enums\AdifRecordStatus;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
+use App\Models\Band;
 use App\Models\OperatingClass;
+use App\Models\Station;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class AdifValidationService
 {
@@ -40,8 +43,22 @@ class AdifValidationService
             ])
             ->get();
 
+        $vhfOnlyStations = Station::query()
+            ->whereKey($records->pluck('station_id')->filter()->unique())
+            ->where('is_vhf_only', true)
+            ->get()
+            ->keyBy('id');
+        $bands = $vhfOnlyStations->isEmpty()
+            ? collect()
+            : Band::query()->whereKey($records->pluck('band_id')->filter()->unique())->get()->keyBy('id');
+
         foreach ($records as $record) {
             $errors = $this->validateRecord($record, $event->start_time, $event->end_time, $validClassCodes, $event->name);
+
+            $bandError = $this->bandRestrictionError($record, $vhfOnlyStations, $bands);
+            if ($bandError !== null) {
+                $errors[] = $bandError;
+            }
 
             if (! empty($errors)) {
                 $record->update([
@@ -55,6 +72,28 @@ class AdifValidationService
         }
 
         return $result;
+    }
+
+    /**
+     * Why the record's station can't log on its band (the free VHF station
+     * operates only on 6m and up), or null when it can.
+     *
+     * @param  Collection<int, Station>  $vhfOnlyStations
+     * @param  Collection<int, Band>  $bands
+     */
+    private function bandRestrictionError(AdifImportRecord $record, Collection $vhfOnlyStations, Collection $bands): ?string
+    {
+        $station = $vhfOnlyStations->get($record->station_id);
+        $band = $bands->get($record->band_id);
+
+        if ($station === null || $band === null) {
+            return null;
+        }
+
+        $message = $station->bandRestrictionMessage($band);
+
+        // Record notes join their errors with "; ", so drop the closing period.
+        return $message === null ? null : rtrim($message, '.');
     }
 
     /**

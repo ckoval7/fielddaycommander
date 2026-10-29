@@ -51,6 +51,12 @@ class BandModeSwitchService
             throw new BandModeSwitchException("{$station->name} has been marked unavailable by a station captain.");
         }
 
+        $bandRestriction = $station->bandRestrictionMessage($band);
+
+        if ($bandRestriction !== null) {
+            throw new BandModeSwitchException($bandRestriction);
+        }
+
         return DB::transaction(function () use ($session, $station, $band, $mode): OperatingSession {
             // Serializes switches and new sessions in this event so two
             // stations can't claim the same band-mode at once.
