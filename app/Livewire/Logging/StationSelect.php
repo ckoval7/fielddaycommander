@@ -90,7 +90,28 @@ class StationSelect extends Component
             return null;
         }
 
+        if ($this->operatingPeriodEnded) {
+            return null;
+        }
+
         return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
+    }
+
+    /**
+     * Whether the event is still running but this Field Day station's 24-hour
+     * operating period (setup started early, rule 3.2) is already over, so no
+     * new logging session may start.
+     */
+    #[Computed]
+    public function operatingPeriodEnded(): bool
+    {
+        $event = app(EventContextService::class)->getContextEvent();
+
+        if ($event?->end_time === null || ! $event->setup_started_early || $event->end_time->lt(appNow())) {
+            return false;
+        }
+
+        return $event->operatingEndsAt()->lt(appNow());
     }
 
     #[Computed]

@@ -200,3 +200,18 @@ test('idempotency re-send bypasses window check and updates the existing contact
     expect($contact->callsign)->toBe('K1XYZ');
     expect(Contact::where('external_id', 'ext-id-idempotent')->count())->toBe(1);
 });
+
+test('contact after a Field Day station\'s 24 hours from its first contact is rejected', function () {
+    $config = makeConfig([
+        'start_time' => now()->subHours(26),
+        'end_time' => now()->addHour(),
+        'setup_started_early' => true,
+    ]);
+
+    $this->handler->handleContact(makeDto('K1FST', now()->subHours(25)), $config);
+
+    expect(fn () => $this->handler->handleContact(makeDto('K1LTE', now()), $config->fresh()))
+        ->toThrow(OutOfPeriodContactException::class);
+
+    expect(Contact::pluck('callsign')->all())->toBe(['K1FST']);
+});

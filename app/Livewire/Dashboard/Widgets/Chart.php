@@ -372,7 +372,7 @@ class Chart extends Component
             return 0.0;
         }
 
-        $windowEnd = appNow()->min($event->end_time);
+        $windowEnd = appNow()->min($event->operatingEndsAt());
         $windowStart = $event->start_time->copy();
         $since = $this->resolveSince($timeRange);
 

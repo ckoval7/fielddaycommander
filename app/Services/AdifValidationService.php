@@ -52,8 +52,10 @@ class AdifValidationService
             ? collect()
             : Band::query()->whereKey($records->pluck('band_id')->filter()->unique())->get()->keyBy('id');
 
+        $operatingEndsAt = $event->operatingEndsAt();
+
         foreach ($records as $record) {
-            $errors = $this->validateRecord($record, $event->start_time, $event->end_time, $validClassCodes, $event->name);
+            $errors = $this->validateRecord($record, $event->start_time, $operatingEndsAt, $validClassCodes, $event->name);
 
             $bandError = $this->bandRestrictionError($record, $vhfOnlyStations, $bands);
             if ($bandError !== null) {

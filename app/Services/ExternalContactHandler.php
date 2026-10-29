@@ -114,11 +114,10 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null
-            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+        if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
             throw new OutOfPeriodContactException(
                 "QSO time {$dto->timestamp->toIso8601String()} is outside event window "
-                ."{$event->start_time->toIso8601String()} – {$event->end_time->toIso8601String()}"
+                ."{$event->start_time->toIso8601String()} – {$event->operatingEndsAt()->toIso8601String()}"
             );
         }
 
@@ -201,8 +200,7 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null
-            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+        if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
             return;
         }
 

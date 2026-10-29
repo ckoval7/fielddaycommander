@@ -1203,8 +1203,8 @@ test('updating an event logs to audit log with old and new values', function () 
     ]);
 });
 
-test('creating an FD event sets setup_allowed_from based on offset hours', function () {
-    // FD starts Saturday 1800Z; offset=24 → setup_allowed_from = Friday 1800Z
+test('creating an FD event opens setup at 0000Z on the Friday before', function () {
+    // FD starts Saturday 1800Z; rule 3.3 opens setup at 0000Z Friday, 42 hours earlier
     $this->actingAs($this->user);
 
     Livewire::test(EventForm::class, ['mode' => 'create'])
@@ -1225,7 +1225,7 @@ test('creating an FD event sets setup_allowed_from based on offset hours', funct
 
     $event = Event::where('name', 'Test FD 2026')->first();
     expect($event)->not->toBeNull();
-    expect($event->setup_allowed_from->toDateTimeString())->toBe('2026-06-26 18:00:00');
+    expect($event->setup_allowed_from->toDateTimeString())->toBe('2026-06-26 00:00:00');
 });
 
 test('creating a WFD event leaves setup_allowed_from null', function () {

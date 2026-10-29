@@ -575,7 +575,7 @@ class TranscribeInterface extends Component
     private function contactTimeError(Carbon $time): ?string
     {
         $earliest = $this->event->start_time->copy()->subMinutes(self::CLOCK_DRIFT_MINUTES);
-        $latest = $this->event->end_time->copy()->addMinutes(self::CLOCK_DRIFT_MINUTES);
+        $latest = $this->event->operatingEndsAt()->copy()->addMinutes(self::CLOCK_DRIFT_MINUTES);
 
         if ($time->lt($earliest) || $time->gt($latest)) {
             return self::OUT_OF_WINDOW_ERROR;

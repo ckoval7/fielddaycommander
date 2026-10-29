@@ -774,3 +774,39 @@ test('syncing a contact rejects a dial frequency on another band', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['frequency_hz' => '7.074 MHz is not on 20m.']);
 });
+
+test('cannot sync a contact made after a Field Day station\'s 24-hour operating period', function () {
+    $this->event->update(['setup_started_early' => true]);
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'qso_time' => now()->subHours(25),
+    ]);
+    $this->event->update(['start_time' => now()->subHours(26)]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()))
+        ->assertUnprocessable()
+        ->assertJson(['message' => 'Your 24-hour operating period has ended. Use Transcribe Paper Log to enter contacts from paper logs.']);
+
+    $this->event->update(['setup_started_early' => false]);
+
+    $this->actingAs($this->user)
+        ->postJson('/logging/contacts', syncPayload($this, now()))
+        ->assertSuccessful();
+});
+
+test('station select explains that the 24-hour operating period is over', function () {
+    $this->event->update(['setup_started_early' => true, 'start_time' => now()->subHours(26)]);
+    Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'qso_time' => now()->subHours(25),
+    ]);
+
+    $otherOperator = User::factory()->create();
+    $otherOperator->assignRole('Operator');
+    $this->actingAs($otherOperator);
+
+    Livewire::test(StationSelect::class)
+        ->assertSee('Operating Period Over')
+        ->assertDontSee($this->station->name);
+});

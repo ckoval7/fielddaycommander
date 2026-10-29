@@ -16,10 +16,29 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Event extends Model
 {
     use HasFactory, SoftDeletes;
+
+    /**
+     * Seconds the first-contact time stays cached. Contact writes clear it
+     * (see ContactObserver); the TTL only covers bulk deletes that skip it.
+     */
+    private const FIRST_CONTACT_CACHE_SECONDS = 600;
+
+    /**
+     * Seconds this instance reuses its looked-up first-contact time, so a bulk
+     * rescore asks the cache once rather than per contact, while a model held
+     * by a long-running listener still sees a first contact logged later.
+     */
+    private const FIRST_CONTACT_MEMO_SECONDS = 5;
+
+    /**
+     * @var array{value: ?Carbon, at: int}|null
+     */
+    private ?array $firstContactMemo = null;
 
     protected $fillable = [
         'name',
@@ -30,6 +49,7 @@ class Event extends Model
         'end_time',
         'setup_allowed_from',
         'max_setup_hours',
+        'setup_started_early',
         'is_active',
         'is_current',
     ];
@@ -40,6 +60,7 @@ class Event extends Model
             'start_time' => 'datetime',
             'end_time' => 'datetime',
             'setup_allowed_from' => 'datetime',
+            'setup_started_early' => 'boolean',
             'is_active' => 'boolean',
             'is_current' => 'boolean',
         ];
@@ -110,6 +131,97 @@ class Event extends Model
     public static function calculateSetupAllowedFrom(Carbon $startTime, int $offsetHours): Carbon
     {
         return $startTime->copy()->subHours($offsetHours);
+    }
+
+    /**
+     * When contacts stop counting: the end of the operating period.
+     *
+     * Normally the event end. A Field Day station that started setup before
+     * the contest (rule 3.2) may operate only 24 consecutive hours from its
+     * first contact, so once that contact exists the period ends at the
+     * earlier of the event end and 24 hours after it. Event lifecycle
+     * (active, grace, archived) always follows the real end_time.
+     */
+    public function operatingEndsAt(): ?Carbon
+    {
+        if ($this->end_time === null || ! $this->setup_started_early) {
+            return $this->end_time;
+        }
+
+        $firstContactAt = $this->firstContactAt();
+
+        if ($firstContactAt === null) {
+            return $this->end_time;
+        }
+
+        return $firstContactAt->copy()->addHours(24)->min($this->end_time);
+    }
+
+    /**
+     * Whether a QSO time falls inside the start time and operating end,
+     * inclusive. An event with no window set accepts every time.
+     */
+    public function isWithinOperatingPeriod(Carbon $time): bool
+    {
+        $end = $this->operatingEndsAt();
+
+        if ($this->start_time === null || $end === null) {
+            return true;
+        }
+
+        return $time->between($this->start_time, $end);
+    }
+
+    /**
+     * Time of the event's earliest live contact at or after the start, from
+     * any station including GOTA. Null before the first contact.
+     *
+     * Cached per event configuration and cleared whenever a contact is
+     * written, so hot paths don't run the MIN query on every request.
+     */
+    public function firstContactAt(): ?Carbon
+    {
+        if ($this->start_time === null) {
+            return null;
+        }
+
+        if ($this->firstContactMemo !== null && time() - $this->firstContactMemo['at'] < self::FIRST_CONTACT_MEMO_SECONDS) {
+            return $this->firstContactMemo['value'];
+        }
+
+        $configurationId = $this->eventConfiguration?->id;
+        $value = null;
+
+        if ($configurationId !== null) {
+            $timestamp = Cache::remember(
+                self::firstContactCacheKey($configurationId),
+                self::FIRST_CONTACT_CACHE_SECONDS,
+                fn (): int => ($first = Contact::query()
+                    ->where('event_configuration_id', $configurationId)
+                    ->where('qso_time', '>=', $this->start_time)
+                    ->min('qso_time')) === null ? 0 : Carbon::parse($first)->getTimestamp(),
+            );
+
+            $value = $timestamp > 0 ? Carbon::createFromTimestamp($timestamp, 'UTC') : null;
+        }
+
+        $this->firstContactMemo = ['value' => $value, 'at' => time()];
+
+        return $value;
+    }
+
+    /**
+     * Drop the cached first-contact time after a contact for this
+     * configuration is added, moved, deleted or restored.
+     */
+    public static function forgetFirstContactAt(int $eventConfigurationId): void
+    {
+        Cache::forget(self::firstContactCacheKey($eventConfigurationId));
+    }
+
+    private static function firstContactCacheKey(int $eventConfigurationId): string
+    {
+        return "event-configuration:{$eventConfigurationId}:first-contact-at";
     }
 
     // Accessors

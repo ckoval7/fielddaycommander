@@ -145,6 +145,10 @@ class ContactSyncController extends Controller
             return response()->json(['message' => 'This event has ended. Use Transcribe Paper Log to enter contacts from paper logs.'], 422);
         }
 
+        if ($event->operatingEndsAt()?->lt($qsoTime)) {
+            return response()->json(['message' => 'Your 24-hour operating period has ended. Use Transcribe Paper Log to enter contacts from paper logs.'], 422);
+        }
+
         if (Carbon::parse($event->start_time)->gt($qsoTime)) {
             return response()->json(['message' => 'This event has not started yet. Contacts can only be logged once the event begins.'], 422);
         }

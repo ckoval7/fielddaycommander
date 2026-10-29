@@ -291,11 +291,7 @@ class ContactEditor extends Component
 
         $event = $contact->eventConfiguration?->event;
 
-        if ($event?->start_time === null || $event->end_time === null) {
-            return true;
-        }
-
-        return $time->between($event->start_time, $event->end_time);
+        return $event?->isWithinOperatingPeriod($time) ?? true;
     }
 
     /**

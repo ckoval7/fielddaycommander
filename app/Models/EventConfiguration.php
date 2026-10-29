@@ -566,7 +566,7 @@ class EventConfiguration extends Model
             ->where('is_gota_contact', true)
             ->when($event?->start_time !== null && $event?->end_time !== null, fn ($query) => $query
                 ->where(fn ($inPeriod) => $inPeriod
-                    ->whereBetween('qso_time', [$event->start_time, $event->end_time])
+                    ->whereBetween('qso_time', [$event->start_time, $event->operatingEndsAt()])
                     ->orWhereNull('qso_time')));
     }
 

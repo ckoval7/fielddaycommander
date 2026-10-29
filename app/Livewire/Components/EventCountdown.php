@@ -102,11 +102,15 @@ class EventCountdown extends Component
 
         $now = appNow();
 
+        // Counted to the operating end, which comes before end_time when a
+        // Field Day station's 24 hours from its first contact run out first.
+        $endsAt = $this->event->operatingEndsAt();
+
         return match (true) {
-            $this->event->start_time <= $now && $this->event->end_time >= $now => 'active',
+            $this->event->start_time <= $now && $endsAt >= $now => 'active',
             $this->event->setup_allowed_from && $this->event->setup_allowed_from <= $now && $this->event->start_time > $now => 'setup',
             $this->event->start_time > $now => 'upcoming',
-            $this->event->end_time < $now => 'ended',
+            $endsAt < $now => 'ended',
             default => '',
         };
     }
@@ -121,8 +125,7 @@ class EventCountdown extends Component
 
         $targetTime = match ($this->state) {
             'upcoming', 'setup' => $this->event->start_time,
-            'active' => $this->event->end_time,
-            'ended' => $this->event->end_time,
+            'active', 'ended' => $this->event->operatingEndsAt(),
             default => null,
         };
 

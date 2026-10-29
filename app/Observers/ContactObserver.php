@@ -7,6 +7,7 @@ namespace App\Observers;
 
 use App\Enums\NotificationCategory;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Scoring\DomainEvents\QsoLogged;
 use App\Scoring\Exceptions\UnknownRuleSet;
@@ -104,12 +105,43 @@ class ContactObserver
      */
     public function saved(Contact $contact): void
     {
+        if ($contact->wasRecentlyCreated || $contact->wasChanged(['qso_time', 'event_configuration_id', 'deleted_at'])) {
+            $this->forgetFirstContactAt($contact);
+        }
+
         event(new QsoLogged($contact, $contact->event_configuration_id));
     }
 
     public function deleted(Contact $contact): void
     {
+        $this->forgetFirstContactAt($contact);
+
         event(new QsoLogged($contact, $contact->event_configuration_id));
+    }
+
+    /**
+     * Clear the cached first-contact time behind a Field Day station's
+     * 24-hour operating period (Event::operatingEndsAt), for the contact's
+     * configuration and, when it moved, the one it left.
+     *
+     * Cleared again once the transaction commits, so a reader that cached
+     * the old value before the commit doesn't keep it.
+     */
+    protected function forgetFirstContactAt(Contact $contact): void
+    {
+        $configurationIds = array_unique(array_filter([
+            $contact->event_configuration_id,
+            $contact->getPrevious()['event_configuration_id'] ?? null,
+        ]));
+
+        $forget = function () use ($configurationIds): void {
+            foreach ($configurationIds as $configurationId) {
+                Event::forgetFirstContactAt((int) $configurationId);
+            }
+        };
+
+        $forget();
+        DB::afterCommit($forget);
     }
 
     /**

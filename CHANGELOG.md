@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- On **Create Event** and **Edit Event** for ARRL Field Day, a new **Setup started before the contest** switch is for stations that began setting up before 1800 UTC Saturday. When it's on, the operating period ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first. Contacts after that time earn no points, aren't accepted from **Log Contact**, **Transcribe Paper Log**, or external loggers, and are left out of the Cabrillo log. **Select Station** stops new sessions. The header countdown and the dashboard's **Time Remaining** count down to the new end once the first contact is logged. The switch is off by default, so existing events don't change.
+
 ### Fixed
 
 - During ARRL Field Day, GOTA contacts earned their 5-point bonus but were left out of QSO points on **Scoring**, the event dashboard, **Logbook**, and the ARRL submission sheet. They now earn QSO points by mode with the power multiplier applied, plus the unchanged GOTA bonus. Upgrading automatically rescores existing events with GOTA contacts, raising affected Field Day scores.
@@ -33,6 +37,7 @@
 - During ARRL Field Day, switching a station to commercial mains removed the emergency power bonus from **Scoring**, but the submission sheet still checked only the event's power sources and listed the bonus, so its bonus lines added up to more than its total. Switching the station back also restored the bonus. Each contact now keeps the power source its station had when it was logged. The sheet's **Power Source** boxes include the stations' sources, its bonus lines match **Scoring**, and a Class A entry with any contact on commercial mains shows as **A-Commercial**. Contacts made on mains keep the emergency power bonus and the 5× multiplier off after the station switches back. Upgrading records each existing contact's power source from its station's current setting.
 - A station marked **VHF/UHF Only** could log contacts on HF, although the free VHF station may only operate on 6m and higher. Those contacts didn't change the entry class or the emergency power bonus. **Station Select**, the band picker on **Log Contact**, and **Transcribe Paper Log** now offer only 6m and higher bands for that station and refuse lower ones. Contacts below 50 MHz from external loggers are dropped and show **below 50 MHz at VHF station** on **External Loggers**. On **ADIF Import**, records mapped to that station below 50 MHz are marked **Invalid** in the review step, before anything is imported.
 - On **Events**, the **Participants** count could be lower than the ARRL submission sheet's for the same event, such as 11 against 17. The list counted only people who logged contacts, including ones whose only contacts were dupes. It now uses the submission sheet's count: everyone who logged a contact that isn't a dupe, made a GOTA contact that isn't a dupe, or signed up for a volunteer shift and wasn't marked a no-show.
+- For ARRL Field Day events, setup opened 24 hours before the start (1800 UTC Friday). It now opens at 0000 UTC on the Friday before, as the rules allow, on **Create Event**, **Edit Event**, the header countdown, and the dashboard. Upgrading updates Field Day events that haven't started yet. Winter Field Day still opens setup 24 hours before its start.
 
 ## 26.10.13 - 2026-10-26
 

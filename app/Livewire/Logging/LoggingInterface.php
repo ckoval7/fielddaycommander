@@ -76,8 +76,8 @@ class LoggingInterface extends Component
         }
 
         $event = $operatingSession->station->eventConfiguration?->event;
-        if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
-            $operatingSession->update(['end_time' => $event?->end_time ?? appNow()]);
+        if (! $event || Carbon::parse($event->operatingEndsAt())->lt(appNow())) {
+            $operatingSession->update(['end_time' => $event?->operatingEndsAt() ?? appNow()]);
             $this->redirect(route('logging.station-select'), navigate: true);
 
             return;

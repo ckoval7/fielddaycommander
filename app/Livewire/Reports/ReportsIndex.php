@@ -70,7 +70,7 @@ class ReportsIndex extends Component
             return 0;
         }
 
-        return $this->config()->contacts()->needsAttention()->count();
+        return $this->config()->contacts()->needsAttention($this->config()->event)->count();
     }
 
     /**

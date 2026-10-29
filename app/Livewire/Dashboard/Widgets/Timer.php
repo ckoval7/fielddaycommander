@@ -16,7 +16,7 @@ use Livewire\Component;
  * Updates every second via client-side JavaScript (Alpine.js).
  *
  * Timer Type: event_countdown
- * - Counts down to event end_time
+ * - Counts down to the event's operating end (Event::operatingEndsAt)
  * - Format: "DD:HH:MM:SS" (if >= 24 hours) or "HH:MM:SS" (if < 24 hours)
  * - Shows "Event Ended" when event is over
  * - Changes color when < 1 hour remaining
@@ -46,7 +46,9 @@ class Timer extends Component
 
         $now = appNow();
         $startTime = $event->start_time;
-        $endTime = $event->end_time;
+        // The operating end: 24 hours after the first contact for a Field Day
+        // station that set up early, otherwise the event end.
+        $endTime = $event->operatingEndsAt();
         $isSetup = $event->setup_allowed_from
             && $startTime->isAfter($now)
             && $event->setup_allowed_from->lte($now);

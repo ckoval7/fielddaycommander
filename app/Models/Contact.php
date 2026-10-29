@@ -192,22 +192,39 @@ class Contact extends Model
      * A contact with no QSO time, or whose event has no window set, counts as
      * in the window, matching DuplicateCheckService.
      *
+     * Pass the event when the query covers one event's contacts: its window
+     * then ends at Event::operatingEndsAt(), which can be 24 hours after the
+     * first contact. Without it the window is compared in SQL against each
+     * contact's event end_time.
+     *
      * @param  Builder<Contact>  $query
      * @return Builder<Contact>
      */
-    public function scopeNeedsAttention(Builder $query): Builder
+    public function scopeNeedsAttention(Builder $query, ?Event $event = null): Builder
     {
+        $operatingEndsAt = $event?->operatingEndsAt();
+
         return $query->withoutTrashed()->where(fn (Builder $problem) => $problem
             ->whereNull('band_id')
             ->orWhereNull('mode_id')
-            ->orWhere(fn (Builder $outOfWindow) => $outOfWindow
-                ->whereNotNull('qso_time')
-                ->whereHas('eventConfiguration.event', fn (Builder $event) => $event
-                    ->whereNotNull('events.start_time')
-                    ->whereNotNull('events.end_time')
-                    ->where(fn (Builder $outside) => $outside
-                        ->whereColumn('events.start_time', '>', 'contacts.qso_time')
-                        ->orWhereColumn('events.end_time', '<', 'contacts.qso_time')))));
+            ->orWhere(fn (Builder $outOfWindow) => $event !== null
+                ? $outOfWindow
+                    ->whereNotNull('qso_time')
+                    ->when(
+                        $event->start_time === null || $operatingEndsAt === null,
+                        fn (Builder $none) => $none->whereRaw('1 = 0'),
+                        fn (Builder $outside) => $outside->where(fn (Builder $either) => $either
+                            ->where('qso_time', '<', $event->start_time)
+                            ->orWhere('qso_time', '>', $operatingEndsAt)),
+                    )
+                : $outOfWindow
+                    ->whereNotNull('qso_time')
+                    ->whereHas('eventConfiguration.event', fn (Builder $events) => $events
+                        ->whereNotNull('events.start_time')
+                        ->whereNotNull('events.end_time')
+                        ->where(fn (Builder $outside) => $outside
+                            ->whereColumn('events.start_time', '>', 'contacts.qso_time')
+                            ->orWhereColumn('events.end_time', '<', 'contacts.qso_time')))));
     }
 
     /**
@@ -234,8 +251,7 @@ class Contact extends Model
 
         $event ??= $this->eventConfiguration?->event;
 
-        if ($this->qso_time !== null && $event?->start_time !== null && $event->end_time !== null
-            && ! $this->qso_time->between($event->start_time, $event->end_time)) {
+        if ($this->qso_time !== null && $event !== null && ! $event->isWithinOperatingPeriod($this->qso_time)) {
             $reasons[] = 'Outside event window';
         }
 
