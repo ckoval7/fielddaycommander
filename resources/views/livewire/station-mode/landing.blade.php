@@ -81,8 +81,10 @@
                 </div>
 
                 <x-slot:actions>
-                    <x-button label="Cancel" wire:click="cancelExit" class="w-full sm:w-auto" />
-                    <x-button label="Exit Station Mode" wire:click="exitStationMode" class="btn-error w-full sm:w-auto" icon="phosphor-power" spinner="exitStationMode" />
+                    <div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">
+                        <x-button label="Cancel" wire:click="cancelExit" class="w-full sm:w-auto" />
+                        <x-button label="Exit Station Mode" wire:click="exitStationMode" class="btn-error w-full sm:w-auto" icon="phosphor-power" spinner="exitStationMode" />
+                    </div>
                 </x-slot:actions>
             </x-modal>
         @endif

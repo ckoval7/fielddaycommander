@@ -156,6 +156,26 @@ test('user with edit-any-equipment sees actions column', function () {
         ->assertSee('Actions');
 });
 
+test('club equipment shows cards until the table fits beside the open sidebar at 2xl', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $item = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSeeHtmlInOrder([
+            '2xl:hidden grid grid-cols-1 xl:grid-cols-2',
+            'wire:key="equipment-card-'.$item->id.'"',
+            'hidden 2xl:block',
+            '<td class="min-w-40 max-w-xs">',
+            '<p class="line-clamp-2 text-sm">',
+        ])
+        ->assertDontSeeHtml('hidden xl:block');
+});
+
 test('user with edit-any-equipment can delete club equipment', function () {
     $role = Role::create(['name' => 'EquipmentManager', 'guard_name' => 'web']);
     $role->givePermissionTo('edit-any-equipment');

@@ -100,12 +100,21 @@ export function registerFormErrorSummary(Alpine, Livewire) {
 /**
  * Panel behaviour for <x-form-error-summary />. The panel is a manual popover
  * so it renders in the top layer, above open <dialog> modals as well.
+ *
+ * While it is open it publishes the space it takes at the bottom of the
+ * screen as --form-error-summary-reserve and marks the root element, so an
+ * open modal can end above it (see app.css) instead of having its action
+ * buttons covered on a phone.
  */
 export function formErrorSummaryPanel() {
     return {
         init() {
             this.$watch('$store.formErrors.revision', () => this.raise());
             this.$watch('$store.formErrors.open', (open) => (open ? this.raise() : this.lower()));
+
+            if (typeof ResizeObserver === 'function') {
+                new ResizeObserver(() => this.reserveSpace()).observe(this.$el);
+            }
         },
 
         raise() {
@@ -116,12 +125,40 @@ export function formErrorSummaryPanel() {
             // Re-showing moves the panel to the top of the top layer, above any dialog opened since.
             this.lower();
             this.$el.showPopover();
+            this.reserveSpace();
         },
 
         lower() {
-            if (this.$el.matches?.(':popover-open')) {
+            if (this.isOpen()) {
                 this.$el.hidePopover();
             }
+
+            this.releaseSpace();
+        },
+
+        isOpen() {
+            return this.$el.matches?.(':popover-open') ?? false;
+        },
+
+        reserveSpace() {
+            if (!this.isOpen()) {
+                this.releaseSpace();
+
+                return;
+            }
+
+            const root = document.documentElement;
+            const reserve = Math.ceil(window.innerHeight - this.$el.getBoundingClientRect().top);
+
+            root.style.setProperty('--form-error-summary-reserve', `${Math.max(0, reserve)}px`);
+            root.dataset.formErrorSummary = 'open';
+        },
+
+        releaseSpace() {
+            const root = document.documentElement;
+
+            root.style.removeProperty('--form-error-summary-reserve');
+            delete root.dataset.formErrorSummary;
         },
     };
 }
