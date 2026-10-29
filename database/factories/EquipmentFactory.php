@@ -33,7 +33,7 @@ class EquipmentFactory extends Factory
             'tags' => fake()->randomElements(['portable', 'QRP', 'digital', 'SSB', 'CW', 'heavy'], fake()->numberBetween(1, 3)),
             'value_usd' => fake()->optional()->randomFloat(2, 100, 5000),
             'notes' => fake()->optional()->paragraph(),
-            'power_output_watts' => fake()->optional()->numberBetween(5, 1500),
+            'power_output_watts' => 100,
         ];
     }
 
