@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Gallery;
 
+use App\Exceptions\ImageProcessingException;
 use App\Models\EventConfiguration;
 use App\Models\Image;
 use App\Services\ImageService;
@@ -72,10 +73,16 @@ class GalleryUpload extends Component
             return;
         }
 
-        $result = $imageService->store(
-            $this->photo,
-            'gallery/'.$this->eventConfiguration->id
-        );
+        try {
+            $result = $imageService->store(
+                $this->photo,
+                'gallery/'.$this->eventConfiguration->id
+            );
+        } catch (ImageProcessingException) {
+            $this->addError('photo', "This photo couldn't be processed. Save it as a JPEG and try again.");
+
+            return;
+        }
 
         Image::create([
             'event_configuration_id' => $this->eventConfiguration->id,
@@ -96,6 +103,6 @@ class GalleryUpload extends Component
     public function render(): View
     {
         return view('livewire.gallery.gallery-upload')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Upload Photo']);
     }
 }

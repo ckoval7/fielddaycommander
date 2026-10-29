@@ -23,6 +23,12 @@ class StationSelect extends Component
 {
     use AuthorizesRequests;
 
+    /**
+     * Highest session power accepted when the radio has no rating: the US
+     * amateur legal limit.
+     */
+    private const LEGAL_LIMIT_WATTS = 1500;
+
     public bool $showSetupModal = false;
 
     public ?int $selectedStationId = null;
@@ -84,7 +90,28 @@ class StationSelect extends Component
             return null;
         }
 
+        if ($this->operatingPeriodEnded) {
+            return null;
+        }
+
         return $contextEvent->load('eventConfiguration.stations.operatingSessions.operator');
+    }
+
+    /**
+     * Whether the event is still running but this Field Day station's 24-hour
+     * operating period (setup started early, rule 3.2) is already over, so no
+     * new logging session may start.
+     */
+    #[Computed]
+    public function operatingPeriodEnded(): bool
+    {
+        $event = app(EventContextService::class)->getContextEvent();
+
+        if ($event?->end_time === null || ! $event->setup_started_early || $event->end_time->lt(appNow())) {
+            return false;
+        }
+
+        return $event->operatingEndsAt()->lt(appNow());
     }
 
     #[Computed]
@@ -118,10 +145,16 @@ class StationSelect extends Component
             });
     }
 
+    /**
+     * Bands the selected station can start a session on. A free VHF station
+     * only gets 6m and up.
+     */
     #[Computed]
     public function bands()
     {
-        return Band::query()->allowedForFieldDay()->ordered()->get();
+        $station = $this->selectedStationId ? $this->stations->firstWhere('id', $this->selectedStationId) : null;
+
+        return Band::query()->allowedForFieldDay()->allowedAtStation($station)->ordered()->get();
     }
 
     #[Computed]
@@ -238,6 +271,7 @@ class StationSelect extends Component
 
         if ($station->computed_status === 'available') {
             $this->selectedStationId = $stationId;
+            unset($this->bands);
             $this->powerWatts = $this->defaultPowerWattsFor($station);
             $this->showSetupModal = true;
         } elseif ($station->computed_status === 'idle') {
@@ -258,16 +292,44 @@ class StationSelect extends Component
         return 100;
     }
 
+    /**
+     * Rated output of the station's primary radio, or null when it has none
+     * recorded. A session can't run more power than the radio is rated for.
+     */
+    private function radioRatedPowerWatts(?Station $station): ?int
+    {
+        $rating = $station?->primaryRadio?->power_output_watts;
+
+        return $rating !== null && $rating > 0 ? (int) $rating : null;
+    }
+
+    /**
+     * Most power the setup form accepts for the selected station: the radio's
+     * rating, or the legal limit when the radio has no rating.
+     */
+    #[Computed]
+    public function maxPowerWatts(): int
+    {
+        $station = $this->selectedStationId
+            ? $this->stations->firstWhere('id', $this->selectedStationId)
+            : null;
+
+        return $this->radioRatedPowerWatts($station) ?? self::LEGAL_LIMIT_WATTS;
+    }
+
     public function startSession(): void
     {
+        $station = Station::with('primaryRadio')->find($this->selectedStationId);
+        $radioRating = $this->radioRatedPowerWatts($station);
+
         $this->validate([
             'selectedStationId' => 'required|exists:stations,id',
             'selectedBandId' => 'required|exists:bands,id',
             'selectedModeId' => 'required|exists:modes,id',
-            'powerWatts' => 'required|integer|min:1|max:1500',
+            'powerWatts' => 'required|integer|min:1|max:'.($radioRating ?? self::LEGAL_LIMIT_WATTS),
+        ], $radioRating === null ? [] : [
+            'powerWatts.max' => "This station's radio is rated for {$radioRating} W. Enter {$radioRating} W or less.",
         ]);
-
-        $station = Station::find($this->selectedStationId);
 
         if (StationMode::isActive() && $station?->id !== StationMode::boundStationId()) {
             $this->addError('selectedStationId', 'This browser can only log for its assigned station.');
@@ -277,6 +339,14 @@ class StationSelect extends Component
 
         if ($station?->isUnavailable()) {
             $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
+
+            return;
+        }
+
+        $bandRestriction = $station?->bandRestrictionMessage(Band::findOrFail($this->selectedBandId));
+
+        if ($bandRestriction !== null) {
+            $this->addError('selectedBandId', $bandRestriction);
 
             return;
         }
@@ -349,6 +419,7 @@ class StationSelect extends Component
 
         // Open setup modal for the new session
         $this->selectedStationId = $this->takeoverStationId;
+        unset($this->bands);
         $station = $this->stations->firstWhere('id', $this->takeoverStationId);
         if ($station) {
             $this->powerWatts = $this->defaultPowerWattsFor($station);
@@ -376,7 +447,7 @@ class StationSelect extends Component
     public function render(): View
     {
         return view('livewire.logging.station-select')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Logging']);
     }
 
     /**

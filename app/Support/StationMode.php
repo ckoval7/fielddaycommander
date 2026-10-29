@@ -8,6 +8,7 @@ namespace App\Support;
 use App\Models\AuditLog;
 use App\Models\OperatingSession;
 use App\Models\StationDevice;
+use App\Services\EmptySessionPruner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -227,18 +228,36 @@ class StationMode
 
     /**
      * End the operator's logging session and sign them out, keeping the device cookie.
+     *
+     * $queuedSessionIds is what the browser reported as still holding
+     * unsynced contacts. When given, every other session ended here that
+     * logged nothing is removed. Null means the browser couldn't say, so
+     * the sessions are kept and left to the sessions:prune-empty schedule.
+     *
+     * @param  list<int>|null  $queuedSessionIds
      */
-    public static function endSession(Request $request): void
+    public static function endSession(Request $request, ?array $queuedSessionIds = null): void
     {
         $user = $request->user();
         $device = self::currentDevice();
 
         if ($user) {
-            OperatingSession::query()
+            $active = OperatingSession::query()
                 ->active()
                 ->forUser($user->id)
-                ->whereNull('external_source')
-                ->update(['end_time' => appNow()]);
+                ->whereNull('external_source');
+
+            $endedIds = (clone $active)->pluck('id');
+            $active->update(['end_time' => appNow()]);
+
+            if ($queuedSessionIds !== null) {
+                $pruner = app(EmptySessionPruner::class);
+
+                OperatingSession::query()
+                    ->whereKey($endedIds->diff($queuedSessionIds))
+                    ->get()
+                    ->each(fn (OperatingSession $session): bool => $pruner->deleteIfEmptyLocked($session));
+            }
 
             AuditLog::log(
                 action: 'station_mode.session_ended',

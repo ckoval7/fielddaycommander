@@ -240,7 +240,7 @@ class StatCard extends Component
             $windowStart = Carbon::instance($since);
         }
 
-        $windowEnd = Carbon::instance($now ?? appNow())->min($event->end_time);
+        $windowEnd = Carbon::instance($now ?? appNow())->min($event->operatingEndsAt());
 
         return max(0.0, $windowStart->diffInMinutes($windowEnd) / 60);
     }
@@ -348,7 +348,7 @@ class StatCard extends Component
         // If end_time is in the future, this returns positive; if past, returns negative
         // Carbon 3 returns fractional hours; floor so 21.9 hours shows "21",
         // matching the countdown, rather than rounding up to "22".
-        $hoursRemaining = max(0, (int) floor(appNow()->diffInHours($event->end_time, false)));
+        $hoursRemaining = max(0, (int) floor(appNow()->diffInHours($event->operatingEndsAt(), false)));
 
         return [
             'value' => number_format($hoursRemaining),

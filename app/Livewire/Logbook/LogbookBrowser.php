@@ -269,7 +269,8 @@ class LogbookBrowser extends Component
      * Why each contact on this page earns no credit, keyed by contact id.
      *
      * Empty unless the event's rulebook withholds credit from some contacts
-     * (e.g. WFD 2027 WSJT-mode and satellite contacts). The rules are resolved
+     * (e.g. WFD 2027 WSJT-mode and satellite contacts) or a contact was made
+     * above the operating class's power limit. The rules are resolved
      * once per page; contacts arrive with their band already loaded.
      *
      * @return array<int, string>
@@ -281,16 +282,20 @@ class LogbookBrowser extends Component
             return [];
         }
 
-        $rules = EventConfiguration::query()->find($this->eventConfigurationId)?->contactCreditRules();
+        $config = EventConfiguration::query()->with('operatingClass')->find($this->eventConfigurationId);
+        $rules = $config?->contactCreditRules();
+        $powerCap = $config?->powerCapWatts();
 
-        if ($rules === null) {
+        if ($rules === null && $powerCap === null) {
             return [];
         }
 
         $reasons = [];
 
         foreach ($this->contacts as $contact) {
-            $reason = $rules->noCreditReason($contact);
+            $reason = $config->exceedsPowerCap($contact)
+                ? "Made at {$contact->power_watts} W, over the {$powerCap} W limit for {$config->operatingClass->name}, so it scores 0 points."
+                : $rules?->noCreditReason($contact);
 
             if ($reason !== null) {
                 $reasons[$contact->id] = $reason;
@@ -444,6 +449,6 @@ class LogbookBrowser extends Component
 
     public function render(): View
     {
-        return view('livewire.logbook.logbook-browser')->layout('layouts.app');
+        return view('livewire.logbook.logbook-browser')->layout('layouts.app', ['title' => 'Logbook']);
     }
 }

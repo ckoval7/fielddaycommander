@@ -20,7 +20,7 @@ use Livewire\WithPagination;
 
 class AllEquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
+    use AuthorizesRequests, GuardsPrimaryRadioDeletion, ManagesEquipmentCommitments, WithPagination;
 
     public string $search = '';
 
@@ -188,6 +188,14 @@ class AllEquipmentList extends Component
 
         $this->authorize('delete', $equipment);
 
+        $blockedMessage = $this->primaryRadioDeletionBlocker($equipment);
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+
+            return;
+        }
+
         AuditLog::log(
             action: 'equipment.deleted',
             auditable: $equipment,
@@ -212,6 +220,6 @@ class AllEquipmentList extends Component
     {
         return view('livewire.equipment.all-equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Equipment Catalog']);
     }
 }

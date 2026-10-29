@@ -13,11 +13,13 @@ use App\Models\OperatingClass;
 use App\Models\Organization;
 use App\Models\Section;
 use App\Models\Setting;
+use App\Scoring\ClassPowerLimits;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\PowerContext;
 use App\Scoring\PowerMultiplierTiers;
 use App\Scoring\RuleSetFactory;
+use App\Support\EventSections;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -79,6 +81,12 @@ class EventForm extends Component
     public ?int $year = null;
 
     public ?string $rules_version = null;
+
+    /**
+     * Field Day only: setup began before the contest started, so the station
+     * may operate just 24 consecutive hours from its first contact (rule 3.2).
+     */
+    public bool $setup_started_early = false;
 
     // Section 2: Station Configuration
     public ?string $callsign = null;
@@ -307,6 +315,7 @@ class EventForm extends Component
         $this->end_time = $this->event->end_time?->format(self::DATETIME_FORMAT);
         $this->year = $this->event->year;
         $this->rules_version = $this->event->rules_version;
+        $this->setup_started_early = (bool) $this->event->setup_started_early;
         $this->rulesVersionLocked = $this->event->start_time !== null
             && $this->event->start_time <= appNow();
 
@@ -377,6 +386,9 @@ class EventForm extends Component
 
         // Not locked for clone
         $this->isLocked = false;
+
+        // Each year's setup is its own: the clone starts with the full period.
+        $this->setup_started_early = false;
 
         // Clear dates, then autofill if Field Day
         $this->start_time = null;
@@ -460,12 +472,8 @@ class EventForm extends Component
 
         $eventType = EventType::find($this->event_type_id);
 
-        if (! $eventType || $eventType->setup_offset_hours === null) {
-            return null;
-        }
-
-        return Event::calculateSetupAllowedFrom(Carbon::parse($this->start_time), $eventType->setup_offset_hours)
-            ->format('l, F j, Y \a\t Hi\z');
+        return $eventType?->setupAllowedFrom(Carbon::parse($this->start_time))
+            ?->format('l, F j, Y \a\t Hi\z');
     }
 
     /**
@@ -595,8 +603,21 @@ class EventForm extends Component
     public function sections()
     {
         return Section::where('is_active', true)
+            ->whereNotIn('code', $this->foldedSectionCodes())
             ->orderBy('code')
             ->get();
+    }
+
+    /**
+     * WFD-only section codes the selected event type can't use as its own.
+     *
+     * @return list<string>
+     */
+    private function foldedSectionCodes(): array
+    {
+        $typeCode = $this->event_type_id ? EventType::find($this->event_type_id)?->code : null;
+
+        return EventSections::foldedCodesForType($typeCode);
     }
 
     #[Computed]
@@ -622,6 +643,20 @@ class EventForm extends Component
         return EventType::query()->whereKey($this->event_type_id)->value('code') === 'WFD';
     }
 
+    /**
+     * Whether the selected event type is ARRL Field Day, the only rulebook
+     * that shortens the operating period when setup starts early.
+     */
+    #[Computed]
+    public function isFieldDay(): bool
+    {
+        if (! $this->event_type_id) {
+            return false;
+        }
+
+        return EventType::query()->whereKey($this->event_type_id)->value('code') === 'FD';
+    }
+
     #[Computed]
     public function selectedOperatingClass(): ?OperatingClass
     {
@@ -638,10 +673,22 @@ class EventForm extends Component
         return $this->selectedOperatingClass?->allows_gota ?? false;
     }
 
+    /**
+     * Most power the selected operating class allows under the rulebook the
+     * form's event type and rules version resolve to, or null when the class
+     * has no limit or no class or rulebook is chosen yet.
+     */
     #[Computed]
     public function maxPowerLimit(): ?int
     {
-        return $this->selectedOperatingClass?->max_power_watts;
+        $classCode = $this->selectedOperatingClass?->code;
+        $rules = $this->selectedRuleSet();
+
+        if ($classCode === null || $rules === null) {
+            return null;
+        }
+
+        return ClassPowerLimits::for($rules, $classCode);
     }
 
     public function updating($property, $value): void
@@ -759,9 +806,8 @@ class EventForm extends Component
             'rules_version' => $validated['rules_version'] ?? $this->rules_version,
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'setup_allowed_from' => $eventType?->setup_offset_hours !== null
-                ? Event::calculateSetupAllowedFrom($startTime, $eventType->setup_offset_hours)
-                : null,
+            'setup_allowed_from' => $eventType?->setupAllowedFrom($startTime),
+            'setup_started_early' => $eventType?->code === 'FD' && $this->setup_started_early,
             'is_active' => true,
         ]);
 
@@ -858,10 +904,11 @@ class EventForm extends Component
             $eventData['start_time'] = $validated['start_time'];
 
             $eventType = EventType::find($validated['event_type_id']);
-            $eventData['setup_allowed_from'] = $eventType?->setup_offset_hours !== null
-                ? Event::calculateSetupAllowedFrom(Carbon::parse($validated['start_time']), $eventType->setup_offset_hours)
-                : null;
+            $eventData['setup_allowed_from'] = $eventType?->setupAllowedFrom(Carbon::parse($validated['start_time']));
         }
+
+        $eventData['setup_started_early'] = $this->setup_started_early
+            && EventType::query()->whereKey($eventData['event_type_id'] ?? $this->event->event_type_id)->value('code') === 'FD';
 
         $this->event->update($eventData);
 
@@ -974,9 +1021,10 @@ class EventForm extends Component
             'event_type_id' => ['required', 'exists:event_types,id'],
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after:start_time'],
+            'setup_started_early' => ['boolean'],
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/i'],
             'club_name' => ['nullable', 'string', 'max:255'],
-            'section_id' => ['required', 'exists:sections,id'],
+            'section_id' => ['required', Rule::exists('sections', 'id')->whereNotIn('code', $this->foldedSectionCodes())],
             'operating_class_id' => ['required', 'exists:operating_classes,id'],
             'transmitter_count' => ['required', 'integer', 'min:1', 'max:99'],
             'rules_version' => ['nullable', 'string', 'max:16', 'regex:/^[A-Za-z0-9._-]+$/'],
@@ -1188,7 +1236,7 @@ class EventForm extends Component
 
     public function render(): View
     {
-        return view('livewire.events.event-form')->layout('layouts.app');
+        return view('livewire.events.event-form')->layout('layouts.app', ['title' => 'Event']);
     }
 
     /**

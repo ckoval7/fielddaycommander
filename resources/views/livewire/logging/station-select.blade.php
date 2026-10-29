@@ -5,7 +5,15 @@
 <div>
     <x-header title="Select Station" subtitle="Choose a station to begin logging" separator />
 
-    @if(! $this->activeEvent)
+    @if($this->operatingPeriodEnded)
+        <x-card>
+            <div class="text-center py-8">
+                <x-icon name="phosphor-clock-countdown" class="w-12 h-12 mx-auto text-base-content/30" />
+                <h3 class="mt-4 text-lg font-semibold">Operating Period Over</h3>
+                <p class="mt-2 text-base-content/70">This event's 24-hour operating period has ended. Use Transcribe Paper Log to enter contacts from paper logs.</p>
+            </div>
+        </x-card>
+    @elseif(! $this->activeEvent)
         <x-card>
             <div class="text-center py-8">
                 <x-icon name="phosphor-cell-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
@@ -202,7 +210,7 @@
                 wire:model="powerWatts"
                 type="number"
                 min="1"
-                max="1500"
+                :max="$this->maxPowerWatts"
                 suffix="W"
             />
 

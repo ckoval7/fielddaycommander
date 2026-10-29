@@ -7,6 +7,7 @@ namespace App\Observers;
 
 use App\Enums\NotificationCategory;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Scoring\DomainEvents\QsoLogged;
 use App\Scoring\Exceptions\UnknownRuleSet;
@@ -25,9 +26,14 @@ class ContactObserver
      * one place that sees the finished contact (sub-mode, satellite flag, band),
      * so a WFD 2027 FT8 or satellite contact is zeroed here whichever way it
      * arrived. Anything summing `contacts.points` then agrees with the score.
+     *
+     * A contact made above the operating class's power limit is logged too,
+     * but scores 0 points.
      */
     public function saving(Contact $contact): void
     {
+        $this->recordStationPowerSource($contact);
+
         if ($contact->is_duplicate || (int) $contact->points === 0 || $contact->event_configuration_id === null) {
             return;
         }
@@ -36,12 +42,38 @@ class ContactObserver
             ? $contact->eventConfiguration
             : EventConfiguration::query()->find($contact->event_configuration_id);
 
+        if ($config?->exceedsPowerCap($contact)) {
+            $contact->points = 0;
+
+            return;
+        }
+
         try {
             if ($config?->contactNoCreditReason($contact) !== null) {
                 $contact->points = 0;
             }
         } catch (UnknownRuleSet) {
             // No rulebook to judge by: leave the points as priced.
+        }
+    }
+
+    /**
+     * Copy the station's power source onto a new contact, so the source in
+     * use when it was made still counts after the station is switched.
+     */
+    protected function recordStationPowerSource(Contact $contact): void
+    {
+        if ($contact->exists || $contact->power_source !== null || $contact->operating_session_id === null) {
+            return;
+        }
+
+        $source = DB::table('operating_sessions')
+            ->join('stations', 'stations.id', '=', 'operating_sessions.station_id')
+            ->where('operating_sessions.id', $contact->operating_session_id)
+            ->value('stations.power_source');
+
+        if ($source !== null) {
+            $contact->power_source = $source;
         }
     }
 
@@ -73,12 +105,43 @@ class ContactObserver
      */
     public function saved(Contact $contact): void
     {
+        if ($contact->wasRecentlyCreated || $contact->wasChanged(['qso_time', 'event_configuration_id', 'deleted_at'])) {
+            $this->forgetFirstContactAt($contact);
+        }
+
         event(new QsoLogged($contact, $contact->event_configuration_id));
     }
 
     public function deleted(Contact $contact): void
     {
+        $this->forgetFirstContactAt($contact);
+
         event(new QsoLogged($contact, $contact->event_configuration_id));
+    }
+
+    /**
+     * Clear the cached first-contact time behind a Field Day station's
+     * 24-hour operating period (Event::operatingEndsAt), for the contact's
+     * configuration and, when it moved, the one it left.
+     *
+     * Cleared again once the transaction commits, so a reader that cached
+     * the old value before the commit doesn't keep it.
+     */
+    protected function forgetFirstContactAt(Contact $contact): void
+    {
+        $configurationIds = array_unique(array_filter([
+            $contact->event_configuration_id,
+            $contact->getPrevious()['event_configuration_id'] ?? null,
+        ]));
+
+        $forget = function () use ($configurationIds): void {
+            foreach ($configurationIds as $configurationId) {
+                Event::forgetFirstContactAt((int) $configurationId);
+            }
+        };
+
+        $forget();
+        DB::afterCommit($forget);
     }
 
     /**

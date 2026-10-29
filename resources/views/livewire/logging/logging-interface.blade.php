@@ -118,7 +118,7 @@
                     label="End Session"
                     icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
-                    wire:click="endSession"
+                    wire:click="endSession(! hasUnsyncedSessionContacts)"
                     wire:confirm="End this session?"
                 />
             </div>
@@ -296,7 +296,7 @@
                             <div class="text-xs text-base-content/60 font-mono" x-text="[contact.exchange_class, contact.section_code || '—', queuedSummary(contact)].filter(Boolean).join(' · ')"></div>
                         </div>
                         <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
+                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></span>
                             <template x-if="contact.status === 'failed'">
                                 <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
                             </template>
@@ -351,7 +351,7 @@
                         '!bg-primary/25': recalledUuid === contact.uuid,
                     }">
                         <td class="font-mono">-</td>
-                        <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
+                        <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></td>
                         <td class="font-bold font-mono uppercase">
                             <span x-text="contact.callsign"></span>
                             <template x-if="contact.status === 'failed'">

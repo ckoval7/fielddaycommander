@@ -17,6 +17,9 @@ Schedule::command('events:activate-by-date')->everyFifteenMinutes();
 // Close operating sessions for events that have ended
 Schedule::command('sessions:close-expired')->everyFifteenMinutes();
 
+// Remove sessions that ended with no contacts once any queued contacts have had time to sync
+Schedule::command('sessions:prune-empty')->hourly();
+
 // Close idle external logger sessions
 Schedule::command('external-logger:close-idle')->everyFiveMinutes();
 

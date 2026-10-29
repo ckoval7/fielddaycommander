@@ -106,7 +106,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Contact Logging
 Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
     Route::get('/logging', StationSelect::class)->name('logging.station-select');
-    Route::get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
+    // A session that ended with no contacts is deleted, so Back to its page goes to Station Select.
+    Route::get('/logging/session/{operatingSession}', LoggingInterface::class)
+        ->name('logging.session')
+        ->missing(fn () => redirect()->route('logging.station-select'));
     Route::get('/logging/transcribe', TranscribeSelect::class)->name('logging.transcribe.select');
     Route::get('/logging/transcribe/{station}', TranscribeInterface::class)->name('logging.transcribe.session');
 });
@@ -118,7 +121,6 @@ Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
 
 // Logbook Browser (public)
 Route::get('/logbook', [LogbookController::class, 'index'])->name('logbook.index');
-Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbook.export');
 
 // Section Map (public)
 Route::get('/section-map', function () {
@@ -288,6 +290,7 @@ Route::middleware(['auth', 'verified', 'can:view-reports'])->group(function () {
     Route::get('/reports', ReportsIndex::class)->name('reports.index');
     Route::get('/reports/cabrillo', [ReportController::class, 'cabrillo'])->name('reports.cabrillo');
     Route::get('/reports/adif', [ReportController::class, 'adif'])->name('reports.adif');
+    Route::get('/logbook/export', [LogbookController::class, 'export'])->name('logbook.export');
     Route::get('/reports/wfd-event-summary', [ReportController::class, 'wfdEventSummary'])->name('reports.wfd-event-summary');
     Route::get('/reports/submission-sheet', [ReportController::class, 'submissionSheet'])->name('reports.submission-sheet');
 });

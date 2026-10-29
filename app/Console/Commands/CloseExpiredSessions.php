@@ -19,10 +19,16 @@ class CloseExpiredSessions extends Command
         $staleSessions = OperatingSession::query()
             ->whereNull('end_time')
             ->whereHas('station.eventConfiguration.event', function ($query) {
-                $query->where('end_time', '<', appNow());
+                // Early-setup Field Day events can stop operating before end_time,
+                // so they are checked against their operating end below.
+                $query->where(fn ($ended) => $ended
+                    ->where('end_time', '<', appNow())
+                    ->orWhere('setup_started_early', true));
             })
             ->with('station.eventConfiguration.event', 'operator')
-            ->get();
+            ->get()
+            ->filter(fn (OperatingSession $session) => $session->station->eventConfiguration->event->operatingEndsAt()?->lt(appNow()))
+            ->values();
 
         if ($staleSessions->isEmpty()) {
             $this->info('No expired sessions found.');
@@ -31,7 +37,7 @@ class CloseExpiredSessions extends Command
         }
 
         foreach ($staleSessions as $session) {
-            $eventEndTime = $session->station->eventConfiguration->event->end_time;
+            $eventEndTime = $session->station->eventConfiguration->event->operatingEndsAt();
 
             $session->update(['end_time' => $eventEndTime]);
 

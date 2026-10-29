@@ -97,8 +97,8 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         if ($dto->isReplace) {
             try {
                 $this->handler->handleReplace($dto, $config);
-            } catch (InvalidExternalContactException) {
-                $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
+            } catch (InvalidExternalContactException $exception) {
+                $this->writeLastLogEntry($lastLogKey, $dto, false, $exception->rejectionReason);
             }
 
             return;
@@ -109,8 +109,8 @@ class N1mmListenCommand extends BaseUdpListenerCommand
             $this->writeLastLogEntry($lastLogKey, $dto, true);
         } catch (OutOfPeriodContactException) {
             $this->rejectOutOfPeriod($lastLogKey, $dto);
-        } catch (InvalidExternalContactException) {
-            $this->writeLastLogEntry($lastLogKey, $dto, false, 'invalid callsign');
+        } catch (InvalidExternalContactException $exception) {
+            $this->writeLastLogEntry($lastLogKey, $dto, false, $exception->rejectionReason);
         }
     }
 }

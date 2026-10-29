@@ -349,6 +349,7 @@ class GuestbookManager extends Component
 
         $this->selectedIds = array_values(array_diff($this->selectedIds, [$entry->id]));
         $this->closeDeleteModal();
+        $this->dispatch('bonus-claimed');
         $this->dispatch('toast', title: 'Success', description: 'Entry deleted.', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
@@ -512,6 +513,6 @@ class GuestbookManager extends Component
 
     public function render()
     {
-        return view('livewire.guestbook.guestbook-manager')->layout('layouts.app');
+        return view('livewire.guestbook.guestbook-manager')->layout('layouts.app', ['title' => 'Guestbook Manager']);
     }
 }

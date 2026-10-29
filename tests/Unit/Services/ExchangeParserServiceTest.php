@@ -229,3 +229,33 @@ test('accepts any known class when no event type is given', function (string $cl
 
     expect($result['success'])->toBeTrue();
 })->with(['A', 'F', 'H', 'M']);
+
+test('records YT and MX as TER and DX for a Field Day event', function (string $logged, string $counted) {
+    Section::firstOrCreate(['code' => 'TER'], ['name' => 'Territories', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'YT'], ['name' => 'Yukon', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'MX'], ['name' => 'Mexico', 'region' => 'DX', 'is_active' => true]);
+    $eventType = EventType::where('code', 'FD')->firstOrFail();
+
+    $result = $this->parser->parse("W1AW 3A {$logged}", $eventType->id);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['section_code'])->toBe($counted)
+        ->and($result['section_id'])->toBe(Section::where('code', $counted)->value('id'));
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+    'lowercase' => ['yt', 'TER'],
+]);
+
+test('keeps YT and MX as logged for a Winter Field Day event', function (string $logged) {
+    Section::firstOrCreate(['code' => 'TER'], ['name' => 'Territories', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'YT'], ['name' => 'Yukon', 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => 'MX'], ['name' => 'Mexico', 'region' => 'DX', 'is_active' => true]);
+    $eventType = EventType::where('code', 'WFD')->firstOrFail();
+
+    $result = $this->parser->parse("W1AW 1H {$logged}", $eventType->id);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['section_code'])->toBe($logged)
+        ->and($result['section_id'])->toBe(Section::where('code', $logged)->value('id'));
+})->with(['YT', 'MX']);

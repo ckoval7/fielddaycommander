@@ -19,7 +19,7 @@ use Livewire\WithPagination;
 
 class EquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
+    use AuthorizesRequests, GuardsPrimaryRadioDeletion, ManagesEquipmentCommitments, WithPagination;
 
     public string $search = '';
 
@@ -153,6 +153,14 @@ class EquipmentList extends Component
 
         $this->authorize('delete', $equipment);
 
+        $blockedMessage = $this->primaryRadioDeletionBlocker($equipment);
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+
+            return;
+        }
+
         AuditLog::log(
             action: 'equipment.deleted',
             auditable: $equipment,
@@ -173,7 +181,10 @@ class EquipmentList extends Component
      */
     public function bulkDeleteEquipment(): void
     {
-        $ownedEquipment = $this->scopeSelectedEquipment($this->selectedIds);
+        [
+            'deletable' => $ownedEquipment,
+            'blockedMessage' => $blockedMessage,
+        ] = $this->partitionPrimaryRadios($this->scopeSelectedEquipment($this->selectedIds));
 
         $count = $ownedEquipment->count();
 
@@ -181,7 +192,13 @@ class EquipmentList extends Component
             $equipment->delete();
         }
 
-        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
+        if ($count > 0 || $blockedMessage === null) {
+            $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
+        }
+
+        if ($blockedMessage !== null) {
+            $this->dispatch('notify', title: 'Radio still in use', description: $blockedMessage, type: 'error');
+        }
 
         $this->selectedIds = [];
 
@@ -195,6 +212,6 @@ class EquipmentList extends Component
     {
         return view('livewire.equipment.equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'My Equipment']);
     }
 }

@@ -11,6 +11,7 @@ use App\Exceptions\AdifImportRecordException;
 use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Contact;
+use App\Models\Event;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Scoring\DomainEvents\QsoLogged;
@@ -249,6 +250,12 @@ class AdifImportService
         $this->extendOwnedSessions($sessionSpans);
         $this->markImported($created);
 
+        // Inserted quietly, so the observer didn't clear this: an imported
+        // contact can be the event's first, which starts a 24-hour period.
+        if ($created !== []) {
+            Event::forgetFirstContactAt($import->event_configuration_id);
+        }
+
         $this->dupes->settleGroups(
             array_map(fn (Contact $contact) => $this->dupes->keyFor($contact), $created),
             quietly: true,
@@ -441,8 +448,8 @@ class AdifImportService
 
                     if ($contact?->is_duplicate) {
                         $notes = "Imported as a dupe of contact #{$contact->duplicate_of_contact_id} (0 points)";
-                    } elseif ($contact?->qso_time !== null && $event?->start_time !== null && $event->end_time !== null
-                        && ! $contact->qso_time->between($event->start_time, $event->end_time)) {
+                    } elseif ($contact?->qso_time !== null && $event !== null
+                        && ! $event->isWithinOperatingPeriod($contact->qso_time)) {
                         $notes = 'Imported outside the event period (0 points)';
                     }
 

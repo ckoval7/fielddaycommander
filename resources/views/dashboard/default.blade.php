@@ -14,6 +14,7 @@ Props from controller:
 --}}
 
 <x-layouts.app>
+    <x-slot:title>Dashboard</x-slot:title>
     {{-- Connection Monitor --}}
     <x-dashboard.connection-monitor />
 

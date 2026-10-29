@@ -7,6 +7,7 @@ use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Band;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\Section;
 use App\Models\Station;
@@ -358,3 +359,78 @@ test('auto-creates stub user for unknown operator callsign', function () {
     expect($stubUser)->not->toBeNull()
         ->and($stubUser->user_role)->toBe('locked');
 });
+
+test('maps YT and MX to TER and DX for a Field Day import', function (string $logged, string $counted) {
+    $countedSection = Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => $logged], ['name' => $logged, 'region' => 'VE', 'is_active' => true]);
+    $import = AdifImport::factory()->create();
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'section_code' => $logged,
+    ]);
+
+    $report = $this->mapper->autoMap($import);
+
+    expect($record->refresh()->section_id)->toBe($countedSection->id)
+        ->and($report['unmapped_sections'])->toBeEmpty();
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
+test('keeps YT and MX as logged for a Winter Field Day import', function (string $logged, string $counted) {
+    Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    $section = Section::firstOrCreate(['code' => $logged], ['name' => $logged, 'region' => 'VE', 'is_active' => true]);
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'description' => 'Winter Field Day']);
+    $import = AdifImport::factory()->create();
+    $import->eventConfiguration->event->update(['event_type_id' => $wfd->id]);
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'section_code' => $logged,
+    ]);
+
+    $this->mapper->autoMap($import->fresh());
+
+    expect($record->refresh()->section_id)->toBe($section->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
+test('stores a YT or MX picked by hand as TER or DX for a Field Day import', function (string $picked, string $counted) {
+    $countedSection = Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    $pickedSection = Section::firstOrCreate(['code' => $picked], ['name' => $picked, 'region' => 'VE', 'is_active' => true]);
+    $import = AdifImport::factory()->create();
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'section_code' => 'YUK',
+        'section_id' => null,
+    ]);
+
+    $this->mapper->applyFieldMapping($import, ['sections' => ['YUK' => $pickedSection->id]]);
+
+    expect($record->refresh()->section_id)->toBe($countedSection->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
+test('keeps a YT or MX picked by hand for a Winter Field Day import', function (string $picked, string $counted) {
+    Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    $pickedSection = Section::firstOrCreate(['code' => $picked], ['name' => $picked, 'region' => 'VE', 'is_active' => true]);
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'description' => 'Winter Field Day']);
+    $import = AdifImport::factory()->create();
+    $import->eventConfiguration->event->update(['event_type_id' => $wfd->id]);
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'section_code' => 'YUK',
+        'section_id' => null,
+    ]);
+
+    $this->mapper->applyFieldMapping($import->fresh(), ['sections' => ['YUK' => $pickedSection->id]]);
+
+    expect($record->refresh()->section_id)->toBe($pickedSection->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);

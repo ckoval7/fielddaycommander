@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\DuplicateCheckService;
 use App\Services\ExchangeParserService;
 use App\Support\BroadcastChannels;
+use App\Support\EventSections;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Carbon;
@@ -134,7 +135,11 @@ class ContactEditor extends Component
             'band_id' => $validated['bandId'],
             'mode_id' => $validated['modeId'],
             'submode' => $validated['submode'] ?? null,
-            'section_id' => $validated['sectionId'],
+            // A newly picked YT or MX stores as TER or DX unless the event
+            // recognises it; an unchanged section is left as logged.
+            'section_id' => (int) $validated['sectionId'] === $contact->section_id
+                ? $contact->section_id
+                : EventSections::countedSectionId((int) $validated['sectionId'], $contact->eventConfiguration?->event),
             'notes' => $validated['notes'] ?: null,
         ]);
 
@@ -291,11 +296,7 @@ class ContactEditor extends Component
 
         $event = $contact->eventConfiguration?->event;
 
-        if ($event?->start_time === null || $event->end_time === null) {
-            return true;
-        }
-
-        return $time->between($event->start_time, $event->end_time);
+        return $event?->isWithinOperatingPeriod($time) ?? true;
     }
 
     /**

@@ -118,6 +118,38 @@ describe('sign up', function () {
         expect(ShiftAssignment::where('shift_id', $shift->id)->where('user_id', $this->user->id)->exists())->toBeTrue();
     });
 
+    test('signing up for an overlapping shift warns but still signs the user up', function () {
+        $role = ShiftRole::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'name' => 'Safety Officer',
+        ]);
+        $mine = Shift::factory()->open()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => now()->addHour(),
+            'end_time' => now()->addHours(3),
+        ]);
+        ShiftAssignment::factory()->create([
+            'shift_id' => $mine->id,
+            'user_id' => $this->user->id,
+        ]);
+        $other = Shift::factory()->open()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'shift_role_id' => $role->id,
+            'start_time' => now()->addHours(2),
+            'end_time' => now()->addHours(4),
+        ]);
+
+        $this->actingAs($this->user);
+
+        Livewire::test(ScheduleTimeline::class)
+            ->call('signUp', $other->id)
+            ->assertDispatched('toast', title: 'Success')
+            ->assertDispatched('toast', title: 'Overlapping shifts');
+
+        expect(ShiftAssignment::where('shift_id', $other->id)->where('user_id', $this->user->id)->exists())->toBeTrue();
+    });
+
     test('user can sign up again after cancelling', function () {
         $role = ShiftRole::factory()->create([
             'event_configuration_id' => $this->eventConfig->id,

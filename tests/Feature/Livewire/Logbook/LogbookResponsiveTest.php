@@ -16,6 +16,7 @@ use App\Services\EventContextService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 uses(RefreshDatabase::class);
 
@@ -70,6 +71,9 @@ describe('responsive layout patterns', function () {
     });
 
     test('export button is accessible', function () {
+        Permission::findOrCreate('view-reports', 'web');
+        $this->user->givePermissionTo('view-reports');
+
         Livewire::test(LogbookBrowser::class)
             ->assertSee('Export');
     });

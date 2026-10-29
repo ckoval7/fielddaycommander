@@ -45,7 +45,7 @@ class StationFactory extends Factory
             'is_gota' => false,
             'is_vhf_only' => false,
             'is_satellite' => false,
-            'max_power_watts' => fake()->randomElement([5, 100, 150, 500, 1500]),
+            'max_power_watts' => 100,
         ];
     }
 

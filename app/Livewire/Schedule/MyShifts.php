@@ -252,6 +252,6 @@ class MyShifts extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.my-shifts')->layout('layouts.app');
+        return view('livewire.schedule.my-shifts')->layout('layouts.app', ['title' => 'My Shifts']);
     }
 }

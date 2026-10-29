@@ -21,7 +21,7 @@ class EventTypeSeeder extends Seeder
                 'name' => 'Field Day',
                 'description' => 'ARRL Field Day - annual emergency preparedness exercise held the 4th full weekend in June',
                 'is_active' => true,
-                'setup_offset_hours' => 24,
+                'setup_offset_hours' => 42,
             ],
             [
                 'code' => 'WFD',

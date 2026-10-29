@@ -29,7 +29,7 @@ class CabrilloExporter
 
         $contacts = $config->creditableContacts()
             ->when($config->event?->start_time && $config->event?->end_time, fn ($query) => $query
-                ->whereBetween('qso_time', [$config->event->start_time, $config->event->end_time]))
+                ->whereBetween('qso_time', [$config->event->start_time, $config->event->operatingEndsAt()]))
             ->with(['band', 'mode', 'section'])
             ->orderBy('qso_time')
             ->get();
@@ -175,7 +175,7 @@ class CabrilloExporter
      */
     private function winterPowerCategory(EventConfiguration $config): string
     {
-        $fallbackWatts = $config->effectiveMaxPowerWatts();
+        $fallbackWatts = $config->plannedMaxPowerWatts();
 
         $exceeded = $config->contacts()
             ->notDuplicate()

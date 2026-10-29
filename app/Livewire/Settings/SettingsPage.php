@@ -24,6 +24,6 @@ class SettingsPage extends Component
 
     public function render(): View
     {
-        return view('livewire.settings.settings-page')->layout('layouts.app');
+        return view('livewire.settings.settings-page')->layout('layouts.app', ['title' => 'System Settings']);
     }
 }

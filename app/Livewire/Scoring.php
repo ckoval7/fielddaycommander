@@ -306,17 +306,37 @@ class Scoring extends Component
             ->count();
     }
 
+    /**
+     * Non-duplicate contacts with 0 points for a reason other than the power
+     * limit, which has its own notice.
+     */
     #[Computed]
     public function zeroPointContactCount(): int
     {
-        if (! $this->config()) {
+        $config = $this->config();
+
+        if (! $config) {
             return 0;
         }
 
-        return $this->config()->contacts()
+        $cap = $config->powerCapWatts();
+
+        return $config->contacts()
             ->where('is_duplicate', false)
             ->where('points', 0)
+            ->when($cap !== null, fn ($query) => $query->where(fn ($q) => $q
+                ->whereNull('power_watts')
+                ->orWhere('power_watts', '<=', $cap)))
             ->count();
+    }
+
+    /**
+     * Non-duplicate contacts made above the operating class's power limit.
+     */
+    #[Computed]
+    public function overPowerCapContactCount(): int
+    {
+        return $this->config()?->overPowerCapContactCount() ?? 0;
     }
 
     // ========================================================================
@@ -509,24 +529,25 @@ class Scoring extends Component
         }
 
         $effectiveWatts = $config->effectiveMaxPowerWatts();
-        $configWatts = $config->max_power_watts;
-        $stationOverride = $effectiveWatts > $configWatts;
-        $stationNote = $stationOverride
-            ? " A station is configured at {$effectiveWatts}W, which overrides the event setting of {$configWatts}W."
-            : '';
+
+        // The multiplier follows the highest power on any contact; before the
+        // first contact, the planned event and station power stands in.
+        $subject = $config->highestContactPowerWatts() !== null
+            ? "Your highest-power contact was made at {$effectiveWatts}W"
+            : "With no contacts yet, the planned power is {$effectiveWatts}W";
 
         $multiplier = $this->powerMultiplier;
 
         if ($multiplier === 1) {
-            return "Operating at {$effectiveWatts}W (over 100W) gives a 1\u{00d7} multiplier.{$stationNote}";
+            return "{$subject} (over 100W), which gives a 1\u{00d7} multiplier.";
         }
 
         if ($multiplier === 5) {
-            return "At {$effectiveWatts}W on natural power only, the event qualifies for a 5\u{00d7} multiplier.";
+            return "{$subject} on natural power only, which qualifies for a 5\u{00d7} multiplier.";
         }
 
         if ($effectiveWatts > 5) {
-            return "Operating at {$effectiveWatts}W (over 5W, up to 100W) gives a 2\u{00d7} multiplier.{$stationNote}";
+            return "{$subject} (over 5W, up to 100W), which gives a 2\u{00d7} multiplier.";
         }
 
         // QRP (5W or less) but not 5x: explain which power setting rules it out.
@@ -534,9 +555,9 @@ class Scoring extends Component
         $hasDisqualifyingPower = $config->uses_commercial_power || $config->uses_generator;
 
         return match (true) {
-            $hasDisqualifyingPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
-            $hasNaturalPower => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier. A station is set to commercial or generator power, so the event doesn't qualify for 5\u{00d7}.",
-            default => "Operating at {$effectiveWatts}W (QRP) gives a 2\u{00d7} multiplier.",
+            $hasDisqualifyingPower => "{$subject} (QRP), which gives a 2\u{00d7} multiplier. Switch to natural power only to qualify for 5\u{00d7}.",
+            $hasNaturalPower => "{$subject} (QRP), which gives a 2\u{00d7} multiplier. A station is set to commercial or generator power, so the event doesn't qualify for 5\u{00d7}.",
+            default => "{$subject} (QRP), which gives a 2\u{00d7} multiplier.",
         };
     }
 
@@ -547,7 +568,8 @@ class Scoring extends Component
     /**
      * Rules table for the power multiplier, with the active row flagged.
      * Depends on the powerMultiplier computed property, and uses the same
-     * effective power (highest of the event and its stations) that drives it.
+     * effective power (highest contact power, or planned power before any
+     * contact) that drives it.
      *
      * @return array<int, array{condition: string, multiplier: string, active: bool}>
      */
@@ -615,6 +637,18 @@ class Scoring extends Component
                 'severity' => 'error',
                 'section' => 'qso',
                 'message' => "{$zeroCount} ".str('contact')->plural($zeroCount).' logged with 0 points. Check their band and mode.',
+            ];
+        }
+
+        // Contacts above the operating class's power limit
+        $overCapCount = $this->overPowerCapContactCount;
+        if ($overCapCount > 0) {
+            $cap = $this->config()->powerCapWatts();
+            $className = $this->config()->operatingClass?->name ?? 'this class';
+            $notices[] = [
+                'severity' => 'error',
+                'section' => 'power',
+                'message' => "{$overCapCount} ".str('contact')->plural($overCapCount)." logged above the {$cap}W limit for {$className}. They score 0 points.",
             ];
         }
 

@@ -60,12 +60,75 @@ function writeStorage(storage, key, value) {
     }
 }
 
+/** Prefix of the localStorage keys that hold each session's queue. */
+const QUEUE_KEY_PREFIX = 'fd-commander-queue-';
+
+/**
+ * Ids of every session this browser still holds unsynced contacts for,
+ * across all stored queues (a band/mode switch carries contacts into the
+ * next session's queue). Null when localStorage can't be read.
+ */
+export function queuedSessionIds(storage = localStorage) {
+    try {
+        const ids = new Set();
+        for (let i = 0; i < storage.length; i++) {
+            const key = storage.key(i);
+            if (!key?.startsWith(QUEUE_KEY_PREFIX)) {
+                continue;
+            }
+            let entries = [];
+            try {
+                entries = JSON.parse(storage.getItem(key) ?? '[]');
+            } catch {
+                // An unreadable queue can't be vouched for: keep its session.
+                const id = Number.parseInt(key.slice(QUEUE_KEY_PREFIX.length), 10);
+                if (Number.isInteger(id)) {
+                    ids.add(id);
+                }
+                continue;
+            }
+            for (const c of Array.isArray(entries) ? entries : []) {
+                if (c?.status !== 'synced' && Number.isInteger(c?.operating_session_id)) {
+                    ids.add(c.operating_session_id);
+                }
+            }
+        }
+        return [...ids];
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Add the queue report to a sign-out form so the server keeps sessions that
+ * still have contacts waiting here and removes the empty rest. Leaves the
+ * form alone when storage can't be read, and the server then keeps them all.
+ */
+export function stampQueuedSessions(form) {
+    const ids = queuedSessionIds();
+    if (ids === null || !form) {
+        return;
+    }
+    const set = (name, value) => {
+        let input = form.querySelector(`input[name="${name}"]`);
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            form.appendChild(input);
+        }
+        input.value = value;
+    };
+    set('queue_checked', '1');
+    set('queued_sessions', ids.join(','));
+}
+
 export default function contactQueue(sessionId, csrfToken, sessionContext) {
     return {
         queue: [],
         isOnline: navigator.onLine,
         syncIntervalId: null,
-        storageKey: `fd-commander-queue-${sessionId}`,
+        storageKey: `${QUEUE_KEY_PREFIX}${sessionId}`,
         // True while the last attempt to save the queue to localStorage failed.
         storageFailing: false,
         recallIndex: -1,
@@ -189,6 +252,15 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
          */
         get sessionQueueCount() {
             return this.queue.filter(c => c.operating_session_id === sessionId).length;
+        },
+
+        /**
+         * True while a contact made in this session hasn't synced yet. Ending
+         * or switching away then keeps the session even if the server has no
+         * contacts for it, so the queued ones still have somewhere to land.
+         */
+        get hasUnsyncedSessionContacts() {
+            return this.queue.some(c => c.operating_session_id === sessionId && c.status !== 'synced');
         },
 
         get failedCount() {
@@ -493,6 +565,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         clearAdvanced() {
             this.advanced = emptyAdvancedFields(this.advanced.frequency);
             this.offBandSuggestion = null;
+            this.parseError = '';
         },
 
         toggleAdvanced(focusFirst = false) {
@@ -565,7 +638,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.switching = true;
             let result;
             try {
-                result = await this.$wire.switchBandMode(bandId, modeId);
+                result = await this.$wire.switchBandMode(bandId, modeId, !this.hasUnsyncedSessionContacts);
             } catch (e) {
                 console.warn('Band/mode switch failed:', e);
                 result = null;
@@ -610,7 +683,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             if (waiting.length === 0) {
                 return;
             }
-            const key = `fd-commander-queue-${newSessionId}`;
+            const key = `${QUEUE_KEY_PREFIX}${newSessionId}`;
             let existing = [];
             try {
                 existing = JSON.parse(readStorage(localStorage, key) ?? '[]');
@@ -1048,7 +1121,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             }
         },
 
-        saveRecalled(inputEl) {
+        async saveRecalled(inputEl) {
             if (!this.isRecalling) return;
 
             const exchange = inputEl.value.trim();
@@ -1100,9 +1173,22 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 }
                 const contactId = this.recalledContactId;
                 const wire = globalThis.Livewire?.find(inputEl.closest(String.raw`[wire\:id]`)?.getAttribute('wire:id'));
-                if (wire) {
-                    wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
+                if (!wire) {
+                    return;
                 }
+                // Stay in edit mode until the server accepts the edit, so a
+                // rejected one keeps its text and shows why.
+                let error;
+                try {
+                    error = await wire.call('updateContact', contactId, exchange, this.emptyToNull(advanced));
+                } catch {
+                    error = 'The edit wasn\'t saved. Check the connection and try again.';
+                }
+                if (error) {
+                    this.parseError = error;
+                    return;
+                }
+                this.parseError = '';
                 this.exitRecall(inputEl);
             }
         },

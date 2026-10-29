@@ -127,3 +127,35 @@ test('scheduledHours returns shift duration rounded to 0.1', function () {
 
     expect($assignment->scheduledHours())->toBe(2.5);
 });
+
+test('hoursWorked counts elapsed time for someone still checked in', function () {
+    $start = now()->startOfMinute();
+    $assignment = makeAssignmentForHours([
+        'start_time' => $start,
+        'end_time' => $start->copy()->addHours(3),
+    ], [
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => $start,
+        'checked_out_at' => null,
+    ]);
+
+    $this->travelTo($start->copy()->addMinutes(90));
+
+    expect($assignment->hoursWorked())->toBe(1.5);
+});
+
+test('hoursWorked caps an open check-in at the scheduled length', function () {
+    $start = now()->startOfMinute();
+    $assignment = makeAssignmentForHours([
+        'start_time' => $start,
+        'end_time' => $start->copy()->addHours(2),
+    ], [
+        'status' => ShiftAssignment::STATUS_CHECKED_IN,
+        'checked_in_at' => $start,
+        'checked_out_at' => null,
+    ]);
+
+    $this->travelTo($start->copy()->addHours(5));
+
+    expect($assignment->hoursWorked())->toBe(2.0);
+});

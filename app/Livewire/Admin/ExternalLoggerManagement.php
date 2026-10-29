@@ -434,7 +434,7 @@ class ExternalLoggerManagement extends Component
         return view('livewire.admin.external-logger-management', [
             'hasActiveEvent' => $config !== null,
             'wsjtxNoCreditReason' => $config !== null ? $this->wsjtxNoCreditReason($config) : null,
-        ])->layout('components.layouts.app');
+        ])->layout('components.layouts.app', ['title' => 'External Loggers']);
     }
 
     /**

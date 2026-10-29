@@ -73,6 +73,6 @@ class GalleryShow extends Component
     public function render(): View
     {
         return view('livewire.gallery.gallery-show')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Photo Gallery']);
     }
 }

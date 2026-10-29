@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Database\Factories\ShiftAssignmentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -233,24 +234,43 @@ class ShiftAssignment extends Model
     /**
      * Calculate the hours actually worked on this assignment, rounded to 0.1 hour.
      *
-     * Returns 0.0 if either check-in or check-out is missing, or if checkout
-     * precedes check-in. Caps the duration at the shift's scheduled length so a
-     * late checkout doesn't exceed the planned hours.
+     * Someone still checked in is counted up to now. Returns 0.0 without a
+     * check-in, or if the end precedes check-in. Caps the duration at the
+     * shift's scheduled length so a late checkout doesn't exceed the planned hours.
      *
      * @note Callers summing across a collection should eager-load the `shift`
      * relation (e.g. `->with('shift')`) to avoid N+1 queries.
      */
     public function hoursWorked(): float
     {
-        if ($this->checked_in_at === null || $this->checked_out_at === null) {
+        $workedUntil = $this->workedUntil();
+
+        if ($this->checked_in_at === null || $workedUntil === null) {
             return 0.0;
         }
 
-        $workedMinutes = $this->checked_in_at->diffInMinutes($this->checked_out_at);
+        $workedMinutes = $this->checked_in_at->diffInMinutes($workedUntil);
         $scheduledMinutes = $this->shift->start_time->diffInMinutes($this->shift->end_time);
         $minutes = max(0, min($workedMinutes, $scheduledMinutes));
 
         return round($minutes / 60, 1);
+    }
+
+    /**
+     * When the worked time ends: the checkout, or now for someone still
+     * checked in. Null when there's nothing to count.
+     */
+    public function workedUntil(): ?CarbonInterface
+    {
+        if ($this->checked_in_at === null) {
+            return null;
+        }
+
+        if ($this->checked_out_at !== null) {
+            return $this->checked_out_at;
+        }
+
+        return $this->status === self::STATUS_CHECKED_IN ? appNow() : null;
     }
 
     /**

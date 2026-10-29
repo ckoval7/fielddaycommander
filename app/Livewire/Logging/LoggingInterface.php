@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Services\BandModeSwitchService;
 use App\Services\BandResolverService;
 use App\Services\DuplicateCheckService;
+use App\Services\EmptySessionPruner;
 use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
 use App\Support\AdvancedContactFields;
@@ -76,8 +77,8 @@ class LoggingInterface extends Component
         }
 
         $event = $operatingSession->station->eventConfiguration?->event;
-        if (! $event || Carbon::parse($event->end_time)->lt(appNow())) {
-            $operatingSession->update(['end_time' => $event?->end_time ?? appNow()]);
+        if (! $event || Carbon::parse($event->operatingEndsAt())->lt(appNow())) {
+            $operatingSession->update(['end_time' => $event?->operatingEndsAt() ?? appNow()]);
             $this->redirect(route('logging.station-select'), navigate: true);
 
             return;
@@ -220,9 +221,25 @@ class LoggingInterface extends Component
         $this->dispatch('suggestion-selected');
     }
 
-    public function endSession(): void
+    /**
+     * End this session. With $removeIfEmpty (the browser has no contacts
+     * still queued for it) a session that logged nothing is deleted rather
+     * than left behind.
+     */
+    public function endSession(bool $removeIfEmpty = false): void
     {
-        $this->operatingSession->update(['end_time' => appNow()]);
+        $session = $this->operatingSession;
+
+        app(DuplicateCheckService::class)->locked(
+            $session->station->event_configuration_id,
+            function () use ($session, $removeIfEmpty): void {
+                $session->update(['end_time' => appNow()]);
+
+                if ($removeIfEmpty) {
+                    app(EmptySessionPruner::class)->deleteIfEmpty($session);
+                }
+            },
+        );
 
         if (StationMode::isActive()) {
             StationMode::endSession(request());
@@ -238,11 +255,13 @@ class LoggingInterface extends Component
      * Move to another band and mode: end this session and start a new one
      * on the same station. Returns the new session's id and logging URL for
      * the contact queue, which carries unsynced contacts across before it
-     * navigates, or the reason the switch can't happen.
+     * navigates, or the reason the switch can't happen. With $removeIfEmpty
+     * (no contacts still queued for this session) a session that logged
+     * nothing is deleted rather than left behind.
      *
      * @return array{ok: bool, session_id?: int, url?: string, message?: string}
      */
-    public function switchBandMode(int $bandId, int $modeId): array
+    public function switchBandMode(int $bandId, int $modeId, bool $removeIfEmpty = false): array
     {
         $this->operatingSession->refresh();
 
@@ -252,7 +271,7 @@ class LoggingInterface extends Component
         }
 
         try {
-            $session = app(BandModeSwitchService::class)->switchTo($this->operatingSession, $bandId, $modeId);
+            $session = app(BandModeSwitchService::class)->switchTo($this->operatingSession, $bandId, $modeId, $removeIfEmpty);
         } catch (BandModeSwitchException $exception) {
             return ['ok' => false, 'message' => $exception->getMessage()];
         }
@@ -265,14 +284,19 @@ class LoggingInterface extends Component
     }
 
     /**
-     * Bands an operator can switch to, in band-plan order.
+     * Bands an operator can switch to, in band-plan order. A free VHF
+     * station only gets 6m and up.
      *
      * @return Collection<int, Band>
      */
     #[Computed]
     public function switchBands(): Collection
     {
-        return Band::query()->allowedForFieldDay()->ordered()->get(['id', 'name']);
+        return Band::query()
+            ->allowedForFieldDay()
+            ->allowedAtStation($this->operatingSession->station)
+            ->ordered()
+            ->get(['id', 'name']);
     }
 
     /**
@@ -376,11 +400,12 @@ class LoggingInterface extends Component
 
     /**
      * Save an edit to a recalled contact: its exchange and, when the
-     * Advanced Fields are sent, those too.
+     * Advanced Fields are sent, those too. Returns the error when the edit
+     * is rejected, or null once it is saved.
      *
      * @param  array<string, mixed>|null  $advanced
      */
-    public function updateContact(int $contactId, string $exchangeInput, ?array $advanced = null): void
+    public function updateContact(int $contactId, string $exchangeInput, ?array $advanced = null): ?string
     {
         $this->operatingSession->refresh();
 
@@ -402,7 +427,7 @@ class LoggingInterface extends Component
         if (! $parsed['success']) {
             $this->parseError = $parsed['errors'][0] ?? 'Invalid exchange';
 
-            return;
+            return $this->parseError;
         }
 
         $advancedValues = [];
@@ -410,7 +435,7 @@ class LoggingInterface extends Component
             $advancedValues = $this->validatedAdvancedFields($advanced);
 
             if ($advancedValues === null) {
-                return;
+                return $this->parseError;
             }
         }
 
@@ -441,6 +466,8 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
+
+        return null;
     }
 
     /**
@@ -637,6 +664,7 @@ class LoggingInterface extends Component
             ->withTrashed()
             ->with('section')
             ->latest('qso_time')
+            ->latest('id')
             ->limit(50)
             ->get();
     }
@@ -649,6 +677,6 @@ class LoggingInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.logging-interface')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Logging']);
     }
 }

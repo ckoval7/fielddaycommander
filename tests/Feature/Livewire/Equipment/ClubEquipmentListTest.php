@@ -8,6 +8,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Models\Station;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -638,4 +639,60 @@ test('ClubEquipmentList ignores sort columns outside the allowlist', function ()
         ->set('sortBy', 'nonexistent_column')
         ->set('sortDirection', 'sideways')
         ->assertOk();
+});
+
+test('deleting a club radio that is a station primary radio is blocked', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590SG',
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => '40m SSB']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && str_contains($params['description'], "40m SSB in {$eventName}"));
+
+    expect(Equipment::find($radio->id))->not->toBeNull();
+});
+
+test('club bulk delete skips radios used as station primary radios and names every station', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio1 = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $radio2 = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Elecraft',
+        'model' => 'K3',
+    ]);
+    $station1 = Station::factory()->create(['radio_equipment_id' => $radio1->id, 'name' => 'Station 1']);
+    $station2 = Station::factory()->create(['radio_equipment_id' => $radio2->id, 'name' => 'GOTA Station']);
+    $event1 = $station1->eventConfiguration->event->name;
+    $event2 = $station2->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', [$radio1->id, $radio2->id])
+        ->call('bulkDeleteEquipment')
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Icom IC-7300 is the primary radio for Station 1 in {$event1}. Elecraft K3 is the primary radio for GOTA Station in {$event2}. Assign another radio to those stations first.");
+
+    expect(Equipment::find($radio1->id))->not->toBeNull();
+    expect(Equipment::find($radio2->id))->not->toBeNull();
 });

@@ -68,6 +68,39 @@ class Band extends Model
         });
     }
 
+    /**
+     * Lowest frequency, in MHz, a free VHF station may operate on (6m and up).
+     */
+    public const VHF_STATION_MIN_MHZ = 50.0;
+
+    /**
+     * Whether a station may log on this band. A free VHF station operates
+     * exclusively above 50 MHz, so it can't use LF or HF bands. Satellite
+     * (no single frequency) stays allowed: its links are VHF and up.
+     */
+    public function isAllowedAtStation(Station $station): bool
+    {
+        if (! $station->is_vhf_only) {
+            return true;
+        }
+
+        return $this->frequency_mhz === null || (float) $this->frequency_mhz >= self::VHF_STATION_MIN_MHZ;
+    }
+
+    /**
+     * Keep only the bands the station may log on (see isAllowedAtStation()).
+     */
+    public function scopeAllowedAtStation(Builder $query, ?Station $station): Builder
+    {
+        if (! $station?->is_vhf_only) {
+            return $query;
+        }
+
+        return $query->where(fn (Builder $inner): Builder => $inner
+            ->whereNull('frequency_mhz')
+            ->orWhere('frequency_mhz', '>=', self::VHF_STATION_MIN_MHZ));
+    }
+
     public function scopeAllowedForFieldDay(Builder $query): Builder
     {
         return $query->where('allowed_fd', true);

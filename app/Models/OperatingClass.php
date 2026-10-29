@@ -19,7 +19,6 @@ class OperatingClass extends Model
         'description',
         'allows_gota',
         'allows_free_vhf',
-        'max_power_watts',
         'requires_emergency_power',
     ];
 
