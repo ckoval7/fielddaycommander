@@ -1273,7 +1273,7 @@ test('bulk delete asks for confirmation before deleting anyone', function () {
     expect(User::find($user->id))->not->toBeNull();
 });
 
-test('bulk toasts count only the users actually changed, not SYSTEM', function () {
+test('bulk role and delete toasts count only the users actually changed, not SYSTEM', function () {
     $this->actingAs($this->admin);
 
     $user = User::factory()->create();
@@ -1285,13 +1285,13 @@ test('bulk toasts count only the users actually changed, not SYSTEM', function (
         ->set('selectedUsers', $ids)
         ->set('bulk_role_id', $operatorRole->id)
         ->call('bulkAssignRole')
-        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === 'Role assigned to 1 user.')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === 'Role assigned to 1 user. The SYSTEM account is protected and was skipped.')
         ->set('selectedUsers', $ids)
         ->call('bulkLockAccounts')
-        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '1 account locked.')
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '2 accounts locked.')
         ->set('selectedUsers', $ids)
         ->call('bulkDeleteUsers')
-        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '1 user deleted.');
+        ->assertDispatched('toast', fn ($name, $params) => $params['description'] === '1 user deleted. The SYSTEM account is protected and was skipped.');
 
     expect(User::find($systemUser->id))->not->toBeNull();
 });
