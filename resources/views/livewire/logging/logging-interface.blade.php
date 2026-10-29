@@ -118,7 +118,7 @@
                     label="End Session"
                     icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
-                    wire:click="endSession"
+                    wire:click="endSession(! hasUnsyncedSessionContacts)"
                     wire:confirm="End this session?"
                 />
             </div>

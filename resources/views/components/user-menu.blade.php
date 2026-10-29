@@ -6,7 +6,7 @@
 @if(\App\Support\StationMode::isActive())
 <div class="flex items-center gap-2" data-station-mode-controls>
     <x-theme-switch compact />
-    <form method="POST" action="{{ route('station-mode.end') }}" data-navigate-ignore>
+    <form method="POST" action="{{ route('station-mode.end') }}" data-navigate-ignore x-data @submit="globalThis.stampQueuedSessions?.($el)">
         @csrf
         <button type="submit" class="btn btn-error btn-sm sm:btn-md" title="Sign out of station mode">
             <x-icon name="phosphor-sign-out" class="w-4 h-4" />

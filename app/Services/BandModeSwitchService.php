@@ -25,10 +25,15 @@ class BandModeSwitchService
      * End the session and start one on the new band and mode, or return the
      * session unchanged when nothing changes.
      *
+     * With $removeIfEmpty (the browser has no contacts still queued for the
+     * session) a session that logged nothing is deleted rather than left
+     * behind, so changing band and then mode leaves no empty session in
+     * between. The new session continues from the one before it instead.
+     *
      * @throws BandModeSwitchException when the band or mode can't be used or
      *                                 another station is already on it
      */
-    public function switchTo(OperatingSession $session, int $bandId, int $modeId): OperatingSession
+    public function switchTo(OperatingSession $session, int $bandId, int $modeId, bool $removeIfEmpty = false): OperatingSession
     {
         if ($session->end_time !== null) {
             throw new BandModeSwitchException('This session has ended. Start a new one from Station Select.');
@@ -57,9 +62,10 @@ class BandModeSwitchService
             throw new BandModeSwitchException($bandRestriction);
         }
 
-        return DB::transaction(function () use ($session, $station, $band, $mode): OperatingSession {
+        return DB::transaction(function () use ($session, $station, $band, $mode, $removeIfEmpty): OperatingSession {
             // Serializes switches and new sessions in this event so two
-            // stations can't claim the same band-mode at once.
+            // stations can't claim the same band-mode at once, and holds off
+            // contact syncs while an empty session is removed.
             EventConfiguration::query()->whereKey($station->event_configuration_id)->lockForUpdate()->first();
 
             // Per FD Rule 6.9: no two transmitters on the same band-mode at
@@ -87,7 +93,7 @@ class BandModeSwitchService
 
             $session->update(['end_time' => $now]);
 
-            return OperatingSession::create([
+            $next = OperatingSession::create([
                 'station_id' => $session->station_id,
                 'operator_user_id' => $session->operator_user_id,
                 'previous_session_id' => $session->id,
@@ -98,6 +104,12 @@ class BandModeSwitchService
                 'qso_count' => 0,
                 'is_supervised' => (bool) $session->is_supervised,
             ]);
+
+            if ($removeIfEmpty && app(EmptySessionPruner::class)->deleteIfEmpty($session)) {
+                $next->refresh();
+            }
+
+            return $next;
         });
     }
 }

@@ -174,6 +174,7 @@ class StoreContactSyncRequest extends FormRequest
     {
         return [
             'uuid.required' => 'A client UUID is required for idempotent sync',
+            'operating_session_id.exists' => 'This operating session has ended.',
             'callsign.required' => 'A callsign is required',
             'callsign.regex' => 'The callsign must contain only letters, numbers, and forward slashes',
             'exchange_class.required' => 'The exchange class is required',

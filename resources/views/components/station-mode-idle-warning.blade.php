@@ -36,10 +36,14 @@
                 this.remaining--;
                 if (this.remaining <= 0) {
                     clearInterval(this.countdownTimer);
-                    this.$refs.endSessionForm.submit();
+                    this.signOut();
                 }
             }, 1000);
             this.$nextTick(() => this.$refs.stillHere.focus());
+        },
+        signOut() {
+            globalThis.stampQueuedSessions?.(this.$refs.endSessionForm);
+            this.$refs.endSessionForm.submit();
         },
         dismiss() {
             clearInterval(this.countdownTimer);
@@ -77,7 +81,7 @@
                 seconds.
             </p>
             <div class="modal-action justify-center">
-                <button type="button" class="btn btn-ghost" @click="$refs.endSessionForm.submit()">Sign Out Now</button>
+                <button type="button" class="btn btn-ghost" @click="signOut()">Sign Out Now</button>
                 <button type="button" class="btn btn-primary" x-ref="stillHere" @click="dismiss()">Keep Session Open</button>
             </div>
         </div>

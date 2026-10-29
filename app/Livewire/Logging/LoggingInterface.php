@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Services\BandModeSwitchService;
 use App\Services\BandResolverService;
 use App\Services\DuplicateCheckService;
+use App\Services\EmptySessionPruner;
 use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
 use App\Support\AdvancedContactFields;
@@ -220,9 +221,25 @@ class LoggingInterface extends Component
         $this->dispatch('suggestion-selected');
     }
 
-    public function endSession(): void
+    /**
+     * End this session. With $removeIfEmpty (the browser has no contacts
+     * still queued for it) a session that logged nothing is deleted rather
+     * than left behind.
+     */
+    public function endSession(bool $removeIfEmpty = false): void
     {
-        $this->operatingSession->update(['end_time' => appNow()]);
+        $session = $this->operatingSession;
+
+        app(DuplicateCheckService::class)->locked(
+            $session->station->event_configuration_id,
+            function () use ($session, $removeIfEmpty): void {
+                $session->update(['end_time' => appNow()]);
+
+                if ($removeIfEmpty) {
+                    app(EmptySessionPruner::class)->deleteIfEmpty($session);
+                }
+            },
+        );
 
         if (StationMode::isActive()) {
             StationMode::endSession(request());
@@ -238,11 +255,13 @@ class LoggingInterface extends Component
      * Move to another band and mode: end this session and start a new one
      * on the same station. Returns the new session's id and logging URL for
      * the contact queue, which carries unsynced contacts across before it
-     * navigates, or the reason the switch can't happen.
+     * navigates, or the reason the switch can't happen. With $removeIfEmpty
+     * (no contacts still queued for this session) a session that logged
+     * nothing is deleted rather than left behind.
      *
      * @return array{ok: bool, session_id?: int, url?: string, message?: string}
      */
-    public function switchBandMode(int $bandId, int $modeId): array
+    public function switchBandMode(int $bandId, int $modeId, bool $removeIfEmpty = false): array
     {
         $this->operatingSession->refresh();
 
@@ -252,7 +271,7 @@ class LoggingInterface extends Component
         }
 
         try {
-            $session = app(BandModeSwitchService::class)->switchTo($this->operatingSession, $bandId, $modeId);
+            $session = app(BandModeSwitchService::class)->switchTo($this->operatingSession, $bandId, $modeId, $removeIfEmpty);
         } catch (BandModeSwitchException $exception) {
             return ['ok' => false, 'message' => $exception->getMessage()];
         }

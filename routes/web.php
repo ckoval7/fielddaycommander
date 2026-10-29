@@ -106,7 +106,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Contact Logging
 Route::middleware(['auth', 'verified', 'can:log-contacts'])->group(function () {
     Route::get('/logging', StationSelect::class)->name('logging.station-select');
-    Route::get('/logging/session/{operatingSession}', LoggingInterface::class)->name('logging.session');
+    // A session that ended with no contacts is deleted, so Back to its page goes to Station Select.
+    Route::get('/logging/session/{operatingSession}', LoggingInterface::class)
+        ->name('logging.session')
+        ->missing(fn () => redirect()->route('logging.station-select'));
     Route::get('/logging/transcribe', TranscribeSelect::class)->name('logging.transcribe.select');
     Route::get('/logging/transcribe/{station}', TranscribeInterface::class)->name('logging.transcribe.session');
 });
