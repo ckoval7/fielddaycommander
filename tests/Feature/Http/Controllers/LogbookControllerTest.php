@@ -39,8 +39,11 @@ beforeEach(function () {
         'event_id' => $this->event->id,
     ]);
 
-    // Create a user for authentication tests
+    // Create a user for authentication tests. Downloading the log takes the
+    // same permission as the Reports page.
+    Permission::findOrCreate('view-reports', 'web');
     $this->user = User::factory()->create();
+    $this->user->givePermissionTo('view-reports');
 
     // Create reference data
     $this->band = Band::first() ?? Band::create([
@@ -69,6 +72,10 @@ describe('index route', function () {
 });
 
 describe('export route', function () {
+    beforeEach(function () {
+        $this->actingAs($this->user);
+    });
+
     test('returns CSV file with correct headers for authenticated user', function () {
         $this->actingAs($this->user);
 
@@ -90,10 +97,16 @@ describe('export route', function () {
             ->and($content)->toContain('Mode');
     });
 
-    test('allows unauthenticated access to public export', function () {
-        $response = $this->get(route('logbook.export'));
+    test('sends guests to the login page instead of exporting', function () {
+        auth()->logout();
 
-        $response->assertOk();
+        $this->get(route('logbook.export'))->assertRedirect(route('login'));
+    });
+
+    test('forbids users who cannot open the reports page', function () {
+        $this->actingAs(User::factory()->create())
+            ->get(route('logbook.export'))
+            ->assertForbidden();
     });
 
     test('returns 404 when no active event exists', function () {
@@ -366,6 +379,23 @@ describe('export route', function () {
 
             expect(exportedCallsigns($this->get($component->instance()->exportUrl)))->toBe(['K1PAST']);
         });
+    });
+
+    test('browser shows the export button only to users who can open the reports page', function () {
+        Livewire::test(LogbookBrowser::class)->assertSee('Export CSV');
+
+        Livewire::actingAs(User::factory()->create())
+            ->test(LogbookBrowser::class)
+            ->assertDontSee('Export CSV')
+            ->assertDontSee(route('logbook.export'));
+    });
+
+    test('browser hides the export button from guests', function () {
+        auth()->logout();
+
+        Livewire::test(LogbookBrowser::class)
+            ->assertOk()
+            ->assertDontSee('Export CSV');
     });
 
     test('browser export link follows filter changes made after the page loads', function () {
