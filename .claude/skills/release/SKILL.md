@@ -45,7 +45,7 @@ Fixes in steps 1–3 and 5 go on short branches off `dev` (`fix/sonar-<topic>`, 
 
 ## 1. Local Sonar scan (iterate until clean)
 
-`sonar-local.sh` runs a throwaway local SonarQube server with SonarCloud's own **"Sonar way comprehensive"** profiles, so local results match SonarCloud's rules:
+`sonar-local.sh` runs a throwaway local SonarQube server with SonarCloud's own **"Sonar way comprehensive"** profiles, so local results match SonarCloud's rules. Never scan with the community image's default profiles. `up` warns if SonarCloud's project uses anything other than comprehensive for a language:
 
 ```bash
 $S up        # ~1 min the first time; reuses the server if it's already running
