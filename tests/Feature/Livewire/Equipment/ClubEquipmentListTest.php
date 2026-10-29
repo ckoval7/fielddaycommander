@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Equipment\ClubEquipmentList;
+use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
@@ -591,6 +592,47 @@ test('equipment manager can bulk delete club equipment', function () {
 
     expect(Equipment::where('id', $eq1->id)->exists())->toBeFalse();
     expect(Equipment::where('id', $eq2->id)->exists())->toBeFalse();
+});
+
+test('club bulk delete writes an audit log entry for each item', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $items = Equipment::factory()->count(2)->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', $items->pluck('id')->all())
+        ->call('bulkDeleteEquipment');
+
+    expect(AuditLog::where('action', 'equipment.deleted')->pluck('auditable_id')->sort()->values()->all())
+        ->toBe($items->pluck('id')->sort()->values()->all());
+});
+
+test('club equipment shows its own empty state and no selection for regular users', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSee('No club equipment found. Try changing the filters.')
+        ->assertSeeHtml('colspan="8"')
+        ->assertDontSeeHtml('wire:model.live="selectedIds"')
+        ->assertDontSee('Add Club Equipment');
+});
+
+test('club equipment lists the manager by call sign in its own column', function () {
+    $this->actingAs($this->user);
+
+    $manager = User::factory()->create(['call_sign' => 'KD9MGR']);
+    Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'managed_by_user_id' => $manager->id,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSeeHtmlInOrder(['Managed by KD9MGR', '<th>Manager</th>', '<div class="text-sm">KD9MGR</div>']);
 });
 
 test('regular user cannot bulk delete club equipment', function () {

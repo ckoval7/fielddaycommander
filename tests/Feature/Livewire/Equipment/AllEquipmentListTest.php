@@ -312,6 +312,61 @@ test('viewer without edit-any-equipment does not see action menu', function () {
         ->assertDontSee(route('equipment.edit', $equipment), false);
 });
 
+test('equipment catalog shows cards until the table fits beside the open sidebar at 2xl', function () {
+    $this->actingAs(makeAllEquipmentManager());
+
+    $owner = User::factory()->create(['call_sign' => 'KD9OWN']);
+    $item = Equipment::factory()->create([
+        'owner_user_id' => $owner->id,
+        'type' => 'power_supply',
+        'description' => str_repeat('A long description that would stretch the table. ', 4),
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSeeHtmlInOrder([
+            '2xl:hidden grid grid-cols-1 xl:grid-cols-2',
+            'wire:key="equipment-card-'.$item->id.'"',
+            'KD9OWN',
+            'hidden 2xl:block',
+            '<th>Owner</th>',
+            '<th>Make/Model</th>',
+            '<span class="badge badge-primary badge-sm whitespace-nowrap">',
+            '<td class="min-w-40 max-w-xs">',
+            '<p class="line-clamp-2 text-sm">',
+            'aria-label="Actions for '.e($item->make.' '.$item->model).'"',
+        ])
+        ->assertDontSeeHtml('hidden xl:block')
+        ->assertDontSeeHtml('overflow-x-auto')
+        ->assertDontSeeHtml('wire:model.live="selectedIds"');
+});
+
+test('equipment catalog marks club equipment with its manager in the owner column', function () {
+    $this->actingAs($this->user);
+
+    $manager = User::factory()->create(['call_sign' => 'KD9MGR']);
+    Equipment::factory()->create([
+        'owner_user_id' => null,
+        'owner_organization_id' => Organization::factory()->create()->id,
+        'managed_by_user_id' => $manager->id,
+    ]);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSeeHtmlInOrder(['badge-club badge-xs', 'Manager: KD9MGR', 'badge-club badge-sm', 'Manager: KD9MGR']);
+});
+
+test('equipment catalog empty state spans every column', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSee('No equipment found. Try changing the filters.')
+        ->assertSeeHtml('colspan="8"');
+
+    $this->actingAs(makeAllEquipmentManager());
+
+    Livewire::test(AllEquipmentList::class)
+        ->assertSeeHtml('colspan="9"');
+});
+
 test('equipment manager can delete another users equipment', function () {
     $this->actingAs(makeAllEquipmentManager());
 

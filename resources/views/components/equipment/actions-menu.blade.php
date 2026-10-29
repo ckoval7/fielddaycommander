@@ -2,8 +2,9 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-{{-- Per-item actions menu for the Equipment Catalog list --}}
-@php($commitment = $item->activeCommitments->first())
+{{-- Per-item actions menu for the equipment lists: edit, the current commitment's actions or Commit to Event, and delete. --}}
+@props(['item', 'commitment' => null])
+
 <x-dropdown>
     <x-slot:trigger>
         <x-button icon="phosphor-dots-three-vertical" class="btn-sm btn-ghost" aria-label="Actions for {{ $item->make }} {{ $item->model }}" />

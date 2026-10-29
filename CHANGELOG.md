@@ -57,6 +57,9 @@
 - On **Log Contact** at a **VHF/UHF Only** station, typing a lower band such as `20m` gave the general "Enter callsign, class, and section" error. It now says the station is VHF/UHF Only and to choose 6m or higher. The shortcut hint also showed `40M` there. It now shows a usable band such as `6M`.
 - On **My Equipment** and **Club Equipment**, deleting a selection that included a station's primary radio showed "items deleted" and then immediately replaced it with "Radio still in use", so you couldn't tell what was deleted. One **Some items kept** warning now gives the number deleted and names the radio that was kept and why.
 - When cloning stations, a warning such as a deleted primary radio replaced the **Stations Cloned** summary. The summary now includes the warnings.
+- On **My Equipment** at laptop widths with the sidebar showing, items with long descriptions pushed the table past its card, the page scrolled sideways and **Actions** was off the edge. Items now show as cards until the whole table fits, as on **Club Equipment**.
+- On **Equipment Catalog** at laptop widths with the sidebar showing, the table was wider than its card, so you had to scroll it sideways to reach **Actions**. Items now show as cards until the whole table fits.
+- Deleting several selected items at once on **My Equipment** left nothing in **Audit Logs**. Each deleted item now gets an entry, as it does on **Club Equipment**.
 
 ## 26.10.13 - 2026-10-26
 
