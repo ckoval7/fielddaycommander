@@ -157,10 +157,66 @@ class SubmissionReportService
             ['code' => 'social_media',            'name' => 'Social media'],
         ];
 
-        // Index claimed bonuses by bonus_type code, scoped to the event's
-        // resolved rules_version so stale cross-version rows do not leak in.
         $rulesVersion = $config->event?->resolved_rules_version;
+        $claimed = $this->claimedBonuses($config, $rulesVersion);
 
+        // Bonuses this entry class can't earn (site responsibilities on a
+        // Class A sheet, say) are left off unless something was claimed.
+        $bonusTypes = BonusType::query()
+            ->where('event_type_id', $config->event?->event_type_id)
+            ->where('rules_version', $rulesVersion)
+            ->get()
+            ->keyBy('code');
+
+        $checklist = [];
+        $rendered = [];
+        foreach ($arrlOrder as $item) {
+            $code = $item['code'];
+            $match = $claimed[$code] ?? null;
+            $rendered[$code] = true;
+
+            if ($match === null && $this->cannotEarnBonus($config, $code, $bonusTypes->get($code))) {
+                continue;
+            }
+
+            $checklist[] = [
+                'name' => $item['name'],
+                'code' => $code,
+                'claimed' => $match !== null,
+                'points' => $match['points'] ?? 0,
+                'is_verified' => $match['is_verified'] ?? false,
+                'auto' => $item['auto'] ?? false,
+            ];
+        }
+
+        // Append ruleset-specific extras (e.g. non-ARRL bonuses introduced by a
+        // custom rules_version) so they are visible on the sheet.
+        foreach ($claimed as $code => $match) {
+            if (isset($rendered[$code])) {
+                continue;
+            }
+
+            $checklist[] = [
+                'name' => $match['name'] ?? $code,
+                'code' => $code,
+                'claimed' => true,
+                'points' => $match['points'],
+                'is_verified' => $match['is_verified'],
+                'auto' => false,
+            ];
+        }
+
+        return $checklist;
+    }
+
+    /**
+     * Claimed bonuses keyed by bonus_type code, scoped to the event's resolved
+     * rules_version so stale cross-version rows do not leak in.
+     *
+     * @return array<string, array{name?: string, points: int, is_verified: bool}>
+     */
+    private function claimedBonuses(EventConfiguration $config, ?string $rulesVersion): array
+    {
         $claimed = [];
         foreach ($config->bonuses as $bonus) {
             $bonusType = $bonus->bonusType;
@@ -187,58 +243,20 @@ class SubmissionReportService
             }
         }
 
-        // Bonuses this entry class can't earn (site responsibilities on a
-        // Class A sheet, say) are left off unless something was claimed.
-        $bonusTypes = BonusType::query()
-            ->where('event_type_id', $config->event?->event_type_id)
-            ->where('rules_version', $rulesVersion)
-            ->get()
-            ->keyBy('code');
+        return $claimed;
+    }
 
-        $checklist = [];
-        $rendered = [];
-        foreach ($arrlOrder as $item) {
-            $code = $item['code'];
-            $match = $claimed[$code] ?? null;
-            $rendered[$code] = true;
-            $bonusType = $bonusTypes->get($code);
-
-            if ($match === null && $bonusType && ! $config->isClassEligibleForBonus($bonusType)) {
-                continue;
-            }
-
-            if ($match === null && $code === '_gota' && ! $config->has_gota_station) {
-                continue;
-            }
-
-            $checklist[] = [
-                'name' => $item['name'],
-                'code' => $code,
-                'claimed' => $match !== null,
-                'points' => $match ? $match['points'] : 0,
-                'is_verified' => $match ? $match['is_verified'] : false,
-                'auto' => $item['auto'] ?? false,
-            ];
+    /**
+     * Whether this entry can't earn the bonus at all: the class isn't
+     * eligible for it, or it's the GOTA bonus and there's no GOTA station.
+     */
+    private function cannotEarnBonus(EventConfiguration $config, string $code, ?BonusType $bonusType): bool
+    {
+        if ($bonusType && ! $config->isClassEligibleForBonus($bonusType)) {
+            return true;
         }
 
-        // Append ruleset-specific extras (e.g. non-ARRL bonuses introduced by a
-        // custom rules_version) so they are visible on the sheet.
-        foreach ($claimed as $code => $match) {
-            if (isset($rendered[$code])) {
-                continue;
-            }
-
-            $checklist[] = [
-                'name' => $match['name'] ?? $code,
-                'code' => $code,
-                'claimed' => true,
-                'points' => $match['points'],
-                'is_verified' => $match['is_verified'],
-                'auto' => false,
-            ];
-        }
-
-        return $checklist;
+        return $code === '_gota' && ! $config->has_gota_station;
     }
 
     /**
