@@ -425,11 +425,11 @@ class DuplicateCheckService
     {
         $event = $config?->event;
 
-        if ($event?->start_time === null || $event->end_time === null || $contact->qso_time === null) {
+        if ($event === null || $contact->qso_time === null) {
             return true;
         }
 
-        return $contact->qso_time->between($event->start_time, $event->end_time);
+        return $event->isWithinOperatingPeriod($contact->qso_time);
     }
 
     /**

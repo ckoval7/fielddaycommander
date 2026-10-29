@@ -1010,7 +1010,7 @@ describe('csv export safety', function () {
 });
 
 describe('mobile card list', function () {
-    test('renders entries as cards with selection and row actions below md', function () {
+    test('renders entries as cards with selection and row actions until the table fits at xl', function () {
         $this->actingAs($this->admin);
 
         $entry = GuestbookEntry::factory()->create([
@@ -1022,14 +1022,43 @@ describe('mobile card list', function () {
 
         Livewire::test(GuestbookManager::class, ['event' => $this->event])
             ->assertSeeHtmlInOrder([
-                'md:hidden space-y-3',
+                'xl:hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3',
                 'wire:key="guestbook-card-'.$entry->id.'"',
                 'value="'.$entry->id.'" wire:model.live="selectedIds"',
                 'KD9MOB',
                 'openVerifyModal('.$entry->id.')',
                 'openDeleteModal('.$entry->id.')',
-                'hidden md:block overflow-x-auto',
+                'hidden xl:block overflow-x-auto',
             ]);
+    });
+
+    test('keeps the bonus panel beside the stats and filters only from xl', function () {
+        $this->actingAs($this->admin);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSeeHtmlInOrder([
+                'grid grid-cols-1 xl:grid-cols-3 xl:grid-rows-[auto_1fr]',
+                'xl:col-span-2',
+                'Total',
+                'xl:col-start-3 xl:row-start-1 xl:row-span-2',
+                'Guestbook Bonuses',
+                'xl:col-span-2',
+                'Search name, callsign, email',
+            ])
+            ->assertDontSeeHtml('lg:grid-cols-4 gap-6');
+    });
+
+    test('shows presence under status until the presence column fits at 2xl', function () {
+        $this->actingAs($this->admin);
+
+        GuestbookEntry::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'presence_type' => PresenceType::Online,
+        ]);
+
+        Livewire::test(GuestbookManager::class, ['event' => $this->event])
+            ->assertSeeHtml('hidden 2xl:table-cell')
+            ->assertSeeHtml('<div class="2xl:hidden text-base-content/60 whitespace-nowrap">Online</div>');
     });
 });
 

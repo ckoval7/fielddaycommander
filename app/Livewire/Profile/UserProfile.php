@@ -602,7 +602,7 @@ class UserProfile extends Component
             'sessions' => $sessions,
             'operatingSessions' => $operatingSessions,
             'activityLog' => $activityLog,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Profile']);
     }
 
     /**

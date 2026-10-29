@@ -6,6 +6,7 @@
 namespace App\Services;
 
 use App\Models\Contact;
+use App\Models\Event;
 use Illuminate\Database\Eloquent\Builder;
 
 class LogbookQueryBuilder
@@ -206,11 +207,17 @@ class LogbookQueryBuilder
      * Filter to contacts that need attention before the log is submitted.
      *
      * @param  string|null  $attentionFilter  'only' = needs attention only, null = show all
+     * @param  int|null  $eventConfigurationId  the configuration being browsed, so the
+     *                                          window ends at its operating end
      */
-    public function forAttentionStatus(Builder $query, ?string $attentionFilter): Builder
+    public function forAttentionStatus(Builder $query, ?string $attentionFilter, ?int $eventConfigurationId = null): Builder
     {
         if ($attentionFilter === 'only') {
-            return $query->needsAttention();
+            $event = $eventConfigurationId === null
+                ? null
+                : Event::query()->whereHas('eventConfiguration', fn (Builder $config) => $config->whereKey($eventConfigurationId))->first();
+
+            return $query->needsAttention($event);
         }
 
         return $query;
@@ -260,7 +267,7 @@ class LogbookQueryBuilder
         $query = $this->forTranscribed($query, $filters['transcribed_filter'] ?? null);
         $query = $this->forGotaStatus($query, $filters['gota_filter'] ?? null);
         $query = $this->forDeletedStatus($query, $filters['deleted_filter'] ?? null);
-        $query = $this->forAttentionStatus($query, $filters['attention_filter'] ?? null);
+        $query = $this->forAttentionStatus($query, $filters['attention_filter'] ?? null, $filters['event_configuration_id']);
         $query = $this->chronological($query);
 
         return $query;

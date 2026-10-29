@@ -5,7 +5,9 @@
 
 namespace App\Livewire\Equipment;
 
-use App\Models\AuditLog;
+use App\Livewire\Equipment\Concerns\BulkDeletesEquipment;
+use App\Livewire\Equipment\Concerns\ListsEquipment;
+use App\Livewire\Equipment\Concerns\ManagesEquipmentCommitments;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use Closure;
@@ -13,29 +15,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+/**
+ * My Equipment: the signed-in user's own equipment. Anyone who can manage
+ * their own equipment can select, commit and delete what they own.
+ */
 class EquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
-
-    public string $search = '';
-
-    public ?string $typeFilter = null;
-
-    public ?string $statusFilter = null;
-
-    public string $sortBy = 'created_at';
-
-    public string $sortDirection = 'desc';
-
-    public bool $showPhotoModal = false;
-
-    public ?string $photoPath = null;
-
-    public ?string $photoDescription = null;
+    use AuthorizesRequests, BulkDeletesEquipment, ListsEquipment, ManagesEquipmentCommitments;
 
     /**
      * Mount the component and authorize the user.
@@ -46,60 +34,23 @@ class EquipmentList extends Component
     }
 
     /**
-     * Reset to page 1 when search query changes.
+     * Only the authenticated user's equipment.
      */
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when type filter changes.
-     */
-    public function updatedTypeFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when status filter changes.
-     */
-    public function updatedStatusFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Get the filtered and sorted equipment query.
-     *
-     * Returns only the authenticated user's equipment, filtered by search query,
-     * type, and status, then sorted by the specified column.
-     */
-    #[Computed]
-    public function equipment()
+    protected function equipmentQuery(): Builder
     {
         return Equipment::query()
-            ->with(['manager', 'commitments.event'])
-            ->where('owner_user_id', auth()->id())
-            ->when($this->search, fn (Builder $query) => $query->search($this->search))
-            ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
-            ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
-            ->sortedBy($this->sortBy, $this->sortDirection)
-            ->orderBy('id', $this->sortDirection === 'asc' ? 'asc' : 'desc')
-            ->paginate(25);
+            ->with(['manager', 'activeCommitments'])
+            ->where('owner_user_id', auth()->id());
     }
 
     /**
-     * Open modal to view full-size equipment photo.
-     *
-     * @param  string  $photoPath  The storage path of the photo
-     * @param  string  $description  Equipment description
+     * Break sort ties by ID so items don't swap places between pages.
      */
-    public function viewPhoto(string $photoPath, string $description): void
+    protected function sortEquipment(Builder $query): Builder
     {
-        $this->photoPath = $photoPath;
-        $this->photoDescription = $description;
-        $this->showPhotoModal = true;
+        return $query
+            ->sortedBy($this->sortBy, $this->sortDirection)
+            ->orderBy('id', $this->sortDirection === 'asc' ? 'asc' : 'desc');
     }
 
     /**
@@ -143,58 +94,12 @@ class EquipmentList extends Component
     }
 
     /**
-     * Delete equipment after authorization check.
-     *
-     * @param  int  $equipmentId  The ID of the equipment to delete
-     */
-    public function deleteEquipment(int $equipmentId): void
-    {
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        $this->authorize('delete', $equipment);
-
-        AuditLog::log(
-            action: 'equipment.deleted',
-            auditable: $equipment,
-            oldValues: [
-                'make' => $equipment->make,
-                'model' => $equipment->model,
-                'type' => $equipment->type,
-            ]
-        );
-
-        $equipment->delete();
-
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted.', type: 'success');
-    }
-
-    /**
-     * Bulk delete selected equipment items owned by the authenticated user.
-     */
-    public function bulkDeleteEquipment(): void
-    {
-        $ownedEquipment = $this->scopeSelectedEquipment($this->selectedIds);
-
-        $count = $ownedEquipment->count();
-
-        foreach ($ownedEquipment as $equipment) {
-            $equipment->delete();
-        }
-
-        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
-
-        $this->selectedIds = [];
-
-        unset($this->equipment);
-    }
-
-    /**
      * Render the component view.
      */
     public function render(): View
     {
         return view('livewire.equipment.equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'My Equipment']);
     }
 }

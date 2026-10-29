@@ -38,7 +38,6 @@ class OperatingClassFactory extends Factory
             'description' => 'Test Operating Class',
             'allows_gota' => true,
             'allows_free_vhf' => false,
-            'max_power_watts' => 150,
             'requires_emergency_power' => false,
         ];
     }

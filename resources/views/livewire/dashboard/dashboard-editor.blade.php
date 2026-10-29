@@ -124,13 +124,14 @@
             @edit-mode-changed.window="setEnabled($event.detail.enabled)"
             x-init="setEnabled(@js($editMode))"
             wire:key="editor-sortable-{{ $dashboard->id }}"
+            class="@container"
         >
             {{-- Screen reader live region --}}
             <div aria-live="polite" aria-atomic="true" class="sr-only" x-text="announceMessage"></div>
 
             <ul
                 x-bind="sortableContainer"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-flow-row-dense gap-5 widget-grid isolate"
+                class="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-3 grid-flow-row-dense gap-5 widget-grid isolate"
                 style="grid-auto-rows: 90px;"
             >
                 @foreach($widgets as $index => $widget)
@@ -144,7 +145,7 @@
                         // or the grid grows an implicit column and every widget reflows.
                         $spanClasses = match($colSpan) {
                             2 => 'sm:col-span-2',
-                            3 => 'sm:col-span-2 lg:col-span-3',
+                            3 => 'sm:col-span-2 @3xl:col-span-3',
                             default => '',
                         };
                         $rowSpanClasses = match($rowSpan) {

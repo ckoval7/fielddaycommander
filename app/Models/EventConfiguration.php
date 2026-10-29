@@ -6,12 +6,14 @@
 namespace App\Models;
 
 use App\Enums\PowerSource;
+use App\Scoring\ClassPowerLimits;
 use App\Scoring\Contracts\DeterminesContactCredit;
 use App\Scoring\Contracts\FieldDayRuleSet;
 use App\Scoring\Contracts\RuleSet;
 use App\Scoring\Dto\Nomenclature;
 use App\Scoring\Dto\PowerContext;
 use App\Scoring\Dto\ScoreBreakdown;
+use App\Scoring\Exceptions\UnknownRuleSet;
 use App\Scoring\RuleSetFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -180,7 +182,8 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Sum of points on non-duplicate, non-GOTA contacts, before any multiplier.
+     * Sum of points on non-duplicate contacts, before any multiplier. GOTA
+     * station contacts count here too; their GOTA bonus is separate.
      */
     public function qsoBasePoints(): int
     {
@@ -190,14 +193,13 @@ class EventConfiguration extends Model
 
         return (int) $this->contacts()
             ->where('is_duplicate', false)
-            ->where('is_gota_contact', false)
             ->sum('points');
     }
 
     /**
      * Resolve points for a single contact via the event's pinned RuleSet.
      *
-     * Handles GOTA flat-rate and mode_rule_points overrides internally.
+     * Handles mode_rule_points overrides internally.
      */
     public function pointsForContact(Mode $mode, Station $station): int
     {
@@ -211,8 +213,7 @@ class EventConfiguration extends Model
      * and submitted logs (Cabrillo, ADIF, summary sheets) should all start here.
      * Contacts a rulebook gives no credit (e.g. WFD 2027 WSJT-mode or satellite
      * contacts) are left out; rulebooks without such rules return every
-     * non-duplicate contact. GOTA contacts are included — filter them yourself
-     * where the rulebook scores them separately.
+     * non-duplicate contact. GOTA contacts are included.
      *
      * @return HasMany<Contact, EventConfiguration>
      */
@@ -338,24 +339,154 @@ class EventConfiguration extends Model
     }
 
     /**
-     * Get the effective max power considering both event config and station power levels.
+     * The power the entry is scored at: the highest power on any contact.
      *
-     * Per ARRL Field Day rules, the power multiplier applies to the entire entry.
-     * If any station uses higher power than the event config, that becomes the
-     * effective power for scoring purposes.
+     * Per ARRL Field Day rules, the power multiplier applies to the entire
+     * entry and follows the most power any transmitter actually used. Until a
+     * contact with a power is logged, the planned power (the higher of the
+     * event setting and any station's maximum) stands in, so the Scoring page,
+     * submission sheet and Cabrillo header show what the entry is set up for.
      */
     public function effectiveMaxPowerWatts(): int
     {
+        return $this->highestContactPowerWatts() ?? $this->plannedMaxPowerWatts();
+    }
+
+    /**
+     * Highest power logged on any contact, or null when none records a power.
+     * Duplicates count: they were still transmitted at that power.
+     */
+    public function highestContactPowerWatts(): ?int
+    {
+        $watts = $this->contacts()->max('power_watts');
+
+        return $watts === null ? null : (int) $watts;
+    }
+
+    /**
+     * The higher of the event's power setting and any station's maximum power.
+     */
+    public function plannedMaxPowerWatts(): int
+    {
         $stationMaxPower = $this->stations()->max('max_power_watts') ?? 0;
 
-        return max($this->max_power_watts, $stationMaxPower);
+        return max((int) $this->max_power_watts, (int) $stationMaxPower);
+    }
+
+    /**
+     * Most power a contact may be made at under the event's rulebook for the
+     * operating class, or null when the class has no limit (ARRL Field Day
+     * Classes A, B and C are limited to 500 W PEP; Winter Field Day caps every
+     * class at 100 W PEP). The limit is a rule of the event's rules version;
+     * with no rulebook to judge by, there is no limit.
+     */
+    public function powerCapWatts(): ?int
+    {
+        $classCode = $this->operatingClass?->code;
+
+        if ($classCode === null) {
+            return null;
+        }
+
+        try {
+            return ClassPowerLimits::for($this->ruleSet(), $classCode);
+        } catch (UnknownRuleSet) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether a contact was made above the operating class's power limit.
+     * Such contacts are logged but score 0 points.
+     */
+    public function exceedsPowerCap(Contact $contact): bool
+    {
+        $cap = $this->powerCapWatts();
+
+        return $cap !== null
+            && $contact->power_watts !== null
+            && (int) $contact->power_watts > $cap;
+    }
+
+    /**
+     * Number of non-duplicate contacts made above the operating class's power limit.
+     */
+    public function overPowerCapContactCount(): int
+    {
+        $cap = $this->powerCapWatts();
+
+        if ($cap === null) {
+            return 0;
+        }
+
+        return $this->contacts()
+            ->where('is_duplicate', false)
+            ->where('power_watts', '>', $cap)
+            ->count();
+    }
+
+    /**
+     * Station power sources the entry has used: the source recorded on each
+     * contact when it was made, plus every station's current source.
+     *
+     * Contacts keep the source their station had at the time, so switching a
+     * station back from commercial mains doesn't erase the contacts made on
+     * mains. Event-level power flags are separate; see usesPowerSource().
+     *
+     * @return list<PowerSource>
+     */
+    public function stationPowerSourcesUsed(): array
+    {
+        $values = $this->contacts()
+            ->whereNotNull('power_source')
+            ->distinct()
+            ->toBase()
+            ->pluck('power_source')
+            ->merge($this->stations()->whereNotNull('power_source')->distinct()->toBase()->pluck('power_source'));
+
+        return $values
+            ->map(fn (string $value): ?PowerSource => PowerSource::tryFrom($value))
+            ->filter()
+            ->unique(fn (PowerSource $source): string => $source->value)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Whether the entry used a power source, from the event's power flags or
+     * any station's power source (current, or recorded on a contact).
+     *
+     * @param  list<PowerSource>|null  $stationSources  Pass stationPowerSourcesUsed() to reuse it.
+     */
+    public function usesPowerSource(PowerSource $source, ?array $stationSources = null): bool
+    {
+        $eventFlag = match ($source) {
+            PowerSource::CommercialMains => (bool) $this->uses_commercial_power,
+            PowerSource::Generator => (bool) $this->uses_generator,
+            PowerSource::Battery => (bool) $this->uses_battery,
+            PowerSource::Solar => (bool) $this->uses_solar,
+            PowerSource::Other => filled($this->uses_other_power),
+        };
+
+        return $eventFlag || in_array($source, $stationSources ?? $this->stationPowerSourcesUsed(), true);
+    }
+
+    /**
+     * Whether any contact or setting puts the entry on commercial mains.
+     * A Class A entry on mains is listed as A-Commercial and loses the
+     * emergency power bonus.
+     */
+    public function usesCommercialMains(): bool
+    {
+        return $this->usesPowerSource(PowerSource::CommercialMains);
     }
 
     /**
      * Check if station qualifies for QRP natural power bonus (5x multiplier).
      *
      * Requires natural power sources at event level and no commercial/generator power.
-     * Also checks that all stations with a power_source set use natural power.
+     * Every station power source used, current or recorded on a contact, must
+     * also be natural power.
      */
     public function hasQrpNaturalPowerBonus(): bool
     {
@@ -370,18 +501,13 @@ class EventConfiguration extends Model
             return false;
         }
 
-        // Check station-level power sources: any non-natural station disqualifies
-        $naturalValues = collect(PowerSource::cases())
-            ->filter(fn (PowerSource $ps) => $ps->isNaturalPower())
-            ->map(fn (PowerSource $ps) => $ps->value)
-            ->all();
+        foreach ($this->stationPowerSourcesUsed() as $source) {
+            if (! $source->isNaturalPower()) {
+                return false;
+            }
+        }
 
-        $hasDisqualifyingStation = $this->stations()
-            ->whereNotNull('power_source')
-            ->whereNotIn('power_source', $naturalValues)
-            ->exists();
-
-        return ! $hasDisqualifyingStation;
+        return true;
     }
 
     /**
@@ -402,19 +528,26 @@ class EventConfiguration extends Model
      */
     public function calculateGotaBonus(): int
     {
+        $perContact = $this->gotaBonusPointsPerContact();
+
+        if ($perContact === 0) {
+            return 0;
+        }
+
+        return $this->scoredGotaContacts()->count() * $perContact;
+    }
+
+    /**
+     * GOTA bonus points each GOTA contact earns, or 0 without a GOTA station
+     * or under a rulebook that has none.
+     */
+    public function gotaBonusPointsPerContact(): int
+    {
         if (! $this->has_gota_station) {
             return 0;
         }
 
-        $rules = $this->fieldDayRules();
-
-        if (! $rules) {
-            return 0;
-        }
-
-        $gotaContactCount = $this->scoredGotaContacts()->count();
-
-        return $gotaContactCount * $rules->gotaPointsPerContact();
+        return $this->fieldDayRules()?->gotaPointsPerContact() ?? 0;
     }
 
     /**
@@ -433,7 +566,7 @@ class EventConfiguration extends Model
             ->where('is_gota_contact', true)
             ->when($event?->start_time !== null && $event?->end_time !== null, fn ($query) => $query
                 ->where(fn ($inPeriod) => $inPeriod
-                    ->whereBetween('qso_time', [$event->start_time, $event->end_time])
+                    ->whereBetween('qso_time', [$event->start_time, $event->operatingEndsAt()])
                     ->orWhereNull('qso_time')));
     }
 
@@ -524,25 +657,19 @@ class EventConfiguration extends Model
      *
      * Awarded when running 100% on emergency power (no commercial power)
      * and the operating class is eligible for the bonus.
-     * Disqualified if the event config uses commercial power OR any station
-     * has its power_source set to CommercialMains.
+     * Disqualified if the event config uses commercial power, any station is
+     * set to CommercialMains, or any contact was made while its station was.
      */
     public function calculateEmergencyPowerBonus(): int
     {
         $rules = $this->fieldDayRules();
         $bonusType = $rules?->bonus('emergency_power');
 
-        $hasCommercialStation = ! $this->uses_commercial_power
-            && $this->stations()
-                ->where('power_source', PowerSource::CommercialMains->value)
-                ->exists();
-
         $disqualified = ! $rules
             || ! $bonusType
             || ! $bonusType->is_active
-            || $this->uses_commercial_power
-            || $hasCommercialStation
-            || ! $this->isClassEligibleForBonus($bonusType);
+            || ! $this->isClassEligibleForBonus($bonusType)
+            || $this->usesCommercialMains();
 
         if ($disqualified) {
             return 0;

@@ -309,3 +309,32 @@ describe('live broadcasts', function () {
             && collect($event->contactIds)->sort()->values()->all() === collect([$this->contact->id, $second->id])->sort()->values()->all());
     });
 });
+
+describe('sections Field Day folds', function () {
+    beforeEach(function () {
+        $this->ter = Section::firstOrCreate(['code' => 'TER'], ['name' => 'Territories', 'region' => 'VE', 'is_active' => true]);
+        $this->yt = Section::firstOrCreate(['code' => 'YT'], ['name' => 'Yukon', 'region' => 'VE', 'is_active' => true]);
+    });
+
+    test('stores a newly picked YT as TER for a Field Day event', function () {
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('sectionId', $this->yt->id)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect($this->contact->fresh()->section_id)->toBe($this->ter->id);
+    });
+
+    test('leaves a contact already logged as YT alone when its section is unchanged', function () {
+        $this->contact->update(['section_id' => $this->yt->id]);
+
+        Livewire::test(ContactEditor::class)
+            ->call('openEdit', $this->contact->id)
+            ->set('notes', 'Checked')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect($this->contact->fresh()->section_id)->toBe($this->yt->id);
+    });
+});

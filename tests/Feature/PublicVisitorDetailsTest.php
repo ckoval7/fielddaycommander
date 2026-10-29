@@ -31,7 +31,7 @@ it('shows public visitor details when the site is open to the public', function 
     $this->get('/')
         ->assertOk()
         ->assertSee('Visit Us')
-        ->assertSee('hosted by Test Radio Club')
+        ->assertSee('Hosted by Test Radio Club')
         ->assertSee('Behind the library')
         ->assertSee('Saturday 10am to 4pm')
         ->assertSee('info@example.org')

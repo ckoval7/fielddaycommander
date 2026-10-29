@@ -16,6 +16,7 @@
         get gota_operator_user_id() { return @this.gotaOperatorUserId || null },
         mode_category: {{ Js::from($operatingSession->mode?->category) }},
         bands: {{ Js::from($this->switchBands->map->only(['id', 'name'])->values()) }},
+        restricted_bands: {{ Js::from($this->restrictedSwitchBands) }},
         modes: {{ Js::from($this->switchModes->map->only(['id', 'name', 'category'])->values()) }},
         band_ranges: {{ Js::from((object) $this->bandRanges) }},
         sections: {{ Js::from(\App\Models\Section::where('is_active', true)->pluck('id', 'code')->toArray()) }},
@@ -55,7 +56,7 @@
                     list="log-submodes"
                     maxlength="20"
                     x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                    class="input input-xs w-28 pointer-coarse:w-36 uppercase font-mono"
+                    class="input input-xs w-28 pointer-coarse:w-40 uppercase font-mono"
                     placeholder="Sub-mode"
                     aria-label="Sub-mode (optional)"
                 />
@@ -119,7 +120,7 @@
                     label="End Session"
                     icon="phosphor-stop"
                     class="btn-outline btn-error btn-sm"
-                    wire:click="endSession"
+                    wire:click="endSession(! hasUnsyncedSessionContacts)"
                     wire:confirm="End this session?"
                 />
             </div>
@@ -138,7 +139,7 @@
                 list="log-submodes"
                 maxlength="20"
                 x-on:input="document.querySelectorAll('[data-submode-input]').forEach(el => el.value = $el.value)"
-                class="input input-xs w-28 uppercase font-mono"
+                class="input input-xs w-28 pointer-coarse:w-40 uppercase font-mono"
                 placeholder="Sub-mode"
                 aria-label="Sub-mode (optional)"
                 autocapitalize="characters"
@@ -297,7 +298,7 @@
                             <div class="text-xs text-base-content/60 font-mono" x-text="[contact.exchange_class, contact.section_code || '—', queuedSummary(contact)].filter(Boolean).join(' · ')"></div>
                         </div>
                         <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
-                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></span>
+                            <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></span>
                             <template x-if="contact.status === 'failed'">
                                 <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL<span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>
@@ -350,7 +351,7 @@
                         '!bg-primary/25': recalledUuid === contact.uuid,
                     }">
                         <td class="font-mono">-</td>
-                        <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false})"></td>
+                        <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></td>
                         <td class="font-bold font-mono uppercase">
                             <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
                             <template x-if="contact.status === 'failed'">
@@ -407,7 +408,7 @@
             </x-logging.exchange-composer>
         </x-logging.qso-log>
 
-        <x-logging.keyboard-shortcuts :live="true" />
+        <x-logging.keyboard-shortcuts :live="true" :example-band="$this->switchExampleBand" />
     </div>
 </div>
 </div>

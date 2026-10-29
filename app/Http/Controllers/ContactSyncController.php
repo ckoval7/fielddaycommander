@@ -11,6 +11,7 @@ use App\Models\Contact;
 use App\Models\OperatingSession;
 use App\Services\DuplicateCheckService;
 use App\Support\AdvancedContactFields;
+use App\Support\EventSections;
 use App\Support\StationMode;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -74,7 +75,7 @@ class ContactSyncController extends Controller
             'submode' => $request->submode,
             'qso_time' => $request->qso_time,
             'callsign' => $request->callsign,
-            'section_id' => $request->section_id,
+            'section_id' => EventSections::countedSectionId((int) $request->section_id, $session->station->eventConfiguration?->event),
             'exchange_class' => $request->exchange_class,
             'power_watts' => $request->power_watts,
             ...$request->safe()->only(AdvancedContactFields::FIELDS),
@@ -143,6 +144,10 @@ class ContactSyncController extends Controller
         $event = $session->station->eventConfiguration?->event;
         if (! $event || Carbon::parse($event->end_time)->lt($qsoTime)) {
             return response()->json(['message' => 'This event has ended. Use Transcribe Paper Log to enter contacts from paper logs.'], 422);
+        }
+
+        if ($event->operatingEndsAt()?->lt($qsoTime)) {
+            return response()->json(['message' => 'Your 24-hour operating period has ended. Use Transcribe Paper Log to enter contacts from paper logs.'], 422);
         }
 
         if (Carbon::parse($event->start_time)->gt($qsoTime)) {

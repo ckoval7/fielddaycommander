@@ -5,7 +5,9 @@
 
 namespace App\Livewire\Equipment;
 
-use App\Models\AuditLog;
+use App\Livewire\Equipment\Concerns\BulkDeletesEquipment;
+use App\Livewire\Equipment\Concerns\ListsEquipment;
+use App\Livewire\Equipment\Concerns\ManagesEquipmentCommitments;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use Closure;
@@ -13,78 +15,24 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+/**
+ * Club Equipment: everything the club owns. Any signed-in user can browse
+ * it; selecting, committing and deleting need edit-any-equipment.
+ */
 class ClubEquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
-
-    public string $search = '';
-
-    public ?string $typeFilter = null;
-
-    public ?string $statusFilter = null;
-
-    public string $sortBy = 'created_at';
-
-    public string $sortDirection = 'desc';
-
-    public bool $showPhotoModal = false;
-
-    public ?string $photoPath = null;
-
-    public ?string $photoDescription = null;
+    use AuthorizesRequests, BulkDeletesEquipment, ListsEquipment, ManagesEquipmentCommitments;
 
     /**
-     * Reset to page 1 when search query changes.
+     * Only club-owned equipment.
      */
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when type filter changes.
-     */
-    public function updatedTypeFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when status filter changes.
-     */
-    public function updatedStatusFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Get the filtered and sorted club equipment query.
-     */
-    #[Computed]
-    public function equipment()
+    protected function equipmentQuery(): Builder
     {
         return Equipment::query()
-            ->with(['manager', 'activeCommitments', 'commitments.event'])
-            ->whereNotNull('owner_organization_id')
-            ->when($this->search, fn (Builder $query) => $query->search($this->search))
-            ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
-            ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
-            ->sortedBy($this->sortBy, $this->sortDirection)
-            ->paginate(25);
-    }
-
-    /**
-     * Open modal to view full-size equipment photo.
-     */
-    public function viewPhoto(string $photoPath, string $description): void
-    {
-        $this->photoPath = $photoPath;
-        $this->photoDescription = $description;
-        $this->showPhotoModal = true;
+            ->with(['manager', 'activeCommitments'])
+            ->whereNotNull('owner_organization_id');
     }
 
     /**
@@ -129,70 +77,12 @@ class ClubEquipmentList extends Component
     }
 
     /**
-     * Bulk delete selected club equipment items.
-     */
-    public function bulkDeleteEquipment(): void
-    {
-        $this->authorizeCommitAction();
-
-        $clubEquipment = $this->scopeSelectedEquipment($this->selectedIds);
-
-        $count = $clubEquipment->count();
-
-        foreach ($clubEquipment as $equipment) {
-            AuditLog::log(
-                action: 'equipment.deleted',
-                auditable: $equipment,
-                oldValues: [
-                    'make' => $equipment->make,
-                    'model' => $equipment->model,
-                    'type' => $equipment->type,
-                ]
-            );
-
-            $equipment->delete();
-        }
-
-        $this->dispatch('notify', title: 'Success', description: $count.' '.str('item')->plural($count).' deleted.', type: 'success');
-
-        $this->selectedIds = [];
-
-        unset($this->equipment);
-    }
-
-    /**
-     * Delete club equipment after authorization check.
-     */
-    public function deleteEquipment(int $equipmentId): void
-    {
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        $this->authorize('delete', $equipment);
-
-        AuditLog::log(
-            action: 'equipment.deleted',
-            auditable: $equipment,
-            oldValues: [
-                'make' => $equipment->make,
-                'model' => $equipment->model,
-                'type' => $equipment->type,
-            ]
-        );
-
-        $equipment->delete();
-
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted.', type: 'success');
-
-        unset($this->equipment);
-    }
-
-    /**
      * Render the component view.
      */
     public function render(): View
     {
         return view('livewire.equipment.club-equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Club Equipment']);
     }
 }

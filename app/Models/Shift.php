@@ -5,6 +5,7 @@
 
 namespace App\Models;
 
+use App\Support\LocalTimeRange;
 use Database\Factories\ShiftFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class Shift extends Model
 {
@@ -120,6 +122,42 @@ class Shift extends Model
                 ->countingTowardCapacity()
                 ->count() < $this->capacity
         );
+    }
+
+    /**
+     * The user's other assignments in this event whose shifts overlap this one.
+     * No-shows are left out. Shifts that only touch end to start don't overlap.
+     *
+     * @return Collection<int, ShiftAssignment>
+     */
+    public function overlappingAssignmentsFor(int $userId): Collection
+    {
+        return ShiftAssignment::query()
+            ->forUser($userId)
+            ->countingTowardCapacity()
+            ->where('shift_id', '!=', $this->id)
+            ->whereHas('shift', fn (Builder $query) => $query
+                ->where('event_configuration_id', $this->event_configuration_id)
+                ->where('start_time', '<', $this->end_time)
+                ->where('end_time', '>', $this->start_time))
+            ->with('shift.shiftRole')
+            ->get()
+            ->sortBy(fn (ShiftAssignment $assignment) => $assignment->shift->start_time)
+            ->values();
+    }
+
+    /**
+     * List the shifts behind a set of assignments for a message,
+     * such as "Safety Officer (Oct 28, 2:00 PM to 4:00 PM EDT)".
+     *
+     * @param  Collection<int, ShiftAssignment>  $assignments  with `shift.shiftRole` loaded
+     */
+    public static function describeAssignments(Collection $assignments): string
+    {
+        return $assignments
+            ->map(fn (ShiftAssignment $assignment) => ($assignment->shift->shiftRole?->name ?? 'Shift')
+                .' ('.LocalTimeRange::format($assignment->shift->start_time, $assignment->shift->end_time).')')
+            ->join(', ', ' and ');
     }
 
     /**

@@ -4,11 +4,14 @@
 // it seeds enough data to fill several pages and writes every app PDF to
 // PDF_RENDER_OUT so the pages can be rasterized and looked at.
 
+use App\Models\Band;
+use App\Models\Contact;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
+use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
 use App\Models\Station;
@@ -78,6 +81,14 @@ beforeEach(function () {
 test('ARRL submission sheet', function () {
     $config = ($this->makeEvent)('FD', (string) now()->year, ['has_gota_station' => true, 'gota_callsign' => 'W1AW/G']);
     ($this->bulletin)($config);
+
+    // Primary and GOTA contacts so the breakdown page has rows, including GOTA's.
+    $band = Band::firstOrCreate(['name' => '20m'], ['meters' => 20, 'frequency_mhz' => 14.0, 'allowed_fd' => true]);
+    foreach (['CW' => 2, 'Phone' => 1] as $name => $points) {
+        $mode = Mode::firstOrCreate(['name' => $name], ['category' => $name, 'points_fd' => $points, 'points_wfd' => $points]);
+        Contact::factory()->count(6)->create(['event_configuration_id' => $config->id, 'band_id' => $band->id, 'mode_id' => $mode->id, 'is_duplicate' => false, 'is_gota_contact' => false, 'power_watts' => 100, 'points' => $points]);
+        Contact::factory()->count(4)->create(['event_configuration_id' => $config->id, 'band_id' => $band->id, 'mode_id' => $mode->id, 'is_duplicate' => false, 'is_gota_contact' => true, 'power_watts' => 20, 'points' => $points, 'gota_operator_first_name' => 'Morgan', 'gota_operator_last_name' => 'Chen']);
+    }
 
     ($this->save)('submission-sheet', $this->actingAs($this->user)->get(route('reports.submission-sheet')));
 });

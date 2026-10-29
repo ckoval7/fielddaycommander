@@ -333,3 +333,38 @@ test('commitment summary csv neutralizes spreadsheet formulas', function () {
     expect($content)->toContain('"\'+cmd|"" /C calc""!A0"')
         ->not->toContain(',"+cmd');
 });
+
+test('equipment reports and dashboard still work after a past event station primary radio is deleted', function (string $routeName) {
+    $this->event->update([
+        'start_time' => now()->subYear(),
+        'end_time' => now()->subYear()->addDay(),
+    ]);
+    $this->commitment->update(['status' => 'returned']);
+
+    // The station observer commits the primary radio to the station's event.
+    $radio = Equipment::factory()->create([
+        'owner_user_id' => $this->owner->id,
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590SG',
+    ]);
+    $this->station->update(['radio_equipment_id' => $radio->id]);
+    EquipmentEvent::where('equipment_id', $radio->id)->update(['status' => 'delivered']);
+
+    $radio->delete();
+
+    $this->withoutVite()
+        ->actingAs($this->admin)
+        ->get(route($routeName, ['event' => $this->event]))
+        ->assertOk();
+})->with([
+    'events.equipment.dashboard',
+    'events.equipment.reports.commitment-summary',
+    'events.equipment.reports.delivery-checklist',
+    'events.equipment.reports.station-inventory-pdf',
+    'events.equipment.reports.station-inventory-csv',
+    'events.equipment.reports.owner-contacts-pdf',
+    'events.equipment.reports.owner-contacts-csv',
+    'events.equipment.reports.return-checklist',
+    'events.equipment.reports.historical-record',
+]);

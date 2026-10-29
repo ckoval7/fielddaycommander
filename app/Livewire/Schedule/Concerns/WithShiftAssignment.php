@@ -108,6 +108,11 @@ trait WithShiftAssignment
         $this->shiftAssigned();
 
         $this->dispatch('toast', title: 'Success', description: 'Volunteer assigned to shift', icon: 'phosphor-check-circle', css: 'alert-success');
+
+        $overlapping = $shift->overlappingAssignmentsFor($user->id);
+        if ($overlapping->isNotEmpty()) {
+            $this->dispatch('toast', title: 'Overlapping shifts', description: 'This volunteer is also signed up for an overlapping shift: '.Shift::describeAssignments($overlapping).'.', icon: 'phosphor-warning', css: 'alert-warning');
+        }
     }
 
     /**

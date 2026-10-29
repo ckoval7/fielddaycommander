@@ -4,8 +4,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Dashboard\Widgets\ProgressBar;
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\Event;
+use App\Models\EventBonus;
 use App\Models\EventConfiguration;
 use App\Models\OperatingSession;
 use App\Models\Station;
@@ -459,4 +461,28 @@ describe('real-world scenarios', function () {
         expect($data['percentage'])->toBe(74.0); // 37 of the 50 since the 150 milestone
         expect($data['label'])->toBe('187/200 QSOs to next milestone');
     });
+});
+
+it('counts only verified bonus points toward bonus progress', function () {
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(1),
+        'end_time' => now()->addHours(23),
+    ]);
+    $config = EventConfiguration::factory()->for($event)->create();
+    $bonusType = BonusType::factory()->create(['eligible_classes' => null]);
+
+    foreach ([[100, true], [500, false]] as [$points, $verified]) {
+        EventBonus::factory()->create([
+            'event_configuration_id' => $config->id,
+            'bonus_type_id' => $bonusType->id,
+            'calculated_points' => $points,
+            'is_verified' => $verified,
+        ]);
+    }
+
+    $data = Livewire::test(ProgressBar::class, ['config' => ['metric' => 'bonus_progress']])
+        ->instance()
+        ->getData();
+
+    expect($data['current'])->toBe(100);
 });

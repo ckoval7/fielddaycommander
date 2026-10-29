@@ -5,8 +5,10 @@
 
 namespace App\Services;
 
+use App\Models\EventType;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Support\EventSections;
 
 class ExchangeParserService
 {
@@ -31,6 +33,9 @@ class ExchangeParserService
 
     /** @var array<int, array<int, string>> */
     private array $classCodeCache = [];
+
+    /** @var array<int, ?string> */
+    private array $eventTypeCodeCache = [];
 
     /**
      * Parse a complete exchange string into structured data.
@@ -58,7 +63,7 @@ class ExchangeParserService
         if ($tokens !== null
             && $this->applyCallsign($tokens[0], $result)
             && $this->applyExchangeClass($tokens[1], $eventTypeId, $result)
-            && $this->applySection($tokens[2], $result)) {
+            && $this->applySection($tokens[2], $eventTypeId, $result)) {
             $result['success'] = true;
         }
 
@@ -148,9 +153,13 @@ class ExchangeParserService
     /**
      * Resolve the section token to a section id and record it.
      *
+     * When the event type is known, a section the event doesn't recognise on
+     * its own (YT or MX outside Winter Field Day) is recorded as the section
+     * it counts as, so the stored contact already carries that section.
+     *
      * @param  array{success: bool, callsign: ?string, transmitter_count: ?int, class_code: ?string, section_code: ?string, section_id: ?int, errors: array<string>}  $result
      */
-    private function applySection(string $sectionCode, array &$result): bool
+    private function applySection(string $sectionCode, ?int $eventTypeId, array &$result): bool
     {
         $sectionId = $this->lookupSection($sectionCode);
 
@@ -158,6 +167,16 @@ class ExchangeParserService
             $result['errors'][] = "Unknown section: {$sectionCode}";
 
             return false;
+        }
+
+        if ($eventTypeId !== null) {
+            $countedCode = EventSections::countedCodeForType($sectionCode, $this->eventTypeCode($eventTypeId));
+            $countedId = $this->lookupSection($countedCode);
+
+            if ($countedId !== null) {
+                $sectionCode = $countedCode;
+                $sectionId = $countedId;
+            }
         }
 
         $result['section_code'] = $sectionCode;
@@ -217,6 +236,18 @@ class ExchangeParserService
         }
 
         return $this->classCodeCache[$eventTypeId];
+    }
+
+    /**
+     * Code of the event type with the given id, or null if there is none.
+     */
+    private function eventTypeCode(int $eventTypeId): ?string
+    {
+        if (! array_key_exists($eventTypeId, $this->eventTypeCodeCache)) {
+            $this->eventTypeCodeCache[$eventTypeId] = EventType::query()->whereKey($eventTypeId)->value('code');
+        }
+
+        return $this->eventTypeCodeCache[$eventTypeId];
     }
 
     /**

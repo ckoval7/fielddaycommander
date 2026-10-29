@@ -14,6 +14,7 @@ use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftRole;
 use App\Services\EventContextService;
+use App\Support\LocalTimeRange;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,7 +32,7 @@ class ManageSchedule extends Component
     use WithScheduleFilters;
     use WithShiftAssignment;
 
-    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
+    private const DATETIME_LOCAL_FORMAT = 'Y-m-d H:i';
 
     private const DEFAULT_ROLE_COLOR = '#64748b';
 
@@ -161,6 +162,7 @@ class ManageSchedule extends Component
 
         return ShiftAssignment::query()
             ->pendingConfirmation()
+            ->whereNotNull('checked_in_at')
             ->whereHas('shift', function ($query) {
                 $query->where('event_configuration_id', $this->eventConfig->id);
             })
@@ -340,15 +342,21 @@ class ManageSchedule extends Component
     {
         Gate::authorize('manage-shifts');
 
+        // Capacity can't drop below the people already signed up.
+        $slotsTaken = $this->editingShiftId ? Shift::findOrFail($this->editingShiftId)->slotsTaken() : 0;
+
         $this->validate([
             'shiftRoleId' => ['required', 'exists:shift_roles,id'],
             'shiftStartTime' => ['required', 'date'],
             'shiftEndTime' => ['required', 'date', 'after:shiftStartTime'],
-            'shiftCapacity' => ['required', 'integer', 'min:1'],
+            'shiftCapacity' => ['required', 'integer', 'min:'.max(1, $slotsTaken)],
             'shiftIsOpen' => ['boolean'],
             'shiftNotes' => ['nullable', 'string', 'max:1000'],
         ], [
             'shiftEndTime.after' => 'End time must be after start time.',
+            'shiftCapacity.min' => $slotsTaken > 1
+                ? "{$slotsTaken} people are signed up for this shift. Remove some before lowering the capacity below {$slotsTaken}."
+                : 'Capacity must be at least 1.',
         ]);
 
         $tz = localTimezone();
@@ -421,6 +429,7 @@ class ManageSchedule extends Component
         unset($this->shifts);
 
         $this->dispatch('toast', title: 'Success', description: $message, icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->warnIfOutsideEventWindow($shift->start_time, $shift->end_time, 'This shift is outside the event window');
     }
 
     public function deleteShift(int $shiftId): void
@@ -538,6 +547,32 @@ class ManageSchedule extends Component
         unset($this->shifts);
 
         $this->dispatch('toast', title: 'Success', description: "{$createdCount} ".str('shift')->plural($createdCount).' created', icon: 'phosphor-check-circle', css: 'alert-success');
+        $this->warnIfOutsideEventWindow($start, $end, $createdCount === 1 ? 'This shift is outside the event window' : 'Some of these shifts are outside the event window', $createdCount);
+    }
+
+    /**
+     * Warn, without blocking the save, when a shift range starts before the
+     * event window opens or ends after it closes. The window opens at the
+     * earlier of setup and the event start, and closes at the event end.
+     */
+    private function warnIfOutsideEventWindow(Carbon $start, Carbon $end, string $lead, int $count = 1): void
+    {
+        if (! $this->event?->start_time || ! $this->event->end_time) {
+            return;
+        }
+
+        $windowStart = $this->event->setup_allowed_from?->lt($this->event->start_time)
+            ? $this->event->setup_allowed_from
+            : $this->event->start_time;
+        $windowEnd = $this->event->end_time;
+
+        if ($start->gte($windowStart) && $end->lte($windowEnd)) {
+            return;
+        }
+
+        $description = $lead.' ('.LocalTimeRange::format($windowStart, $windowEnd).'). '.($count === 1 ? 'It was' : 'They were').' saved anyway.';
+
+        $this->dispatch('toast', title: 'Outside the event', description: $description, icon: 'phosphor-warning', css: 'alert-warning');
     }
 
     // --- Assignments ---
@@ -578,6 +613,13 @@ class ManageSchedule extends Component
 
         $assignment = ShiftAssignment::findOrFail($assignmentId);
         $assignment->load('user');
+
+        if ($assignment->checked_in_at === null) {
+            $this->dispatch('toast', title: 'Not checked in', description: 'Only shifts someone has checked in to can be confirmed.', icon: 'phosphor-x-circle', css: 'alert-error');
+
+            return;
+        }
+
         $assignment->confirm(Auth::user());
 
         AuditLog::log(
@@ -881,7 +923,7 @@ class ManageSchedule extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.manage-schedule')->layout('layouts.app');
+        return view('livewire.schedule.manage-schedule')->layout('layouts.app', ['title' => 'Manage Schedule']);
     }
 
     /**

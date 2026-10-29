@@ -9,6 +9,7 @@ use App\Enums\VisitorCategory;
 use App\Models\EventConfiguration;
 use App\Models\GuestbookEntry;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class BonusPointsSidebar extends Component
@@ -124,6 +125,16 @@ class BonusPointsSidebar extends Component
     public function maxBonusPoints(): int
     {
         return collect($this->bonusItems)->sum('points');
+    }
+
+    /**
+     * Re-render with fresh counts when the manager verifies, unverifies or
+     * deletes entries, instead of waiting for the next poll.
+     */
+    #[On('bonus-claimed')]
+    public function refreshCounts(): void
+    {
+        unset($this->verifiedCounts);
     }
 
     public function render()

@@ -17,7 +17,7 @@ class MessageForm extends Component
 {
     use AuthorizesRequests;
 
-    private const DATETIME_LOCAL_FORMAT = 'Y-m-d\TH:i';
+    private const DATETIME_LOCAL_FORMAT = 'Y-m-d H:i';
 
     public Event $event;
 
@@ -325,7 +325,7 @@ class MessageForm extends Component
             'isEditing' => $this->message && $this->message->exists,
             'ics213Enabled' => Setting::getBoolean('enable_ics213', false),
             'scoresMessageBonuses' => $this->event->scoresMessageBonuses(),
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Message']);
     }
 
     protected function fillFromMessage(Message $message): void

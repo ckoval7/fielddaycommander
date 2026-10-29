@@ -49,10 +49,10 @@
                 $bonusCategories = $this->bonusCategories;
             @endphp
 
-            {{-- Main Content Layout --}}
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            {{-- Main Content Layout: stats, bonuses and filters stack; from xl the bonus panel sits beside the stats and filters --}}
+            <div class="grid grid-cols-1 xl:grid-cols-3 xl:grid-rows-[auto_1fr] gap-6 mb-6 items-start">
                 {{-- Stats Cards (Left Side) --}}
-                <div class="{{ $bonusCategories ? 'lg:col-span-3' : 'lg:col-span-4' }} space-y-6">
+                <div class="{{ $bonusCategories ? 'xl:col-span-2' : 'xl:col-span-3' }}">
                     {{-- Without the bonus tile there are five: Total takes a full row on phones so none sits alone --}}
                     <div class="grid grid-cols-2 {{ $bonusCategories ? 'md:grid-cols-3' : 'md:grid-cols-5' }} gap-4">
                         <div class="stat bg-base-100 rounded-lg shadow {{ $bonusCategories ? '' : 'col-span-2 md:col-span-1' }}">
@@ -86,59 +86,59 @@
 
                 {{-- Bonus Points Sidebar (Right Side) --}}
                 @if($bonusCategories)
-                    <div class="lg:col-span-1">
+                    <div class="xl:col-start-3 xl:row-start-1 xl:row-span-2">
                         <livewire:guestbook.bonus-points-sidebar :event-config-id="$eventConfig->id" />
                     </div>
                 @endif
-            </div>
 
-            {{-- Filters --}}
-            <x-card class="mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <x-input
-                        label="Search"
-                        placeholder="Search name, callsign, email..."
-                        wire:model.live.debounce.300ms="search"
-                        icon="phosphor-magnifying-glass"
-                        clearable
-                    />
+                {{-- Filters --}}
+                <x-card class="{{ $bonusCategories ? 'xl:col-span-2' : 'xl:col-span-3' }}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 {{ $bonusCategories ? '' : 'xl:grid-cols-4' }} gap-4">
+                        <x-input
+                            label="Search"
+                            placeholder="Search name, callsign, email..."
+                            wire:model.live.debounce.300ms="search"
+                            icon="phosphor-magnifying-glass"
+                            clearable
+                        />
 
-                    <x-select
-                        label="Presence"
-                        wire:model.live="filterPresence"
-                        :options="$this->presenceOptions"
-                        option-value="value"
-                        option-label="label"
-                    />
+                        <x-select
+                            label="Presence"
+                            wire:model.live="filterPresence"
+                            :options="$this->presenceOptions"
+                            option-value="value"
+                            option-label="label"
+                        />
 
-                    <x-select
-                        label="Category"
-                        wire:model.live="filterCategory"
-                        :options="$this->categoryOptions"
-                        option-value="value"
-                        option-label="label"
-                    />
+                        <x-select
+                            label="Category"
+                            wire:model.live="filterCategory"
+                            :options="$this->categoryOptions"
+                            option-value="value"
+                            option-label="label"
+                        />
 
-                    <x-select
-                        label="Status"
-                        wire:model.live="filterVerified"
-                        :options="$this->verifiedOptions"
-                        option-value="value"
-                        option-label="label"
-                    />
-                </div>
-
-                @if($search || $filterPresence || $filterCategory || $filterVerified)
-                    <div class="mt-4 flex justify-end">
-                        <x-button
-                            label="Clear Filters"
-                            icon="phosphor-x"
-                            class="btn-ghost btn-sm"
-                            wire:click="clearFilters"
+                        <x-select
+                            label="Status"
+                            wire:model.live="filterVerified"
+                            :options="$this->verifiedOptions"
+                            option-value="value"
+                            option-label="label"
                         />
                     </div>
-                @endif
-            </x-card>
+
+                    @if($search || $filterPresence || $filterCategory || $filterVerified)
+                        <div class="mt-4 flex justify-end">
+                            <x-button
+                                label="Clear Filters"
+                                icon="phosphor-x"
+                                class="btn-ghost btn-sm"
+                                wire:click="clearFilters"
+                            />
+                        </div>
+                    @endif
+                </x-card>
+            </div>
 
             {{-- Bulk Actions Bar --}}
             @if(count($selectedIds) > 0)
@@ -188,14 +188,15 @@
                         ['key' => 'name', 'label' => 'Name', 'sortable' => false],
                         ['key' => 'callsign', 'label' => 'Callsign'],
                         ['key' => 'visitor_category', 'label' => 'Category'],
-                        ['key' => 'presence_type', 'label' => 'Presence'],
+                        // Until 2xl, presence shows under Status so the table fits beside the open sidebar.
+                        ['key' => 'presence_type', 'label' => 'Presence', 'class' => 'hidden 2xl:table-cell'],
                         ['key' => 'is_verified', 'label' => 'Status', 'sortable' => false],
                         ['key' => 'created_at', 'label' => 'Signed'],
                     ];
                 @endphp
 
-                {{-- Mobile Card View --}}
-                <div class="md:hidden space-y-3">
+                {{-- Card View until the table fits beside the open sidebar --}}
+                <div class="xl:hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-3">
                     @foreach($this->entries as $entry)
                         <div wire:key="guestbook-card-{{ $entry->id }}" class="rounded-lg border border-base-300 bg-base-100 p-3">
                             <div class="flex items-start gap-2">
@@ -262,7 +263,7 @@
                     @endforeach
                 </div>
 
-                <div class="hidden md:block overflow-x-auto">
+                <div class="hidden xl:block overflow-x-auto">
                     <x-table
                         :headers="$headers"
                         :rows="$this->entries"
@@ -314,6 +315,7 @@
                                     <span>Unverified</span>
                                 </div>
                             @endif
+                            <div class="2xl:hidden text-base-content/60 whitespace-nowrap">{{ $entry->presence_type === \App\Enums\PresenceType::InPerson ? 'In Person' : 'Online' }}</div>
                         @endscope
 
                         @scope('cell_created_at', $entry)

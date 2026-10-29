@@ -10,9 +10,10 @@ a right-aligned column beside a short description, in two columns from md.
 
 Props:
 - $live: bool - Add the live logging shortcuts (Advanced Fields, band/mode switch)
+- $exampleBand: string - Band shown in the band/mode switch hint, one the station can use
 --}}
 
-@props(['live' => false])
+@props(['live' => false, 'exampleBand' => '40M'])
 
 @php
     /** @var array<int, array{keys: array<int, string>, label: string, typed?: bool}> $shortcuts */
@@ -29,7 +30,7 @@ Props:
             $shortcuts,
             ['keys' => ['Alt+A'], 'label' => 'Show or hide advanced fields'],
             ['keys' => ['Alt+B', 'Alt+M'], 'label' => 'Focus band or mode picker'],
-            ['keys' => ['40M', 'CW'], 'label' => 'Type band/mode alone, Enter to switch', 'typed' => true],
+            ['keys' => [$exampleBand, 'CW'], 'label' => 'Type band/mode alone, Enter to switch', 'typed' => true],
         );
     }
 @endphp

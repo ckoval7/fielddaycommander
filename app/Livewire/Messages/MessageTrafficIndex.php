@@ -220,6 +220,6 @@ class MessageTrafficIndex extends Component
         return view('livewire.messages.message-traffic-index', [
             'ics213Enabled' => Setting::getBoolean('enable_ics213', false),
             'scoresMessageBonuses' => $this->event->scoresMessageBonuses(),
-        ])->layout('components.layouts.app');
+        ])->layout('components.layouts.app', ['title' => 'Messages']);
     }
 }

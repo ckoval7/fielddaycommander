@@ -228,6 +228,8 @@ class ContactExporterTest extends TestCase
         expect($dataRow[2])->not->toBeEmpty();
         // Mode name should be in the output
         expect($dataRow[3])->not->toBeEmpty();
+        // Logger column holds the logger's callsign
+        expect($dataRow[8])->toBe($contact->logger->call_sign)->not->toBeEmpty();
     }
 
     public function test_csv_neutralizes_spreadsheet_formulas(): void

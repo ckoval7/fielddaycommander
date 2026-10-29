@@ -11,14 +11,16 @@
                 <span class="text-sm font-normal text-base-content/60 ml-2">({{ $this->contacts->count() }} shown)</span>
             @endif
         </h2>
-        <a
-            href="{{ $this->exportUrl }}"
-            class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
-            target="_blank"
-        >
-            <x-icon name="phosphor-download-simple" class="w-4 h-4" />
-            <span class="ml-1">Export CSV</span>
-        </a>
+        @can('view-reports')
+            <a
+                href="{{ $this->exportUrl }}"
+                class="btn btn-sm btn-primary min-h-[2.75rem] sm:min-h-[1.75rem]"
+                target="_blank"
+            >
+                <x-icon name="phosphor-download-simple" class="w-4 h-4" />
+                <span class="ml-1">Export CSV</span>
+            </a>
+        @endcan
     </div>
 
     {{-- Bulk Action Bar --}}

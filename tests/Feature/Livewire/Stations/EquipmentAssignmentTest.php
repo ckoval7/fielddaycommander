@@ -49,7 +49,6 @@ beforeEach(function () {
         'code' => '3A',
         'name' => 'Class 3A',
         'allows_gota' => true,
-        'max_power_watts' => 150,
         'requires_emergency_power' => false,
     ]);
 
@@ -818,12 +817,18 @@ test('validatePowerLimits warns when amplifier exceeds station limit', function 
 });
 
 test('validatePowerLimits warns when amplifier exceeds operating class limit', function () {
-    // Operating class max is 150W from beforeEach
+    // ARRL Field Day holds Class A to 500 W under the event's rules version.
+    $this->eventConfig->update(['operating_class_id' => OperatingClass::firstOrCreate(
+        ['event_type_id' => $this->event->event_type_id, 'code' => 'A'],
+        ['name' => 'Class A'],
+    )->id]);
+    $this->station->update(['max_power_watts' => 1500]);
+
     $amplifier = Equipment::factory()->create([
         'type' => 'amplifier',
         'make' => 'Over Class Limit',
         'model' => 'Amp',
-        'power_output_watts' => 200,
+        'power_output_watts' => 600,
         'owner_user_id' => $this->user->id,
     ]);
 
@@ -834,8 +839,34 @@ test('validatePowerLimits warns when amplifier exceeds operating class limit', f
     $result = $component->validatePowerLimits($amplifier->id, $this->station->id);
 
     expect($result)->toHaveKey('within_limits', false);
-    expect($result['warning_message'])->toContain('Class 3A limit');
-    expect($result)->toHaveKey('calculated_power', 200);
+    expect($result['warning_message'])->toContain('limit (500W)');
+    expect($result)->toHaveKey('calculated_power', 600);
+});
+
+test('validatePowerLimits finds no class limit for a class the rules version leaves unlimited', function () {
+    // ARRL Field Day sets no class limit for Class D.
+    $this->eventConfig->update(['operating_class_id' => OperatingClass::firstOrCreate(
+        ['event_type_id' => $this->event->event_type_id, 'code' => 'D'],
+        ['name' => 'Class D'],
+    )->id]);
+    $this->station->update(['max_power_watts' => 1500]);
+
+    $amplifier = Equipment::factory()->create([
+        'type' => 'amplifier',
+        'make' => 'Home Station',
+        'model' => 'Amp',
+        'power_output_watts' => 1000,
+        'owner_user_id' => $this->user->id,
+    ]);
+
+    $component = new EquipmentAssignment;
+    $component->stationId = $this->station->id;
+    $component->mount($this->station->id);
+
+    $result = $component->validatePowerLimits($amplifier->id, $this->station->id);
+
+    expect($result)->toHaveKey('within_limits', true);
+    expect($result)->toHaveKey('warning_message', null);
 });
 
 test('validatePowerLimits passes for non-amplifier equipment', function () {

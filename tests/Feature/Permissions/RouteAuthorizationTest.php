@@ -110,6 +110,7 @@ $gatedEndpoints = [
     'reports.adif' => ['get', 'reports.adif', 'view-reports', fn () => []],
     'reports.wfd-event-summary' => ['get', 'reports.wfd-event-summary', 'view-reports', fn () => []],
     'reports.submission-sheet' => ['get', 'reports.submission-sheet', 'view-reports', fn () => []],
+    'logbook.export' => ['get', 'logbook.export', 'view-reports', fn () => []],
     'album-export.store' => ['post', 'album-export.store', 'manage-images', fn () => ['eventConfiguration' => $this->eventConfiguration]],
     'album-export.download' => ['get', 'album-export.download', 'manage-images', fn () => ['eventConfiguration' => $this->eventConfiguration, 'filename' => 'album.zip']],
     'logging.contacts.store' => ['post', 'logging.contacts.store', 'log-contacts', fn () => []],

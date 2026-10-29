@@ -13,6 +13,7 @@ use App\Models\EventType;
 use App\Models\Mode;
 use App\Models\OperatingClass;
 use App\Models\Section;
+use App\Models\Station;
 use App\Services\AdifValidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -210,4 +211,49 @@ test('record with null exchange_class passes validation', function () {
     $record->refresh();
     expect($record->status)->not->toBe(AdifRecordStatus::Invalid)
         ->and($result['valid_count'])->toBe(1);
+});
+
+test('a record mapped to the free VHF station below 50 MHz is flagged invalid', function () {
+    $vhfStation = Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'VHF', 'is_vhf_only' => true]);
+    $six = Band::create(['name' => '6m', 'meters' => 6, 'frequency_mhz' => 50.0, 'is_vhf_uhf' => true, 'sort_order' => 9]);
+    $import = AdifImport::factory()->create(['event_configuration_id' => $this->config->id]);
+
+    $attributes = [
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-06-28 01:00:00'),
+        'exchange_class' => '3A',
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $vhfStation->id,
+    ];
+    $hfRecord = AdifImportRecord::factory()->mapped()->create([...$attributes, 'band_id' => $this->band->id]);
+    $sixRecord = AdifImportRecord::factory()->mapped()->create([...$attributes, 'callsign' => 'K1ABC', 'band_id' => $six->id]);
+
+    $result = $this->validator->validate($import);
+
+    expect($hfRecord->refresh())
+        ->status->toBe(AdifRecordStatus::Invalid)
+        ->notes->toBe('VHF is marked VHF/UHF Only, so it can\'t log on 20m. Choose 6m or a higher band')
+        ->and($sixRecord->refresh()->status)->not->toBe(AdifRecordStatus::Invalid)
+        ->and($result)->toBe(['invalid_count' => 1, 'valid_count' => 1]);
+});
+
+test('an HF record at a station that is not VHF-only passes validation', function () {
+    $station = Station::factory()->create(['event_configuration_id' => $this->config->id, 'is_vhf_only' => false]);
+    $import = AdifImport::factory()->create(['event_configuration_id' => $this->config->id]);
+    $record = AdifImportRecord::factory()->mapped()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-06-28 01:00:00'),
+        'exchange_class' => '3A',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $station->id,
+    ]);
+
+    $this->validator->validate($import);
+
+    expect($record->refresh()->status)->not->toBe(AdifRecordStatus::Invalid);
 });

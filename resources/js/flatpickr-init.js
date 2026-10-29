@@ -34,6 +34,10 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
                 config.noCalendar = false;
                 config.dateFormat = 'Y-m-d H:i';
                 config.time_24hr = true;
+                // flatpickr defaults to 5-minute steps, which makes its hidden
+                // minute field reject times like 12:18 set by the Now button
+                // and silently blocks the form from submitting.
+                config.minuteIncrement = 1;
             } else if (mode === 'date') {
                 config.enableTime = false;
                 config.noCalendar = false;
@@ -43,6 +47,7 @@ export default function flatpickrComponent({ mode = 'datetime', min = null, max 
                 config.noCalendar = true;
                 config.dateFormat = 'H:i';
                 config.time_24hr = true;
+                config.minuteIncrement = 1;
             }
 
             if (min) config.minDate = min;

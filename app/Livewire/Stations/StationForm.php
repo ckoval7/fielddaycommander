@@ -126,11 +126,25 @@ class StationForm extends Component
         return EventConfiguration::with('operatingClass')->find($this->event_configuration_id);
     }
 
+    /**
+     * The event's planned maximum power, held to the operating class limit of
+     * the event's rulebook when that is lower, or null with no event chosen.
+     */
     #[Computed]
     public function maxPowerLimit(): ?int
     {
-        return $this->selectedEvent?->operatingClass?->max_power_watts
-            ?? $this->selectedEvent?->max_power_watts;
+        $config = $this->selectedEvent;
+
+        if ($config === null) {
+            return null;
+        }
+
+        $limits = array_map('intval', array_filter(
+            [$config->max_power_watts, $config->powerCapWatts()],
+            fn (mixed $watts): bool => $watts !== null,
+        ));
+
+        return $limits === [] ? null : min($limits);
     }
 
     #[Computed]
@@ -156,6 +170,30 @@ class StationForm extends Component
     public function totalQsoCount(): int
     {
         return (int) $this->sessions->sum('qso_count');
+    }
+
+    /**
+     * Whether any radio is left to pick, so the form can say to add one
+     * rather than show an empty picker.
+     */
+    #[Computed]
+    public function hasUnassignedRadio(): bool
+    {
+        if ($this->radio_equipment_id) {
+            return true;
+        }
+
+        $assignedRadioIds = $this->event_configuration_id
+            ? Station::where('event_configuration_id', $this->event_configuration_id)
+                ->whereNotNull('radio_equipment_id')
+                ->when($this->stationId, fn ($q) => $q->where('id', '!=', $this->stationId))
+                ->pluck('radio_equipment_id')
+            : collect();
+
+        return Equipment::query()
+            ->where('type', 'radio')
+            ->whereNotIn('id', $assignedRadioIds)
+            ->exists();
     }
 
     /**
@@ -434,7 +472,7 @@ class StationForm extends Component
 
     public function render(): View
     {
-        return view('livewire.stations.station-form')->layout('layouts.app');
+        return view('livewire.stations.station-form')->layout('layouts.app', ['title' => 'Station']);
     }
 
     /**

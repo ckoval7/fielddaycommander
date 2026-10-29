@@ -281,7 +281,6 @@ it('counts GOTA contacts and dupes the same way the dashboard and logbook do', f
 
     expect($component->totalContacts)->toBe(7)
         ->and($component->validContacts)->toBe(6)
-        ->and($component->mainStationContacts)->toBe(4)
         ->and($component->duplicateCount)->toBe(1)
         ->and($component->gotaContactCount)->toBe(2);
 });
@@ -302,12 +301,52 @@ it('computes the band/mode grid', function () {
     $component = Livewire::test(Scoring::class);
 
     $cwRow = collect($component->bandModeGrid)
-        ->first(fn ($r) => $r['mode']->name === 'CW');
+        ->first(fn ($r) => $r['label'] === 'CW');
 
     expect($cwRow)->not->toBeNull();
     expect($cwRow['cells'][$band->id])->toBe(3);
     expect($cwRow['total_count'])->toBe(3);
     expect($cwRow['total_points'])->toBe(6);
+});
+
+it('counts GOTA contacts in QSO points, on their own grid row, with the GOTA bonus on top', function () {
+    $config = makeActiveEvent(['has_gota_station' => true]);
+    $band = Band::first();
+    $cw = Mode::where('name', 'CW')->first();
+    $attributes = ['event_configuration_id' => $config->id, 'band_id' => $band->id, 'mode_id' => $cw->id, 'points' => 2];
+
+    Contact::factory()->count(3)->create($attributes);
+    Contact::factory()->gota()->count(2)->create($attributes);
+
+    $component = Livewire::test(Scoring::class);
+    $multiplier = $component->powerMultiplier;
+
+    $gotaRow = collect($component->bandModeGrid)->firstWhere('label', 'GOTA');
+    $cwRow = collect($component->bandModeGrid)->firstWhere('label', 'CW');
+
+    expect($component->qsoBasePoints)->toBe(10)
+        ->and($component->gotaBonus)->toBe(10)
+        ->and($cwRow['total_count'])->toBe(3)
+        ->and($gotaRow['mode'])->toBeNull()
+        ->and($gotaRow['cells'][$band->id])->toBe(2)
+        ->and($gotaRow['total_points'])->toBe(4)
+        ->and($config->fresh()->calculateFinalScore())->toBe(10 * $multiplier + 10 + $component->bonusScore);
+
+    $component->assertDontSeeText('They score as the GOTA bonus');
+});
+
+it('leaves the GOTA row off the grid when the GOTA station made no contacts', function () {
+    $config = makeActiveEvent(['has_gota_station' => true]);
+
+    Contact::factory()->create([
+        'event_configuration_id' => $config->id,
+        'band_id' => Band::first()->id,
+        'mode_id' => Mode::first()->id,
+    ]);
+
+    $labels = collect(Livewire::test(Scoring::class)->instance()->bandModeGrid)->pluck('label');
+
+    expect($labels)->not->toContain('GOTA');
 });
 
 it('hides VHF/UHF bands with no QSOs from the bands list', function () {

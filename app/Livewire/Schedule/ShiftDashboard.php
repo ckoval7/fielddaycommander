@@ -92,6 +92,6 @@ class ShiftDashboard extends Component
 
     public function render(): View
     {
-        return view('livewire.schedule.shift-dashboard')->layout('layouts.app');
+        return view('livewire.schedule.shift-dashboard')->layout('layouts.app', ['title' => 'Shift Dashboard']);
     }
 }

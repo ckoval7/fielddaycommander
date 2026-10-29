@@ -3,7 +3,7 @@
 
 import './bootstrap';
 import dashboardSortable from './components/dashboard-sortable';
-import contactQueue from './components/contact-queue';
+import contactQueue, { stampQueuedSessions } from './components/contact-queue';
 import transcribeRecall from './components/transcribe-recall';
 import updatedAgo from './components/updated-ago';
 import { copyToClipboard } from './clipboard';
@@ -17,6 +17,9 @@ import { Chart, registerables } from 'chart.js/auto';
 // Make Chart.js globally available for dynamic imports
 Chart.register(...registerables);
 globalThis.Chart = Chart;
+
+// Station-mode sign-out forms report which sessions still have contacts queued here.
+globalThis.stampQueuedSessions = stampQueuedSessions;
 
 // Set initial theme on page load (this is redundant with inline script but kept for fallback)
 let theme = localStorage.getItem('theme');

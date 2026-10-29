@@ -86,6 +86,23 @@ test('shows stations for active event', function () {
         ->assertSee('Available');
 });
 
+test('station cards size their columns to the space beside the sidebar', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    Station::factory()->create(['event_configuration_id' => $config->id]);
+
+    // A viewport breakpoint gave three ~210px columns on an iPad with the sidebar open.
+    Livewire::test(StationSelect::class)
+        ->assertSeeHtml('class="@container"')
+        ->assertSeeHtml('@3xl:grid-cols-3')
+        ->assertDontSeeHtml('lg:grid-cols-3');
+});
+
 test('shows station as occupied when active session exists', function () {
     $this->actingAs($this->user);
 
@@ -132,6 +149,28 @@ test('opens setup modal when selecting available station', function () {
         ->call('selectStation', $station->id)
         ->assertSet('showSetupModal', true)
         ->assertSet('selectedStationId', $station->id);
+});
+
+test('setup modal stacks its buttons on phones so cancel stays on screen', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    $station = Station::factory()->create([
+        'event_configuration_id' => $config->id,
+    ]);
+
+    Livewire::test(StationSelect::class)
+        ->call('selectStation', $station->id)
+        ->assertSeeHtmlInOrder([
+            'Start Logging Session',
+            '<div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">',
+            'Cancel',
+            'Start Session',
+        ]);
 });
 
 test('default power is capped by radio power limit when selecting station', function () {
@@ -454,7 +493,7 @@ test('band warning shown when selected band is not supported by station radio', 
     expect($warning)->not->toBeNull()
         ->and($warning['type'])->toBe('warning')
         ->and($warning['message'])->toContain('20m')
-        ->and($warning['message'])->toContain('Icom IC-7300');
+        ->and($warning['message'])->toContain('The Icom IC-7300 covers 40m.');
 });
 
 test('band warning shows info when station has no radio assigned', function () {

@@ -10,6 +10,7 @@ use App\Models\AdifImport;
 use App\Models\AdifImportRecord;
 use App\Models\Section;
 use App\Models\Station;
+use App\Support\EventSections;
 use Illuminate\Support\Collection;
 
 class AdifFieldMapperService
@@ -19,7 +20,10 @@ class AdifFieldMapperService
     /**
      * Auto-map staged records against the database.
      *
-     * @return array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>}
+     * Records with no operator, section or station value at all are counted
+     * under missing_*, so the wizard can offer one default for each.
+     *
+     * @return array{unmapped_bands: array<string>, unmapped_modes: array<string>, unmapped_sections: array<string>, unmapped_stations: array<string>, missing_operators: int, missing_sections: int, missing_stations: int}
      */
     public function autoMap(AdifImport $import): array
     {
@@ -28,9 +32,16 @@ class AdifFieldMapperService
             'unmapped_modes' => [],
             'unmapped_sections' => [],
             'unmapped_stations' => [],
+            'missing_operators' => 0,
+            'missing_sections' => 0,
+            'missing_stations' => 0,
         ];
 
-        $sections = Section::query()->where('is_active', true)->pluck('id', 'code')->toArray();
+        // YT and MX map to TER and DX unless the event recognises them.
+        $sections = EventSections::foldIdsByCode(
+            Section::query()->where('is_active', true)->pluck('id', 'code')->toArray(),
+            $import->eventConfiguration?->event,
+        );
 
         $stations = Station::query()
             ->where('event_configuration_id', $import->event_configuration_id)
@@ -55,12 +66,16 @@ class AdifFieldMapperService
         $updates = [];
 
         foreach ($records as $record) {
+            $report['missing_operators'] += blank($record->operator_callsign) ? 1 : 0;
+            $report['missing_sections'] += blank($record->section_code) ? 1 : 0;
+            $report['missing_stations'] += blank($record->station_identifier) ? 1 : 0;
+
             $values = [
                 'band_id' => $this->lookup($record->band_name, $bandIds, 'unmapped_bands', $report),
                 'mode_id' => $this->lookup($record->mode_name, $modeIds, 'unmapped_modes', $report),
                 'section_id' => $this->lookup($record->section_code, $sections, 'unmapped_sections', $report, upper: true),
                 'station_id' => $this->lookup($record->station_identifier, $stations, 'unmapped_stations', $report, upper: true),
-                'operator_user_id' => $record->operator_callsign !== null ? ($operatorIds[$record->operator_callsign] ?? null) : null,
+                'operator_user_id' => filled($record->operator_callsign) ? ($operatorIds[$record->operator_callsign] ?? null) : null,
                 'status' => AdifRecordStatus::Mapped->value,
             ];
 
@@ -167,11 +182,15 @@ class AdifFieldMapperService
         }
 
         if (isset($mappings['sections'])) {
+            $event = $import->eventConfiguration?->event;
+
             foreach ($mappings['sections'] as $sectionCode => $sectionId) {
+                // A YT or MX picked by hand stores as TER or DX unless the
+                // event recognises it, as auto-mapping does.
                 $import->records()
                     ->where('section_code', $sectionCode)
                     ->whereNull('section_id')
-                    ->update(['section_id' => $sectionId]);
+                    ->update(['section_id' => EventSections::countedSectionId((int) $sectionId, $event)]);
             }
         }
 
@@ -191,6 +210,34 @@ class AdifFieldMapperService
                     ->whereNull('operator_user_id')
                     ->update(['operator_user_id' => $userId]);
             }
+        }
+    }
+
+    /**
+     * Fill in the operator, section or station on records whose ADIF file
+     * left that field out entirely, such as a WSJT-X log with no operator
+     * callsign. Records with a value that just didn't match are untouched;
+     * those go through applyFieldMapping().
+     *
+     * @param  array{operator_user_id?: int, section_id?: int, station_id?: int}  $defaults
+     */
+    public function applyMissingDefaults(AdifImport $import, array $defaults): void
+    {
+        $sourceColumns = [
+            'operator_user_id' => 'operator_callsign',
+            'section_id' => 'section_code',
+            'station_id' => 'station_identifier',
+        ];
+
+        foreach ($sourceColumns as $idColumn => $sourceColumn) {
+            if (! isset($defaults[$idColumn])) {
+                continue;
+            }
+
+            $import->records()
+                ->whereNull($idColumn)
+                ->where(fn ($query) => $query->whereNull($sourceColumn)->orWhere($sourceColumn, ''))
+                ->update([$idColumn => $defaults[$idColumn]]);
         }
     }
 
@@ -221,7 +268,7 @@ class AdifFieldMapperService
      */
     private function lookup(?string $value, array $map, string $reportKey, array &$report, bool $upper = false): ?int
     {
-        if ($value === null) {
+        if (blank($value)) {
             return null;
         }
 

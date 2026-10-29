@@ -5,7 +5,15 @@
 <div>
     <x-header use-h1 title="Select Station" subtitle="Choose a station to begin logging" separator />
 
-    @if(! $this->activeEvent)
+    @if($this->operatingPeriodEnded)
+        <x-card>
+            <div class="text-center py-8">
+                <x-icon name="phosphor-clock-countdown" class="w-12 h-12 mx-auto text-base-content/30" />
+                <h3 class="mt-4 text-lg font-semibold">Operating Period Over</h3>
+                <p class="mt-2 text-base-content/70">This event's 24-hour operating period has ended. Use Transcribe Paper Log to enter contacts from paper logs.</p>
+            </div>
+        </x-card>
+    @elseif(! $this->activeEvent)
         <x-card>
             <div class="text-center py-8">
                 <x-icon name="phosphor-cell-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
@@ -14,7 +22,9 @@
             </div>
         </x-card>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {{-- Columns follow the space beside the sidebar, not the screen width. --}}
+        <div class="@container">
+        <div class="grid grid-cols-1 sm:grid-cols-2 @3xl:grid-cols-3 gap-4 sm:gap-6">
             @forelse($this->stations as $station)
                 @php
                     $status = $station->computed_status;
@@ -124,6 +134,7 @@
                 </div>
             @endforelse
         </div>
+        </div>
     @endif
 
     {{-- Session Setup Modal --}}
@@ -199,7 +210,7 @@
                 wire:model="powerWatts"
                 type="number"
                 min="1"
-                max="1500"
+                :max="$this->maxPowerWatts"
                 suffix="W"
             />
 
@@ -217,18 +228,21 @@
         </div>
 
         <x-slot:actions>
-            <x-button
-                label="Cancel"
-                wire:click="cancelSetup"
-                class="w-full sm:w-auto"
-            />
-            <x-button
-                label="Start Session"
-                wire:click="startSession"
-                class="btn-primary w-full sm:w-auto"
-                icon="phosphor-play"
-                spinner="startSession"
-            />
+            {{-- Stacked on phones: two full-width buttons side by side push Cancel off the left edge --}}
+            <div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">
+                <x-button
+                    label="Cancel"
+                    wire:click="cancelSetup"
+                    class="w-full sm:w-auto"
+                />
+                <x-button
+                    label="Start Session"
+                    wire:click="startSession"
+                    class="btn-primary w-full sm:w-auto"
+                    icon="phosphor-play"
+                    spinner="startSession"
+                />
+            </div>
         </x-slot:actions>
     </x-modal>
 

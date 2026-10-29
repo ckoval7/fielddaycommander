@@ -5,7 +5,8 @@
 
 namespace App\Livewire\Equipment;
 
-use App\Models\AuditLog;
+use App\Livewire\Equipment\Concerns\ListsEquipment;
+use App\Livewire\Equipment\Concerns\ManagesEquipmentCommitments;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\User;
@@ -16,29 +17,17 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
-use Livewire\WithPagination;
 
+/**
+ * Equipment Catalog: every item, personal and club, with an owner filter.
+ * Viewing needs view-all-equipment; actions need edit-any-equipment. It has
+ * no selection or bulk actions.
+ */
 class AllEquipmentList extends Component
 {
-    use AuthorizesRequests, ManagesEquipmentCommitments, WithPagination;
-
-    public string $search = '';
-
-    public ?string $typeFilter = null;
-
-    public ?string $statusFilter = null;
+    use AuthorizesRequests, ListsEquipment, ManagesEquipmentCommitments;
 
     public int|string|null $userFilter = null;
-
-    public string $sortBy = 'created_at';
-
-    public string $sortDirection = 'desc';
-
-    public bool $showPhotoModal = false;
-
-    public ?string $photoPath = null;
-
-    public ?string $photoDescription = null;
 
     /**
      * Mount the component and authorize the user.
@@ -46,30 +35,6 @@ class AllEquipmentList extends Component
     public function mount(): void
     {
         $this->authorize('view-all-equipment');
-    }
-
-    /**
-     * Reset to page 1 when search query changes.
-     */
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when type filter changes.
-     */
-    public function updatedTypeFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    /**
-     * Reset to page 1 when status filter changes.
-     */
-    public function updatedStatusFilter(): void
-    {
-        $this->resetPage();
     }
 
     /**
@@ -110,10 +75,9 @@ class AllEquipmentList extends Component
     }
 
     /**
-     * Get the filtered and sorted equipment query for all users.
+     * All equipment, narrowed to club equipment or one owner by the owner filter.
      */
-    #[Computed]
-    public function equipment()
+    protected function equipmentQuery(): Builder
     {
         return Equipment::query()
             ->with(['owner', 'manager', 'activeCommitments'])
@@ -122,25 +86,7 @@ class AllEquipmentList extends Component
             })
             ->when($this->userFilter && $this->userFilter !== 'club', function (Builder $query) {
                 $query->where('owner_user_id', (int) $this->userFilter);
-            })
-            ->when($this->search, fn (Builder $query) => $query->search($this->search))
-            ->when($this->typeFilter, fn (Builder $query) => $query->ofType($this->typeFilter))
-            ->when($this->statusFilter, fn (Builder $query) => $query->withCommitmentStatus($this->statusFilter))
-            ->sortedBy($this->sortBy, $this->sortDirection)
-            ->paginate(25);
-    }
-
-    /**
-     * Open modal to view full-size equipment photo.
-     *
-     * @param  string  $photoPath  The storage path of the photo
-     * @param  string  $description  Equipment description
-     */
-    public function viewPhoto(string $photoPath, string $description): void
-    {
-        $this->photoPath = $photoPath;
-        $this->photoDescription = $description;
-        $this->showPhotoModal = true;
+            });
     }
 
     /**
@@ -180,38 +126,12 @@ class AllEquipmentList extends Component
     }
 
     /**
-     * Delete any user's equipment after authorization check.
-     */
-    public function deleteEquipment(int $equipmentId): void
-    {
-        $equipment = Equipment::findOrFail($equipmentId);
-
-        $this->authorize('delete', $equipment);
-
-        AuditLog::log(
-            action: 'equipment.deleted',
-            auditable: $equipment,
-            oldValues: [
-                'make' => $equipment->make,
-                'model' => $equipment->model,
-                'type' => $equipment->type,
-            ]
-        );
-
-        $equipment->delete();
-
-        $this->dispatch('notify', title: 'Success', description: 'Equipment deleted.', type: 'success');
-
-        unset($this->equipment);
-    }
-
-    /**
      * Render the component view.
      */
     public function render(): View
     {
         return view('livewire.equipment.all-equipment-list', [
             'equipment' => $this->equipment,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Equipment Catalog']);
     }
 }

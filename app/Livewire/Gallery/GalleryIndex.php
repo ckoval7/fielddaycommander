@@ -67,6 +67,6 @@ class GalleryIndex extends Component
     public function render(): View
     {
         return view('livewire.gallery.gallery-index')
-            ->layout('layouts.app');
+            ->layout('layouts.app', ['title' => 'Photo Gallery']);
     }
 }

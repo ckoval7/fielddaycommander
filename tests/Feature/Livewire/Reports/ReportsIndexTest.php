@@ -245,6 +245,36 @@ test('sectionCounts returns count 4 for section code ME', function () {
     expect($row['count'])->toBe(4);
 });
 
+test('sectionCounts folds YT into TER and MX into DX for Field Day', function () {
+    Permission::firstOrCreate(['name' => 'view-reports']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('view-reports');
+
+    $config = makeReportsIndexEvent();
+
+    $sections = collect([
+        ['code' => 'YT', 'name' => 'Yukon'],
+        ['code' => 'TER', 'name' => 'Territories'],
+        ['code' => 'MX', 'name' => 'Mexico'],
+        ['code' => 'DX', 'name' => 'DX'],
+    ])->mapWithKeys(fn ($attributes) => [
+        $attributes['code'] => Section::where('code', $attributes['code'])->first() ?? Section::factory()->create($attributes),
+    ]);
+
+    foreach (['YT', 'TER', 'MX', 'DX'] as $code) {
+        Contact::factory()->create([
+            'event_configuration_id' => $config->id,
+            'section_id' => $sections[$code]->id,
+            'is_duplicate' => false,
+        ]);
+    }
+
+    $counts = collect(Livewire::actingAs($user)->test(ReportsIndex::class)->get('sectionCounts'))
+        ->pluck('count', 'code');
+
+    expect($counts->all())->toEqual(['TER' => 2, 'DX' => 2]);
+});
+
 test('reports volunteerHours aggregates hours worked per volunteer', function () {
     Permission::firstOrCreate(['name' => 'view-reports']);
     $viewer = User::factory()->create();
@@ -531,4 +561,16 @@ test('sections use a narrow side gutter on phones', function () {
         ->test(ReportsIndex::class)
         ->assertSeeHtml('px-3 sm:px-6')
         ->assertSeeHtml('rounded-lg p-4 sm:p-5');
+});
+
+test('the reports page has its own browser tab title', function () {
+    Permission::firstOrCreate(['name' => 'view-reports']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('view-reports');
+    makeReportsIndexEvent();
+
+    $this->actingAs($user)
+        ->get(route('reports.index'))
+        ->assertOk()
+        ->assertSee('<title>Reports - ', false);
 });

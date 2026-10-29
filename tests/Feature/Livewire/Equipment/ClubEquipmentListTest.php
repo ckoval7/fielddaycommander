@@ -4,10 +4,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Equipment\ClubEquipmentList;
+use App\Models\AuditLog;
 use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\Organization;
+use App\Models\Station;
 use App\Models\User;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -153,6 +155,26 @@ test('user with edit-any-equipment sees actions column', function () {
 
     Livewire::test(ClubEquipmentList::class)
         ->assertSee('Actions');
+});
+
+test('club equipment shows cards until the table fits beside the open sidebar at 2xl', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $item = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSeeHtmlInOrder([
+            '2xl:hidden grid grid-cols-1 xl:grid-cols-2',
+            'wire:key="equipment-card-'.$item->id.'"',
+            'hidden 2xl:block',
+            '<td class="min-w-40 max-w-xs">',
+            '<p class="line-clamp-2 text-sm">',
+        ])
+        ->assertDontSeeHtml('hidden xl:block');
 });
 
 test('user with edit-any-equipment can delete club equipment', function () {
@@ -572,6 +594,47 @@ test('equipment manager can bulk delete club equipment', function () {
     expect(Equipment::where('id', $eq2->id)->exists())->toBeFalse();
 });
 
+test('club bulk delete writes an audit log entry for each item', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $items = Equipment::factory()->count(2)->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', $items->pluck('id')->all())
+        ->call('bulkDeleteEquipment');
+
+    expect(AuditLog::where('action', 'equipment.deleted')->pluck('auditable_id')->sort()->values()->all())
+        ->toBe($items->pluck('id')->sort()->values()->all());
+});
+
+test('club equipment shows its own empty state and no selection for regular users', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSee('No club equipment found. Try changing the filters.')
+        ->assertSeeHtml('colspan="8"')
+        ->assertDontSeeHtml('wire:model.live="selectedIds"')
+        ->assertDontSee('Add Club Equipment');
+});
+
+test('club equipment lists the manager by call sign in its own column', function () {
+    $this->actingAs($this->user);
+
+    $manager = User::factory()->create(['call_sign' => 'KD9MGR']);
+    Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'managed_by_user_id' => $manager->id,
+    ]);
+
+    Livewire::test(ClubEquipmentList::class)
+        ->assertSeeHtmlInOrder(['Managed by KD9MGR', '<th scope="col">Manager</th>', '<div class="text-sm">KD9MGR</div>']);
+});
+
 test('regular user cannot bulk delete club equipment', function () {
     $this->actingAs($this->user);
 
@@ -638,4 +701,89 @@ test('ClubEquipmentList ignores sort columns outside the allowlist', function ()
         ->set('sortBy', 'nonexistent_column')
         ->set('sortDirection', 'sideways')
         ->assertOk();
+});
+
+test('deleting a club radio that is a station primary radio is blocked', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Kenwood',
+        'model' => 'TS-590SG',
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => '40m SSB']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->call('deleteEquipment', $radio->id)
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && str_contains($params['description'], "40m SSB in {$eventName}"));
+
+    expect(Equipment::find($radio->id))->not->toBeNull();
+});
+
+test('club bulk delete skips radios used as station primary radios and names every station', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio1 = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $radio2 = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Elecraft',
+        'model' => 'K3',
+    ]);
+    $station1 = Station::factory()->create(['radio_equipment_id' => $radio1->id, 'name' => 'Station 1']);
+    $station2 = Station::factory()->create(['radio_equipment_id' => $radio2->id, 'name' => 'GOTA Station']);
+    $event1 = $station1->eventConfiguration->event->name;
+    $event2 = $station2->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', [$radio1->id, $radio2->id])
+        ->call('bulkDeleteEquipment')
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'success')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'error'
+            && $params['description'] === "Icom IC-7300 is the primary radio for Station 1 in {$event1}. Elecraft K3 is the primary radio for GOTA Station in {$event2}. Assign another radio to those stations first.");
+
+    expect(Equipment::find($radio1->id))->not->toBeNull();
+    expect(Equipment::find($radio2->id))->not->toBeNull();
+});
+
+test('club bulk delete that keeps a primary radio reports the deleted items in the same toast', function () {
+    giveEquipmentManagerRole($this->user);
+    $this->actingAs($this->user);
+
+    $radio = Equipment::factory()->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+        'type' => 'radio',
+        'make' => 'Icom',
+        'model' => 'IC-7300',
+    ]);
+    $others = Equipment::factory()->count(2)->create([
+        'owner_organization_id' => $this->organization->id,
+        'owner_user_id' => null,
+    ]);
+    $station = Station::factory()->create(['radio_equipment_id' => $radio->id, 'name' => 'Station 1']);
+    $eventName = $station->eventConfiguration->event->name;
+
+    Livewire::test(ClubEquipmentList::class)
+        ->set('selectedIds', [$radio->id, ...$others->pluck('id')->all()])
+        ->call('bulkDeleteEquipment')
+        ->assertDispatched('notify', fn (string $name, array $params): bool => $params['type'] === 'warning'
+            && $params['description'] === "2 items deleted. Icom IC-7300 is the primary radio for Station 1 in {$eventName}. Assign another radio to that station first.")
+        ->assertNotDispatched('notify', fn (string $name, array $params): bool => in_array($params['type'], ['success', 'error'], true));
+
+    expect(Equipment::find($radio->id))->not->toBeNull()
+        ->and(Equipment::whereIn('id', $others->pluck('id'))->count())->toBe(0);
 });

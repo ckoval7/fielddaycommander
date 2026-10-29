@@ -281,7 +281,8 @@ class LogbookBrowser extends Component
      * Why each contact on this page earns no credit, keyed by contact id.
      *
      * Empty unless the event's rulebook withholds credit from some contacts
-     * (e.g. WFD 2027 WSJT-mode and satellite contacts). The rules are resolved
+     * (e.g. WFD 2027 WSJT-mode and satellite contacts) or a contact was made
+     * above the operating class's power limit. The rules are resolved
      * once per page; contacts arrive with their band already loaded.
      *
      * @return array<int, string>
@@ -293,16 +294,20 @@ class LogbookBrowser extends Component
             return [];
         }
 
-        $rules = EventConfiguration::query()->find($this->eventConfigurationId)?->contactCreditRules();
+        $config = EventConfiguration::query()->with('operatingClass')->find($this->eventConfigurationId);
+        $rules = $config?->contactCreditRules();
+        $powerCap = $config?->powerCapWatts();
 
-        if ($rules === null) {
+        if ($rules === null && $powerCap === null) {
             return [];
         }
 
         $reasons = [];
 
         foreach ($this->contacts as $contact) {
-            $reason = $rules->noCreditReason($contact);
+            $reason = $config->exceedsPowerCap($contact)
+                ? "Made at {$contact->power_watts} W, over the {$powerCap} W limit for {$config->operatingClass->name}, so it scores 0 points."
+                : $rules?->noCreditReason($contact);
 
             if ($reason !== null) {
                 $reasons[$contact->id] = $reason;
@@ -389,9 +394,9 @@ class LogbookBrowser extends Component
     /**
      * Summary figures for the filtered logbook, counted the way the scoring
      * page counts them: QSOs and the band and mode tallies leave out dupes,
-     * QSO points also leave out GOTA contacts (they score as the GOTA bonus)
-     * and any contact the rulebook gives no credit. The dupes and GOTA bonus
-     * points are reported alongside so the differences are visible.
+     * and QSO points also leave out any contact the rulebook gives no credit.
+     * The dupes and the GOTA bonus the GOTA contacts earn on top of their QSO
+     * points are reported alongside.
      *
      * @return array{total_qsos: int, duplicate_count: int, total_points: int, gota_points: int, unique_sections: int, by_band: array<string, int>, by_mode: array<string, int>}
      */
@@ -417,10 +422,11 @@ class LogbookBrowser extends Component
         $duplicateCount = $filters->query($this->eventConfigurationId)->reorder()->duplicatesOnly()->count();
         $uniqueSections = $counted()->distinct('section_id')->count('section_id');
 
-        $pointsQuery = $counted()->where('is_gota_contact', false);
-        EventConfiguration::find($this->eventConfigurationId)?->contactCreditRules()?->constrainToCreditable($pointsQuery);
+        $config = EventConfiguration::find($this->eventConfigurationId);
+        $pointsQuery = $counted();
+        $config?->contactCreditRules()?->constrainToCreditable($pointsQuery);
         $totalPoints = (int) $pointsQuery->sum('points');
-        $gotaPoints = (int) $counted()->where('is_gota_contact', true)->sum('points');
+        $gotaPoints = $counted()->where('is_gota_contact', true)->count() * ($config?->gotaBonusPointsPerContact() ?? 0);
 
         $byBand = $counted()
             ->select('band_id', \DB::raw('count(*) as count'))
@@ -455,6 +461,6 @@ class LogbookBrowser extends Component
 
     public function render(): View
     {
-        return view('livewire.logbook.logbook-browser')->layout('layouts.app');
+        return view('livewire.logbook.logbook-browser')->layout('layouts.app', ['title' => 'Logbook']);
     }
 }

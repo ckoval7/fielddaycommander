@@ -45,7 +45,6 @@ beforeEach(function () {
         'code' => '2A',
         'name' => 'Class 2A',
         'allows_gota' => true,
-        'max_power_watts' => 150,
         'requires_emergency_power' => false,
     ]);
 

@@ -161,7 +161,7 @@
             <tr>
                 <td class="val">{{ $participant_count }}</td>
                 <td class="val">{{ $transmitter_count }}</td>
-                <td class="val">{{ $entry_class }}</td>
+                <td class="val">{{ $entry_class }}@if (! empty($entry_category)) <span style="font-size: 9px; font-weight: normal; color: #64748b;">{{ $entry_category }}</span>@endif</td>
                 <td class="val">{{ $power_multiplier }}×</td>
             </tr>
         </table>
@@ -278,7 +278,7 @@
          BAND/MODE QSO BREAKDOWN — own page, exact ARRL form layout
          CW QSOs/Pwr · Digital QSOs/Pwr · Phone QSOs/Pwr
          Bands: 160m 80m 40m 20m 15m 10m 6m 2m 222 432 Other Satellite
-         Excludes GOTA QSOs.
+         GOTA QSOs go on their own row, after the bands.
     ============================================================ --}}
     <div class="header-bar page-break">
         <div class="header-callsign">{{ $callsign }}</div>
@@ -286,7 +286,7 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Band/Mode QSO Breakdown <span class="section-note">do not list GOTA QSOs</span></div>
+        <div class="section-title">Band/Mode QSO Breakdown</div>
         @php
             $cats = ['CW', 'Digital', 'Phone'];
             $catModeId = [];
@@ -328,6 +328,16 @@
                         @endforeach
                     </tr>
                 @endforeach
+                @if ($has_gota_station)
+                    <tr class="{{ count($bands) % 2 === 1 ? 'alt' : '' }}">
+                        <td class="m">GOTA</td>
+                        @foreach ($cats as $cat)
+                            @php $catTotals[$cat] += $gota_mode_row[$cat]['qsos']; @endphp
+                            <td class="r">{{ $gota_mode_row[$cat]['qsos'] ?: '' }}</td>
+                            <td class="r">{{ $gota_mode_row[$cat]['power'] ?: '' }}</td>
+                        @endforeach
+                    </tr>
+                @endif
                 <tr>
                     <td class="m" style="border-top: 2px solid #1e3ea8;">Total</td>
                     @foreach ($cats as $cat)

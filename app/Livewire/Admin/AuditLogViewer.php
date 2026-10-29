@@ -50,7 +50,7 @@ class AuditLogViewer extends Component
             'logs' => $logs,
             'users' => User::all(),
             'actionTypeGroups' => $this->getActionTypeGroups(),
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Audit Logs']);
     }
 
     public function clearFilters(): void

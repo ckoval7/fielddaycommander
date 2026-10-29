@@ -47,7 +47,7 @@ class SafetyChecklistItem extends Model
                 'help_text' => 'Keep a well-stocked first aid kit in a known, accessible location announced to all participants. At minimum it should include adhesive bandages, gauze, antiseptic wipes, medical tape, instant cold packs, nitrile gloves, and a CPR pocket mask. Check that supplies are not expired.',
             ],
             [
-                'label' => 'First Aid - CPR - AED versed else trained participant/s on site for full Field Day period',
+                'label' => 'First Aid - CPR - AED versed or trained participant/s on site for full Field Day period',
                 'is_required' => true,
                 'help_text' => 'At least one person with current First Aid/CPR/AED certification (or equivalent training) must be on site for the entire event. If an AED is available, ensure it is powered on, pads are in-date, and its location is posted. Make sure all participants know who the trained responder is.',
             ],

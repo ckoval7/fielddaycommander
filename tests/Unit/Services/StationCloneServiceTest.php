@@ -599,6 +599,30 @@ class StationCloneServiceTest extends TestCase
             ->and($result['warnings'][0])->toContain('non-GOTA');
     }
 
+    public function test_deleted_primary_radio_is_not_carried_over_to_the_clone(): void
+    {
+        $radio = Equipment::factory()->create(['type' => 'radio']);
+        $sourceStation = Station::factory()->create([
+            'event_configuration_id' => $this->sourceConfig->id,
+            'radio_equipment_id' => $radio->id,
+            'name' => '20m Phone',
+        ]);
+        $radio->delete();
+
+        $result = $this->service->cloneStations(
+            $this->sourceConfig->id,
+            $this->targetConfig->id,
+            [$sourceStation->id]
+        );
+
+        $clonedStation = Station::find($result['cloned_station_ids'][0]);
+
+        expect($result['success'])->toBeTrue()
+            ->and($clonedStation->radio_equipment_id)->toBeNull()
+            ->and(EquipmentEvent::where('equipment_id', $radio->id)->where('event_id', $this->targetEvent->id)->exists())->toBeFalse()
+            ->and($result['warnings'])->toBe(['The primary radio for station "20m Phone" was deleted. Assign a radio to the cloned station before logging.']);
+    }
+
     // Validation Tests
 
     public function test_throws_exception_if_source_event_not_found(): void

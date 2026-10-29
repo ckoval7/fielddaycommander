@@ -5,7 +5,9 @@
 
 namespace App\Services;
 
+use App\Enums\PowerSource;
 use App\Models\Band;
+use App\Models\BonusType;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
@@ -14,6 +16,8 @@ use Carbon\CarbonInterface;
 
 class SubmissionReportService
 {
+    public function __construct(private ParticipantCountService $participantCounts) {}
+
     /**
      * Assemble all data needed to render the ARRL Field Day submission sheet PDF.
      *
@@ -27,6 +31,12 @@ class SubmissionReportService
         $modes = Mode::orderBy('id')->get();
         $bulletin = $this->bulletinCopy($config);
 
+        // Power sources come from the event's flags and from the stations,
+        // including the source recorded on each contact when it was made.
+        $stationSources = $config->stationPowerSourcesUsed();
+        $usesCommercial = $config->usesPowerSource(PowerSource::CommercialMains, $stationSources);
+        $classCode = $config->operatingClass->code;
+
         return [
             // Section 1: Station Identification
             'callsign' => $config->callsign,
@@ -34,22 +44,28 @@ class SubmissionReportService
             'club_name' => $config->club_name,
             'section' => $config->section->code,
             'section_name' => $config->section->name,
-            'entry_class' => $config->transmitter_count.$config->operatingClass->code,
-            'operating_class_code' => $config->operatingClass->code,
+            'entry_class' => $config->transmitter_count.$classCode,
+            // A Class A entry that used commercial mains for any contact is
+            // listed as A-Commercial.
+            'entry_category' => $classCode === 'A' && $usesCommercial ? 'A-Commercial' : null,
+            'operating_class_code' => $classCode,
             'transmitter_count' => $config->transmitter_count,
-            'participant_count' => $this->participantCount($config),
+            'participant_count' => $this->participantCounts->forConfiguration($config),
 
-            // Section 2: Power Source
-            'uses_commercial_power' => $config->uses_commercial_power,
-            'uses_generator' => $config->uses_generator,
-            'uses_battery' => $config->uses_battery,
-            'uses_solar' => $config->uses_solar,
-            'uses_wind' => $config->uses_wind,
-            'uses_water' => $config->uses_water,
-            'uses_other_power' => $config->uses_other_power,
+            // Section 2: Power Source (the ARRL form's five boxes; wind and
+            // water go under Other)
+            'uses_commercial_power' => $usesCommercial,
+            'uses_generator' => $config->usesPowerSource(PowerSource::Generator, $stationSources),
+            'uses_battery' => $config->usesPowerSource(PowerSource::Battery, $stationSources),
+            'uses_solar' => $config->usesPowerSource(PowerSource::Solar, $stationSources),
+            'uses_wind' => (bool) $config->uses_wind,
+            'uses_water' => (bool) $config->uses_water,
+            'uses_other_power' => $config->usesPowerSource(PowerSource::Other, $stationSources)
+                || $config->uses_wind
+                || $config->uses_water,
 
             // Section 3: Claimed Score
-            'qso_base_points' => (int) $config->contacts()->notDuplicate()->where('is_gota_contact', false)->sum('points'),
+            'qso_base_points' => $config->qsoBasePoints(),
             'power_multiplier' => $config->calculatePowerMultiplier(),
             'qso_score' => $config->calculateQsoScore(),
             'bonus_score' => $config->calculateBonusScore(),
@@ -61,6 +77,7 @@ class SubmissionReportService
             'bands' => $bands,
             'modes' => $modes,
             'band_mode_grid' => $this->bandModeGrid($config, $bands, $modes),
+            'gota_mode_row' => $this->gotaModeRow($config),
 
             // Section 5: Bonus Points — full ARRL checklist
             'bonus_checklist' => $this->bonusChecklist($config),
@@ -109,40 +126,6 @@ class SubmissionReportService
     }
 
     /**
-     * Count unique participants (operators + GOTA operators), excluding the SYSTEM user.
-     */
-    private function participantCount(EventConfiguration $config): int
-    {
-        $systemUserIds = User::where('call_sign', User::SYSTEM_CALL_SIGN)->pluck('id');
-
-        $loggerIds = Contact::where('event_configuration_id', $config->id)
-            ->notDuplicate()
-            ->whereNotNull('logger_user_id')
-            ->whereNotIn('logger_user_id', $systemUserIds)
-            ->distinct()
-            ->pluck('logger_user_id');
-
-        $gotaUserIds = Contact::where('event_configuration_id', $config->id)
-            ->where('is_gota_contact', true)
-            ->notDuplicate()
-            ->whereNotNull('gota_operator_user_id')
-            ->whereNotIn('gota_operator_user_id', $systemUserIds)
-            ->distinct()
-            ->pluck('gota_operator_user_id');
-
-        $gotaFreeTextCount = Contact::where('event_configuration_id', $config->id)
-            ->where('is_gota_contact', true)
-            ->notDuplicate()
-            ->whereNull('gota_operator_user_id')
-            ->whereNotNull('gota_operator_first_name')
-            ->selectRaw('DISTINCT gota_operator_first_name, gota_operator_last_name')
-            ->get()
-            ->count();
-
-        return $loggerIds->merge($gotaUserIds)->unique()->count() + $gotaFreeTextCount;
-    }
-
-    /**
      * Build the full ARRL bonus checklist in form order.
      *
      * Every ARRL-listed bonus appears, with claimed status and points from the DB.
@@ -174,31 +157,16 @@ class SubmissionReportService
             ['code' => 'social_media',            'name' => 'Social media'],
         ];
 
-        // Index claimed bonuses by bonus_type code, scoped to the event's
-        // resolved rules_version so stale cross-version rows do not leak in.
         $rulesVersion = $config->event?->resolved_rules_version;
+        $claimed = $this->claimedBonuses($config, $rulesVersion);
 
-        $claimed = [];
-        foreach ($config->bonuses as $bonus) {
-            $bonusType = $bonus->bonusType;
-
-            if (! $bonusType || $bonusType->rules_version !== $rulesVersion) {
-                continue;
-            }
-
-            $claimed[$bonusType->code] = [
-                'name' => $bonusType->name,
-                'points' => (int) $bonus->calculated_points,
-                'is_verified' => $bonus->is_verified,
-            ];
-        }
-
-        // Auto-determined bonuses
-        foreach ($this->autoBonusPoints($config) as $code => $points) {
-            if ($points > 0) {
-                $claimed[$code] = ['points' => $points, 'is_verified' => true];
-            }
-        }
+        // Bonuses this entry class can't earn (site responsibilities on a
+        // Class A sheet, say) are left off unless something was claimed.
+        $bonusTypes = BonusType::query()
+            ->where('event_type_id', $config->event?->event_type_id)
+            ->where('rules_version', $rulesVersion)
+            ->get()
+            ->keyBy('code');
 
         $checklist = [];
         $rendered = [];
@@ -207,12 +175,16 @@ class SubmissionReportService
             $match = $claimed[$code] ?? null;
             $rendered[$code] = true;
 
+            if ($match === null && $this->cannotEarnBonus($config, $code, $bonusTypes->get($code))) {
+                continue;
+            }
+
             $checklist[] = [
                 'name' => $item['name'],
                 'code' => $code,
                 'claimed' => $match !== null,
-                'points' => $match ? $match['points'] : 0,
-                'is_verified' => $match ? $match['is_verified'] : false,
+                'points' => $match['points'] ?? 0,
+                'is_verified' => $match['is_verified'] ?? false,
                 'auto' => $item['auto'] ?? false,
             ];
         }
@@ -235,6 +207,56 @@ class SubmissionReportService
         }
 
         return $checklist;
+    }
+
+    /**
+     * Claimed bonuses keyed by bonus_type code, scoped to the event's resolved
+     * rules_version so stale cross-version rows do not leak in.
+     *
+     * @return array<string, array{name?: string, points: int, is_verified: bool}>
+     */
+    private function claimedBonuses(EventConfiguration $config, ?string $rulesVersion): array
+    {
+        $claimed = [];
+        foreach ($config->bonuses as $bonus) {
+            $bonusType = $bonus->bonusType;
+
+            if (! $bonusType || $bonusType->rules_version !== $rulesVersion) {
+                continue;
+            }
+
+            $claimed[$bonusType->code] = [
+                'name' => $bonusType->name,
+                'points' => (int) $bonus->calculated_points,
+                'is_verified' => $bonus->is_verified,
+            ];
+        }
+
+        // Auto-determined bonuses replace any saved row for the same code, as
+        // they do in the score: a computed 0 (emergency power lost to a
+        // station on mains, say) leaves the bonus unclaimed.
+        foreach ($this->autoBonusPoints($config) as $code => $points) {
+            if ($points > 0) {
+                $claimed[$code] = ['points' => $points, 'is_verified' => true];
+            } else {
+                unset($claimed[$code]);
+            }
+        }
+
+        return $claimed;
+    }
+
+    /**
+     * Whether this entry can't earn the bonus at all: the class isn't
+     * eligible for it, or it's the GOTA bonus and there's no GOTA station.
+     */
+    private function cannotEarnBonus(EventConfiguration $config, string $code, ?BonusType $bonusType): bool
+    {
+        if ($bonusType && ! $config->isClassEligibleForBonus($bonusType)) {
+            return true;
+        }
+
+        return $code === '_gota' && ! $config->has_gota_station;
     }
 
     /**
@@ -278,6 +300,37 @@ class SubmissionReportService
         }
 
         return $grid;
+    }
+
+    /**
+     * GOTA station QSO count and max power per mode category, for the GOTA
+     * row of the band/mode breakdown. GOTA QSOs earn QSO points like the
+     * primary station's, and ARRL asks for them on their own row.
+     *
+     * @return array<string, array{qsos: int, power: int}>
+     */
+    private function gotaModeRow(EventConfiguration $config): array
+    {
+        $counts = Contact::query()
+            ->where('contacts.event_configuration_id', $config->id)
+            ->notDuplicate()
+            ->where('is_gota_contact', true)
+            ->join('modes', 'modes.id', '=', 'contacts.mode_id')
+            ->selectRaw('modes.category as category, count(*) as contact_count, max(contacts.power_watts) as max_power')
+            ->groupBy('modes.category')
+            ->get()
+            ->keyBy('category');
+
+        $row = [];
+        foreach (['CW', 'Digital', 'Phone'] as $category) {
+            $entry = $counts->get($category);
+            $row[$category] = [
+                'qsos' => $entry ? (int) $entry->contact_count : 0,
+                'power' => $entry ? (int) $entry->max_power : 0,
+            ];
+        }
+
+        return $row;
     }
 
     /**

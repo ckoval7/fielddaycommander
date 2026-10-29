@@ -446,22 +446,32 @@ test('stat card hours remaining uses appNow for time travel', function () {
     expect($data['value'])->toBe('5');
 });
 
-test('stat card calculates bonus points earned correctly', function () {
+test('stat card bonus points earned counts verified bonuses only, as the scoring page does', function () {
     $event = Event::factory()->create([
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
     $eventConfig = EventConfiguration::factory()->create(['event_id' => $event->id]);
 
-    $bonusType = BonusType::factory()->create();
+    $bonusType = BonusType::factory()->create(['eligible_classes' => null]);
     $user = User::factory()->create();
 
-    // Create 3 bonus point entries
+    // An unverified claim isn't part of the score yet
+    EventBonus::factory()->create([
+        'event_configuration_id' => $eventConfig->id,
+        'bonus_type_id' => $bonusType->id,
+        'claimed_by_user_id' => $user->id,
+        'calculated_points' => 1000,
+        'is_verified' => false,
+    ]);
+
+    // Create 3 verified bonus point entries
     EventBonus::factory()->create([
         'event_configuration_id' => $eventConfig->id,
         'bonus_type_id' => $bonusType->id,
         'claimed_by_user_id' => $user->id,
         'calculated_points' => 100,
+        'is_verified' => true,
     ]);
 
     EventBonus::factory()->create([
@@ -469,6 +479,7 @@ test('stat card calculates bonus points earned correctly', function () {
         'bonus_type_id' => $bonusType->id,
         'claimed_by_user_id' => $user->id,
         'calculated_points' => 50,
+        'is_verified' => true,
     ]);
 
     EventBonus::factory()->create([
@@ -476,6 +487,7 @@ test('stat card calculates bonus points earned correctly', function () {
         'bonus_type_id' => $bonusType->id,
         'claimed_by_user_id' => $user->id,
         'calculated_points' => 25,
+        'is_verified' => true,
     ]);
 
     $component = Livewire::test(StatCard::class, [
@@ -525,7 +537,7 @@ test('stat card bonus points earned only counts current event', function () {
     ]);
     $pastConfig = EventConfiguration::factory()->create(['event_id' => $pastEvent->id]);
 
-    $bonusType = BonusType::factory()->create();
+    $bonusType = BonusType::factory()->create(['eligible_classes' => null]);
     $user = User::factory()->create();
 
     // Add bonuses to current event
@@ -534,6 +546,7 @@ test('stat card bonus points earned only counts current event', function () {
         'bonus_type_id' => $bonusType->id,
         'claimed_by_user_id' => $user->id,
         'calculated_points' => 100,
+        'is_verified' => true,
     ]);
 
     // Add bonuses to past event (should not be counted)
@@ -542,6 +555,7 @@ test('stat card bonus points earned only counts current event', function () {
         'bonus_type_id' => $bonusType->id,
         'claimed_by_user_id' => $user->id,
         'calculated_points' => 500,
+        'is_verified' => true,
     ]);
 
     $component = Livewire::test(StatCard::class, [

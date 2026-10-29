@@ -81,9 +81,11 @@
                     <x-input label="Password" type="password" wire:model="exitPassword" autocomplete="off" icon="phosphor-lock" />
                 </div>
 
-                <x-slot:actions class="flex-wrap max-sm:w-full">
-                    <x-button label="Cancel" wire:click="cancelExit" class="w-full sm:w-auto" />
-                    <x-button label="Exit Station Mode" wire:click="exitStationMode" class="btn-error w-full sm:w-auto" icon="phosphor-power" spinner="exitStationMode" />
+                <x-slot:actions>
+                    <div class="flex flex-col sm:flex-row sm:justify-end gap-2 w-full">
+                        <x-button label="Cancel" wire:click="cancelExit" class="w-full sm:w-auto" />
+                        <x-button label="Exit Station Mode" wire:click="exitStationMode" class="btn-error w-full sm:w-auto" icon="phosphor-power" spinner="exitStationMode" />
+                    </div>
                 </x-slot:actions>
             </x-modal>
         @endif

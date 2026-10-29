@@ -241,3 +241,22 @@ test('tall images get a thumbnail with bounded height', function () {
     expect($height)->toBe(1200)
         ->and($width)->toBe(120);
 });
+
+test('a photo that cannot be processed is refused with a message', function () {
+    $user = User::factory()->create();
+    $eventConfig = EventConfiguration::factory()->create();
+
+    $image = imagecreatetruecolor(30, 30);
+    ob_start();
+    imagepng($image);
+    $png = substr((string) ob_get_clean(), 0, 40).str_repeat("\0", 40);
+
+    Livewire::actingAs($user)
+        ->test(GalleryUpload::class, ['eventConfiguration' => $eventConfig])
+        ->set('photo', UploadedFile::fake()->createWithContent('broken.png', $png))
+        ->call('save')
+        ->assertHasErrors(['photo'])
+        ->assertSee("This photo couldn't be processed. Save it as a JPEG and try again.");
+
+    expect(Image::count())->toBe(0);
+});

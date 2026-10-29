@@ -118,6 +118,16 @@
                         </div>
                     </div>
                 @endif
+
+                @if($this->isFieldDay)
+                    <div class="col-span-full">
+                        <x-toggle
+                            label="Setup started before the contest"
+                            wire:model="setup_started_early"
+                            hint="Turn this on if your station began setting up before 1800 UTC Saturday. Operating then ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first."
+                        />
+                    </div>
+                @endif
             </div>
         </x-card>
 

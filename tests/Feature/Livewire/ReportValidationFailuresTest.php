@@ -85,3 +85,17 @@ test('the floating summary panel renders as a dismissable top-layer popover', fu
         ->assertSee('popover="manual"', false)
         ->assertSee('aria-label="Hide error summary"', false);
 });
+
+test('open modals end above the floating summary so it never covers their buttons', function () {
+    $css = file_get_contents(resource_path('css/app.css'));
+    $script = file_get_contents(resource_path('js/components/form-error-summary.js'));
+
+    // The panel publishes the space it takes at the bottom of the screen while it is open...
+    expect($script)
+        ->toContain("root.style.setProperty('--form-error-summary-reserve'")
+        ->toContain("root.dataset.formErrorSummary = 'open'")
+        ->toContain("root.style.removeProperty('--form-error-summary-reserve')");
+
+    // ...and an open modal box shrinks and lifts out of that space.
+    expect($css)->toMatch('/:root\[data-form-error-summary="open"\] \.modal-box \{[^}]*max-height: calc\(100dvh - 2rem - var\(--form-error-summary-reserve, 0px\)\);[^}]*margin-bottom: var\(--form-error-summary-reserve, 0px\);/s');
+});

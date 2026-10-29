@@ -12,9 +12,12 @@ use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Section;
+use App\Models\Station;
+use App\Support\EventSections;
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Support\Facades\Cache;
@@ -112,11 +115,10 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null
-            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+        if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
             throw new OutOfPeriodContactException(
                 "QSO time {$dto->timestamp->toIso8601String()} is outside event window "
-                ."{$event->start_time->toIso8601String()} – {$event->end_time->toIso8601String()}"
+                ."{$event->start_time->toIso8601String()} – {$event->operatingEndsAt()->toIso8601String()}"
             );
         }
 
@@ -134,9 +136,11 @@ class ExternalContactHandler
             ? $this->bandResolver->resolveByFrequencyHz($frequencyHz)
             : $this->bandResolver->resolveByName($dto->bandName);
 
+        $this->assertBandAllowedAtStation($station, $bandId, $dto);
+
         $modeName = $dto->modeName ?? $cachedRadioInfo?->modeName;
         $modeId = $this->modeResolver->resolve($modeName, $dto->parentModeName);
-        $sectionId = $this->resolveSection($dto->sectionCode);
+        $sectionId = $this->resolveSection($dto->sectionCode, $config);
 
         $session = $this->sessionResolver->resolve(
             stationId: $station->id,
@@ -197,8 +201,7 @@ class ExternalContactHandler
         }
 
         $event = $config->event;
-        if ($event?->start_time !== null && $event?->end_time !== null
-            && ($dto->timestamp->lt($event->start_time) || $dto->timestamp->gt($event->end_time))) {
+        if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
             return;
         }
 
@@ -312,13 +315,44 @@ class ExternalContactHandler
         throw new InvalidExternalContactException('Invalid callsign');
     }
 
+    /**
+     * Drop contacts the free VHF station logs below 50 MHz: it operates
+     * exclusively on 6m and up, so an HF contact there would be another
+     * transmitter the entry class doesn't count.
+     *
+     * @throws InvalidExternalContactException
+     */
+    private function assertBandAllowedAtStation(Station $station, ?int $bandId, ExternalContactDto $dto): void
+    {
+        $band = $bandId !== null ? Band::find($bandId) : null;
+
+        if ($band === null || $band->isAllowedAtStation($station)) {
+            return;
+        }
+
+        Log::warning('Dropped external contact below 50 MHz at the free VHF station', [
+            'source' => $dto->source,
+            'external_id' => $dto->externalId,
+            'callsign' => mb_substr($dto->callsign, 0, 40),
+            'station' => $station->name,
+            'band' => $band->name,
+        ]);
+
+        throw new InvalidExternalContactException('Band not allowed at the free VHF station', 'below 50 MHz at VHF station');
+    }
+
     private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
     {
         $bandId = $dto->frequencyHz
             ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz)
             : ($this->bandResolver->resolveByName($dto->bandName) ?? $contact->band_id);
+        $station = $contact->operatingSession?->station;
+        if ($station !== null) {
+            $this->assertBandAllowedAtStation($station, $bandId, $dto);
+        }
+
         $modeId = $this->modeResolver->resolve($dto->modeName, $dto->parentModeName) ?? $contact->mode_id;
-        $sectionId = $this->resolveSection($dto->sectionCode) ?? $contact->section_id;
+        $sectionId = $this->resolveSection($dto->sectionCode, $config) ?? $contact->section_id;
 
         $previousKey = $this->dupes->keyFor($contact);
 
@@ -413,12 +447,25 @@ class ExternalContactHandler
         return $this->userResolver->resolveOrCreate($callsign)->id;
     }
 
-    private function resolveSection(?string $code): ?int
+    /**
+     * Resolve a logged section code to the id of the section it counts as for
+     * the event, so YT and MX outside Winter Field Day store as TER and DX.
+     */
+    private function resolveSection(?string $code, EventConfiguration $config): ?int
     {
         if ($code === null) {
             return null;
         }
 
-        return Section::where('code', strtoupper($code))->where('is_active', true)->value('id');
+        $code = strtoupper($code);
+        $countedCode = EventSections::countedCode($code, $config->event);
+
+        $countedId = Section::where('code', $countedCode)->where('is_active', true)->value('id');
+
+        if ($countedId !== null || $countedCode === $code) {
+            return $countedId;
+        }
+
+        return Section::where('code', $code)->where('is_active', true)->value('id');
     }
 }

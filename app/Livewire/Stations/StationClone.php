@@ -254,55 +254,74 @@ class StationClone extends Component
             ]
         );
 
-        // Show success message with detailed summary
+        $clonedWithWarnings = false;
+
         if ($result['success'] && $result['stations_cloned'] > 0) {
-            $description = sprintf(
-                "Stations Created: %d\nEquipment Assigned: %d%s",
-                $result['stations_cloned'],
-                $result['equipment_assigned'],
-                $result['equipment_skipped'] > 0 ? "\nEquipment Skipped: {$result['equipment_skipped']} (conflicts)" : ''
-            );
-
-            $this->dispatch('toast', [
-                'title' => 'Stations Cloned',
-                'description' => $description,
-                'icon' => 'phosphor-check-circle',
-                'css' => 'alert-success',
-            ]);
-
-            // Emit event to parent component
-            $this->dispatch('stations-cloned');
-
-            // Close modal
-            $this->closeModal();
+            $clonedWithWarnings = $this->announceClonedStations($result);
         }
 
-        // Show warnings
-        if (! empty($result['warnings'])) {
-            foreach ($result['warnings'] as $warning) {
-                $this->dispatch('toast', [
-                    'title' => 'Warning',
-                    'description' => $warning,
-                    'icon' => 'phosphor-warning',
-                    'css' => 'alert-warning',
-                ]);
-            }
+        // Warnings already shown in the success toast aren't repeated
+        if (! $clonedWithWarnings) {
+            $this->toastEach($result['warnings'] ?? [], 'Warning', 'phosphor-warning', 'alert-warning');
         }
 
-        // Show errors
-        if (! empty($result['errors'])) {
-            foreach ($result['errors'] as $error) {
-                $this->dispatch('toast', [
-                    'title' => 'Error',
-                    'description' => $error,
-                    'icon' => 'phosphor-x-circle',
-                    'css' => 'alert-error',
-                ]);
-            }
-        }
+        $this->toastEach($result['errors'] ?? [], 'Error', 'phosphor-x-circle', 'alert-error');
 
         if (! $result['success']) {
             $this->addError('general', 'Unable to clone stations. Please review the errors and try again.');
+        }
+    }
+
+    /**
+     * Show the success toast with a summary of what was cloned, then close the
+     * modal. Toasts show one at a time, so warnings go in the same toast
+     * rather than replacing it. Returns whether the toast carried warnings.
+     *
+     * @param  array<string, mixed>  $result
+     */
+    private function announceClonedStations(array $result): bool
+    {
+        $description = sprintf(
+            "Stations Created: %d\nEquipment Assigned: %d%s",
+            $result['stations_cloned'],
+            $result['equipment_assigned'],
+            $result['equipment_skipped'] > 0 ? "\nEquipment Skipped: {$result['equipment_skipped']} (conflicts)" : ''
+        );
+
+        $withWarnings = ! empty($result['warnings']);
+
+        $this->dispatch('toast', [
+            'title' => 'Stations Cloned',
+            'description' => $withWarnings
+                ? $description."\n".implode("\n", $result['warnings'])
+                : $description,
+            'icon' => $withWarnings ? 'phosphor-warning' : 'phosphor-check-circle',
+            'css' => $withWarnings ? 'alert-warning' : 'alert-success',
+            'timeout' => $withWarnings ? 8000 : 3000,
+        ]);
+
+        // Emit event to parent component
+        $this->dispatch('stations-cloned');
+
+        $this->closeModal();
+
+        return $withWarnings;
+    }
+
+    /**
+     * Show one toast per message.
+     *
+     * @param  array<int, string>  $messages
+     */
+    private function toastEach(array $messages, string $title, string $icon, string $css): void
+    {
+        foreach ($messages as $message) {
+            $this->dispatch('toast', [
+                'title' => $title,
+                'description' => $message,
+                'icon' => $icon,
+                'css' => $css,
+            ]);
         }
     }
 
@@ -404,7 +423,7 @@ class StationClone extends Component
         return view('livewire.stations.station-clone', [
             'sourceEvents' => $this->sourceEvents,
             'targetEvents' => $this->targetEvents,
-        ])->layout('layouts.app');
+        ])->layout('layouts.app', ['title' => 'Clone Stations']);
     }
 
     /**

@@ -60,11 +60,11 @@ test('power multiplier: 6-100W = 2x', function () {
     expect($this->rules->powerMultiplier($ctx))->toBe('2');
 });
 
-test('pointsForContact: GOTA station always returns 5', function () {
+test('pointsForContact: GOTA station contacts score by mode like any other', function () {
     $mode = Mode::factory()->create(['points_fd' => 2]);
     $station = Station::factory()->gota()->make();
 
-    expect($this->rules->pointsForContact($mode, $station))->toBe(5);
+    expect($this->rules->pointsForContact($mode, $station))->toBe(2);
 });
 
 test('pointsForContact: non-GOTA falls back to modes.points_fd', function () {

@@ -90,6 +90,36 @@ test('rejects contact time outside event bounds with buffer', function () {
         ->assertSet('parseError', 'Contact time must be within the event window (±5 minutes).');
 });
 
+test('rejects a contact time ahead of the clock', function () {
+    $this->actingAs($this->user);
+
+    $later = now()->addHour();
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('workingDate', $later->format('Y-m-d'))
+        ->set('contactTime', $later->format('H:i'))
+        ->set('exchangeInput', 'W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertSet('parseError', 'Contact time is in the future. Check the time and the UTC/local setting.');
+
+    expect(Contact::count())->toBe(0);
+});
+
+test('reports an impossible inline time as a time error', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('exchangeInput', '2575 W5XYZ 1B CT')
+        ->call('logContact')
+        ->assertSet('parseError', 'Invalid time format. Try 1423, 14:23, or 2:23pm.');
+
+    expect(Contact::count())->toBe(0);
+});
+
 test('shows friendly validation messages when band and mode are missing', function () {
     $this->actingAs($this->user);
 
@@ -285,6 +315,20 @@ test('saves contact with is_transcribed true', function () {
         'callsign' => 'W5XYZ',
         'is_transcribed' => true,
     ]);
+});
+
+test('lists the later of two contacts with the same time first', function () {
+    $this->actingAs($this->user);
+
+    $component = Livewire::test(TranscribeInterface::class, ['station' => $this->station])
+        ->set('selectedBandId', $this->band->id)
+        ->set('selectedModeId', $this->mode->id)
+        ->set('exchangeInput', '1423 W5FST 1B CT')
+        ->call('logContact')
+        ->set('exchangeInput', '1423 W5SND 1B ME')
+        ->call('logContact');
+
+    expect($component->get('recentContacts')->pluck('callsign')->all())->toBe(['W5SND', 'W5FST']);
 });
 
 test('creates synthetic operating session on first save', function () {
@@ -773,7 +817,7 @@ test('updateContact preserves CW mode points on edit', function () {
     expect($contact->points)->toBe(2);
 });
 
-test('updateContact preserves GOTA 5 points on edit', function () {
+test('updateContact keeps a GOTA contact scored by mode on edit', function () {
     $this->actingAs($this->user);
 
     $gotaStation = Station::factory()->create([
@@ -818,7 +862,7 @@ test('updateContact preserves GOTA 5 points on edit', function () {
 
     $contact->refresh();
     expect($contact->is_gota_contact)->toBeTrue()
-        ->and($contact->points)->toBe(5);
+        ->and($contact->points)->toBe((int) $this->mode->points_fd);
 });
 
 test('toggling timeIsLocal to true converts contactTime and workingDate to local', function () {

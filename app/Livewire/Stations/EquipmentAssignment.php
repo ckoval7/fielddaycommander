@@ -509,7 +509,7 @@ class EquipmentAssignment extends Component
      *
      * Checks two limits:
      * 1. Station max_power_watts (if set)
-     * 2. Event operating class max_power_watts (from event configuration)
+     * 2. The operating class limit of the event's rulebook
      *
      * NOTE: For amplifiers, the amplifier power_output_watts IS the total power
      * (not additive with radio power). The amplifier replaces/overrides the radio power.
@@ -524,6 +524,7 @@ class EquipmentAssignment extends Component
         $station = Station::with([
             'primaryRadio',
             'eventConfiguration.operatingClass',
+            'eventConfiguration.event.eventType',
         ])->findOrFail($stationId);
 
         // Only validate power for amplifiers
@@ -555,7 +556,7 @@ class EquipmentAssignment extends Component
         }
 
         // Check event operating class power limit
-        $operatingClassLimit = $station->eventConfiguration?->operatingClass?->max_power_watts;
+        $operatingClassLimit = $station->eventConfiguration?->powerCapWatts();
         if ($operatingClassLimit && $amplifierPower > $operatingClassLimit) {
             $className = $station->eventConfiguration->operatingClass->name ?? 'operating class';
             $warnings[] = "Amplifier output ({$amplifierPower}W) exceeds {$className} limit ({$operatingClassLimit}W).";
@@ -1184,6 +1185,6 @@ class EquipmentAssignment extends Component
      */
     public function render(): View
     {
-        return view('livewire.stations.equipment-assignment')->layout('layouts.app');
+        return view('livewire.stations.equipment-assignment')->layout('layouts.app', ['title' => 'Equipment Assignment']);
     }
 }

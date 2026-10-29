@@ -581,11 +581,19 @@ test('a widget saved wider than the grid renders and edits at full width', funct
     $this->dashboard->update(['config' => $config]);
 
     Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard->fresh()])
-        ->assertSeeHtml('lg:col-span-3')
+        ->assertSeeHtml('@3xl:col-span-3')
         ->assertDontSeeHtml('col-span-4')
         ->call('enterEditMode')
         ->call('configureWidget', 'widget-1')
         ->assertDispatched('open-widget-configurator', colSpan: 3);
+});
+
+test('the widget grid sizes its columns to the space beside the sidebar', function () {
+    // A viewport breakpoint gave three ~210px columns on an iPad with the sidebar open,
+    // clipping the countdown clock and the milestone count.
+    Livewire::test(DashboardEditor::class, ['dashboard' => $this->dashboard])
+        ->assertSeeHtml('@3xl:grid-cols-3')
+        ->assertDontSeeHtml('lg:grid-cols-3');
 });
 
 test('the widget grid keeps edit toolbars under the sticky header and labels the width buttons', function () {

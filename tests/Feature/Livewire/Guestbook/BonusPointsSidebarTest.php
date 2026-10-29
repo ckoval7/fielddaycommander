@@ -183,3 +183,18 @@ test('does not count verified online entries in visit categories', function () {
     expect($component->get('agencyCount'))->toBe(0);
     expect($component->get('totalBonusPoints'))->toBe(0);
 });
+
+test('refreshes its counts when a bonus is claimed', function () {
+    $component = Livewire::test(BonusPointsSidebar::class, ['eventConfigId' => $this->eventConfig->id]);
+
+    expect($component->get('agencyCount'))->toBe(0);
+
+    GuestbookEntry::factory()->verified()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'visitor_category' => VisitorCategory::Agency,
+    ]);
+
+    $component->dispatch('bonus-claimed');
+
+    expect($component->get('agencyCount'))->toBe(1);
+});
