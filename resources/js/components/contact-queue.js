@@ -359,6 +359,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             this.queue.unshift(entry);
             this.saveQueue();
             void this.syncNext();
+
+            return entry;
         },
 
         /**
@@ -395,9 +397,9 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const advanced = this.parseAdvancedFields();
             if (!advanced) return; // parseError already set
 
-            this.announceLogged(parsed.callsign, rawInput);
+            const dupeHint = this.liveDupeHint(rawInput);
 
-            this.enqueue({
+            const entry = this.enqueue({
                 band_id: sessionContext.band_id,
                 mode_id: sessionContext.mode_id,
                 submode: sessionContext.submode || null,
@@ -413,6 +415,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 gota_operator_user_id: sessionContext.gota_operator_user_id || null,
                 advanced,
             });
+
+            this.announceLogged(entry, dupeHint);
 
             // Clear input and refocus
             inputEl.value = '';
@@ -434,19 +438,70 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         parseError: '',
 
         /**
-         * Confirm a logged contact to screen readers, flagging a dupe when the
-         * server's dupe check was for exactly this exchange.
+         * How long to wait for the server's answer before confirming a logged
+         * contact without it.
          */
-        announceLogged(callsign, rawInput) {
+        announceFallbackMs: 3000,
+
+        /** Confirmations waiting on the server's dupe verdict, keyed by uuid. */
+        pendingAnnouncements: {},
+
+        /**
+         * Whether the live dupe check already flagged exactly this exchange.
+         * It lags fast typing, so it is only a fallback for the server's answer.
+         */
+        liveDupeHint(rawInput) {
             const wire = this.$wire;
-            const isDupe = Boolean(wire?.isDuplicate)
+            return Boolean(wire?.isDuplicate)
                 && String(wire?.exchangeInput ?? '').trim().toUpperCase() === rawInput.toUpperCase();
+        },
+
+        /**
+         * Confirm a logged contact to screen readers. Online, wait for the sync
+         * response so the dupe flag is the one the contact was stored with;
+         * offline, or if the server is slow, fall back to the live dupe check.
+         */
+        announceLogged(entry, dupeHint) {
+            if (!this.isOnline) {
+                this.speakLogged(entry.callsign, dupeHint, true);
+                return;
+            }
+
+            this.pendingAnnouncements[entry.uuid] = {
+                callsign: entry.callsign,
+                dupeHint,
+                timer: setTimeout(() => this.settleAnnouncement(entry.uuid), this.announceFallbackMs),
+            };
+        },
+
+        /**
+         * Speak a waiting confirmation once, with the server's dupe verdict
+         * when there is one and the live check's otherwise.
+         */
+        settleAnnouncement(uuid, isDupe = null, savedLocally = false) {
+            const pending = this.takeAnnouncement(uuid);
+            if (pending) {
+                this.speakLogged(pending.callsign, isDupe ?? pending.dupeHint, savedLocally);
+            }
+        },
+
+        /** Drop a waiting confirmation, e.g. when a sync failure is announced instead. */
+        takeAnnouncement(uuid) {
+            const pending = this.pendingAnnouncements[uuid];
+            if (pending) {
+                clearTimeout(pending.timer);
+                delete this.pendingAnnouncements[uuid];
+            }
+            return pending ?? null;
+        },
+
+        speakLogged(callsign, isDupe, savedLocally) {
             const parts = [`${callsign} logged`];
 
             if (isDupe) {
                 parts.push('dupe');
             }
-            if (!this.isOnline) {
+            if (savedLocally) {
                 parts.push('saved on this device');
             }
 
@@ -871,6 +926,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
             candidate.last_error_code = errorData.code ?? null;
             this.saveQueue();
+            this.takeAnnouncement(candidate.uuid);
             // Retries fail the same way; say it once.
             if (candidate.attempts === 1) {
                 this.announceSyncFailure(candidate);
@@ -943,7 +999,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 this.measureClockOffset(response, sentAt);
 
                 if (response.ok) {
-                    await response.json();
+                    const result = await response.json();
+                    this.settleAnnouncement(candidate.uuid, Boolean(result?.is_duplicate));
 
                     // Keep the entry on screen as 'synced' until the refreshed
                     // server row replaces it (see pruneConfirmed), so the log
@@ -970,6 +1027,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     candidate.attempts = 999;
                     candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
+                    this.takeAnnouncement(candidate.uuid);
                     this.announceSyncFailure(candidate);
                 } else {
                     // Transient server error - retry
@@ -977,6 +1035,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     candidate.attempts++;
                     candidate.lastAttemptTime = Date.now();
                     this.saveQueue();
+                    this.settleAnnouncement(candidate.uuid, null, true);
                 }
             } catch (e) {
                 // Network error (fetch threw) - queue contact for retry with backoff
@@ -985,6 +1044,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 candidate.attempts++;
                 candidate.lastAttemptTime = Date.now();
                 this.saveQueue();
+                this.settleAnnouncement(candidate.uuid, null, true);
             }
         },
 

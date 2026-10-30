@@ -26,6 +26,9 @@ Props:
 Slots:
 - $cards: Mobile card list items
 - $rows: Desktop table rows
+
+Mark each contact's recall button data-roving-item: the history is one Tab
+stop, with arrow keys between contacts (see roving-focus.js).
 - $extraColumns: Extra desktop column headings, after Section
 - $slot: The docked composer
 --}}
@@ -77,8 +80,10 @@ Slots:
         @endif
     </div>
 
-    {{-- History: stays pinned to the bottom so the newest QSO sits right above the input --}}
+    {{-- History: stays pinned to the bottom so the newest QSO sits right above the input.
+         Its contacts are one Tab stop; arrow keys move between them. --}}
     <div
+        x-roving-focus
         class="group/log max-sm:flex-1 max-sm:min-h-28 sm:h-80 overflow-y-auto overflow-x-auto"
         x-data="{
             pinned: true,

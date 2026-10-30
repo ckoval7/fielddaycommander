@@ -83,8 +83,9 @@ class EventForm extends Component
     public ?string $rules_version = null;
 
     /**
-     * Field Day only: setup began before the contest started, so the station
-     * may operate just 24 consecutive hours from its first contact (rule 3.2).
+     * Field Day Class A, B or F only: setup began before the contest started, so
+     * the station may operate just 24 consecutive hours from its first
+     * contact (rule 3.2). Other classes always have that limit.
      */
     public bool $setup_started_early = false;
 
@@ -668,6 +669,27 @@ class EventForm extends Component
         return EventType::query()->whereKey($this->event_type_id)->value('code') === 'FD';
     }
 
+    /**
+     * Whether the form asks about early setup: only Field Day Class A, B and F
+     * stations can earn the full 27 hours by waiting for the start (rule 3.1).
+     */
+    #[Computed]
+    public function offersEarlySetupChoice(): bool
+    {
+        return $this->isFieldDay
+            && in_array($this->selectedOperatingClass?->code, Event::FULL_PERIOD_CLASSES, true);
+    }
+
+    /**
+     * Whether a Field Day station of the selected class is always held to 24
+     * consecutive hours, whenever it started setting up.
+     */
+    #[Computed]
+    public function hasFixedTwentyFourHourLimit(): bool
+    {
+        return $this->isFieldDay && $this->selectedOperatingClass !== null && ! $this->offersEarlySetupChoice;
+    }
+
     #[Computed]
     public function selectedOperatingClass(): ?OperatingClass
     {
@@ -818,7 +840,7 @@ class EventForm extends Component
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
             'setup_allowed_from' => $eventType?->setupAllowedFrom($startTime),
-            'setup_started_early' => $eventType?->code === 'FD' && $this->setup_started_early,
+            'setup_started_early' => $this->offersEarlySetupChoice && $this->setup_started_early,
             'is_active' => true,
         ]);
 
@@ -918,8 +940,7 @@ class EventForm extends Component
             $eventData['setup_allowed_from'] = $eventType?->setupAllowedFrom(Carbon::parse($validated['start_time']));
         }
 
-        $eventData['setup_started_early'] = $this->setup_started_early
-            && EventType::query()->whereKey($eventData['event_type_id'] ?? $this->event->event_type_id)->value('code') === 'FD';
+        $eventData['setup_started_early'] = $this->setup_started_early && $this->offersEarlySetupChoice;
 
         $this->event->update($eventData);
 

@@ -284,6 +284,7 @@
                 <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
                     <button
                         type="button"
+                        data-roving-item
                         @click="recallByUuid(contact.uuid)"
                         :aria-current="recalledUuid === contact.uuid"
                         :class="{
@@ -355,7 +356,7 @@
                         <td class="font-mono">-</td>
                         <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></td>
                         <td class="font-bold font-mono uppercase">
-                            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
+                            <button type="button" data-roving-item class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
                             <template x-if="contact.status === 'failed'">
                                 <span><span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span><span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>

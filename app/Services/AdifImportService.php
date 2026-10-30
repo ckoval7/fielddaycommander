@@ -294,7 +294,7 @@ class AdifImportService
             'callsign' => $record->callsign,
             'section_id' => $record->section_id,
             'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
-            'power_watts' => $session->power_watts,
+            'power_watts' => AdvancedContactFields::powerWattsFromAdif($record->raw_data ?? []) ?? $session->power_watts,
             ...$advancedFields,
             'adif_fields' => $adifFields !== [] ? $adifFields : null,
             'points' => 0,
@@ -354,7 +354,7 @@ class AdifImportService
             'is_transcription' => false,
             'start_time' => $qsoTime,
             'end_time' => $qsoTime,
-            'power_watts' => 100,
+            'power_watts' => AdvancedContactFields::powerWattsFromAdif($record->raw_data ?? []) ?? 100,
             'qso_count' => 0,
         ]);
 
@@ -507,6 +507,7 @@ class AdifImportService
 
             $value = match ($field) {
                 'exchange_class' => $record->exchange_class ? strtoupper($record->exchange_class) : null,
+                'power_watts' => AdvancedContactFields::powerWattsFromAdif($record->raw_data ?? []),
                 default => null,
             };
 

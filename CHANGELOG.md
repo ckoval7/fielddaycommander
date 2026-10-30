@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+
+- On **Log Contact**, pressing Enter right after typing an exchange could make a screen reader say "K9SR logged" even though the contact was saved as a dupe. The confirmation now uses the server's answer and says "K9SR logged, dupe" for a dupe. If the server takes more than 3 seconds or you're offline, it uses the live dupe check as before.
+- ARRL Field Day Classes C, D, and E could use the full 27 hours with the setup switch off. They now have 24 consecutive hours from the event's first contact, including GOTA, or until the event end if sooner. Contacts after that earn no points, and **Select Station** stops new sessions. Only Classes A, B, and F see the switch, now labeled **Setup began before 1800 UTC Saturday**.
+- ADIF file imports ignored `TX_PWR` and used 100 W or the matching open session's power. Imports now use `TX_PWR` when present, rounded up to whole watts, and fill a matched contact's missing power from it. Contacts received live over ADIF UDP or WSJT-X logged-ADIF now use `TX_PWR` too.
+- For keyboard users, **Recent QSOs** on **Log Contact** and **Recently Transcribed** on **Transcribe Paper Log** now each take a single Tab stop instead of one per contact. Tab lands on the newest contact or the one you last used. Up and Down move between contacts, and Home and End jump to the first and last.
+- On **Select Station**, screen reader names for **Select Station** and **Take Over** buttons now include the station name.
+- On **Get Ready**, the registration link in **Invite participants** could run off the left edge of narrow windows and phones. It now wraps.
+
 ## 26.10.14 - 2026-10-29
 
 ### Added

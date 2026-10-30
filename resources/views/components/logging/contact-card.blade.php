@@ -55,6 +55,7 @@ Props:
 @else
     <button
         type="button"
+        data-roving-item
         wire:key="card-{{ $contact->id }}"
         @click="recallByContactId({{ $contact->id }})"
         :aria-current="recalledContactId === {{ $contact->id }}"

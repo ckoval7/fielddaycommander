@@ -85,6 +85,7 @@
                         @if($status === 'available')
                             <x-button
                                 label="Select Station"
+                                aria-label="Select Station {{ $station->name }}"
                                 wire:click="selectStation({{ $station->id }})"
                                 class="btn-success btn-sm w-full"
                                 icon="phosphor-play"
@@ -93,6 +94,7 @@
                         @elseif($status === 'idle')
                             <x-button
                                 label="Take Over"
+                                aria-label="Take Over {{ $station->name }}"
                                 wire:click="selectStation({{ $station->id }})"
                                 class="btn-warning btn-sm w-full"
                                 icon="phosphor-arrow-clockwise"
@@ -101,6 +103,7 @@
                         @elseif($status === 'unavailable')
                             <x-button
                                 label="Select Station"
+                                aria-label="Select Station {{ $station->name }}"
                                 class="btn-sm w-full"
                                 icon="phosphor-play"
                                 disabled

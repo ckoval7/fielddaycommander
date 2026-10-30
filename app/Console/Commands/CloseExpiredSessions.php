@@ -19,13 +19,15 @@ class CloseExpiredSessions extends Command
         $staleSessions = OperatingSession::query()
             ->whereNull('end_time')
             ->whereHas('station.eventConfiguration.event', function ($query) {
-                // Early-setup Field Day events can stop operating before end_time,
-                // so they are checked against their operating end below.
+                // Field Day events can stop operating before end_time (early
+                // setup, or a class limited to 24 hours), so they are checked
+                // against their operating end below.
                 $query->where(fn ($ended) => $ended
                     ->where('end_time', '<', appNow())
-                    ->orWhere('setup_started_early', true));
+                    ->orWhere('setup_started_early', true)
+                    ->orWhereHas('eventType', fn ($type) => $type->where('code', 'FD')));
             })
-            ->with('station.eventConfiguration.event', 'operator')
+            ->with('station.eventConfiguration.event.eventType', 'station.eventConfiguration.operatingClass', 'operator')
             ->get()
             ->filter(fn (OperatingSession $session) => $session->station->eventConfiguration->event->operatingEndsAt()?->lt(appNow()))
             ->values();

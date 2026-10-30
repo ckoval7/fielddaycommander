@@ -11,6 +11,7 @@ import { copyToClipboard } from './clipboard';
 import { formErrorSummaryPanel, registerFormErrorSummary } from './components/form-error-summary';
 import { confirmDialogPanel, registerConfirmDialog } from './components/confirm-dialog';
 import { registerAnnouncer } from './components/announcer';
+import { rovingFocus } from './components/roving-focus';
 import { spokenAbbreviations, spokenDuration } from './spoken';
 import flatpickrComponent from './flatpickr-init';
 import { Chart, registerables } from 'chart.js/auto';
@@ -40,6 +41,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('formErrorSummaryPanel', formErrorSummaryPanel);
     Alpine.data('confirmDialogPanel', confirmDialogPanel);
     Alpine.data('flatpickr', flatpickrComponent);
+    Alpine.directive('roving-focus', rovingFocus);
     Alpine.magic('copy', () => copyToClipboard);
 });
 

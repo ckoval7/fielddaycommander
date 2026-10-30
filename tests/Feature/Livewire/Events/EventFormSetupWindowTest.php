@@ -107,10 +107,43 @@ test('the FD form previews setup opening at 0000Z Friday', function () {
 test('the setup started early toggle shows for Field Day only', function () {
     Livewire::test(EventForm::class, ['mode' => 'create'])
         ->set('event_type_id', $this->fdType->id)
-        ->assertSee('Setup started before the contest')
+        ->set('operating_class_id', $this->fdClass->id)
+        ->assertSee('Setup began before 1800 UTC Saturday')
         ->assertSeeHtml('wire:model="setup_started_early"')
         ->set('event_type_id', $this->wfdType->id)
-        ->assertDontSee('Setup started before the contest');
+        ->assertDontSee('Setup began before 1800 UTC Saturday');
+});
+
+test('Field Day classes other than A, B and F see their fixed 24 hours instead of the toggle', function () {
+    $classD = OperatingClass::create([
+        'event_type_id' => $this->fdType->id,
+        'code' => 'D',
+        'name' => 'Class D',
+        'description' => 'Home station',
+        'allows_gota' => false,
+        'requires_emergency_power' => false,
+    ]);
+
+    Livewire::test(EventForm::class, ['mode' => 'create'])
+        ->set('event_type_id', $this->fdType->id)
+        ->set('operating_class_id', $classD->id)
+        ->assertDontSeeHtml('wire:model="setup_started_early"')
+        ->assertSee('24 consecutive hours');
+});
+
+test('a Field Day class other than A, B or F never saves the toggle', function () {
+    $classE = OperatingClass::create([
+        'event_type_id' => $this->fdType->id,
+        'code' => 'E',
+        'name' => 'Class E',
+        'description' => 'Home station on emergency power',
+        'allows_gota' => false,
+        'requires_emergency_power' => true,
+    ]);
+
+    $event = ($this->createEvent)('FD Class E 2026', $this->fdType, $classE, '2026-06-27 18:00', '2026-06-28 20:59', true);
+
+    expect($event->setup_started_early)->toBeFalse();
 });
 
 test('an FD event saves the setup started early toggle, off by default', function () {

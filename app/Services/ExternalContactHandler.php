@@ -17,6 +17,7 @@ use App\Models\Contact;
 use App\Models\EventConfiguration;
 use App\Models\Section;
 use App\Models\Station;
+use App\Support\AdvancedContactFields;
 use App\Support\EventSections;
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
@@ -165,7 +166,7 @@ class ExternalContactHandler
             'callsign' => $dto->callsign,
             'section_id' => $sectionId,
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange),
-            'power_watts' => $session->power_watts,
+            'power_watts' => AdvancedContactFields::powerWattsFromAdif($dto->adifFields ?? []) ?? $session->power_watts,
             ...$dto->advancedFields,
             'adif_fields' => $dto->adifFields,
             'is_gota_contact' => (bool) $station->is_gota,
@@ -366,6 +367,7 @@ class ExternalContactHandler
             'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
             // A replace carries the logger's full record, so what it sends
             // wins; fields it leaves out keep their values.
+            'power_watts' => AdvancedContactFields::powerWattsFromAdif($dto->adifFields ?? []) ?? $contact->power_watts,
             ...$dto->advancedFields,
             'adif_fields' => $dto->adifFields ?? $contact->adif_fields,
         ]);
