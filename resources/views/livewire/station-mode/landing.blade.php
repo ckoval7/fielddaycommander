@@ -8,8 +8,7 @@
 
     @if($device)
         <div class="text-center mb-6">
-            <div class="text-xs uppercase tracking-wide text-base-content/60">Station Mode</div>
-            <h1 class="text-2xl font-bold mt-1">{{ $device->station?->name }}</h1>
+            <h1 class="text-2xl font-bold">{{ $device->station?->name }}</h1>
             @if($device->station?->isUnavailable())
                 <x-alert icon="phosphor-prohibit" class="alert-warning text-sm mt-4">
                     This station is marked unavailable ({{ $device->station->unavailable_reason->label() }}). You can still sign in to view the log.
