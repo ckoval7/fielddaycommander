@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.10.14 - 2026-10-29
+
 ### Added
 
 - On **Create Event** and **Edit Event** for ARRL Field Day, a new **Setup started before the contest** switch is for stations that began setting up before 1800 UTC Saturday. When it's on, the operating period ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first. Contacts after that time earn no points, aren't accepted from **Log Contact**, **Transcribe Paper Log**, or external loggers, and are left out of the Cabrillo log. **Select Station** stops new sessions. The header countdown and the dashboard's **Time Remaining** count down to the new end once the first contact is logged. The switch is off by default, so existing events don't change.
