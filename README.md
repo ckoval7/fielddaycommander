@@ -53,6 +53,18 @@ The script installs dependencies, configures the database, builds assets, and se
 
 For a Docker installation, follow [DOCKER.md](DOCKER.md).
 
+### Hardened systems
+
+`deploy.sh` and `update.sh` also work on Rocky Linux, AlmaLinux and RHEL 9 with SELinux enforcing and with STIG or CIS profiles applied. Each step below runs only when that feature is present on the server:
+
+- **SELinux:** The scripts add persistent file-context rules with `semanage fcontext` and `restorecon`, never `chcon`. `.env` is labeled `etc_t` because systemd reads it before it starts the service. The rest of the install keeps the policy defaults. If `semanage` is missing, the scripts install `policycoreutils-python-utils`. The web server is expected to run as `unconfined_service_t`, which you can check with `ps -eZ | grep frankenphp`. If it runs confined as `httpd_t`, the deploy labels `storage/` and `bootstrap/cache` writable and adds the web port. The scripts never switch SELinux to permissive.
+- **fapolicyd:** The scripts trust the FrankenPHP and Composer binaries and add `/etc/fapolicyd/rules.d/39-fdcommander.rules`, so PHP, FrankenPHP and Node can load the app's files under the install path.
+- **`/tmp` mounted `noexec`:** Composer and npm use `/var/lib/fd-commander/deploy-tmp` instead, and the script removes it afterward.
+- **Restrictive umask (077):** Files get explicit owners and modes.
+- **firewalld:** The scripts open only the web port.
+
+If the web server isn't running at the end, `deploy.sh` prints its recent log lines and any SELinux denials (from `ausearch -m AVC -ts recent`), then exits with an error. If a deploy still fails, include the deploy log at `/var/log/fd-commander-deploy.log` and the `ausearch` output in your bug report.
+
 ### Backups
 
 `backup.sh` saves the database, uploaded photos, and `.env` file. Keep `.env` with your backups: its `APP_KEY` is needed to restore two-factor logins. Use `restore.sh` to restore a backup.
