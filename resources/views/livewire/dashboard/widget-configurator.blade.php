@@ -119,6 +119,7 @@
                                 @foreach(range(1, \App\Services\DashboardService::MAX_COL_SPAN) as $c)
                                     <button
                                         type="button"
+                                        aria-pressed="{{ $colSpan === $c ? 'true' : 'false' }}"
                                         wire:click="$set('colSpan', {{ $c }})"
                                         class="btn btn-sm flex-1 {{ $colSpan === $c ? 'btn-primary' : 'btn-ghost' }}"
                                     >
@@ -133,6 +134,7 @@
                                 @foreach([['Short', 2], ['Medium', 3], ['Tall', 6]] as [$label, $r])
                                     <button
                                         type="button"
+                                        aria-pressed="{{ $rowSpan === $r ? 'true' : 'false' }}"
                                         wire:click="$set('rowSpan', {{ $r }})"
                                         class="btn btn-sm flex-1 {{ $rowSpan === $r ? 'btn-primary' : 'btn-ghost' }}"
                                     >
@@ -157,7 +159,7 @@
             @endif
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" @click="$wire.cancel()" />
             <x-button
                 label="Apply"

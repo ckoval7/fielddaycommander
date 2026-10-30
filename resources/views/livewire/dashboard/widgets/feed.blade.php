@@ -46,17 +46,17 @@ Each item: id, icon, title, message, time_ago, read
                             <span class="text-lg truncate {{ $item['read'] ? 'font-normal text-base-content/70' : 'font-bold text-base-content' }}">
                                 {{ $item['title'] }}
                             </span>
-                            <span class="text-base text-base-content/50 flex-shrink-0">
-                                {{ $item['time_ago'] }}
+                            <span class="text-base text-base-content/70 flex-shrink-0">
+                                {{ spoken($item['time_ago'], spokenDuration($item['time_ago'])) }}
                             </span>
                         </div>
-                        <p class="text-base mt-1 line-clamp-2 {{ $item['read'] ? 'text-base-content/50' : 'text-base-content/80' }}">
+                        <p class="text-base mt-1 line-clamp-2 {{ $item['read'] ? 'text-base-content/70' : 'text-base-content/80' }}">
                             {{ $item['message'] }}
                         </p>
                     </div>
                 </div>
             @empty
-                <div class="flex flex-col items-center justify-center py-16 text-base-content/50">
+                <div class="flex flex-col items-center justify-center py-16 text-base-content/70">
                     <x-icon name="phosphor-tray" class="w-16 h-16 mb-4" />
                     <p class="text-xl">No notifications yet</p>
                 </div>
@@ -65,9 +65,9 @@ Each item: id, icon, title, message, time_ago, read
     @else
         {{-- Normal Mode: Compact feed display --}}
         <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
+            <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide">
                 {{ $data['feed_label'] }}
-            </h3>
+            </h2>
             <x-badge value="{{ count($data['items']) }}" class="badge-ghost badge-xs" />
         </div>
 
@@ -90,17 +90,17 @@ Each item: id, icon, title, message, time_ago, read
                             <span class="text-sm truncate {{ $item['read'] ? 'font-normal text-base-content/60' : 'font-semibold text-base-content' }}">
                                 {{ $item['title'] }}
                             </span>
-                            <span class="text-xs text-base-content/40 flex-shrink-0">
-                                {{ $item['time_ago'] }}
+                            <span class="text-xs text-base-content/70 flex-shrink-0">
+                                {{ spoken($item['time_ago'], spokenDuration($item['time_ago'])) }}
                             </span>
                         </div>
-                        <p class="text-xs truncate {{ $item['read'] ? 'text-base-content/40' : 'text-base-content/70' }}">
+                        <p class="text-xs truncate {{ $item['read'] ? 'text-base-content/70' : 'text-base-content/70' }}">
                             {{ $item['message'] }}
                         </p>
                     </div>
                 </div>
             @empty
-                <div class="flex flex-col items-center justify-center py-8 text-base-content/50">
+                <div class="flex flex-col items-center justify-center py-8 text-base-content/70">
                     <x-icon name="phosphor-tray" class="w-10 h-10 mb-2" />
                     <p class="text-sm">No notifications yet</p>
                 </div>

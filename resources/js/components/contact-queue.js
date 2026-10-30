@@ -11,6 +11,9 @@
  * Usage in Blade:
  *   <div x-data="contactQueue(sessionId, csrfToken)">
  */
+import { announce } from './announcer';
+import { spokenAbbreviations } from '../spoken';
+
 /** Where the Advanced Fields panel's open state is kept on this device. */
 const ADVANCED_OPEN_KEY = 'fd-commander-advanced-open';
 
@@ -173,6 +176,23 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             });
 
             this.syncIntervalId = setInterval(() => this.syncNext(), 3000);
+
+            // Screen readers hear what sighted operators see change.
+            this.$watch('parseError', (message) => {
+                if (message) {
+                    announce(spokenAbbreviations(message), { assertive: true });
+                }
+            });
+            this.$watch('isOnline', (online) => {
+                announce(online
+                    ? 'Online. Syncing contacts'
+                    : 'Offline. Saving contacts on this device', { assertive: !online });
+            });
+            this.$watch('recalledExchange', (exchange) => {
+                if (exchange) {
+                    announce(`${exchange}, editing. Enter saves, Delete deletes, Escape cancels`);
+                }
+            });
 
             // Drop queued copies once the server-rendered row for the same
             // contact lands, so the log never shows both or neither.
@@ -375,6 +395,8 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             const advanced = this.parseAdvancedFields();
             if (!advanced) return; // parseError already set
 
+            this.announceLogged(parsed.callsign, rawInput);
+
             this.enqueue({
                 band_id: sessionContext.band_id,
                 mode_id: sessionContext.mode_id,
@@ -410,6 +432,26 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
         },
 
         parseError: '',
+
+        /**
+         * Confirm a logged contact to screen readers, flagging a dupe when the
+         * server's dupe check was for exactly this exchange.
+         */
+        announceLogged(callsign, rawInput) {
+            const wire = this.$wire;
+            const isDupe = Boolean(wire?.isDuplicate)
+                && String(wire?.exchangeInput ?? '').trim().toUpperCase() === rawInput.toUpperCase();
+            const parts = [`${callsign} logged`];
+
+            if (isDupe) {
+                parts.push('dupe');
+            }
+            if (!this.isOnline) {
+                parts.push('saved on this device');
+            }
+
+            announce(parts.join(', '));
+        },
 
         /**
          * GOTA contacts are credited to the GOTA operator: a linked user, or a first and last name.
@@ -805,6 +847,40 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 || (entry.last_error ?? '').includes('dated in the future');
         },
 
+        /**
+         * The server turned a queued contact down (422): re-date it once if it
+         * was stamped in the future, otherwise mark it failed.
+         */
+        handleRejectedSync(candidate, errorData) {
+            if (errorData.code === 'qso_time_in_future' && !candidate.restamped) {
+                // Stamped with a wrong clock offset (or before offsets
+                // were measured): re-date it on the server clock once
+                // and send it again.
+                if (Number.isFinite(errorData.server_time)) {
+                    this.clockOffsetMs = errorData.server_time - Date.now();
+                }
+                this.restamp(candidate);
+                candidate.restamped = true;
+                candidate.status = 'pending';
+                this.saveQueue();
+                return;
+            }
+            candidate.status = 'failed';
+            candidate.attempts++;
+            candidate.lastAttemptTime = Date.now();
+            candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
+            candidate.last_error_code = errorData.code ?? null;
+            this.saveQueue();
+            // Retries fail the same way; say it once.
+            if (candidate.attempts === 1) {
+                this.announceSyncFailure(candidate);
+            }
+        },
+
+        announceSyncFailure(candidate) {
+            announce(`${candidate.callsign} sync failed. ${candidate.last_error}`, { assertive: true });
+        },
+
         async syncNext() {
             if (!this.isOnline) {
                 return;
@@ -887,32 +963,14 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                     // reliable after wire:navigate SPA transitions.
                     globalThis.Livewire?.dispatch('contact-synced');
                 } else if (response.status === 422) {
-                    const errorData = await response.json();
-                    if (errorData.code === 'qso_time_in_future' && !candidate.restamped) {
-                        // Stamped with a wrong clock offset (or before offsets
-                        // were measured): re-date it on the server clock once
-                        // and send it again.
-                        if (Number.isFinite(errorData.server_time)) {
-                            this.clockOffsetMs = errorData.server_time - Date.now();
-                        }
-                        this.restamp(candidate);
-                        candidate.restamped = true;
-                        candidate.status = 'pending';
-                        this.saveQueue();
-                        return;
-                    }
-                    candidate.status = 'failed';
-                    candidate.attempts++;
-                    candidate.lastAttemptTime = Date.now();
-                    candidate.last_error = errorData.message || 'Contact could not be synced. Check its details.';
-                    candidate.last_error_code = errorData.code ?? null;
-                    this.saveQueue();
+                    this.handleRejectedSync(candidate, await response.json());
                 } else if (response.status === 401 || response.status === 419) {
                     // Session or CSRF expired - stop retrying, user must refresh
                     candidate.status = 'failed';
                     candidate.attempts = 999;
                     candidate.last_error = 'Session expired. Please refresh the page, then retry.';
                     this.saveQueue();
+                    this.announceSyncFailure(candidate);
                 } else {
                     // Transient server error - retry
                     candidate.status = 'pending';
@@ -1141,6 +1199,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 this.recalledUuid = null;
                 this.queue = this.queue.filter(c => c.uuid !== uuid);
                 this.saveQueue();
+                announce(`${this.recalledExchange} deleted`);
                 globalThis.Livewire?.dispatch('contact-discarded');
                 this.exitRecall(inputEl);
                 return;
@@ -1202,6 +1261,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
                 delete entry._prevStatus;
                 this.schedulePendingIndicator(entry);
                 this.saveQueue();
+                announce(`${entry.callsign} saved`);
             }
 
             // exitRecall would try to release the lock, but we've already

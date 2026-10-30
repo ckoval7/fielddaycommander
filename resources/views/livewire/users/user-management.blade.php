@@ -57,16 +57,16 @@
                 <table class="table table-zebra">
                     <thead>
                         <tr>
-                            <th>
+                            <th scope="col">
                                 <x-checkbox wire:model.live="selectAll" aria-label="Select all users on this page" />
                             </th>
-                            <th>Callsign</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Roles</th>
-                            <th>License</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th scope="col">Callsign</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Roles</th>
+                            <th scope="col">License</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -121,9 +121,9 @@
                                 </td>
                                 <td>
                                     <x-dropdown>
-                                        <x-slot:trigger>
-                                            <x-button icon="phosphor-dots-three-vertical" aria-label="Actions for {{ $user->call_sign }}" class="btn-sm btn-ghost" />
-                                        </x-slot:trigger>
+                                        <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $user->call_sign }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
                                         <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
                                         <x-menu-separator />
@@ -174,13 +174,13 @@
                                 <div class="min-w-0">
                                     <div class="font-bold text-lg">{{ $user->call_sign }}</div>
                                     <div class="text-sm text-base-content/70">{{ $user->first_name }} {{ $user->last_name }}</div>
-                                    <div class="text-sm text-base-content/50 truncate">{{ $user->email }}</div>
+                                    <div class="text-sm text-base-content/70 truncate">{{ $user->email }}</div>
                                 </div>
                             </div>
                             <x-dropdown>
-                                <x-slot:trigger>
-                                    <x-button icon="phosphor-dots-three-vertical" aria-label="Actions for {{ $user->call_sign }}" class="btn-sm btn-ghost" />
-                                </x-slot:trigger>
+                                <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $user->call_sign }}">
+                            <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
+                        </x-slot:trigger>
 
                                 <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
                                 <x-menu-separator />

@@ -85,10 +85,20 @@ it('shows the label, required marker, hint and validation error', function () {
 
     expect($html)
         ->toContain('Time Zone')
-        ->toContain('<span class="text-error">*</span>')
+        ->toContain('<span class="text-error" aria-hidden="true">*</span>')
         ->toContain('Your local zone')
         ->toContain('Pick a time zone.')
         ->toContain('!select-error');
+
+    preg_match('/<legend id="([^"]+)-label"/', $html, $legend);
+    $uuid = $legend[1];
+
+    expect($html)
+        ->toContain('aria-labelledby="'.$uuid.'-label"')
+        ->toContain('aria-invalid="true"')
+        ->toContain('aria-describedby="'.$uuid.'-error '.$uuid.'-hint"')
+        ->toContain('id="'.$uuid.'-error"')
+        ->toContain('id="'.$uuid.'-hint"');
 });
 
 it('keeps buttons out of the field label so clicks there never remove a chip', function () {

@@ -33,11 +33,13 @@
                 </div>
                 <div class="flex flex-col gap-2 sm:flex-row">
                     <button
+                        aria-pressed="{{ $units === 'imperial' ? 'true' : 'false' }}"
                         wire:click="saveUnits('imperial')"
                         class="btn btn-sm {{ $units === 'imperial' ? 'btn-primary' : 'btn-outline' }}">
                         Imperial (°F, mph)
                     </button>
                     <button
+                        aria-pressed="{{ $units === 'metric' ? 'true' : 'false' }}"
                         wire:click="saveUnits('metric')"
                         class="btn btn-sm {{ $units === 'metric' ? 'btn-primary' : 'btn-outline' }}">
                         Metric (°C, km/h)
@@ -216,7 +218,7 @@
                                 @if($requested)
                                     https://api.weather.gov/points/{{ number_format($requested['lat'], 4, '.', '') }},{{ number_format($requested['lon'], 4, '.', '') }}
                                 @else
-                                    <span class="text-base-content/50">(no coordinates)</span>
+                                    <span class="text-base-content/70">(no coordinates)</span>
                                 @endif
                             </dd>
                             <dt class="text-base-content/60">Alerts</dt>
@@ -224,7 +226,7 @@
                                 @if($resolved)
                                     https://api.weather.gov/alerts/active?zone={{ $resolved['county'] }},{{ $resolved['zone'] }}
                                 @else
-                                    <span class="text-base-content/50">(zone/county unresolved)</span>
+                                    <span class="text-base-content/70">(zone/county unresolved)</span>
                                 @endif
                             </dd>
                             <dt class="text-base-content/60">Contact</dt>
@@ -286,7 +288,7 @@
                     @if(!empty($currentOverride['notes']))
                         <p class="text-base-content/70">{{ $currentOverride['notes'] }}</p>
                     @endif
-                    <p class="text-xs text-base-content/50">
+                    <p class="text-xs text-base-content/70">
                         Set by {{ $currentOverride['updated_by'] ?? '?' }}
                     </p>
                 </div>
@@ -353,7 +355,7 @@
                         <li class="alert {{ $isLocalAlert ? 'alert-error' : 'bg-amber-100 text-amber-950 dark:bg-yellow-400/20 dark:text-yellow-100' }} py-2">
                             <x-icon name="{{ $isLocalAlert ? 'phosphor-warning-octagon-duotone' : 'phosphor-warning-duotone' }}" class="w-5 h-5 shrink-0" />
                             <div>
-                                <p class="text-xs font-semibold uppercase tracking-wide opacity-70">{{ $isLocalAlert ? 'Local Alert' : 'NWS · '.$alert['event'] }}</p>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-base-content/70">{{ $isLocalAlert ? 'Local Alert' : 'NWS · '.$alert['event'] }}</p>
                                 <p>{{ $alert['headline'] }}</p>
                             </div>
                         </li>
@@ -384,7 +386,7 @@
                     @endforeach
                 </div>
                 @if($manualAlertActive)
-                    <p class="text-xs text-base-content/50">Posting a quick alert replaces the active local alert.</p>
+                    <p class="text-xs text-base-content/70">Posting a quick alert replaces the active local alert.</p>
                 @endif
             </div>
 
@@ -400,7 +402,7 @@
                 </button>
             @endif
 
-            <p class="text-xs text-base-content/50">
+            <p class="text-xs text-base-content/70">
                 Local alerts work without internet access. Posting an alert sends it to connected users through the alert banner.
                 Local alerts stay active alongside any NWS alerts until you clear them.
             </p>

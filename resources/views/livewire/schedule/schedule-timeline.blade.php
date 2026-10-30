@@ -63,7 +63,7 @@
                 @if($this->activeFilterCount > 0)
                     <div class="text-center py-12">
                         <x-icon name="phosphor-funnel" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                        <h3 class="text-lg font-semibold mb-2">No shifts match your filters</h3>
+                        <h2 class="text-lg font-semibold mb-2">No shifts match your filters</h2>
                         <p class="text-base-content/60 mb-4">Try adjusting your filters to see more shifts.</p>
                         <x-button
                             label="Clear Filters"
@@ -75,7 +75,7 @@
                 @else
                     <div class="text-center py-12">
                         <x-icon name="phosphor-calendar" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                        <h3 class="text-lg font-semibold mb-2">No current or upcoming shifts</h3>
+                        <h2 class="text-lg font-semibold mb-2">No current or upcoming shifts</h2>
                         <p class="text-base-content/60">Change the Time filter to All to include past shifts.</p>
                     </div>
                 @endif
@@ -162,13 +162,13 @@
                                                 @endswitch
 
                                                 @if(!$loop->last)
-                                                    <span class="text-base-content/30 mx-1">|</span>
+                                                    <span class="text-base-content/70 mx-1">|</span>
                                                 @endif
                                             </div>
                                         @endforeach
                                     </div>
                                 @else
-                                    <span class="text-sm text-base-content/40 italic">No one signed up yet</span>
+                                    <span class="text-sm text-base-content/70 italic">No one signed up yet</span>
                                 @endif
                             </div>
 
@@ -200,7 +200,7 @@
                             @endif
 
                             @if($shifts->isEmpty())
-                                <p class="text-base-content/40 text-sm italic">No shifts scheduled for this role.</p>
+                                <p class="text-base-content/70 text-sm italic">No shifts scheduled for this role.</p>
                             @else
                                 <div class="space-y-3">
                                     @foreach($shifts as $shift)
@@ -275,13 +275,13 @@
                                                                 @endswitch
 
                                                                 @if(!$loop->last)
-                                                                    <span class="text-base-content/30 mx-1">|</span>
+                                                                    <span class="text-base-content/70 mx-1">|</span>
                                                                 @endif
                                                             </div>
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <span class="text-sm text-base-content/40 italic">No one signed up yet</span>
+                                                    <span class="text-sm text-base-content/70 italic">No one signed up yet</span>
                                                 @endif
                                             </div>
 

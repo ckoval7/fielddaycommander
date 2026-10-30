@@ -3,14 +3,16 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $stationId ? 'Edit Station' : 'Create Station' }}</x-slot:title>
+
     {{-- Header --}}
-    <x-header
+    <x-header use-h1
         title="{{ $stationId ? 'Edit Station' : 'Create Station' }}"
         subtitle="{{ $stationId ? 'Update station configuration and equipment' : 'Configure a new station for your event' }}"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="{{ $stationId ? 'Back to Stations' : 'Cancel' }}"
                 icon="{{ $stationId ? 'phosphor-arrow-left' : 'phosphor-x' }}"
@@ -76,7 +78,7 @@
 
                     {{-- Sessions table --}}
                     <x-card>
-                        <h3 class="card-title">Operating Sessions</h3>
+                        <h2 class="card-title">Operating Sessions</h2>
 
                         @if($this->sessions->isEmpty())
                             <x-alert icon="phosphor-info">
@@ -87,13 +89,13 @@
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>Operator</th>
-                                            <th>Band</th>
-                                            <th>Mode</th>
-                                            <th>Start</th>
-                                            <th>End</th>
-                                            <th>Duration</th>
-                                            <th>QSOs</th>
+                                            <th scope="col">Operator</th>
+                                            <th scope="col">Band</th>
+                                            <th scope="col">Mode</th>
+                                            <th scope="col">Start</th>
+                                            <th scope="col">End</th>
+                                            <th scope="col">Duration</th>
+                                            <th scope="col">QSOs</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -110,7 +112,7 @@
                                                         <x-badge value="Active" class="badge-success" />
                                                     @endif
                                                 </td>
-                                                <td>{{ $session->duration ?? '—' }}</td>
+                                                <td>{{ $session->duration ? spoken($session->duration, spokenDuration($session->duration)) : '—' }}</td>
                                                 <td>{{ $session->qso_count ?? 0 }}</td>
                                             </tr>
                                         @endforeach

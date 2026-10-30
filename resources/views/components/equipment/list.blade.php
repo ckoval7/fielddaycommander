@@ -62,18 +62,18 @@
                                     Club
                                 </span>
                                 @if($item->managed_by_user_id && $item->manager)
-                                    <span class="text-xs opacity-70 ml-1">Manager: {{ $item->manager->call_sign }}</span>
+                                    <span class="text-xs text-base-content/70 ml-1">Manager: {{ $item->manager->call_sign }}</span>
                                 @endif
                             @elseif($item->owner)
                                 <span class="text-sm font-semibold">{{ $item->owner->call_sign }}</span>
                                 @if($item->owner->first_name || $item->owner->last_name)
-                                    <span class="text-xs opacity-70 ml-1">{{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}</span>
+                                    <span class="text-xs text-base-content/70 ml-1">{{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}</span>
                                 @endif
                             @endif
                         </div>
                     @elseif($ownership === 'club')
                         @if($item->managed_by_user_id && $item->manager)
-                            <div class="text-xs opacity-70 mt-1">Managed by {{ $item->manager->call_sign }}</div>
+                            <div class="text-xs text-base-content/70 mt-1">Managed by {{ $item->manager->call_sign }}</div>
                         @endif
                     @elseif($item->is_club_equipment)
                         <span class="badge badge-club badge-xs mt-1">
@@ -81,7 +81,7 @@
                             Club Equipment
                         </span>
                         @if($item->managed_by_user_id && $item->manager)
-                            <div class="text-xs opacity-70">Managed by {{ $item->manager->full_name }}</div>
+                            <div class="text-xs text-base-content/70">Managed by {{ $item->manager->full_name }}</div>
                         @endif
                     @endif
                 </div>
@@ -90,7 +90,7 @@
                 <span class="badge badge-primary badge-sm">{{ ucfirst(str_replace('_', ' ', $item->type)) }}</span>
                 <x-equipment.status-badge :status="$commitment?->status ?? 'available'" />
                 @if($item->serial_number)
-                    <code class="text-xs opacity-70">{{ $item->serial_number }}</code>
+                    <code class="text-xs text-base-content/70">{{ $item->serial_number }}</code>
                 @endif
             </div>
             @if($item->tags && is_array($item->tags) && count($item->tags))
@@ -118,7 +118,7 @@
         <thead>
             <tr>
                 @if($selectable)
-                    <th>
+                    <th scope="col">
                         <label>
                             <span class="sr-only">Select all</span>
                             <input
@@ -136,21 +136,21 @@
                         </label>
                     </th>
                 @endif
-                <th>Photo</th>
+                <th scope="col">Photo</th>
                 @if($ownership === 'all')
-                    <th>Owner</th>
+                    <th scope="col">Owner</th>
                 @endif
-                <th>Make/Model</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Serial Number</th>
+                <th scope="col">Make/Model</th>
+                <th scope="col">Type</th>
+                <th scope="col">Description</th>
+                <th scope="col">Serial Number</th>
                 @if($ownership === 'club')
-                    <th>Manager</th>
+                    <th scope="col">Manager</th>
                 @endif
-                <th>Status</th>
-                <th>Tags</th>
+                <th scope="col">Status</th>
+                <th scope="col">Tags</th>
                 @if($showActions)
-                    <th class="text-right">Actions</th>
+                    <th scope="col" class="text-right">Actions</th>
                 @endif
             </tr>
         </thead>
@@ -182,19 +182,19 @@
                                     Club
                                 </span>
                                 @if($item->managed_by_user_id && $item->manager)
-                                    <div class="text-xs opacity-70 mt-0.5">
+                                    <div class="text-xs text-base-content/70 mt-0.5">
                                         Manager: {{ $item->manager->call_sign }}
                                     </div>
                                 @endif
                             @elseif($item->owner)
                                 <div class="font-semibold text-sm">{{ $item->owner->call_sign }}</div>
                                 @if($item->owner->first_name || $item->owner->last_name)
-                                    <div class="text-xs opacity-70">
+                                    <div class="text-xs text-base-content/70">
                                         {{ trim($item->owner->first_name . ' ' . $item->owner->last_name) }}
                                     </div>
                                 @endif
                             @else
-                                <span class="text-xs opacity-50">—</span>
+                                <span class="text-xs text-base-content/70">—</span>
                             @endif
                         </td>
                     @endif
@@ -209,7 +209,7 @@
                                 </span>
                             </div>
                             @if($item->managed_by_user_id && $item->manager)
-                                <div class="text-xs opacity-70 mt-0.5">
+                                <div class="text-xs text-base-content/70 mt-0.5">
                                     Managed by {{ $item->manager->full_name }}
                                 </div>
                             @endif
@@ -231,7 +231,7 @@
                             @if($item->managed_by_user_id && $item->manager)
                                 <div class="text-sm">{{ $item->manager->call_sign }}</div>
                             @else
-                                <span class="text-xs opacity-50">-</span>
+                                <span class="text-xs text-base-content/70">-</span>
                             @endif
                         </td>
                     @endif

@@ -9,6 +9,7 @@
     <x-layouts.head viewport-fit />
 </head>
 <body class="min-h-dvh font-sans antialiased bg-base-200">
+    <x-skip-link />
 
     @php
         // Shared event state snapshot for the mobile header's live-rail + collapse logic.
@@ -47,7 +48,7 @@
                 class="flex items-center gap-2.5 flex-1 min-w-0"
             >
                 @if($mobileBrand->hasCustomLogo)
-                    <img src="{{ asset($mobileBrand->logoPath) }}" alt="Logo" class="shrink-0 w-[40px] h-[40px] rounded-lg object-contain" />
+                    <img src="{{ asset($mobileBrand->logoPath) }}" alt="" class="shrink-0 w-[40px] h-[40px] rounded-lg object-contain" />
                 @else
                     <span class="shrink-0 w-[40px] h-[40px] rounded-lg bg-primary/10 flex items-center justify-center">
                         <x-icon name="phosphor-broadcast" class="w-6 h-6 text-primary" />
@@ -56,7 +57,7 @@
                 <span class="min-w-0 flex flex-col leading-tight">
                     <span class="text-base font-bold text-base-content truncate tracking-tight">{{ $mobileBrand->callsign }}</span>
                     @if($mobileHasCallsign)
-                        <span class="text-[11px] text-base-content/55 truncate -mt-px">{{ $mobileBrand->eventName }}</span>
+                        <span class="text-[11px] text-base-content/70 truncate -mt-px">{{ $mobileBrand->eventName }}</span>
                     @endif
                 </span>
             </a>
@@ -72,11 +73,32 @@
 
             <x-user-menu />
 
+            {{-- Drawer toggle: moves focus into the menu, closes on Escape and
+                 returns focus here, and keeps the page behind it out of reach. --}}
             <button
                 type="button"
                 class="w-11 h-11 flex items-center justify-center"
-                aria-label="Toggle navigation menu"
-                onclick="document.getElementById('main-drawer').click()"
+                aria-label="Navigation menu"
+                aria-controls="main-drawer-panel"
+                x-data="{ open: false }"
+                :aria-expanded="open.toString()"
+                aria-expanded="false"
+                x-init="
+                    const toggle = document.getElementById('main-drawer');
+                    const setOpen = (value) => {
+                        open = value;
+                        document.querySelectorAll('#main-content, body > header, body > footer').forEach((el) => el.inert = value);
+                        if (value) {
+                            {{-- The drawer is still hidden until its slide-in starts --}}
+                            setTimeout(() => document.querySelector('#main-drawer-panel a[href], #main-drawer-panel summary, #main-drawer-panel button')?.focus(), 150);
+                        } else {
+                            $el.focus({ preventScroll: true });
+                        }
+                    };
+                    toggle?.addEventListener('change', () => setOpen(toggle.checked));
+                "
+                @keydown.escape.window="if (open) { document.getElementById('main-drawer').click() }"
+                @click="document.getElementById('main-drawer').click()"
             >
                 <x-icon name="phosphor-list" class="w-6 h-6" />
             </button>
@@ -100,7 +122,7 @@
     </header>
 
     {{-- Desktop header - spans full width above sidebar and content --}}
-    <div
+    <header
         class="hidden lg:block sticky top-0 z-50 bg-base-100 border-b border-base-300"
         x-data
         x-init="new ResizeObserver(() => document.documentElement.style.setProperty('--desktop-header-height', $el.offsetHeight + 'px')).observe($el)"
@@ -127,7 +149,7 @@
                 <x-user-menu />
             </div>
         </div>
-    </div>
+    </header>
 
     {{-- Developer Mode Banner --}}
     @if(\App\Support\DeveloperMode::isEnabled())
@@ -161,6 +183,7 @@
         {{-- SIDEBAR --}}
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 lg:bg-base-200 max-lg:pt-[env(safe-area-inset-top)] max-lg:pb-[env(safe-area-inset-bottom)] max-lg:pl-[env(safe-area-inset-left)]">
             <div
+                id="main-drawer-panel"
                 x-data="{
                     canScrollUp: false,
                     canScrollDown: false,
@@ -241,6 +264,7 @@
                     @blur.capture="hideTooltip()"
                     @sidebar-toggled.window="isSidebarCollapsed = $event.detail; clearTimeout(tooltipTimer); if (tooltipEl) tooltipEl.style.display = 'none';"
                 >
+                    <nav aria-label="Main">
                     <x-menu activate-by-route>
                     @auth
                         @php $isStationMode = \App\Support\StationMode::isActive(); @endphp
@@ -297,9 +321,9 @@
                                     link="{{ route('events.messages.index', $activeEvent) }}"
                                     exact :active="request()->routeIs('events.messages.*')" />
                             @endcan
-                            <x-menu-item :title="$activeEvent->nomenclature()->bulletinName" icon="phosphor-radio"
+                            <x-menu-item icon="phosphor-radio"
                                 link="{{ route('events.w1aw-bulletin') }}"
-                                exact :active="request()->routeIs('events.w1aw-bulletin')" />
+                                exact :active="request()->routeIs('events.w1aw-bulletin')">{{ spoken($activeEvent->nomenclature()->bulletinName, spokenAbbreviations($activeEvent->nomenclature()->bulletinName)) }}</x-menu-item>
                         @endif
 
                         @canany(['create-events', 'edit-events', 'manage-users', 'manage-settings', 'manage-roles', 'manage-shifts', 'view-reports', 'view-security-logs', 'manage-guestbook', 'manage-event-equipment', 'view-all-equipment', 'manage-weather'])
@@ -368,6 +392,7 @@
                         <x-menu-item title="Gallery" icon="phosphor-images" link="/gallery" />
                     @endauth
                     </x-menu>
+                    </nav>
                 </div>
 
                 {{-- Scroll-down indicator --}}
@@ -400,12 +425,13 @@
             <p class="text-center mb-2">{{ $footerText }}</p>
         @endif
         <div class="flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-1">
-            <span>Field Day Commander v{{ config('app.version') }}</span>
-            <span class="hidden sm:inline text-base-content/30">&middot;</span>
+            {{-- Screen readers read "26.10.13" as a date --}}
+            <span>Field Day Commander {{ spoken('v'.config('app.version'), 'version '.str_replace('.', ' point ', config('app.version'))) }}</span>
+            <span class="hidden sm:inline text-base-content/30" aria-hidden="true">&middot;</span>
             <span>Powered by Laravel {{ app()->version() }}</span>
-            <span class="hidden sm:inline text-base-content/30">&middot;</span>
+            <span class="hidden sm:inline text-base-content/30" aria-hidden="true">&middot;</span>
             <a href="https://fielddaycommander.org/" target="_blank" rel="noopener noreferrer" class="link link-hover">Website</a>
-            <span class="hidden sm:inline text-base-content/30">&middot;</span>
+            <span class="hidden sm:inline text-base-content/30" aria-hidden="true">&middot;</span>
             <a href="https://github.com/ckoval7/fielddaycommander" target="_blank" rel="noopener noreferrer" class="link link-hover">GitHub</a>
         </div>
     </footer>
@@ -437,6 +463,7 @@
 
     {{--  TOAST area --}}
     <x-toast />
+    <x-live-announcer />
 
     @if(\App\Support\StationMode::isActive())
         <x-station-mode-idle-warning />
@@ -496,7 +523,7 @@
                         description: escapeHtml(data.description || ''),
                         icon: icon,
                         css: css,
-                        timeout: data.timeout || 3000,
+                        timeout: data.timeout || 5000,
                     }
                 });
             };

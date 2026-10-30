@@ -348,7 +348,7 @@ describe('assigning', function () {
         $this->actingAs($this->manager);
 
         Livewire::test(ShiftDashboard::class)
-            ->assertSeeHtmlInOrder(['data-testid="gaps-card"', 'title="Assign a volunteer"', 'wire:click="openAssignModal('.$shift->id.')"']);
+            ->assertSeeHtmlInOrder(['data-testid="gaps-card"', 'aria-label="Assign a volunteer:', 'wire:click="openAssignModal('.$shift->id.')"']);
     });
 
     test('full shifts are not clickable', function () {

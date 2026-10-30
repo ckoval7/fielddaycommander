@@ -7,7 +7,7 @@
     <div {{ $attributes->class(["hidden-when-collapsed min-w-0"]) }}>
         <div class="flex items-center gap-3">
             @if($hasCustomLogo)
-                <img src="{{ asset($logoPath) }}" alt="Logo" class="w-14 h-14 object-contain shrink-0">
+                <img src="{{ asset($logoPath) }}" alt="" class="w-14 h-14 object-contain shrink-0">
             @else
                 <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <x-icon name="phosphor-broadcast" class="w-9 h-9 text-primary" />
@@ -19,7 +19,7 @@
                     {{ $callsign }}
                 </span>
                 @if($eventName !== $callsign)
-                    <span class="text-xs opacity-60 break-words">
+                    <span class="text-xs opacity-70 break-words">
                         {{ $eventName }}
                     </span>
                 @endif
@@ -27,7 +27,7 @@
         </div>
 
         @if($tagline)
-            <div class="mt-2 text-xs opacity-50 break-words">
+            <div class="mt-2 text-xs opacity-70 break-words">
                 {{ $tagline }}
             </div>
         @endif
@@ -36,10 +36,11 @@
     <!-- Collapsed brand - shown when sidebar collapsed -->
     <div class="display-when-collapsed hidden mx-5 mt-5 mb-1">
         @if($hasCustomLogo)
-            <img src="{{ asset($logoPath) }}" alt="Logo" class="w-12 h-12 object-contain">
+            <img src="{{ asset($logoPath) }}" alt="{{ $callsign }}" class="w-12 h-12 object-contain">
         @else
             <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
                 <x-icon name="phosphor-broadcast" class="w-7 h-7 text-primary" />
+                <span class="sr-only">{{ $callsign }}</span>
             </div>
         @endif
     </div>

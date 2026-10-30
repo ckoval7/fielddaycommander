@@ -632,7 +632,7 @@ test('club equipment lists the manager by call sign in its own column', function
     ]);
 
     Livewire::test(ClubEquipmentList::class)
-        ->assertSeeHtmlInOrder(['Managed by KD9MGR', '<th>Manager</th>', '<div class="text-sm">KD9MGR</div>']);
+        ->assertSeeHtmlInOrder(['Managed by KD9MGR', '<th scope="col">Manager</th>', '<div class="text-sm">KD9MGR</div>']);
 });
 
 test('regular user cannot bulk delete club equipment', function () {

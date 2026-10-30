@@ -29,6 +29,23 @@
             }
         </style>
 
+        <details class="mb-6 rounded-lg border border-base-300 p-3">
+            <summary class="cursor-pointer font-semibold min-h-11 flex items-center">Section details</summary>
+            <ul class="mt-3 space-y-3" aria-label="Section details">
+                @foreach ($sectionData as $code => $section)
+                    <li wire:key="section-details-{{ $code }}" class="break-words">
+                        <span class="font-semibold">{{ $code }}: {{ $section['name'] }}</span>
+                        <span>{{ $section['count'] > 0 ? 'Worked' : 'Not worked' }} · {{ $section['count'] }} QSOs</span>
+                        <div class="text-sm text-base-content/70">
+                            Bands: {{ implode(', ', $section['bands']) ?: 'None' }}.
+                            Modes: {{ implode(', ', $section['modes']) ?: 'None' }}.
+                            Last worked: {{ ! empty($section['latestQsoTime']) ? toLocalTime(\Carbon\Carbon::createFromTimestamp($section['latestQsoTime']))->format('M j, Y H:i T') : 'Never' }}.
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </details>
+
         <x-card class="shadow-md">
             <div class="text-center mb-4">
                 <h2 class="text-xl font-bold">Section Map</h2>
@@ -290,13 +307,14 @@
             >
                 <div class="flex flex-wrap justify-center gap-2 mb-3">
                     <div class="join">
-                        <button class="join-item btn btn-sm" :class="view === 'all' ? 'btn-primary' : 'btn-ghost'" @click="view = 'all'; hoverSection = null">All</button>
-                        <button class="join-item btn btn-sm" :class="view === 'us' ? 'btn-primary' : 'btn-ghost'" @click="view = 'us'; hoverSection = null">US</button>
-                        <button class="join-item btn btn-sm" :class="view === 'ca' ? 'btn-primary' : 'btn-ghost'" @click="view = 'ca'; hoverSection = null">Canada</button>
+                        <button class="join-item btn btn-sm" :aria-pressed="(view === 'all').toString()" :class="view === 'all' ? 'btn-primary' : 'btn-ghost'" @click="view = 'all'; hoverSection = null">All</button>
+                        <button class="join-item btn btn-sm" :aria-pressed="(view === 'us').toString()" :class="view === 'us' ? 'btn-primary' : 'btn-ghost'" @click="view = 'us'; hoverSection = null">US</button>
+                        <button class="join-item btn btn-sm" :aria-pressed="(view === 'ca').toString()" :class="view === 'ca' ? 'btn-primary' : 'btn-ghost'" @click="view = 'ca'; hoverSection = null">Canada</button>
                     </div>
                     <div class="join flex-wrap justify-center" x-show="view !== 'ca'" x-cloak>
                         <template x-for="n in callAreas" :key="n">
                             <button class="join-item btn btn-sm max-sm:px-2"
+                                    :aria-pressed="(view === 'w' + n).toString()"
                                     :class="view === 'w' + n ? 'btn-primary' : 'btn-ghost'"
                                     @click="view = 'w' + n; hoverSection = null"
                                     x-text="'W' + n">
@@ -308,9 +326,9 @@
                 <div class="flex justify-center gap-1 mb-3">
                     <span class="text-xs text-base-content/70 self-center mr-1">Color:</span>
                     <div class="join">
-                        <button class="join-item btn btn-xs" :class="colorMode === 'band' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'band'">Latest Band</button>
-                        <button class="join-item btn btn-xs" :class="colorMode === 'qso' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'qso'">QSO Count</button>
-                        <button class="join-item btn btn-xs" :class="colorMode === 'time' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'time'">Recency</button>
+                        <button class="join-item btn btn-xs" :aria-pressed="(colorMode === 'band').toString()" :class="colorMode === 'band' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'band'">Latest Band</button>
+                        <button class="join-item btn btn-xs" :aria-pressed="(colorMode === 'qso').toString()" :class="colorMode === 'qso' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'qso'">QSO Count</button>
+                        <button class="join-item btn btn-xs" :aria-pressed="(colorMode === 'time').toString()" :class="colorMode === 'time' ? 'btn-secondary' : 'btn-ghost'" @click="colorMode = 'time'">Recency</button>
                     </div>
                 </div>
 
@@ -910,10 +928,10 @@
                                 <span x-text="sectionData[hoverSection || pinnedSection]?.bands?.join(', ')"></span> &middot;
                                 <span x-text="sectionData[hoverSection || pinnedSection]?.modes?.join(', ')"></span>
                             </div>
-                            <div x-show="sectionData[hoverSection || pinnedSection]?.latestQsoTime" class="text-base-content/50">
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.latestQsoTime" class="text-base-content/70">
                                 Last worked <span x-text="timeAgo(sectionData[hoverSection || pinnedSection]?.latestQsoTime)"></span>
                             </div>
-                            <div x-show="sectionData[hoverSection || pinnedSection]?.count === 0" class="text-base-content/50">Not worked</div>
+                            <div x-show="sectionData[hoverSection || pinnedSection]?.count === 0" class="text-base-content/70">Not worked</div>
                         </div>
                     </template>
                 </div>
@@ -935,7 +953,7 @@
                             <span>VHF/UHF/Sat</span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/50">
+                    <div class="flex items-center justify-center gap-3 mt-1 text-xs text-base-content/70">
                         <span>Intensity:</span>
                         <span>pastel = 1 band</span>
                         <span>&middot;</span>

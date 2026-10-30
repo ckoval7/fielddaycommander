@@ -3,9 +3,11 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-header title="Photo Gallery" subtitle="Photo albums by event">
+    <x-slot:title>Photo Gallery</x-slot:title>
+
+    <x-header use-h1 title="Photo Gallery" subtitle="Photo albums by event">
         @if($this->canUpload)
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 @if($this->activeEventConfiguration)
                     {{-- Active event exists - direct link --}}
                     <x-button
@@ -28,10 +30,10 @@
     </x-header>
 
     @if(session('status'))
-        <div class="alert alert-info mb-4">
+        <output class="alert alert-info mb-4">
             <x-icon name="phosphor-info" class="w-5 h-5" />
             <span>{{ session('status') }}</span>
-        </div>
+        </output>
     @endif
 
     @if($this->events->isEmpty())
@@ -77,11 +79,11 @@
                                     </div>
                                 @endif
                             </div>
-                            <h3 class="font-semibold text-lg">{{ $eventConfig->event->name }}</h3>
+                            <h2 class="font-semibold text-lg">{{ $eventConfig->event->name }}</h2>
                             <p class="text-sm text-base-content/70">
                                 {{ $eventConfig->event->start_time->format('F Y') }}
                             </p>
-                            <p class="text-sm text-base-content/50 mt-1">
+                            <p class="text-sm text-base-content/70 mt-1">
                                 {{ $eventConfig->images_count }} {{ Str::plural('photo', $eventConfig->images_count) }}
                             </p>
                         </a>
@@ -107,7 +109,7 @@
             @foreach($this->uploadableEvents as $eventConfig)
                 <button
                     wire:click="$set('selectedEventId', {{ $eventConfig->id }})"
-                    class="w-full p-3 text-left rounded-lg border transition-colors {{ $selectedEventId === $eventConfig->id ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary/50' }}"
+                    class="w-full p-3 text-left rounded-lg border transition-colors {{ $selectedEventId === $eventConfig->id ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary/50' }} pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                 >
                     <div class="font-medium">{{ $eventConfig->event->name }}</div>
                     <div class="text-sm text-base-content/70">{{ $eventConfig->event->start_time->format('F j, Y') }}</div>
@@ -115,7 +117,7 @@
             @endforeach
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" wire:click="$set('showEventSelector', false)" />
             @if($selectedEventId)
                 <x-button

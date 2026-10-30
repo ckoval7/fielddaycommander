@@ -3,9 +3,11 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>Stations</x-slot:title>
+
     {{-- Header --}}
-    <x-header title="Stations" subtitle="Manage stations and equipment assignments" separator progress-indicator>
-        <x-slot:actions>
+    <x-header use-h1 title="Stations" subtitle="Manage stations and equipment assignments" separator progress-indicator>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             @can('log-contacts')
                 <x-button label="Log Contact" icon="phosphor-pencil-line" class="btn-outline" link="{{ route('logging.station-select') }}" wire:navigate responsive />
             @endcan
@@ -105,7 +107,7 @@
                     <x-card wire:key="station-{{ $station->id }}" shadow>
                         {{-- Station Name & Badges --}}
                         <div class="mb-4">
-                            <h3 class="text-xl sm:text-2xl font-bold mb-2 break-words">{{ $station->name }}</h3>
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2 break-words">{{ $station->name }}</h2>
 
                             <div class="flex flex-wrap gap-2">
                                 @if($station->is_gota)
@@ -154,13 +156,13 @@
                                 <div class="text-xs text-base-content/60 mb-1">Primary Radio</div>
                                 <div class="font-semibold text-sm sm:text-base">{{ $station->primaryRadio->make }} {{ $station->primaryRadio->model }}</div>
                                 @if($station->max_power_watts)
-                                    <div class="text-xs sm:text-sm text-base-content/70">{{ $station->max_power_watts }}W</div>
+                                    <div class="text-xs sm:text-sm text-base-content/70">{{ spokenWatts($station->max_power_watts) }}</div>
                                 @endif
                             </div>
                         @else
                             <div class="mb-3 pb-3 border-b border-base-300">
                                 <div class="text-xs text-base-content/60 mb-1">Primary Radio</div>
-                                <div class="text-xs sm:text-sm italic text-base-content/50">Not assigned</div>
+                                <div class="text-xs sm:text-sm italic text-base-content/70">Not assigned</div>
                             </div>
                         @endif
 
@@ -266,7 +268,7 @@
                             @endcan
 
                             @can('delete', $station)
-                                <x-button
+                                <x-button aria-label="Delete station {{ $station->name }}"
                                     icon="phosphor-trash"
                                     class="btn-sm btn-ghost text-error min-h-[2.75rem] sm:min-h-[1.75rem]"
                                     wire:click="deleteStation({{ $station->id }})"
@@ -322,7 +324,7 @@
             />
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 wire:click="cancelUnavailable"

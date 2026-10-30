@@ -8,8 +8,8 @@
     @if (! $this->event)
         <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <x-mary-icon name="phosphor-trophy" class="w-16 h-16 opacity-30" />
-            <div class="text-2xl font-semibold opacity-50">No active event</div>
-            <p class="text-sm opacity-40">Scores appear here when an event is selected.</p>
+            <div class="text-2xl font-semibold text-base-content/70">No active event</div>
+            <p class="text-sm text-base-content/70">Scores appear here when an event is selected.</p>
         </div>
     @else
 
@@ -54,7 +54,7 @@
                             {{ $part->value }}
                         </div>
                         <div class="text-xs uppercase tracking-widest mt-1" style="color: var(--score-text-muted);">
-                            {{ $part->label }}
+                            {{ spoken($part->label, spokenAbbreviations($part->label)) }}
                         </div>
                     </a>
                 @endif
@@ -90,7 +90,7 @@
                     @php $modePoints = $this->pointsForMode($mode); @endphp
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium"
                           style="background: var(--score-surface-alt); color: var(--score-text);">
-                        {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
+                        {{ $mode->name }} = {{ $modePoints }} <x-points-unit :count="$modePoints" />
                     </span>
                 @endforeach
             </div>
@@ -101,17 +101,17 @@
                     <table class="w-full text-xs">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--score-divider);">
-                                <th class="text-left pb-2 font-semibold uppercase tracking-wide pr-2"
+                                <th scope="col" class="text-left pb-2 font-semibold uppercase tracking-wide pr-2"
                                     style="color: var(--score-text-muted);">Mode</th>
                                 @foreach ($this->bands as $band)
-                                    <th class="text-center pb-2 font-semibold uppercase tracking-wide px-1"
+                                    <th scope="col" class="text-center pb-2 font-semibold uppercase tracking-wide px-1"
                                         style="color: var(--score-text-muted); white-space: nowrap;">
                                         {{ $band->name }}
                                     </th>
                                 @endforeach
-                                <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
+                                <th scope="col" class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
                                     style="color: var(--score-text-muted);">QSOs</th>
-                                <th class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
+                                <th scope="col" class="text-right pb-2 font-semibold uppercase tracking-wide pl-2"
                                     style="color: var(--score-text-muted);">QSO Points</th>
                             </tr>
                         </thead>
@@ -262,14 +262,14 @@
                 <table class="w-full text-xs">
                     <thead>
                         <tr>
-                            <th class="text-left pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Condition</th>
-                            <th class="text-right pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Multiplier</th>
+                            <th scope="col" class="text-left pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Condition</th>
+                            <th scope="col" class="text-right pb-1 font-semibold uppercase tracking-wide" style="color: var(--score-text-muted);">Multiplier</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($this->powerMultiplierRules as $rule)
                             <tr style="@if($rule['active']) font-weight: 700; color: var(--score-headline); @else color: var(--score-text-muted); @endif">
-                                <td class="py-1 pr-3">{{ $rule['condition'] }}</td>
+                                <td class="py-1 pr-3">{{ $rule['condition'] }}@if($rule['active'])<span class="sr-only"> (applies)</span>@endif</td>
                                 <td class="py-1 text-right font-mono">{{ $rule['multiplier'] }}</td>
                             </tr>
                         @endforeach
@@ -317,7 +317,7 @@
                         @if ($this->awardsAreMultipliers)
                             OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                         @else
-                            {{ number_format($this->bonusSummary['verified_pts']) }} pts
+                            {{ number_format($this->bonusSummary['verified_pts']) }} <x-points-unit />
                         @endif
                     </div>
                 </div>
@@ -330,7 +330,7 @@
                         @if ($this->awardsAreMultipliers)
                             OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                         @else
-                            {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
+                            {{ number_format($this->bonusSummary['claimed_pts']) }} <x-points-unit /> pending
                         @endif
                     </div>
                 </div>
@@ -350,16 +350,16 @@
                         <div class="flex-1 min-w-0">
                             <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($item['type']->code)">
                                 <span class="text-sm font-medium leading-tight" style="color: var(--score-text);">
-                                    {{ $item['type']->name }}
+                                    {{ spoken($item['type']->name, spokenAbbreviations($item['type']->name)) }}
                                 </span>
                             </x-bonus-rule-help>
                             @if ($item['type']->is_per_occurrence && $item['bonus'])
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} pts
+                                    {{ $item['bonus']->quantity }} × {{ $item['type']->base_points }} <x-points-unit />
                                 </div>
                             @elseif ($item['type']->is_per_transmitter && $item['points'] > 0)
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ min($this->event->eventConfiguration->transmitter_count, 20) }} {{ Str::plural('transmitter', min($this->event->eventConfiguration->transmitter_count, 20)) }} × {{ $item['type']->base_points }} pts
+                                    {{ min($this->event->eventConfiguration->transmitter_count, 20) }} {{ Str::plural('transmitter', min($this->event->eventConfiguration->transmitter_count, 20)) }} × {{ $item['type']->base_points }} <x-points-unit />
                                 </div>
                             @endif
                         </div>
@@ -369,11 +369,11 @@
                                 @if ($item['type']->objective_multiplier !== null)
                                     OM ×{{ $item['type']->objective_multiplier }}
                                 @elseif ($item['status'] === 'claimed')
-                                    {{ $item['points'] }} pts
+                                    {{ $item['points'] }} <x-points-unit />
                                 @elseif ($item['points'] > 0)
                                     +{{ $item['points'] }}
                                 @else
-                                    {{ $item['type']->base_points }} pts
+                                    {{ $item['type']->base_points }} <x-points-unit />
                                 @endif
                             </span>
 
@@ -411,7 +411,7 @@
                                     <span class="text-sm font-medium" style="color: var(--score-text);">GOTA QSO Bonus</span>
                                 </x-bonus-rule-help>
                                 <div class="text-xs mt-0.5" style="color: var(--score-text-muted);">
-                                    {{ $this->gotaContactCount }} contacts × 5 pts
+                                    {{ $this->gotaContactCount }} contacts × 5 <x-points-unit />
                                 </div>
                             </div>
                             <span class="text-xs tabular-nums font-semibold" style="color: var(--score-headline);">
@@ -483,7 +483,7 @@
     @endif
 
     @if ($event?->resolved_rules_version)
-        <div class="mt-8 text-center text-xs text-base-content/50 border-t border-base-200 pt-3">
+        <div class="mt-8 text-center text-xs text-base-content/70 border-t border-base-200 pt-3">
             Scored per {{ $event->eventType->name ?? 'Field Day' }}
             rules version <span class="font-mono">{{ $event->resolved_rules_version }}</span>@if ($event->effective_rules_version !== $event->resolved_rules_version)
                 <span class="text-warning"> (event pinned to {{ $event->effective_rules_version }}, which is not yet available)</span>@endif.

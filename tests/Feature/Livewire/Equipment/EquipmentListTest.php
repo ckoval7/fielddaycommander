@@ -456,7 +456,7 @@ test('my equipment marks an item the club also owns and names its manager under 
 
     Livewire::test(EquipmentList::class)
         ->assertSeeHtmlInOrder(['badge-club', 'Club Equipment', trim('Managed by '.$manager->full_name), 'badge-club', 'Club Equipment', trim('Managed by '.$manager->full_name)])
-        ->assertDontSeeHtml('<th>Manager</th>');
+        ->assertDontSeeHtml('<th scope="col">Manager</th>');
 });
 
 test('search works with partial matches', function () {

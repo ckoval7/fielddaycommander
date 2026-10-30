@@ -203,7 +203,7 @@
                                 @can('manage-guestbook')
                                     <label class="flex items-center justify-center min-h-11 min-w-11 -m-2 shrink-0 cursor-pointer">
                                         <span class="sr-only">Select {{ $entry->first_name }} {{ $entry->last_name }}</span>
-                                        <input type="checkbox" class="checkbox checkbox-sm" value="{{ $entry->id }}" wire:model.live="selectedIds" />
+                                        <input aria-label="Select {{ $entry->first_name }} {{ $entry->last_name }}" type="checkbox" class="checkbox checkbox-sm" value="{{ $entry->id }}" wire:model.live="selectedIds" />
                                     </label>
                                 @endcan
                                 <div class="flex-1 min-w-0">
@@ -285,7 +285,7 @@
                             @if($entry->callsign)
                                 {{ $entry->callsign }}
                             @else
-                                <span class="text-base-content/40">-</span>
+                                <span class="text-base-content/70">-</span>
                             @endif
                         @endscope
 
@@ -350,7 +350,7 @@
                 @if($this->entries->isEmpty())
                     <div class="text-center py-12">
                         <x-icon name="phosphor-users-three" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                        <h3 class="text-lg font-semibold mb-2">No entries found</h3>
+                        <h2 class="text-lg font-semibold mb-2">No entries found</h2>
                         <p class="text-base-content/60">
                             @if($search || $filterPresence || $filterCategory || $filterVerified)
                                 Change your search or clear the filters to see more entries.
@@ -440,7 +440,7 @@
                 @endif
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" @click="$wire.closeVerifyModal()" class="btn-ghost" />
                 <x-button
                     label="Save Changes"
@@ -474,7 +474,7 @@
             @endif
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" @click="$wire.closeDeleteModal()" class="btn-ghost" />
             <x-button
                 label="Delete Entry"

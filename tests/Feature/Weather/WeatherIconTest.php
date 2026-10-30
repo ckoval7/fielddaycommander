@@ -33,7 +33,7 @@ test('icon renders grayed-out cloud when no data and user has manage-weather', f
         ->test(WeatherIcon::class)
         ->assertSet('hasData', false)
         ->assertSet('canManageWeather', true)
-        ->assertSeeHtml('opacity-40');
+        ->assertSeeHtml('opacity-70');
 });
 
 test('icon shows temperature when forecast data present', function () {

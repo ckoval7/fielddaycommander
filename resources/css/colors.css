@@ -132,16 +132,16 @@
      ========================================================================== */
 
   /* Backgrounds */
-  --score-bg:          hsl(42, 18%, 95%);   /* warm newsprint */
-  --score-surface:     hsl(42, 14%, 90%);   /* card / column bg */
-  --score-surface-alt: hsl(42, 10%, 86%);   /* striped rows / inset sections */
+  --score-bg:          hsl(40, 5%, 94%);    /* light newsprint gray */
+  --score-surface:     hsl(40, 4%, 90%);    /* card / column bg */
+  --score-surface-alt: hsl(40, 4%, 86%);    /* striped rows / inset sections */
 
   /* Text */
   --score-text:        hsl(220, 20%, 12%);  /* near-black ink */
   --score-text-muted:  hsl(220, 10%, 42%);  /* section labels, column headers */
 
   /* Headline amber — the score number color */
-  --score-headline:    hsl(38, 80%, 38%);   /* 5.8:1 on cream — WCAG AA */
+  --score-headline:    hsl(38, 80%, 38%);   /* 3:1+ on newsprint, for large text */
   --score-headline-lg: hsl(38, 85%, 34%);   /* final score (largest text) */
 
   /* Status chips */

@@ -10,9 +10,7 @@ use Mary\View\Components\Table as MaryTable;
 it('still finds the checkbox handler it patches in Mary\'s template', function () {
     $template = (new MaryTable(headers: [], rows: []))->render();
 
-    foreach (array_keys(Table::LEAN_SELECTION) as $original) {
-        expect($template)->toContain($original);
-    }
+    expect($template)->toContain(Table::ROW_SELECTION);
 });
 
 it('replaces Mary\'s <x-table>', function () {

@@ -93,6 +93,18 @@ class LogbookBrowser extends Component
         $this->resetPage();
     }
 
+    public function toggleSelectAll(): void
+    {
+        abort_unless(auth()->user()?->can('edit-contacts'), 403);
+
+        $pageIds = $this->contacts->pluck('id')->all();
+        $selectedIds = array_map('intval', $this->selectedIds);
+
+        $this->selectedIds = array_diff($pageIds, $selectedIds) === []
+            ? array_values(array_diff($selectedIds, $pageIds))
+            : array_values(array_unique([...$selectedIds, ...$pageIds]));
+    }
+
     public function deselectAll(): void
     {
         $this->selectedIds = [];

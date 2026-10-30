@@ -18,7 +18,7 @@
                                 <input
                                     type="checkbox"
                                     class="checkbox checkbox-sm checkbox-success"
-                                    aria-label="Claim {{ strtolower($this->terms->awardSingular) }}: {{ $bonusType->name }}"
+                                    aria-label="Claim {{ strtolower($this->terms->awardSingular) }}: {{ spokenAbbreviations($bonusType->name) }}"
                                     wire:key="bonus-checkbox-{{ $bonusType->id }}-{{ $claimed ? 'claimed' : 'unclaimed' }}"
                                     @checked($claimed)
                                     @if($claimed)
@@ -29,24 +29,24 @@
                                 />
                                 <div class="min-w-0 flex-1">
                                     <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($bonusType->code)">
-                                        <span class="text-sm font-medium">{{ $bonusType->name }}</span>
+                                        <span class="text-sm font-medium">{{ spoken($bonusType->name, spokenAbbreviations($bonusType->name)) }}</span>
                                     </x-bonus-rule-help>
                                     <div class="text-xs text-base-content/60 truncate">{{ $bonusType->description }}</div>
                                 </div>
                             </div>
-                            <span class="text-sm tabular-nums font-semibold shrink-0 {{ $claimed ? 'text-success' : 'text-base-content/40' }}">
+                            <span class="text-sm tabular-nums font-semibold shrink-0 {{ $claimed ? 'text-success' : 'text-base-content/70' }}">
                                 @if($claimed)
                                     @if($bonusType->objective_multiplier !== null)
                                         OM ×{{ $bonusType->objective_multiplier }}
                                     @else
-                                        +{{ $bonus->calculated_points }} pts
+                                        +{{ $bonus->calculated_points }} <x-points-unit />
                                     @endif
                                 @elseif($bonusType->objective_multiplier !== null)
                                     OM ×{{ $bonusType->objective_multiplier }}
                                 @elseif($bonusType->is_per_occurrence && $bonusType->max_occurrences)
-                                    {{ $bonusType->base_points }}-{{ $bonusType->max_points }} pts
+                                    {{ $bonusType->base_points }}-{{ $bonusType->max_points }} <x-points-unit />
                                 @else
-                                    {{ $bonusType->base_points }} pts
+                                    {{ $bonusType->base_points }} <x-points-unit />
                                 @endif
                             </span>
                         </div>
@@ -69,8 +69,8 @@
                                             wire:model.blur="quantities.{{ $bonusType->id }}"
                                             placeholder="1"
                                         />
-                                        <span class="text-xs text-base-content/50">
-                                            ({{ $bonusType->base_points }} pts each, max {{ $bonusType->max_occurrences }})
+                                        <span class="text-xs text-base-content/70">
+                                            ({{ $bonusType->base_points }} <x-points-unit /> each, max {{ $bonusType->max_occurrences }})
                                         </span>
                                     </div>
                                 @endif
@@ -78,7 +78,7 @@
                                     type="text"
                                     class="input input-xs w-full max-w-sm"
                                     placeholder="{{ $bonusType->code === 'social_media' ? 'Paste social media URL (optional)' : 'Notes (optional)' }}"
-                                    aria-label="Notes for {{ $bonusType->name }}"
+                                    aria-label="Notes for {{ spokenAbbreviations($bonusType->name) }}"
                                     wire:model.blur="notes.{{ $bonusType->id }}"
                                 />
                             </div>
@@ -131,7 +131,7 @@
                     <div class="flex items-center justify-between gap-3">
                         <label for="additional-youth" class="text-sm">
                             Youth with no account
-                            <span class="block text-xs text-base-content/50">Not in the log under their own callsign</span>
+                            <span class="block text-xs text-base-content/70">Not in the log under their own callsign</span>
                         </label>
                         <div class="flex items-center gap-2">
                             <input
@@ -150,13 +150,13 @@
 
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium">Total youth (max 5)</span>
-                        <span class="text-sm tabular-nums font-semibold {{ $youth['points'] > 0 ? 'text-success' : 'text-base-content/40' }}">
-                            {{ $youth['total'] }} youth = {{ $youth['points'] > 0 ? '+' : '' }}{{ $youth['points'] }} pts
+                        <span class="text-sm tabular-nums font-semibold {{ $youth['points'] > 0 ? 'text-success' : 'text-base-content/70' }}">
+                            {{ $youth['total'] }} youth = {{ $youth['points'] > 0 ? '+' : '' }}{{ $youth['points'] }} <x-points-unit />
                         </span>
                     </div>
 
-                    <div class="text-xs text-base-content/50">
-                        20 pts per youth (age 18 or younger) who completes at least one QSO. Max 100 pts.
+                    <div class="text-xs text-base-content/70">
+                        20 <x-points-unit /> per youth (age 18 or younger) who completes at least one QSO. Max 100 <x-points-unit />.
                     </div>
                 </div>
             </x-card>

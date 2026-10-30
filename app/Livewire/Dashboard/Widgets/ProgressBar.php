@@ -193,7 +193,7 @@ class ProgressBar extends Component
             'target' => $target,
             'percentage' => $this->calculatePercentage($current, $target),
             'label' => "{$current}/{$target} bonus points",
-            'unit_label' => 'bonus pts',
+            'unit_label' => 'bonus points',
             'footer_label' => 'Toward maximum bonus points',
             'is_milestone' => false,
         ];

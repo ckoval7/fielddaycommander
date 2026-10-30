@@ -31,6 +31,10 @@ use Mary\View\Components\Icon as MaryIcon;
  *
  * Icons render through IconSprite, so a page carries each icon's shape once
  * and repeats only a short `<use>` reference.
+ *
+ * Icons are hidden from screen readers unless they are given a name
+ * (`aria-label`, `aria-labelledby`, `title`) or a `role`, since nearly all
+ * of them sit next to text that already says what they mean.
  */
 class Icon extends MaryIcon
 {
@@ -54,7 +58,9 @@ class Icon extends MaryIcon
      */
     public function svg(): string
     {
-        $attributes = $this->attributes->class([
+        $named = $this->attributes->hasAny(['aria-label', 'aria-labelledby', 'title', 'role']);
+
+        $attributes = $this->attributes->merge($named ? [] : ['aria-hidden' => 'true'])->class([
             'inline flex-shrink-0',
             'w-5 h-5' => ! Str::contains($this->attributes->get('class') ?? '', ['w-', 'h-']),
         ])->getAttributes();

@@ -2,7 +2,8 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<x-layouts.guest>
+<x-layouts.guest own-heading>
+    <x-slot:title>Step 3: System Preferences</x-slot:title>
     {{-- Progress Stepper --}}
     <ul class="steps steps-horizontal w-full mb-8">
         <li class="step {{ $step >= 1 ? 'step-primary' : '' }}">Admin Password</li>
@@ -11,7 +12,7 @@
     </ul>
 
     <div class="mb-6">
-        <h2 class="text-2xl font-bold">Step 3: System Preferences</h2>
+        <h1 class="text-2xl font-bold">Step 3: System Preferences</h1>
     </div>
 
     <div class="space-y-6">
@@ -35,7 +36,7 @@
 
             {{-- Organization Information --}}
             <div class="space-y-4">
-                <h3 class="text-lg font-semibold mb-2">Organization Information</h3>
+                <h2 class="text-lg font-semibold mb-2">Organization Information</h2>
                 <p class="text-sm text-gray-600 mb-4">Add your club or organization. Equipment can be recorded as club-owned or personal.</p>
 
                 <x-input
@@ -88,7 +89,7 @@
 
             {{-- System Preferences --}}
             <div class="space-y-4 mt-6">
-                <h3 class="text-lg font-semibold mb-2">System Preferences</h3>
+                <h2 class="text-lg font-semibold mb-2">System Preferences</h2>
 
                 {{-- Searchable timezone using Alpine.js (non-Livewire form) --}}
                 <div
@@ -119,12 +120,14 @@
                     <div class="relative">
                         <button
                             id="timezone-selector"
+                            :aria-expanded="open.toString()"
+                            aria-controls="setup-timezone-options"
                             type="button"
                             @click="open = !open"
                             class="select w-full text-left flex items-center justify-between"
                             :class="{ 'select-error': !selected }"
                         >
-                            <span x-text="selectedLabel || 'Select timezone...'" :class="selectedLabel ? '' : 'text-base-content/40'"></span>
+                            <span x-text="selectedLabel || 'Select timezone...'" :class="selectedLabel ? '' : 'text-base-content/70'"></span>
                             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                         </button>
                         <div
@@ -144,20 +147,20 @@
                                     x-init="$watch('open', v => v && $nextTick(() => $refs.searchInput.focus()))"
                                 />
                             </div>
-                            <ul class="max-h-60 overflow-y-auto py-1" aria-label="Timezones">
+                            <ul id="setup-timezone-options" class="max-h-60 overflow-y-auto py-1" aria-label="Timezones">
                                 <template x-for="tz in filtered" :key="tz.id">
                                     <li>
                                         <button
                                             type="button"
                                             @click="select(tz)"
                                             :aria-pressed="selected === tz.id"
-                                            class="w-full text-left px-3 py-1.5 cursor-pointer hover:bg-base-200 focus:bg-base-200 focus:outline-none text-sm"
+                                            class="w-full text-left px-3 py-1.5 cursor-pointer hover:bg-base-200 focus:bg-base-200 focus:outline-none text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                             :class="selected === tz.id ? 'bg-primary/10 font-medium' : ''"
                                             x-text="tz.name"
                                         ></button>
                                     </li>
                                 </template>
-                                <li x-show="filtered.length === 0" class="px-3 py-2 text-sm text-base-content/50">No matching timezones. Try another search.</li>
+                                <li x-show="filtered.length === 0" class="px-3 py-2 text-sm text-base-content/70">No matching timezones. Try another search.</li>
                             </ul>
                         </div>
                     </div>

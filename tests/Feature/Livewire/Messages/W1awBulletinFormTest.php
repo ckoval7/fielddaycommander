@@ -246,6 +246,7 @@ describe('per-event naming', function () {
         Livewire::actingAs($this->operator)
             ->test(W1awBulletinForm::class)
             ->assertSee('W1AW Bulletin')
+            ->assertSeeHtml('<span class="sr-only">Whiskey One Alpha Whiskey Bulletin</span>')
             ->assertSee('K6KPH')
             ->assertSet('scheduleSource', 'W1AW');
     });

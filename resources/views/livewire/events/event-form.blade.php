@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}</x-slot:title>
     <!-- Header -->
-    <x-header
+    <x-header use-h1
         title="{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}"
         subtitle="{{ $mode === 'create' ? 'Set up a Field Day or Winter Field Day event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 icon="phosphor-x"
@@ -275,7 +276,7 @@
 
             @if($this->isWinterFieldDay)
                 <div class="collapse collapse-arrow bg-base-200 mt-4" data-testid="wfd-rules-guidance">
-                    <input type="checkbox" aria-label="Toggle WFD rules guidance" />
+                    <input type="checkbox" aria-label="Toggle W F D rules guidance" />
                     <div class="collapse-title text-sm font-medium">
                         <x-icon name="phosphor-info" class="w-4 h-4 inline" />
                         WFD rules: class, category, and location

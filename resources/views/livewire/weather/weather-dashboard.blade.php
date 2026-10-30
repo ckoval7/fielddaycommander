@@ -44,6 +44,8 @@
                             @if(! $isLocalAlert && ! empty($alert['description']))
                                 <button
                                     @click="expanded = !expanded"
+                                    :aria-expanded="expanded.toString()"
+                                    :aria-label="expanded ? 'Hide alert details' : 'Show alert details'"
                                     type="button"
                                     class="btn btn-ghost btn-xs shrink-0"
                                 >
@@ -91,19 +93,19 @@
                             <div class="flex flex-wrap gap-4 text-sm">
                                 @if(isset($d['wind_speed']))
                                     <div>
-                                        <span class="text-base-content/50">Wind</span>
+                                        <span class="text-base-content/70">Wind</span>
                                         <span class="ml-1 font-medium">{{ $d['wind_direction'] ?? '' }} {{ round($d['wind_speed']) }} {{ $windUnit }}</span>
                                     </div>
                                 @endif
                                 @if(isset($d['precipitation_chance']))
                                     <div>
-                                        <span class="text-base-content/50">Precipitation chance</span>
+                                        <span class="text-base-content/70">Precipitation chance</span>
                                         <span class="ml-1 font-medium">{{ $d['precipitation_chance'] }}%</span>
                                     </div>
                                 @endif
                                 @if(! empty($d['notes']))
                                     <div class="w-full">
-                                        <span class="text-base-content/50">Notes</span>
+                                        <span class="text-base-content/70">Notes</span>
                                         <span class="ml-1">{{ $d['notes'] }}</span>
                                     </div>
                                 @endif
@@ -121,16 +123,16 @@
                             </div>
                             <div class="flex flex-wrap gap-4 text-sm">
                                 <div>
-                                    <span class="text-base-content/50">Wind</span>
+                                    <span class="text-base-content/70">Wind</span>
                                     <span class="ml-1 font-medium">{{ round($c['wind_speed_10m']) }} {{ $windUnit }}</span>
                                     @if(($c['wind_gusts_10m'] ?? 0) >= ($windUnit === 'km/h' ? 40 : 25))
                                         <span class="ml-1 text-warning font-medium">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @elseif(($c['wind_gusts_10m'] ?? 0) > 0)
-                                        <span class="ml-1 text-base-content/50">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
+                                        <span class="ml-1 text-base-content/70">gusts {{ round($c['wind_gusts_10m']) }} {{ $windUnit }}</span>
                                     @endif
                                 </div>
                                 <div>
-                                    <span class="text-base-content/50">Precipitation</span>
+                                    <span class="text-base-content/70">Precipitation</span>
                                     <span class="ml-1 font-medium">{{ $c['precipitation'] ?? 0 }} mm</span>
                                 </div>
                             </div>
@@ -147,12 +149,12 @@
                         <div class="overflow-x-auto">
                             <table class="table table-sm text-center">
                                 <thead>
-                                    <tr class="text-xs text-base-content/50">
-                                        <th>Time</th>
-                                        <th></th>
-                                        <th>Temp</th>
-                                        <th>Precip %</th>
-                                        <th>Wind {{ $windUnit }}</th>
+                                    <tr class="text-xs text-base-content/70">
+                                        <th scope="col">Time</th>
+                                        <th scope="col"><span class="sr-only">Conditions</span></th>
+                                        <th scope="col">Temp</th>
+                                        <th scope="col">Precip %</th>
+                                        <th scope="col">Wind {{ $windUnit }}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -209,10 +211,10 @@
                                     @endif
                                     <div class="flex items-center gap-2 mt-1">
                                         <span class="font-bold">{{ $day['high'] !== null ? round($day['high']).'°' : '—' }}</span>
-                                        <span class="text-base-content/40">/</span>
+                                        <span class="text-base-content/70">/</span>
                                         <span class="text-base-content/60">{{ $day['low'] !== null ? round($day['low']).'°' : '—' }}</span>
                                     </div>
-                                    <div class="text-xs text-base-content/50 mt-1 space-y-0.5">
+                                    <div class="text-xs text-base-content/70 mt-1 space-y-0.5">
                                         @if($day['precip_chance'] !== null)
                                             <p>Precip {{ $day['precip_chance'] }}%</p>
                                         @endif
@@ -228,7 +230,7 @@
             @endif
 
             {{-- Data Source Footer --}}
-            <div class="text-xs text-base-content/40 text-center pt-2 pb-4">
+            <div class="text-xs text-base-content/70 text-center pt-2 pb-4">
                 @if($isManual)
                     Manual override active. Entered by {{ $manualOverride['updated_by'] ?? 'unknown' }}
                     @if(! empty($manualOverride['updated_at']))

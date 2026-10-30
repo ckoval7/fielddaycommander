@@ -7,7 +7,7 @@
         {{-- Basic Information Section --}}
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Basic Information</h3>
+                <h2 class="card-title">Basic Information</h2>
 
                 {{-- Call Sign (Read-only) --}}
                 <x-input
@@ -94,7 +94,7 @@
         {{-- Preferences Section --}}
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h3 class="card-title">Preferences</h3>
+                <h2 class="card-title">Preferences</h2>
 
                 {{-- Timezone --}}
                 <x-choices-offline
@@ -115,7 +115,7 @@
                         <div class="space-y-2">
                             {{-- Security Alerts (Always enabled) --}}
                             <div class="flex items-center gap-2">
-                                <x-checkbox checked disabled />
+                                <x-checkbox checked disabled aria-label="Security Alerts (always enabled)" />
                                 <span>Security Alerts <span class="text-xs text-base-content/60">(always enabled)</span></span>
                                 <div class="tooltip" data-tip="Security alerts are always enabled">
                                     <x-icon name="phosphor-info" class="w-4 h-4 text-base-content/40 cursor-help" />
@@ -161,7 +161,7 @@
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="card-title">In-App Notification Categories</h3>
+                        <h2 class="card-title">In-App Notification Categories</h2>
                         <p class="text-sm text-base-content/60 mt-1">Choose which types of activity notifications you receive</p>
                     </div>
                     <div>
@@ -189,7 +189,7 @@
                                 <div class="text-sm text-base-content/60">When a new ARRL/RAC section is worked</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_new_section" />
+                        <x-toggle wire:model="notify_new_section" aria-label="New Section Worked" />
                     </div>
 
                     {{-- Guestbook Entries --}}
@@ -201,7 +201,7 @@
                                 <div class="text-sm text-base-content/60">When visitors sign the guestbook</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_guestbook" />
+                        <x-toggle wire:model="notify_guestbook" aria-label="Guestbook Entries" />
                     </div>
 
                     {{-- Photo Uploads --}}
@@ -213,7 +213,7 @@
                                 <div class="text-sm text-base-content/60">When new photos are uploaded to the gallery</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_photos" />
+                        <x-toggle wire:model="notify_photos" aria-label="Photo Uploads" />
                     </div>
 
                     {{-- Station Status --}}
@@ -225,7 +225,7 @@
                                 <div class="text-sm text-base-content/60">When a station becomes available or occupied</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_station_status" />
+                        <x-toggle wire:model="notify_station_status" aria-label="Station Status" />
                     </div>
 
                     {{-- QSO Milestones --}}
@@ -237,7 +237,7 @@
                                 <div class="text-sm text-base-content/60">When the event reaches QSO count milestones</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_qso_milestone" />
+                        <x-toggle wire:model="notify_qso_milestone" aria-label="QSO Milestones" />
                     </div>
 
                     {{-- Equipment Changes --}}
@@ -249,7 +249,7 @@
                                 <div class="text-sm text-base-content/60">When equipment status changes</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_equipment" />
+                        <x-toggle wire:model="notify_equipment" aria-label="Equipment Changes" />
                     </div>
 
                     {{-- Bulletin Reminders --}}
@@ -261,7 +261,7 @@
                                 <div class="text-sm text-base-content/60">Bulletin transmission reminders</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_bulletin_reminder" />
+                        <x-toggle wire:model="notify_bulletin_reminder" aria-label="Bulletin Reminders" />
                     </div>
 
                     {{-- Shift Check-in Reminders --}}
@@ -273,7 +273,7 @@
                                 <div class="text-sm text-base-content/60">Reminders before your scheduled shifts</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notify_shift_checkin_reminder" />
+                        <x-toggle wire:model="notify_shift_checkin_reminder" aria-label="Shift Check-in Reminders" />
                     </div>
 
                     {{-- Weather Alerts --}}
@@ -285,7 +285,7 @@
                                 <div class="text-sm text-base-content/60">NWS and manual weather alerts</div>
                             </div>
                         </div>
-                        <x-toggle wire:model="notifyWeatherAlert" />
+                        <x-toggle wire:model="notifyWeatherAlert" aria-label="Weather Alerts" />
                     </div>
 
                     {{-- Shift Confirmations (shift managers only) --}}
@@ -298,7 +298,7 @@
                                     <div class="text-sm text-base-content/60">Volunteer check-ins waiting for your confirmation</div>
                                 </div>
                             </div>
-                            <x-toggle wire:model="notifyShiftConfirmation" />
+                            <x-toggle wire:model="notifyShiftConfirmation" aria-label="Shift Confirmations" />
                         </div>
                     @endcan
                 </div>
@@ -308,7 +308,7 @@
                     <div class="divider my-1"></div>
 
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold">Shift Reminder Settings</h4>
+                        <h3 class="text-sm font-semibold">Shift Reminder Settings</h3>
 
                         {{-- Email toggle --}}
                         @if(config('mail.email_configured'))
@@ -340,7 +340,7 @@
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-sm text-base-content/50 mb-3">No shift reminders set. Add a time from 1 to 60 minutes before your shift.</p>
+                                <p class="text-sm text-base-content/70 mb-3">No shift reminders set. Add a time from 1 to 60 minutes before your shift.</p>
                             @endif
 
                             @if(count($this->shiftReminderMinutes) < 5)
@@ -375,7 +375,7 @@
                     <div class="divider my-1"></div>
 
                     <div class="space-y-4">
-                        <h4 class="text-sm font-semibold">Bulletin Reminder Settings</h4>
+                        <h3 class="text-sm font-semibold">Bulletin Reminder Settings</h3>
 
                         {{-- Reminder intervals --}}
                         <div>
@@ -398,7 +398,7 @@
                                     @endforeach
                                 </div>
                             @else
-                                <p class="text-sm text-base-content/50 mb-3">No bulletin reminders set. Add a time from 1 to 60 minutes before a transmission.</p>
+                                <p class="text-sm text-base-content/70 mb-3">No bulletin reminders set. Add a time from 1 to 60 minutes before a transmission.</p>
                             @endif
 
                             @if(count($this->bulletinReminderMinutes) < 5)

@@ -18,7 +18,7 @@
             />
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" @click="$wire.showAssignModal = false" />
             <x-button label="Assign Volunteer" wire:click="assignUser" class="btn-primary" spinner="assignUser" />
         </x-slot:actions>

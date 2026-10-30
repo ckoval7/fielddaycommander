@@ -164,7 +164,7 @@ test('gallery delete button is visible on touch devices and has an accessible ta
 
     Livewire::actingAs($user)
         ->test(GalleryShow::class, ['eventConfiguration' => $eventConfig])
-        ->assertSeeHtml('aria-label="Delete photo"')
+        ->assertSeeHtml('aria-label="Delete photo: ')
         ->assertSeeHtml('pointer-coarse:min-h-11 pointer-coarse:min-w-11')
         ->assertSeeHtml('opacity-100 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 group-focus-within:opacity-100')
         ->assertDontSeeHtml('rounded-full opacity-0 group-hover:opacity-100');

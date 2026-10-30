@@ -39,6 +39,7 @@
                         <button
                             type="button"
                             wire:click="$set('timeIsLocal', false)"
+                            aria-pressed="{{ $timeIsLocal ? 'false' : 'true' }}"
                             @class([
                                 'join-item btn btn-xs',
                                 'btn-active btn-warning' => !$timeIsLocal,
@@ -47,6 +48,7 @@
                         <button
                             type="button"
                             wire:click="$set('timeIsLocal', true)"
+                            aria-pressed="{{ $timeIsLocal ? 'true' : 'false' }}"
                             @class([
                                 'join-item btn btn-xs',
                                 'btn-active btn-warning' => $timeIsLocal,
@@ -63,13 +65,13 @@
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
                         <x-icon name="phosphor-cell-signal-high" class="w-4 h-4 text-base-content/50 flex-shrink-0" />
-                        <span class="font-bold text-lg truncate">{{ $station->name }}</span>
+                        <h1 class="font-bold text-lg truncate"><span class="sr-only">Transcribe paper log: </span>{{ $station->name }}</h1>
                         @if($station->is_gota)
                             <x-badge value="GOTA" class="badge-warning badge-sm" />
                         @endif
                     </div>
                     @if($station->primaryRadio)
-                        <p class="text-xs text-base-content/50 pl-6 font-mono">
+                        <p class="text-xs text-base-content/70 pl-6 font-mono">
                             {{ $station->primaryRadio->make }} {{ $station->primaryRadio->model }}
                         </p>
                     @endif
@@ -163,7 +165,7 @@
                         <x-badge value="GOTA" class="badge-info badge-sm" />
                         <span class="text-sm font-semibold">GOTA Operator</span>
                         @if($this->gotaCallsign)
-                            <span class="text-xs text-base-content/50 ml-auto">Callsign on air: <span class="font-mono font-bold">{{ $this->gotaCallsign }}</span></span>
+                            <span class="text-xs text-base-content/70 ml-auto">Callsign on air: <span class="font-mono font-bold">{{ $this->gotaCallsign }}</span></span>
                         @endif
                     </div>
 
@@ -252,16 +254,16 @@
                                 $contact->band->name ?? '—',
                                 $contact->mode->name ?? '—',
                                 $contact->section->code ?? '—',
-                                $contact->points.'pt',
+                                $contact->points.' '.Str::plural('point', $contact->points),
                             ]"
                         />
                     @endforeach
                 </x-slot:cards>
 
                 <x-slot:extra-columns>
-                    <th>Band</th>
-                    <th>Mode</th>
-                    <th>Pts</th>
+                    <th scope="col">Band</th>
+                    <th scope="col">Mode</th>
+                    <th scope="col">{{ spoken('Pts', 'Points') }}</th>
                 </x-slot:extra-columns>
 
                 <x-slot:rows>
@@ -290,16 +292,17 @@
                     :suggestions="$suggestions"
                     :duplicate-warning="$isDuplicate ? $dupeWarning : null"
                 :participant-warning="$participantWarning ?: null"
+                :error="$parseError ?: null"
                 >
                     @if($parseError)
                         <x-alert icon="phosphor-warning" class="alert-error">
-                            {{ $parseError }}
+                            {{ spoken($parseError, spokenAbbreviations($parseError)) }}
                         </x-alert>
                     @endif
 
-                    <div class="flex flex-wrap items-center gap-x-2 text-xs text-base-content/50">
+                    <div class="flex flex-wrap items-center gap-x-2 text-xs text-base-content/70">
                         <span>Time: <span class="font-mono font-semibold text-base-content/70">{{ $contactTime }}</span> {{ $timeLabel }}</span>
-                        <span class="text-base-content/30">Start with the QSO time, e.g. 1423 {{ $this->exchangeExample }}. Time stays set for the next entry.</span>
+                        <span class="text-base-content/70">Start with the QSO time, e.g. 1423 {{ $this->exchangeExample }}. Time stays set for the next entry.</span>
                     </div>
                 </x-logging.exchange-composer>
             </x-logging.qso-log>

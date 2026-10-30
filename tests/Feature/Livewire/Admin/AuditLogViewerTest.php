@@ -807,3 +807,18 @@ test('renders audit logs as tappable cards below md', function () {
             'hidden md:block overflow-x-auto',
         ]);
 });
+
+test('the audit log table headers are scoped to their columns', function () {
+    $this->actingAs($this->adminUser);
+
+    AuditLog::create([
+        'user_id' => $this->adminUser->id,
+        'action' => 'user.login.success',
+        'ip_address' => '192.168.1.1',
+        'user_agent' => 'Mozilla/5.0',
+        'is_critical' => false,
+        'created_at' => now(),
+    ]);
+
+    expect(Livewire::test(AuditLogViewer::class)->html())->toMatch('/<th\s+scope="col"/');
+});

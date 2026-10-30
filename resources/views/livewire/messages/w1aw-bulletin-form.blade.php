@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>W1AW Bulletin</x-slot:title>
     {{-- Header --}}
-    <x-header
-        :title="$this->nomenclature->bulletinName"
-        :subtitle="'Record the ' . $this->nomenclature->bulletinName . ' as copied over the air'"
+    <x-header use-h1
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:title>{{ spoken($this->nomenclature->bulletinName, spokenAbbreviations($this->nomenclature->bulletinName)) }}</x-slot:title>
+        <x-slot:subtitle>{{ spoken($subtitle = 'Record the '.$this->nomenclature->bulletinName.' as copied over the air', spokenAbbreviations($subtitle)) }}</x-slot:subtitle>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Back to Dashboard"
                 icon="phosphor-arrow-left"
@@ -32,7 +33,7 @@
 
     {{-- Transmission Schedule --}}
     <x-card>
-        <x-slot:title>
+                    <x-slot:title>
             <div class="flex items-center gap-2">
                 <x-icon name="phosphor-radio" class="w-5 h-5" />
                 Transmission Schedule
@@ -61,27 +62,27 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Time (UTC)</th>
-                            <th>Mode</th>
-                            <th>Frequencies (MHz)</th>
-                            <th>Source</th>
+                            <th scope="col">Time (UTC)</th>
+                            <th scope="col">Mode</th>
+                            <th scope="col">Frequencies (MHz)</th>
+                            <th scope="col">Source</th>
                             @can('manage-bulletins')
-                                <th class="text-right">Actions</th>
+                                <th scope="col" class="text-right">Actions</th>
                             @endcan
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($this->scheduleEntries as $entry)
-                            <tr class="{{ $entry->scheduled_at->isPast() ? 'opacity-40' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
+                            <tr class="{{ $entry->scheduled_at->isPast() ? 'text-base-content/70' : '' }} {{ $this->nextScheduleEntry && $entry->id === $this->nextScheduleEntry->id ? 'bg-info/5 font-medium' : '' }}">
                                 <td>
                                     {{ $entry->scheduled_at->format('D M j, H:i') }}
                                     @if($entry->notes)
-                                        <div class="text-xs text-base-content/50 mt-0.5">{{ $entry->notes }}</div>
+                                        <div class="text-xs text-base-content/70 mt-0.5">{{ $entry->notes }}</div>
                                     @endif
                                 </td>
                                 <td>{{ $entry->mode_label }}</td>
                                 <td class="font-mono text-sm">{{ $entry->frequencies }}</td>
-                                <td>{{ $entry->source }}</td>
+                                <td>{{ spoken($entry->source, spokenAbbreviations($entry->source)) }}</td>
                                 @can('manage-bulletins')
                                     <td class="text-right">
                                         <div class="flex gap-1 justify-end">
@@ -90,7 +91,7 @@
                                                 class="btn-ghost btn-xs"
                                                 wire:click="editScheduleEntry({{ $entry->id }})"
                                                 spinner="editScheduleEntry({{ $entry->id }})"
-                                                title="Edit transmission"
+                                                title="Edit transmission" aria-label="Edit transmission"
                                             />
                                             <x-button
                                                 icon="phosphor-trash"
@@ -98,7 +99,7 @@
                                                 wire:click="deleteScheduleEntry({{ $entry->id }})"
                                                 wire:confirm="Delete this scheduled transmission?"
                                                 spinner="deleteScheduleEntry({{ $entry->id }})"
-                                                title="Delete transmission"
+                                                title="Delete transmission" aria-label="Delete transmission"
                                             />
                                         </div>
                                     </td>
@@ -109,15 +110,15 @@
                 </table>
             </div>
         @else
-            <p class="text-sm text-base-content/50">No transmissions scheduled yet.</p>
+            <p class="text-sm text-base-content/70">No transmissions scheduled yet.</p>
         @endif
 
         {{-- Add/Edit form (managers only) --}}
         @can('manage-bulletins')
             <div class="mt-4 pt-4 border-t border-base-300">
-                <h4 class="text-sm font-semibold mb-3">
+                <h2 class="text-sm font-semibold mb-3">
                     {{ $editingEntryId ? 'Edit Transmission' : 'Add Transmission' }}
-                </h4>
+                </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <x-flatpickr
                         label="Time (UTC)"
@@ -146,7 +147,7 @@
                         <x-select
                             label="Source"
                             wire:model="scheduleSource"
-                            :options="collect($this->nomenclature->bulletinSources)->map(fn ($source) => ['id' => $source, 'name' => $source])->all()"
+                            :options="collect($this->nomenclature->bulletinSources)->map(fn ($source) => ['id' => $source, 'name' => $source, 'aria-label' => spokenAbbreviations($source)])->all()"
                             option-value="id"
                             option-label="name"
                         />
@@ -298,7 +299,7 @@
                                     <span class="font-medium">{{ $entry->user?->call_sign ?? $entry->user?->first_name ?? 'System' }}</span>
                                     <span>&middot;</span>
                                     <span>{{ $entry->created_at->diffForHumans() }}</span>
-                                    <span class="text-xs text-base-content/50">({{ $entry->created_at->format('M j, Y H:i') }} UTC)</span>
+                                    <span class="text-xs text-base-content/70">({{ $entry->created_at->format('M j, Y H:i') }} UTC)</span>
                                 </div>
 
                                 @if($entry->action === 'bulletin.created')

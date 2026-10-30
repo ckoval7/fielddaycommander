@@ -196,12 +196,12 @@
     >
         {{-- Header with title and summary value --}}
         <div class="flex items-baseline justify-between gap-3 mb-2">
-            <h3 class="min-w-0 truncate {{ $size === 'tv' ? 'text-xl font-bold' : 'text-sm font-semibold' }} text-base-content" title="{{ $chartData['title'] ?? 'Chart' }}">
+            <h2 class="min-w-0 truncate {{ $size === 'tv' ? 'text-xl font-bold' : 'text-sm font-semibold' }} text-base-content" title="{{ $chartData['title'] ?? 'Chart' }}">
                 {{ $chartData['title'] ?? 'Chart' }}
-            </h3>
+            </h2>
             @if(!empty($chartData['summary_value']))
                 <span class="shrink-0 whitespace-nowrap {{ $size === 'tv' ? 'text-2xl' : 'text-lg' }} font-bold tabular-nums text-primary">
-                    {{ $chartData['summary_value'] }}
+                    {{ spoken($chartData['summary_value'], spokenAbbreviations($chartData['summary_value'])) }}
                 </span>
             @endif
         </div>
@@ -243,7 +243,7 @@
         {{-- Empty state --}}
         @if(empty($chartData['labels'] ?? []))
             <div class="absolute inset-0 flex items-center justify-center">
-                <p class="text-base-content/50 {{ $size === 'tv' ? 'text-lg' : 'text-sm' }}">
+                <p class="text-base-content/70 {{ $size === 'tv' ? 'text-lg' : 'text-sm' }}">
                     No data available
                 </p>
             </div>

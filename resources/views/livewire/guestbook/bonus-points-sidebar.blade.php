@@ -17,12 +17,12 @@
                             @endif
                             <div class="min-w-0">
                                 <span class="text-sm">{{ $item['label'] }}</span>
-                                <span class="text-xs text-base-content/50 ml-1">({{ $item['rule'] }})</span>
+                                <span class="text-xs text-base-content/70 ml-1">({{ $item['rule'] }})</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <x-badge :value="$item['count']" class="{{ $item['earned'] ? 'badge-success' : 'badge-ghost' }} badge-sm" />
-                            <span class="text-sm tabular-nums font-semibold {{ $item['earned'] ? 'text-success' : 'text-base-content/40' }}">
+                            <span class="text-sm tabular-nums font-semibold {{ $item['earned'] ? 'text-success' : 'text-base-content/70' }}">
                                 {{ $item['earned'] ? '+' : '' }}{{ $item['points'] }}
                             </span>
                         </div>
@@ -39,7 +39,7 @@
                     </div>
                     <x-badge :value="$this->arrlOfficialCount" class="badge-warning badge-sm" />
                 </div>
-                <div class="text-xs text-base-content/50 -mt-2 ml-7">ARRL official visits do not earn a guestbook bonus.</div>
+                <div class="text-xs text-base-content/70 -mt-2 ml-7">ARRL official visits do not earn a guestbook bonus.</div>
             @endif
 
             {{-- Media Representatives (tracked here, bonus claimed in Manual Bonus Claims) --}}
@@ -51,7 +51,7 @@
                     </div>
                     <x-badge :value="$this->mediaCount" class="badge-secondary badge-sm" />
                 </div>
-                <div class="text-xs text-base-content/50 -mt-2 ml-7">A media visit alone does not earn points. Claim qualifying media coverage on the event dashboard.</div>
+                <div class="text-xs text-base-content/70 -mt-2 ml-7">A media visit alone does not earn points. Claim qualifying media coverage on the event dashboard.</div>
             @endif
 
             <div class="divider my-2"></div>

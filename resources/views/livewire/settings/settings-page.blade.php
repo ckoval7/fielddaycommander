@@ -3,6 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="max-w-7xl mx-auto py-8 px-4 max-sm:px-0">
+    <x-slot:title>Settings</x-slot:title>
+
     <div class="mb-6">
         <h1 class="text-3xl font-bold">System Settings</h1>
         <p class="text-gray-600 dark:text-gray-400">Configure system preferences, branding, and roles</p>

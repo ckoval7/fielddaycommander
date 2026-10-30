@@ -23,7 +23,7 @@ final class Nomenclature
         public readonly string $awardValueLabel = 'Points',
         /**
          * True when this rulebook's awards carry a multiplier rather than a
-         * point value, so the UI shows "OM x3" in place of "300 pts".
+         * point value, so the UI shows "OM x3" in place of "300 points".
          */
         public readonly bool $awardsAreMultipliers = false,
         /**
@@ -48,6 +48,6 @@ final class Nomenclature
         /**
          * Badge shown once the bulletin copy is saved and its award earned.
          */
-        public readonly string $bulletinCapturedLabel = 'Bonus Earned: 100 pts',
+        public readonly string $bulletinCapturedLabel = 'Bonus Earned: 100 points',
     ) {}
 }

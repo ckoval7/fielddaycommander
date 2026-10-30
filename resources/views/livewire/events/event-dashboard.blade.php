@@ -3,6 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $event->name }}</x-slot:title>
+
     <!-- Header Section -->
     <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div class="flex-1">
@@ -104,7 +106,7 @@
                 />
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" wire:click="cancelRescore" class="btn-ghost" />
                 <x-button
                     label="Apply & Rescore"
@@ -135,19 +137,19 @@
                             <!-- Club Name -->
                             <div>
                                 <div class="text-sm text-base-content/60">Club Name</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->club_name ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->club_name ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Section -->
                             <div>
                                 <div class="text-sm text-base-content/60">Section</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->section->code ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->section->code ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Operating Class -->
                             <div>
                                 <div class="text-sm text-base-content/60">Operating Class</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->operatingClass->code ?? 'N/A' }}</div>
+                                <div class="font-semibold">{{ $event->eventConfiguration->operatingClass->code ?? spoken('N/A', 'not available') }}</div>
                             </div>
 
                             <!-- Transmitters -->
@@ -159,7 +161,7 @@
                             <!-- Power -->
                             <div>
                                 <div class="text-sm text-base-content/60">Max Power</div>
-                                <div class="font-semibold">{{ $event->eventConfiguration->max_power_watts }}W</div>
+                                <div class="font-semibold">{{ spokenWatts($event->eventConfiguration->max_power_watts) }}</div>
                             </div>
 
                             {{-- Power multiplier: Field Day rulebooks only --}}
@@ -241,7 +243,7 @@
                         @foreach($this->scoringHeadline as $term)
                             @if($term instanceof \App\Scoring\Dto\ScoreTerm)
                                 <div>
-                                    <div class="text-sm text-base-content/60">{{ $term->label }}</div>
+                                    <div class="text-sm text-base-content/60">{{ spoken($term->label, spokenAbbreviations($term->label)) }}</div>
                                     <div class="text-2xl font-bold">{{ $term->value }}</div>
                                 </div>
                             @endif
@@ -318,7 +320,7 @@
                                 <!-- Bonus Points Total -->
                                 <div>
                                     <div class="text-sm text-base-content/60">Guestbook Bonus</div>
-                                    <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} pts</div>
+                                    <div class="text-2xl font-bold {{ $this->guestbookStats['bonus_points'] > 0 ? 'text-success' : '' }}">{{ number_format($this->guestbookStats['bonus_points']) }} <x-points-unit /></div>
                                 </div>
                             @endif
 
@@ -354,11 +356,11 @@
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>Time</th>
-                                        <th>Callsign</th>
-                                        <th>Band</th>
-                                        <th>Mode</th>
-                                        <th>Operator</th>
+                                        <th scope="col">Time</th>
+                                        <th scope="col">Callsign</th>
+                                        <th scope="col">Band</th>
+                                        <th scope="col">Mode</th>
+                                        <th scope="col">Operator</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -380,7 +382,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="text-xs text-base-content/40 mt-3">
+                        <div class="text-xs text-base-content/70 mt-3">
                             Showing the latest {{ $this->recentContacts->count() }} {{ str('contact')->plural($this->recentContacts->count()) }}
                         </div>
                     @endif
@@ -399,15 +401,15 @@
                              (QSO x Power) + Bonus while Winter Field Day renders QSO x (OM + 1). --}}
                         @foreach($this->scoringHeadline as $part)
                             @if(is_string($part))
-                                <span class="text-2xl font-light text-base-content/30">{{ $part }}</span>
+                                <span class="text-2xl font-light text-base-content/70">{{ $part }}</span>
                             @else
                                 <div class="text-center">
                                     <div class="text-3xl font-black tabular-nums">{{ $part->value }}</div>
-                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ $part->label }}</div>
+                                    <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1">{{ spoken($part->label, spokenAbbreviations($part->label)) }}</div>
                                 </div>
                             @endif
                         @endforeach
-                        <span class="text-2xl font-light text-base-content/30">=</span>
+                        <span class="text-2xl font-light text-base-content/70">=</span>
                         <div class="text-center">
                             <div class="text-4xl font-black tabular-nums text-primary">{{ number_format($this->scoringTotals['final_score']) }}</div>
                             <div class="text-xs uppercase tracking-widest text-base-content/60 mt-1 font-bold">Final Score</div>
@@ -424,7 +426,7 @@
                             @foreach($this->modes as $mode)
                                 @php $modePoints = $this->pointsForMode($mode); @endphp
                                 <span class="badge badge-outline badge-sm">
-                                    {{ $mode->name }} = {{ $modePoints }} {{ $modePoints === 1 ? 'pt' : 'pts' }}
+                                    {{ $mode->name }} = {{ $modePoints }} <x-points-unit :count="$modePoints" />
                                 </span>
                             @endforeach
                         </div>
@@ -434,12 +436,12 @@
                                 <table class="table table-xs">
                                     <thead>
                                         <tr>
-                                            <th>Mode</th>
+                                            <th scope="col">Mode</th>
                                             @foreach($this->bands as $band)
-                                                <th class="text-center">{{ $band->name }}</th>
+                                                <th scope="col" class="text-center">{{ $band->name }}</th>
                                             @endforeach
-                                            <th class="text-right">QSOs</th>
-                                            <th class="text-right">Pts</th>
+                                            <th scope="col" class="text-right">QSOs</th>
+                                            <th scope="col" class="text-right">{{ spoken('Pts', 'Points') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -451,7 +453,7 @@
                                                         @if($row['cells'][$band->id] > 0)
                                                             <span class="font-bold">{{ $row['cells'][$band->id] }}</span>
                                                         @else
-                                                            <span class="text-base-content/20">&mdash;</span>
+                                                            <span class="text-base-content/70">&mdash;</span>
                                                         @endif
                                                     </td>
                                                 @endforeach
@@ -473,7 +475,7 @@
                                 </table>
                             </div>
                         @else
-                            <div class="text-center py-6 text-base-content/40">
+                            <div class="text-center py-6 text-base-content/70">
                                 No contacts logged yet.
                             </div>
                         @endif
@@ -491,7 +493,7 @@
                                     @if($this->terms->awardsAreMultipliers)
                                         OM ×{{ $this->bonusSummary['verified_multiplier'] }}
                                     @else
-                                        {{ number_format($this->bonusSummary['verified_pts']) }} pts
+                                        {{ number_format($this->bonusSummary['verified_pts']) }} <x-points-unit />
                                     @endif
                                 </div>
                             </div>
@@ -502,13 +504,13 @@
                                     @if($this->terms->awardsAreMultipliers)
                                         OM ×{{ $this->bonusSummary['claimed_multiplier'] }} pending
                                     @else
-                                        {{ number_format($this->bonusSummary['claimed_pts']) }} pts pending
+                                        {{ number_format($this->bonusSummary['claimed_pts']) }} <x-points-unit /> pending
                                     @endif
                                 </div>
                             </div>
                             <div>
                                 <div class="text-xs uppercase tracking-wide text-base-content/60">Unclaimed</div>
-                                <div class="text-lg font-bold tabular-nums text-base-content/40">{{ $this->bonusSummary['unclaimed_count'] }}</div>
+                                <div class="text-lg font-bold tabular-nums text-base-content/70">{{ $this->bonusSummary['unclaimed_count'] }}</div>
                             </div>
                         </div>
 
@@ -517,16 +519,16 @@
                             @foreach($this->bonusList as $item)
                                 <div class="flex items-center justify-between gap-2 py-2">
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium truncate">{{ $item['type']->name }}</div>
+                                        <div class="text-sm font-medium truncate">{{ spoken($item['type']->name, spokenAbbreviations($item['type']->name)) }}</div>
                                         @if($item['type']->is_per_occurrence && $item['bonus'])
                                             <div class="text-xs text-base-content/60">
-                                                {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} pts
+                                                {{ $item['bonus']->quantity }} &times; {{ $item['type']->base_points }} <x-points-unit />
                                             </div>
                                         @endif
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/40' }}">
-                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} pts @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} pts @endif
+                                        <span class="text-xs tabular-nums font-semibold {{ $item['status'] !== 'unclaimed' ? 'text-base-content' : 'text-base-content/70' }}">
+                                            @if($item['type']->objective_multiplier !== null) OM ×{{ $item['type']->objective_multiplier }} @elseif($item['status'] === 'claimed') {{ $item['points'] }} <x-points-unit /> @elseif($item['points'] > 0) +{{ $item['points'] }} @else {{ $item['type']->base_points }} <x-points-unit /> @endif
                                         </span>
                                         @if($item['status'] === 'verified')
                                             <x-badge value="Verified" class="badge-success badge-xs" />
@@ -540,7 +542,7 @@
                             @endforeach
 
                             @if(empty($this->bonusList))
-                                <div class="text-center py-4 text-base-content/40">
+                                <div class="text-center py-4 text-base-content/70">
                                     No bonus types configured.
                                 </div>
                             @endif
@@ -599,11 +601,11 @@
                                     <table class="table table-sm">
                                         <thead>
                                             <tr>
-                                                <th>Equipment</th>
-                                                <th>Type</th>
-                                                <th>Owner</th>
-                                                <th>Station</th>
-                                                <th>Status</th>
+                                                <th scope="col">Equipment</th>
+                                                <th scope="col">Type</th>
+                                                <th scope="col">Owner</th>
+                                                <th scope="col">Station</th>
+                                                <th scope="col">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
