@@ -42,9 +42,9 @@
             {{-- Logo --}}
             <div class="flex justify-center mb-4">
                 @if($logoUrl && file_exists(public_path($logoUrl)))
-                    <img src="{{ asset($logoUrl) }}" alt="Logo" class="w-24 h-24 object-contain">
+                    <img src="{{ asset($logoUrl) }}" alt="" class="w-24 h-24 object-contain">
                 @elseif($logoUrl && str_starts_with($logoUrl, '/storage/'))
-                    <img src="{{ $logoUrl }}" alt="Logo" class="w-24 h-24 object-contain">
+                    <img src="{{ $logoUrl }}" alt="" class="w-24 h-24 object-contain">
                 @else
                     <div class="w-24 h-24 rounded-lg bg-primary flex items-center justify-center">
                         <x-icon name="phosphor-cell-signal-high" class="w-14 h-14 text-primary-content" />
@@ -66,7 +66,7 @@
             {{-- Event dates --}}
             @if($activeEvent && $activeEvent->start_time && $activeEvent->end_time)
                 @php $tz = \App\Models\Setting::get('timezone', 'America/New_York'); @endphp
-                <p class="text-base text-base-content/50 mb-4">
+                <p class="text-base text-base-content/70 mb-4">
                     {{ $activeEvent->start_time->timezone($tz)->format('F j, Y g:i A') }} &ndash;
                     {{ $activeEvent->end_time->timezone($tz)->format('F j, Y g:i A T') }}
                 </p>

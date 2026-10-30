@@ -27,12 +27,12 @@
             </span>
         </div>
         <div class="text-right shrink-0 flex flex-col items-end">
-            <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/55">
+            <span class="text-[10px] uppercase tracking-[0.8px] font-semibold text-base-content/70">
                 {{ $state === 'ended' ? 'Ended' : ($state === 'active' ? 'Ends in' : 'Starts in') }}
             </span>
-            <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" @if($live) x-text="countdown" @endif>
+            <span class="font-mono font-bold text-base leading-tight {{ $textClass }}" aria-hidden="true" @if($live) x-text="countdown" @endif>
                 {{ $formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
-            </span>
+            </span><span class="sr-only" @if($live) x-text="window.fdcSpokenDuration?.(countdown) ?? countdown" @endif>{{ spokenDuration($formattedCountdown.($state === 'ended' ? ' ago' : '')) }}</span>
         </div>
     </div>
 
@@ -59,19 +59,19 @@
             </span>
         </div>
 
-        <span class="text-2xl text-base-content/30 max-xl:hidden">|</span>
+        <span class="text-2xl text-base-content/30 max-xl:hidden" aria-hidden="true">|</span>
 
         {{-- Countdown Label and Time --}}
         <div class="flex items-center gap-2 whitespace-nowrap">
             <span class="text-lg font-semibold">
                 {{ $label }}{{ $state !== 'ended' ? ':' : '' }}
             </span>
-            <span class="text-2xl font-mono font-bold {{ $textClass }}" @if($live) x-text="countdown" @endif>
+            <span class="text-2xl font-mono font-bold {{ $textClass }}" aria-hidden="true" @if($live) x-text="countdown" @endif>
                 {{ $formattedCountdown }}{{ $state === 'ended' ? ' ago' : '' }}
-            </span>
+            </span><span class="sr-only" @if($live) x-text="window.fdcSpokenDuration?.(countdown) ?? countdown" @endif>{{ spokenDuration($formattedCountdown.($state === 'ended' ? ' ago' : '')) }}</span>
         </div>
 
-        <span class="text-2xl text-base-content/30">|</span>
+        <span class="text-2xl text-base-content/30" aria-hidden="true">|</span>
 
         {{-- Clocks --}}
         <div class="flex items-center gap-4 max-[1399px]:flex-col max-[1399px]:items-start max-[1399px]:gap-1 text-lg">

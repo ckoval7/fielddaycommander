@@ -18,11 +18,11 @@
                 <table class="w-full text-sm">
                     <thead>
                         <tr>
-                            <th class="sticky left-0 z-10 bg-base-100 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 pb-2 pr-3 border-b border-gray-200 dark:border-gray-700">
+                            <th scope="col" class="sticky left-0 z-10 bg-base-100 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 pb-2 pr-3 border-b border-gray-200 dark:border-gray-700">
                                 Mode
                             </th>
                             @foreach ($this->bands as $band)
-                                <th class="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 pb-2 px-1.5 whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
+                                <th scope="col" class="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 pb-2 px-1.5 whitespace-nowrap border-b border-gray-200 dark:border-gray-700">
                                     {{ $band->name }}
                                 </th>
                             @endforeach
@@ -31,9 +31,9 @@
                     <tbody>
                         @foreach ($this->gridData as $row)
                             <tr>
-                                <td class="sticky left-0 z-10 bg-base-100 py-2 pr-3 border-t border-gray-200 dark:border-gray-700 font-medium text-gray-900 dark:text-gray-100">
+                                <th scope="row" class="sticky left-0 z-10 bg-base-100 py-2 pr-3 border-t border-gray-200 dark:border-gray-700 font-medium text-gray-900 dark:text-gray-100">
                                     {{ $row['mode'] }}
-                                </td>
+                                </th>
                                 @foreach ($this->bands as $band)
                                     <td class="py-2 px-1.5 border-t border-gray-200 dark:border-gray-700 text-center tabular-nums">
                                         @if ($row[$band->id] > 0)
@@ -41,7 +41,7 @@
                                                 {{ $row[$band->id] }}
                                             </span>
                                         @else
-                                            <span class="text-gray-400 dark:text-gray-600">-</span>
+                                            <span class="text-base-content/70">-</span>
                                         @endif
                                     </td>
                                 @endforeach

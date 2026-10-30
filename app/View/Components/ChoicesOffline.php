@@ -10,7 +10,8 @@ use Illuminate\Contracts\View\View;
 use Mary\View\Components\ChoicesOffline as MaryChoicesOffline;
 
 /**
- * Mary UI's <x-choices-offline>, with option rows rendered in the browser.
+ * Mary UI's <x-choices-offline>, with option rows rendered in the browser and
+ * its label, hint and errors linked to the search input.
  *
  * Mary renders every option on the server as a full list item with its own
  * Alpine handlers, and embeds each option's whole record as JSON. A time zone
@@ -106,10 +107,10 @@ class ChoicesOffline extends MaryChoicesOffline
             >
                 <fieldset class="fieldset py-0">
                     @if($label)
-                        <legend class="fieldset-legend mb-0.5">
+                        <legend id="{{ $uuid }}-label" class="fieldset-legend mb-0.5">
                             {{ $label }}
                             @if($isRequired())
-                                <span class="text-error">*</span>
+                                <span class="text-error" aria-hidden="true">*</span>
                             @endif
                         </legend>
                     @endif
@@ -158,7 +159,14 @@ class ChoicesOffline extends MaryChoicesOffline
                                 aria-controls="{{ $uuid }}-list"
                                 aria-autocomplete="list"
                                 :aria-expanded="open"
-                                @if($label) aria-label="{{ $label }}" @endif
+                                @if($label && ! $attributes->hasAny(['aria-label', 'aria-labelledby'])) aria-labelledby="{{ $uuid }}-label" @endif
+                                @if($errorFieldName() && ! $omitError && $errors->has($errorFieldName()))
+                                    aria-invalid="true"
+                                    aria-describedby="{{ $uuid }}-error{{ $hint ? ' '.$uuid.'-hint' : '' }}"
+                                @elseif($hint)
+                                    aria-describedby="{{ $uuid }}-hint"
+                                @endif
+                                {{ $attributes->only(['aria-label', 'aria-labelledby']) }}
                                 autocomplete="off"
                                 class="w-1 !inline-block outline-hidden"
                                 {{ $attributes->whereStartsWith('@') }}
@@ -171,7 +179,7 @@ class ChoicesOffline extends MaryChoicesOffline
                     @if(!$omitError && $errors->has($errorFieldName()))
                         @foreach($errors->get($errorFieldName()) as $message)
                             @foreach(\Illuminate\Support\Arr::wrap($message) as $line)
-                                <div class="{{ $errorClass }}">{{ $line }}</div>
+                                <div @if($loop->first && $loop->parent->first) id="{{ $uuid }}-error" @endif class="{{ $errorClass }}">{{ $line }}</div>
                                 @break($firstErrorOnly)
                             @endforeach
                             @break($firstErrorOnly)
@@ -179,7 +187,7 @@ class ChoicesOffline extends MaryChoicesOffline
                     @endif
 
                     @if($hint)
-                        <div class="{{ $hintClass }}">{{ $hint }}</div>
+                        <div id="{{ $uuid }}-hint" class="{{ $hintClass }}">{{ $hint }}</div>
                     @endif
                 </fieldset>
 

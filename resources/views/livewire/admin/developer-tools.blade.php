@@ -125,7 +125,7 @@
                                     />
                                     <div class="min-w-0">
                                         <div class="font-medium">{{ $option['name'] }}</div>
-                                        <div class="text-xs text-base-content/50 truncate">{{ $option['tables'] }}</div>
+                                        <div class="text-xs text-base-content/70 truncate">{{ $option['tables'] }}</div>
                                     </div>
                                 </label>
                             @endforeach
@@ -177,7 +177,7 @@
                             <h4 class="font-semibold mb-3">Existing Snapshots</h4>
 
                             @if($snapshots->isEmpty())
-                                <div class="text-center py-8 text-base-content/50">
+                                <div class="text-center py-8 text-base-content/70">
                                     <x-icon name="phosphor-camera" class="w-12 h-12 mx-auto mb-2 opacity-50" />
                                     <p>No snapshots found</p>
                                     <p class="text-sm">Create a snapshot to save the current database state</p>
@@ -187,11 +187,11 @@
                                     <table class="table table-zebra w-full">
                                         <thead>
                                             <tr>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                <th>Created</th>
-                                                <th>Size</th>
-                                                <th class="text-right">Actions</th>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Description</th>
+                                                <th scope="col">Created</th>
+                                                <th scope="col">Size</th>
+                                                <th scope="col" class="text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -352,7 +352,7 @@
             <p class="font-semibold">Reset the database and delete all existing data?</p>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 @click="$wire.showResetModal = false"
@@ -389,7 +389,7 @@
             </ul>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 @click="$wire.showSelectiveResetModal = false"
@@ -421,7 +421,7 @@
             </p>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 @click="$wire.showRestoreModal = false"
@@ -456,7 +456,7 @@
             <p class="font-semibold">This cannot be undone.</p>
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 @click="$wire.showClearTestUsersModal = false"

@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Section;
 use App\Services\EventContextService;
 use App\Support\EventSections;
+use App\Support\Phonetics;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
@@ -120,6 +121,8 @@ class SectionsWorked extends Component
             }
         }
 
+        $groups = array_map(fn (array $group): array => $group + ['spoken_label' => self::spokenLabel($group['label'])], $groups);
+
         $totalWorked = collect($groups)->sum('worked_count');
         $totalSections = collect($groups)->sum('total_count');
 
@@ -128,6 +131,19 @@ class SectionsWorked extends Component
             'total_worked' => $totalWorked,
             'total_sections' => $totalSections,
         ];
+    }
+
+    /**
+     * The call area as an operator says it: "Whiskey One", "Kilo Hotel Six,
+     * Kilo Lima Seven, Kilo Papa Four". DX is a word, not a prefix.
+     */
+    private static function spokenLabel(string $label): string
+    {
+        if ($label === 'DX') {
+            return $label;
+        }
+
+        return implode(', ', array_map(Phonetics::spell(...), explode(' / ', $label)));
     }
 
     protected function emptyData(): array

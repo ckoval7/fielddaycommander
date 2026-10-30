@@ -68,6 +68,7 @@ class TranscribeSelect extends Component
     public function render(): View
     {
         return view('livewire.logging.transcribe-select')
-            ->layout('layouts.app', ['title' => 'Transcribe Paper Log']);
+            ->layout('layouts.app')
+            ->title('Transcribe Paper Log');
     }
 }

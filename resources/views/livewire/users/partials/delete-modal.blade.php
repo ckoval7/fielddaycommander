@@ -7,7 +7,7 @@
         This removes the account from the users list. The user won’t be able to sign in.
     </x-alert>
 
-    <x-slot:actions>
+    <x-slot:actions class="flex-wrap max-sm:w-full">
         <x-button label="Cancel" wire:click="$set('showDeleteModal', false)" class="btn-ghost" />
         <x-button label="Delete User" wire:click="deleteUser" class="btn-error" icon="phosphor-trash" spinner="deleteUser" />
     </x-slot:actions>

@@ -16,6 +16,8 @@
         <button
             type="button"
             @click="open = !open"
+            :aria-expanded="open.toString()"
+            aria-controls="schedule-filters"
             class="btn btn-sm btn-outline gap-2"
         >
             <x-icon name="phosphor-funnel" class="w-4 h-4" />
@@ -47,7 +49,7 @@
                     <button
                         type="button"
                         wire:click="removeFilter('{{ $pill['key'] }}')"
-                        class="hover:text-error"
+                        class="hover:text-error pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                     >&times;</button>
                 </span>
             @endforeach
@@ -56,8 +58,8 @@
 
     {{-- Expanded filter controls --}}
     <template x-if="open">
-    <div
-        class="p-4 rounded-lg bg-base-200/50 border border-base-300"
+    <div id="schedule-filters"
+        class="p-3 sm:p-4 rounded-lg bg-base-200/50 border border-base-300"
     >
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {{-- Search --}}
@@ -151,6 +153,7 @@
                         class="btn btn-sm btn-outline"
                         title="{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}"
                     >
+                        <span class="sr-only">{{ $sortDir === 'asc' ? 'Sort descending' : 'Sort ascending' }}</span>
                         @if($sortDir === 'asc')
                             <x-icon name="phosphor-sort-ascending" class="w-4 h-4" />
                         @else

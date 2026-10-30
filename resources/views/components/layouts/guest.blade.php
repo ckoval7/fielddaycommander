@@ -5,10 +5,11 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <title>{{ config('app.name') }}</title>
+    <title>{{ isset($title) ? $title.' - '.config('app.name') : config('app.name') }}</title>
     <x-layouts.head />
 </head>
 <body class="min-h-dvh font-sans antialiased bg-base-200">
+    <x-skip-link />
     <div class="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
         {{-- Logo/Brand --}}
         @php
@@ -57,10 +58,10 @@
                 $tagline = config('branding.default_tagline');
             }
         @endphp
-        <div class="mb-8">
+        <header class="mb-8">
             <a href="/" class="flex items-center gap-3">
                 @if(file_exists(public_path($logoPath)))
-                    <img src="{{ asset($logoPath) }}" alt="Logo" class="w-16 h-16 object-contain">
+                    <img src="{{ asset($logoPath) }}" alt="" class="w-16 h-16 object-contain">
                 @else
                     <div class="w-16 h-16 rounded-lg bg-primary flex items-center justify-center">
                         <x-icon name="phosphor-cell-signal-high" class="w-10 h-10 text-primary-content" />
@@ -69,26 +70,31 @@
                 <div class="text-left">
                     <div class="font-bold text-2xl">{{ $callsign }}</div>
                     @if($eventName !== $callsign)
-                        <div class="text-sm opacity-60">{{ $eventName }}</div>
+                        <div class="text-sm opacity-70">{{ $eventName }}</div>
                     @endif
                 </div>
             </a>
-        </div>
+        </header>
 
         {{-- Content Card --}}
-        <div class="w-full max-w-4xl">
+        <main id="main-content" tabindex="-1" class="w-full max-w-4xl focus:outline-none">
             <div class="card bg-base-100 shadow-xl p-8">
+                {{-- Pages with their own <h1> pass own-heading --}}
+                @if(isset($title) && ! $attributes->has('own-heading') && ! $attributes->has('ownHeading'))
+                    <h1 class="text-2xl font-bold mb-6">{{ $title }}</h1>
+                @endif
                 {{ $slot }}
             </div>
-        </div>
+        </main>
 
         {{-- Theme Toggle --}}
-        <div class="mt-6">
+        <footer class="mt-6">
             <x-theme-switch compact />
-        </div>
+        </footer>
     </div>
 
     <x-toast />
+    <x-live-announcer />
     <x-form-error-summary />
     <x-confirm-dialog />
 </body>

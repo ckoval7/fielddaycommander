@@ -5,7 +5,10 @@
 
 use App\Models\Setting;
 use App\Services\DeveloperClockService;
+use App\Support\Phonetics;
 use Carbon\Carbon;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 if (! function_exists('appNow')) {
     /**
@@ -104,5 +107,92 @@ if (! function_exists('formatTimeAgo')) {
             $diffInSeconds < 86400 => (int) $time->diffInHours(appNow()).'h ago',
             default => (int) $time->diffInDays(appNow()).'d ago',
         };
+    }
+}
+
+if (! function_exists('spoken')) {
+    /**
+     * Show $visible on screen but give screen readers $say instead, for
+     * short forms they misread ("N/A" as "N slash A", "5m" as "5 meters").
+     */
+    function spoken(string $visible, string $say): HtmlString
+    {
+        return new HtmlString('<span aria-hidden="true">'.e($visible).'</span><span class="sr-only">'.e($say).'</span>');
+    }
+}
+
+if (! function_exists('spokenDuration')) {
+    /**
+     * Spell out the d/h/m/s units of a short duration: "2h 5m ago" becomes
+     * "2 hours 5 minutes ago". Only for durations, since "20m" is also a band.
+     */
+    function spokenDuration(string $duration): string
+    {
+        $units = ['d' => 'day', 'h' => 'hour', 'm' => 'minute', 's' => 'second'];
+
+        return preg_replace_callback(
+            '/\b(\d+)([dhms])\b/',
+            fn (array $match): string => $match[1].' '.Str::plural($units[$match[2]], (int) $match[1]),
+            $duration,
+        );
+    }
+}
+
+if (! function_exists('spokenWatts')) {
+    /**
+     * A power level shown as "100W" but read as "100 watts".
+     */
+    function spokenWatts(int|float|string|null $watts): HtmlString
+    {
+        return spoken("{$watts}W", "{$watts} ".Str::plural('watt', (int) $watts));
+    }
+}
+
+if (! function_exists('spokenAbbreviations')) {
+    /**
+     * Expand the short forms screen readers spell out or misread, for labels
+     * that come from frozen rule sets ("QSO Base Pts", "Power Multi.", "WFD
+     * Bulletin"), dashboard summaries ("12.5/hr", "45 Qs") and callsigns.
+     */
+    function spokenAbbreviations(string $text): string
+    {
+        return spokenCallsigns(preg_replace(
+            ['/\bPts\b/i', '/\bPt\b/i', '/\bMulti?\.(?=\s|$)/i', '/\bN\/A\b/', '/\/hr\b/', '/\bQs\b/', '/\bWFD\b/'],
+            ['points', 'point', 'multiplier', 'not available', ' per hour', 'contacts', 'W F D'],
+            $text,
+        ));
+    }
+}
+
+if (! function_exists('spokenPlaceholder')) {
+    /**
+     * A placeholder as screen readers should hear it, or null when they
+     * already read it right.
+     */
+    function spokenPlaceholder(?string $placeholder): ?string
+    {
+        if ($placeholder === null || $placeholder === '') {
+            return null;
+        }
+
+        $spoken = spokenAbbreviations($placeholder);
+
+        return $spoken === $placeholder ? null : $spoken;
+    }
+}
+
+if (! function_exists('spokenCallsigns')) {
+    /**
+     * Spell callsigns in the phonetic alphabet, since screen readers say
+     * "W1AW" as "W 1 ah": "W1AW Bulletin" becomes "Whiskey One Alpha
+     * Whiskey Bulletin". Only uppercase prefix-digit-suffix words match.
+     */
+    function spokenCallsigns(string $text): string
+    {
+        return preg_replace_callback(
+            '/\b(?:[A-Z]{1,2}|\d[A-Z])\d[A-Z]{1,4}\b/',
+            fn (array $match): string => Phonetics::spell($match[0]),
+            $text,
+        );
     }
 }

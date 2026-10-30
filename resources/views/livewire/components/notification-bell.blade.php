@@ -11,13 +11,19 @@
 >
     {{-- Bell Button --}}
     <button
+        type="button"
         @click="open = !open"
         class="btn btn-ghost btn-circle btn-md lg:btn-sm relative"
         title="Notifications"
+        aria-haspopup="true"
+        :aria-expanded="open.toString()"
+        aria-expanded="false"
     >
+        <span class="sr-only">Notifications</span>
         <x-icon name="phosphor-bell" class="w-6 h-6 lg:w-5 lg:h-5" aria-hidden="true" />
         @if($unreadCount > 0)
-            <span class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
+            <span class="sr-only">, {{ $unreadCount }} unread</span>
+            <span aria-hidden="true" class="absolute -top-1 -right-1 badge badge-error badge-xs text-white font-bold min-w-[1.25rem] h-5 flex items-center justify-center">
                 {{ $unreadCount > 99 ? '99+' : $unreadCount }}
             </span>
         @endif
@@ -78,7 +84,7 @@
                         <p class="text-xs text-base-content/60 truncate mt-0.5">
                             {{ $notification->data['message'] ?? '' }}
                         </p>
-                        <p class="text-xs text-base-content/40 mt-1">
+                        <p class="text-xs text-base-content/70 mt-1">
                             {{ $notification->created_at->diffForHumans() }}
                         </p>
                     </div>
@@ -93,7 +99,7 @@
             @empty
                 <div class="px-4 py-8 text-center">
                     <x-icon name="phosphor-bell-slash" class="w-8 h-8 mx-auto text-base-content/30 mb-2" />
-                    <p class="text-sm text-base-content/50">No notifications yet</p>
+                    <p class="text-sm text-base-content/70">No notifications yet</p>
                 </div>
             @endforelse
         </div>

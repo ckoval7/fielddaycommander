@@ -59,11 +59,10 @@ function relativeLuminance(string $color): float
     } elseif (preg_match('/hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/', $color, $m)) {
         [$hue, $saturation, $lightness] = [(float) $m[1], (float) $m[2] / 100, (float) $m[3] / 100];
         $chroma = (1 - abs(2 * $lightness - 1)) * $saturation;
-        $offset = $lightness - $chroma / 2;
 
-        $linear = array_map(function (int $n) use ($hue, $chroma, $offset): float {
+        $linear = array_map(function (int $n) use ($hue, $chroma, $lightness): float {
             $k = fmod($n + $hue / 30, 12);
-            $value = $offset + $chroma * (0.5 - max(-0.5, min($k - 3, 9 - $k, 0.5)));
+            $value = $lightness - $chroma / 2 * max(-1, min($k - 3, 9 - $k, 1));
 
             return $value <= 0.04045 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
         }, [0, 8, 4]);
@@ -120,6 +119,16 @@ test('scoring chips meet WCAG AA on their fills', function (string $theme) {
     foreach (['verified-fill', 'amber-fill'] as $fill) {
         expect(contrastRatio(colorsCssToken($theme, "--score-{$fill}"), colorsCssToken($theme, "--score-on-{$fill}")))
             ->toBeGreaterThanOrEqual(4.5, "{$theme} score {$fill}");
+    }
+})->with(['light', 'dark']);
+
+test('scoring text meets WCAG AA on the scoring backgrounds', function (string $theme) {
+    // The amber headline and warning colors are held to the 3:1 large-text minimum.
+    foreach (['text-muted' => 4.5, 'headline' => 3.0, 'warning' => 3.0] as $text => $minimum) {
+        foreach (['bg', 'surface'] as $background) {
+            expect(contrastRatio(colorsCssToken($theme, "--score-{$text}"), colorsCssToken($theme, "--score-{$background}")))
+                ->toBeGreaterThanOrEqual($minimum, "{$theme} score {$text} on {$background}");
+        }
     }
 })->with(['light', 'dark']);
 

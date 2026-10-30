@@ -497,7 +497,7 @@ test('progress bar bonus_progress metric reports bonus point ceiling', function 
         ->toHaveKeys(['current', 'target', 'percentage', 'unit_label', 'footer_label'])
         ->and($data['current'])->toBe(0)
         ->and($data['target'])->toBeGreaterThanOrEqual(1)
-        ->and($data['unit_label'])->toBe('bonus pts')
+        ->and($data['unit_label'])->toBe('bonus points')
         ->and($data['footer_label'])->toBe('Toward maximum bonus points');
 });
 

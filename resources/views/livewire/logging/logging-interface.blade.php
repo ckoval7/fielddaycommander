@@ -27,11 +27,11 @@
         <div class="px-4 py-2.5 flex items-center justify-between gap-3">
             {{-- Left: Station name --}}
             <div class="min-w-0">
-                <span class="font-bold text-lg sm:text-xl truncate block">
+                <h1 class="font-bold text-lg sm:text-xl truncate block">
                     {{ $operatingSession->station->name ?? 'Station' }}
                     {{-- Narrow screens show power here; the band/mode row below has no room for it. --}}
-                    <span class="xl:hidden font-mono font-normal text-sm text-base-content/60">{{ $operatingSession->power_watts }}W</span>
-                </span>
+                    <span class="xl:hidden font-mono font-normal text-sm text-base-content/70">{{ spokenWatts($operatingSession->power_watts) }}</span>
+                </h1>
             </div>
 
             {{-- Center: Band / Mode / Power --}}
@@ -42,9 +42,9 @@
                     :modes="$this->switchModes"
                     :shortcuts="true"
                 />
-                <span class="text-base-content/30">|</span>
-                <span class="text-base-content/70">{{ $operatingSession->power_watts }}W</span>
-                <span class="text-base-content/30">|</span>
+                <span class="text-base-content/30" aria-hidden="true">|</span>
+                <span class="text-base-content/70">{{ spokenWatts($operatingSession->power_watts) }}</span>
+                <span class="text-base-content/30" aria-hidden="true">|</span>
                 {{-- Optional sub-mode (e.g. FT8, SSTV); stays set between contacts. Mirrored in the mobile row. --}}
                 <input
                     id="log-submode"
@@ -70,26 +70,27 @@
             {{-- Right: QSO counter + Sync status + End button --}}
             <div class="flex items-center gap-3 flex-shrink-0">
                 <div class="flex items-center gap-1">
-                    <span class="text-xs uppercase tracking-wider text-base-content/50 hidden sm:inline">QSOs</span>
+                    <span class="text-xs uppercase tracking-wider text-base-content/70 max-sm:sr-only">QSOs</span>
                     <span class="font-mono font-bold text-xl sm:text-2xl tabular-nums" x-text="parseInt({{ $operatingSession->qso_count }}) + sessionQueueCount">{{ $operatingSession->qso_count }}</span>
                 </div>
 
                 {{-- Sync Status Indicator --}}
                 <div class="flex items-center gap-1.5">
-                    <span class="inline-block w-2 h-2 rounded-full" :class="statusDotClass"></span>
-                    <span x-show="statusLabel" x-text="statusLabel" x-cloak class="text-xs text-base-content/60 hidden sm:inline"></span>
+                    <span class="inline-block w-2 h-2 rounded-full" :class="statusDotClass" aria-hidden="true"></span>
+                    <span x-show="statusLabel" x-text="statusLabel" x-cloak class="text-xs text-base-content/70 max-sm:sr-only"></span>
+                    <span x-show="!statusLabel" class="sr-only">All contacts synced</span>
                 </div>
 
                 {{-- Failed Contacts Dropdown --}}
                 <template x-if="failedCount > 0">
                     <div class="dropdown dropdown-end">
-                        <button class="btn btn-ghost btn-xs text-error gap-1">
+                        <button type="button" class="btn btn-ghost btn-xs text-error gap-1">
                             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                             <span x-text="failedCount + ' failed'"></span>
                         </button>
-                        <div tabindex="0" class="dropdown-content z-50 bg-base-100 border border-base-300 rounded-box shadow-lg p-3 w-72 mt-2">
+                        <div class="dropdown-content z-50 bg-base-100 border border-base-300 rounded-box shadow-lg p-3 w-72 mt-2">
                             <div class="text-sm font-semibold mb-2">Failed Contacts</div>
                             <template x-for="contact in failedContacts" :key="contact.uuid">
                                 <div class="flex items-center justify-between py-1.5 border-b border-base-200 last:border-0">
@@ -183,7 +184,7 @@
                     <x-badge value="GOTA" class="badge-info badge-sm" />
                     <span class="text-sm font-semibold">GOTA Operator</span>
                     @if($this->gotaCallsign)
-                        <span class="text-xs text-base-content/50 ml-auto">Callsign on air: <span class="font-mono font-bold">{{ $this->gotaCallsign }}</span></span>
+                        <span class="text-xs text-base-content/70 ml-auto">Callsign on air: <span class="font-mono font-bold">{{ $this->gotaCallsign }}</span></span>
                     @endif
                 </div>
 
@@ -299,10 +300,10 @@
                         <div class="flex flex-col items-end gap-0.5 flex-shrink-0">
                             <span class="font-mono text-xs text-base-content/60" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></span>
                             <template x-if="contact.status === 'failed'">
-                                <span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span>
+                                <span><span class="badge badge-xs badge-error" :title="contact.last_error">FAIL</span><span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>
                             <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
-                                <span class="badge badge-xs badge-info">SYNC</span>
+                                <span><span class="badge badge-xs badge-info">SYNC</span><span class="sr-only">: waiting to sync</span></span>
                             </template>
                         </div>
                     </button>
@@ -310,7 +311,7 @@
             </x-slot:cards>
 
             <x-slot:extraColumns>
-                <th>Details</th>
+                <th scope="col">Details</th>
             </x-slot:extraColumns>
 
             <x-slot:rows>
@@ -342,8 +343,6 @@
                 <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
                     <tr
                         @click="recallByUuid(contact.uuid)"
-                        @keydown.enter="recallByUuid(contact.uuid)"
-                        tabindex="0"
                         class="cursor-pointer hover:bg-base-200"
                         :aria-current="recalledUuid === contact.uuid"
                         :class="{
@@ -354,12 +353,12 @@
                         <td class="font-mono">-</td>
                         <td class="font-mono" x-text="new Date(contact.qso_time).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})"></td>
                         <td class="font-bold font-mono uppercase">
-                            <span x-text="contact.callsign"></span>
+                            <button type="button" class="uppercase cursor-pointer" @click.stop="recallByUuid(contact.uuid)" :aria-label="contact.callsign + ', edit contact'" x-text="contact.callsign"></button>
                             <template x-if="contact.status === 'failed'">
-                                <span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span>
+                                <span><span class="badge badge-xs badge-error cursor-help ml-1" :title="contact.last_error">FAIL</span><span class="sr-only" x-text="': ' + contact.last_error"></span></span>
                             </template>
                             <template x-if="contact.status !== 'failed' && contact.status !== 'editing' && isPendingIndicatorVisible(contact)">
-                                <span class="badge badge-xs badge-info ml-1">SYNC</span>
+                                <span><span class="badge badge-xs badge-info ml-1">SYNC</span><span class="sr-only">: waiting to sync</span></span>
                             </template>
                         </td>
                         <td class="font-mono" x-text="contact.exchange_class"></td>
@@ -374,13 +373,21 @@
                 :suggestions="$suggestions"
                 :duplicate-warning="$isDuplicate ? $dupeWarning : null"
                 :participant-warning="$participantWarning ?: null"
+                :error="$parseError ?: null"
             >
+                {{-- Server-side errors, from editing a contact that has already synced --}}
+                @if($parseError)
+                    <x-alert icon="phosphor-warning" class="alert-error">
+                        {{ spoken($parseError, spokenAbbreviations($parseError)) }}
+                    </x-alert>
+                @endif
                 <template x-if="parseError">
                     <div class="alert alert-error">
                         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                         </svg>
-                        <span x-text="parseError"></span>
+                        <span x-text="parseError" aria-hidden="true"></span>
+                        <span class="sr-only" x-text="fdcSpokenAbbreviations(parseError)"></span>
                     </div>
                 </template>
                 <template x-if="offBandSuggestion">

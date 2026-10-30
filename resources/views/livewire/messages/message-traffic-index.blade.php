@@ -3,14 +3,16 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>Message Traffic</x-slot:title>
+
     {{-- Header --}}
-    <x-header
+    <x-header use-h1
         title="Message Traffic"
         subtitle="Track {{ $ics213Enabled ? 'radiograms, ICS-213 messages, and' : 'radiograms and' }} NTS message handling"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Log Message"
                 icon="phosphor-plus"
@@ -49,7 +51,7 @@
                 @endif
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">SM/SEC</div>
-                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['sm_points'] }} pts</div>
+                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['sm_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -61,7 +63,7 @@
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">Message Handling</div>
                     <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['traffic_count'] }}/10</div>
-                    <div class="text-xs text-base-content/60">{{ $this->bonusSummary['traffic_points'] }} pts</div>
+                    <div class="text-xs text-base-content/60">{{ $this->bonusSummary['traffic_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -75,8 +77,8 @@
                     <x-icon name="phosphor-x-circle" class="w-6 h-6 lg:w-8 lg:h-8 text-base-content/30 shrink-0" />
                 @endif
                 <div class="min-w-0">
-                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">W1AW</div>
-                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['w1aw_points'] }} pts</div>
+                    <div class="text-xs text-base-content/60 uppercase tracking-wide truncate">{{ spoken('W1AW', spokenAbbreviations('W1AW')) }}</div>
+                    <div class="text-base lg:text-lg font-bold">{{ $this->bonusSummary['w1aw_points'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -87,7 +89,7 @@
                 <x-icon name="phosphor-trophy" class="w-6 h-6 lg:w-8 lg:h-8 text-primary shrink-0" />
                 <div class="min-w-0">
                     <div class="text-xs text-base-content/60 uppercase tracking-wide">Total</div>
-                    <div class="text-xl lg:text-2xl font-bold text-primary">{{ $this->bonusSummary['total'] }} pts</div>
+                    <div class="text-xl lg:text-2xl font-bold text-primary">{{ $this->bonusSummary['total'] }} <x-points-unit /></div>
                 </div>
             </div>
         </x-card>
@@ -102,21 +104,25 @@
     <div class="flex gap-2 flex-wrap">
         <x-button
             label="All"
+            aria-pressed="{{ $roleFilter === null ? 'true' : 'false' }}"
             class="{{ $roleFilter === null ? 'btn-primary btn-sm' : 'btn-ghost btn-sm' }}"
             wire:click="$set('roleFilter', null)"
         />
         <x-button
             label="Originated"
+            aria-pressed="{{ $roleFilter === 'originated' ? 'true' : 'false' }}"
             class="{{ $roleFilter === 'originated' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm' }}"
             wire:click="$set('roleFilter', 'originated')"
         />
         <x-button
             label="Relayed"
+            aria-pressed="{{ $roleFilter === 'relayed' ? 'true' : 'false' }}"
             class="{{ $roleFilter === 'relayed' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm' }}"
             wire:click="$set('roleFilter', 'relayed')"
         />
         <x-button
             label="Received & Delivered"
+            aria-pressed="{{ $roleFilter === 'received_delivered' ? 'true' : 'false' }}"
             class="{{ $roleFilter === 'received_delivered' ? 'btn-primary btn-sm' : 'btn-ghost btn-sm' }}"
             wire:click="$set('roleFilter', 'received_delivered')"
         />
@@ -148,18 +154,18 @@
                 <table class="table table-zebra">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th scope="col">#</th>
                             @if($ics213Enabled)
-                                <th>Format</th>
+                                <th scope="col">Format</th>
                             @endif
-                            <th>Role</th>
-                            <th>Station of Origin</th>
-                            <th>Addressee</th>
-                            <th>Date Filed</th>
-                            <th>Frequency</th>
-                            <th>Mode</th>
-                            <th>Sent / Delivered</th>
-                            <th class="text-right">Actions</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Station of Origin</th>
+                            <th scope="col">Addressee</th>
+                            <th scope="col">Date Filed</th>
+                            <th scope="col">Frequency</th>
+                            <th scope="col">Mode</th>
+                            <th scope="col">Sent / Delivered</th>
+                            <th scope="col" class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -219,13 +225,13 @@
                                                 <div class="text-xs">{{ $message->sent_at->format('M j, g:ia') }}</div>
                                                 @if($message->sentByUser)
                                                     <button
-                                                        class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer"
+                                                        class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                                         wire:click="editSentBy({{ $message->id }})"
                                                         title="Change sender"
-                                                    >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}</button>
+                                                    >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}<span class="sr-only">, change sender</span></button>
                                                 @endif
                                             </div>
-                                            <x-button
+                                            <x-button aria-label="Delete message {{ $message->message_number }}"
                                                 icon="phosphor-x"
                                                 class="btn-ghost btn-xs"
                                                 tooltip="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status"
@@ -246,13 +252,13 @@
                                 </td>
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-1">
-                                        <x-button
+                                        <x-button aria-label="Edit message {{ $message->message_number }}"
                                             icon="phosphor-pencil-simple"
                                             class="btn-ghost btn-xs"
                                             tooltip="Edit"
                                             link="{{ route('events.messages.edit', [$event, $message]) }}"
                                         />
-                                        <x-button
+                                        <x-button aria-label="Print message {{ $message->message_number }}"
                                             icon="phosphor-printer"
                                             class="btn-ghost btn-xs"
                                             tooltip="Print"
@@ -260,7 +266,7 @@
                                             external
                                         />
                                         @can('delete', $message)
-                                            <x-button
+                                            <x-button aria-label="Delete message {{ $message->message_number }}"
                                                 icon="phosphor-trash"
                                                 class="btn-ghost btn-xs text-error"
                                                 tooltip="Delete"
@@ -316,7 +322,7 @@
                                         <span class="text-xs text-base-content/60">From:</span>
                                         <span class="font-mono">{{ $message->station_of_origin }}</span>
                                     </div>
-                                    <span class="text-base-content/30">&rarr;</span>
+                                    <span class="text-base-content/70">&rarr;</span>
                                 @endif
                                 <div class="flex items-center gap-1">
                                     <span class="text-xs text-base-content/60">To:</span>
@@ -349,7 +355,7 @@
                                             <span class="text-xs">{{ $message->sent_at->format('M j, g:ia') }}</span>
                                             @if($message->sentByUser)
                                                 <button
-                                                    class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer"
+                                                    class="text-xs text-base-content/60 hover:text-primary hover:underline cursor-pointer pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                                     wire:click="editSentBy({{ $message->id }})"
                                                 >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}</button>
                                             @endif
@@ -368,26 +374,26 @@
                                 </div>
                                 <div class="flex items-center gap-1">
                                     @if($message->sent_at)
-                                        <x-button
+                                        <x-button aria-label="Delete message {{ $message->message_number }}"
                                             icon="phosphor-x"
                                             class="btn-ghost btn-xs"
                                             tooltip="Clear status"
                                             wire:click="unmarkAsSent({{ $message->id }})"
                                         />
                                     @endif
-                                    <x-button
+                                    <x-button aria-label="Edit message {{ $message->message_number }}"
                                         icon="phosphor-pencil-simple"
                                         class="btn-ghost btn-xs"
                                         link="{{ route('events.messages.edit', [$event, $message]) }}"
                                     />
-                                    <x-button
+                                    <x-button aria-label="Print message {{ $message->message_number }}"
                                         icon="phosphor-printer"
                                         class="btn-ghost btn-xs"
                                         link="{{ route('events.messages.print', [$event, $message]) }}"
                                         external
                                     />
                                     @can('delete', $message)
-                                        <x-button
+                                        <x-button aria-label="Delete message {{ $message->message_number }}"
                                             icon="phosphor-trash"
                                             class="btn-ghost btn-xs text-error"
                                             wire:click="deleteMessage({{ $message->id }})"
@@ -444,7 +450,7 @@
             @endunless
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 wire:click="$set('showSentByModal', false)"

@@ -30,6 +30,7 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
                 </div>
             </div>
         @else
+            <h1 class="text-3xl font-bold">Sign Our Guestbook</h1>
             <section class="mx-auto max-w-3xl">
                 <livewire:guestbook.guestbook-form kiosk />
             </section>
@@ -42,7 +43,7 @@ Like the TV dashboard it reloads itself on a 419 rather than leaving the page.
         <div class="flex justify-end">
             <a
                 href="{{ route('guestbook.index') }}"
-                class="btn btn-ghost btn-sm text-base-content/50 font-normal"
+                class="btn btn-ghost btn-sm text-base-content/70 font-normal"
             >
                 <x-icon name="phosphor-sign-out" class="w-4 h-4" />
                 Exit kiosk

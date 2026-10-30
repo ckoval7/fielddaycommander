@@ -4,14 +4,14 @@
 --}}
 {{-- A container, so the entry grid follows the space it's given (half the guestbook page, or the full kiosk width) rather than the screen --}}
 <div wire:poll.30s class="@container">
-    <x-header title="Recent Visitors" subtitle="In-person and online visitors" class="mb-6" />
+    <x-header heading-level="2" title="Recent Visitors" subtitle="In-person and online visitors" class="mb-6" />
 
     @if($entries->isEmpty())
         <x-card class="shadow-md">
             <div class="text-center py-12">
                 <x-icon name="phosphor-users-three" class="w-16 h-16 mx-auto text-base-content/30" />
                 <p class="mt-4 text-base-content/70">No visitors have signed the guestbook yet.</p>
-                <p class="text-sm text-base-content/50 mt-2">Be the first to sign the guestbook!</p>
+                <p class="text-sm text-base-content/70 mt-2">Be the first to sign the guestbook!</p>
             </div>
         </x-card>
     @else
@@ -40,7 +40,7 @@
                             </div>
 
                             {{-- Timestamp --}}
-                            <div class="text-xs text-base-content/50 mt-2">
+                            <div class="text-xs text-base-content/70 mt-2">
                                 {{ $entry->created_at->diffForHumans() }}
                             </div>
 
@@ -65,7 +65,8 @@
                                     class="w-8 h-8 rounded-full bg-warning flex items-center justify-center"
                                     title="Visitor bonus category: {{ $entry->visitor_category->label() }}"
                                 >
-                                    <span class="text-lg">⭐</span>
+                                    <span class="text-lg" aria-hidden="true">⭐</span>
+                                    <span class="sr-only">Visitor bonus category: {{ $entry->visitor_category->label() }}</span>
                                 </div>
                             </div>
                         @endif

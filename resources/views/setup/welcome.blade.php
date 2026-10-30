@@ -2,7 +2,8 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<x-layouts.guest>
+<x-layouts.guest own-heading>
+    <x-slot:title>Step 1: Admin Password</x-slot:title>
     {{-- Progress Stepper --}}
     <ul class="steps steps-horizontal w-full mb-8">
         <li class="step {{ $step >= 1 ? 'step-primary' : '' }}">Admin Password</li>
@@ -11,7 +12,7 @@
     </ul>
 
     <div class="mb-6">
-        <h2 class="text-2xl font-bold">Step 1: Admin Password</h2>
+        <h1 class="text-2xl font-bold">Step 1: Admin Password</h1>
     </div>
 
     <div class="space-y-6">

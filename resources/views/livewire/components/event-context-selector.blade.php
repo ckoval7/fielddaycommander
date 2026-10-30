@@ -74,7 +74,7 @@
 
         @foreach($groupLabels as $groupKey => $groupLabel)
             @if($grouped[$groupKey]->isNotEmpty())
-                <div class="text-xs font-bold uppercase tracking-wider text-base-content/50 px-2 pt-2 pb-1">
+                <div class="text-xs font-bold uppercase tracking-wider text-base-content/70 px-2 pt-2 pb-1">
                     {{ $groupLabel }}
                 </div>
                 @foreach($grouped[$groupKey] as $event)
@@ -95,7 +95,7 @@
         @endforeach
 
         @if($grouped['active']->isEmpty() && $grouped['grace']->isEmpty() && $grouped['setup']->isEmpty() && $grouped['upcoming']->isEmpty() && $grouped['archived']->isEmpty())
-            <div class="text-xs text-base-content/50 px-2 py-2 text-center">
+            <div class="text-xs text-base-content/70 px-2 py-2 text-center">
                 No events found
             </div>
         @endif

@@ -3,7 +3,7 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-header title="Select Station" subtitle="Choose a station to begin logging" separator />
+    <x-header use-h1 title="Select Station" subtitle="Choose a station to begin logging" separator />
 
     @if($this->operatingPeriodEnded)
         <x-card>
@@ -17,7 +17,7 @@
         <x-card>
             <div class="text-center py-8">
                 <x-icon name="phosphor-cell-signal-slash" class="w-12 h-12 mx-auto text-base-content/30" />
-                <h3 class="mt-4 text-lg font-semibold">No Active Event</h3>
+                <h2 class="mt-4 text-lg font-semibold">No Active Event</h2>
                 <p class="mt-2 text-base-content/70">No event is running. Station setup opens 15 minutes before the next event starts.</p>
             </div>
         </x-card>
@@ -41,7 +41,7 @@
                 <x-card class="border {{ $borderClass }}">
                     <div class="flex items-start justify-between">
                         <div class="min-w-0">
-                            <h3 class="font-bold text-base sm:text-lg truncate">{{ $station->name }}</h3>
+                            <h2 class="font-bold text-base sm:text-lg truncate">{{ $station->name }}</h2>
                             @if($station->is_gota)
                                 <x-badge value="GOTA" class="badge-xs badge-info mt-1" />
                             @endif
@@ -127,7 +127,7 @@
                     <x-card>
                         <div class="text-center py-8">
                             <x-icon name="phosphor-hard-drives" class="w-12 h-12 mx-auto text-base-content/30" />
-                            <h3 class="mt-4 text-lg font-semibold">No Stations Configured</h3>
+                            <h2 class="mt-4 text-lg font-semibold">No Stations Configured</h2>
                             <p class="mt-2 text-base-content/70">No stations are set up for this event. Contact your event administrator.</p>
                         </div>
                     </x-card>
@@ -216,7 +216,7 @@
 
             @php $selectedStation = $this->stations?->firstWhere('id', $selectedStationId); @endphp
             @if($selectedStation?->is_gota)
-                <div class="divider text-xs text-base-content/50">GOTA Station Options</div>
+                <div class="divider text-xs text-base-content/70">GOTA Station Options</div>
                 <label class="flex items-center gap-3 cursor-pointer py-2">
                     <input type="checkbox" wire:model="isSupervisedSession" class="toggle toggle-sm toggle-primary" />
                     <div>

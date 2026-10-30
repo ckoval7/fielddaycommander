@@ -3,14 +3,15 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="space-y-6">
+    <x-slot:title>{{ $equipmentId ? 'Edit Equipment' : 'Add Equipment' }}</x-slot:title>
     {{-- Header --}}
-    <x-header
+    <x-header use-h1
         title="{{ $equipmentId ? 'Edit Equipment' : ($isClubEquipment ? 'Add Club Equipment' : 'Add Equipment') }}"
         subtitle="{{ $equipmentId ? 'Update equipment details' : ($isClubEquipment ? 'Add equipment to the club inventory' : 'Add equipment details') }}"
         separator
         progress-indicator
     >
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             @if($isClubEquipment)
                 <span class="badge badge-club badge-lg">
                     <x-icon name="phosphor-buildings" class="w-4 h-4 mr-1" />
@@ -255,27 +256,28 @@
                         </div>
                     @else
                         {{-- Upload placeholder --}}
-                        <div
-                            class="flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-base-300 rounded-lg bg-base-200/30 hover:bg-base-200/50 hover:border-primary/50 transition-colors cursor-pointer"
+                        <button
+                            type="button"
+                            class="w-full flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-base-300 rounded-lg bg-base-200/30 hover:bg-base-200/50 hover:border-primary/50 transition-colors cursor-pointer"
                             x-on:click="$refs.photoInput.click()"
                         >
-                            <div wire:loading.remove wire:target="photo">
+                            <span class="flex flex-col items-center" wire:loading.remove wire:target="photo">
                                 <x-icon name="phosphor-image" class="w-12 h-12 text-base-content/40 mb-3" />
-                                <p class="text-base font-medium text-base-content mb-1">Choose a photo</p>
-                                <p class="text-sm text-base-content/60">PNG or JPEG up to 5 MB</p>
-                            </div>
-                            <div wire:loading wire:target="photo" class="flex items-center gap-2">
+                                <span class="text-base font-medium text-base-content mb-1">Choose a photo</span>
+                                <span class="text-sm text-base-content/60">PNG or JPEG up to 5 MB</span>
+                            </span>
+                            <span wire:loading wire:target="photo" class="flex items-center gap-2">
                                 <span class="loading loading-spinner loading-md"></span>
                                 <span class="text-base-content/70">Uploading...</span>
-                            </div>
-                        </div>
+                            </span>
+                        </button>
                     @endif
 
                     @error('photo')
                         <p class="mt-2 text-sm text-error">{{ $message }}</p>
                     @enderror
 
-                    <p class="mt-2 text-xs text-base-content/50">Max 5 MB. Formats: PNG, JPEG</p>
+                    <p class="mt-2 text-xs text-base-content/70">Max 5 MB. Formats: PNG, JPEG</p>
                 </div>
             </div>
         </x-card>

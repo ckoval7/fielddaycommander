@@ -25,6 +25,7 @@ use App\Services\ExchangeParserService;
 use App\Services\LoggingWarningService;
 use App\Support\AdvancedContactFields;
 use App\Support\BroadcastChannels;
+use App\Support\Phonetics;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -394,6 +395,7 @@ class LoggingInterface extends Component
             $this->operatingSession->decrement('qso_count');
         });
         ContactChanged::notify(BroadcastChannels::CONTACT_DELETED, [$contact]);
+        $this->dispatch('announce', message: "{$contact->callsign} deleted");
 
         $this->operatingSession->refresh();
         unset($this->recentContacts);
@@ -506,6 +508,7 @@ class LoggingInterface extends Component
         $this->parseError = '';
         $this->clearDuplicateState();
         unset($this->recentContacts);
+        $this->dispatch('announce', message: "{$contact->callsign} saved");
 
         return null;
     }
@@ -635,19 +638,6 @@ class LoggingInterface extends Component
     #[Computed]
     public function phoneticExchange(): string
     {
-        $phonetics = [
-            'A' => 'Alpha', 'B' => 'Bravo', 'C' => 'Charlie', 'D' => 'Delta',
-            'E' => 'Echo', 'F' => 'Foxtrot', 'G' => 'Golf', 'H' => 'Hotel',
-            'I' => 'India', 'J' => 'Juliet', 'K' => 'Kilo', 'L' => 'Lima',
-            'M' => 'Mike', 'N' => 'November', 'O' => 'Oscar', 'P' => 'Papa',
-            'Q' => 'Quebec', 'R' => 'Romeo', 'S' => 'Sierra', 'T' => 'Tango',
-            'U' => 'Uniform', 'V' => 'Victor', 'W' => 'Whiskey', 'X' => 'X-ray',
-            'Y' => 'Yankee', 'Z' => 'Zulu',
-            '0' => 'Zero', '1' => 'One', '2' => 'Two', '3' => 'Three',
-            '4' => 'Four', '5' => 'Five', '6' => 'Six', '7' => 'Seven',
-            '8' => 'Eight', '9' => 'Nine',
-        ];
-
         $config = $this->operatingSession->station->eventConfiguration;
 
         $callsign = strtoupper(
@@ -659,14 +649,7 @@ class LoggingInterface extends Component
         $classCode = strtoupper($config->operatingClass->code ?? '');
         $sectionCode = strtoupper($config->section->code ?? '');
 
-        $toPhonetic = function (string $str) use ($phonetics): string {
-            $words = [];
-            foreach (str_split($str) as $char) {
-                $words[] = $phonetics[$char] ?? $char;
-            }
-
-            return implode(' ', $words);
-        };
+        $toPhonetic = Phonetics::spell(...);
 
         $parts = array_filter([
             $toPhonetic($callsign),
@@ -717,6 +700,7 @@ class LoggingInterface extends Component
     public function render(): View
     {
         return view('livewire.logging.logging-interface')
-            ->layout('layouts.app', ['title' => 'Logging']);
+            ->layout('layouts.app')
+            ->title('Log Contacts: '.($this->operatingSession->station->name ?? 'Station'));
     }
 }

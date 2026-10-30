@@ -21,11 +21,11 @@
 
                 <div class="mt-2 space-y-1">
                     <p class="text-sm">
-                        <span class="font-semibold">Station:</span> {{ $activeSession->station->name ?? 'N/A' }}
+                        <span class="font-semibold">Station:</span> {{ $activeSession->station->name ?? spoken('N/A', 'not available') }}
                         ({{ $activeSession->band->name ?? '' }} {{ $activeSession->mode->name ?? '' }})
                     </p>
                     <p class="text-sm">
-                        <span class="font-semibold">Event:</span> {{ $activeSession->station->eventConfiguration->event->name ?? 'N/A' }}
+                        <span class="font-semibold">Event:</span> {{ $activeSession->station->eventConfiguration->event->name ?? spoken('N/A', 'not available') }}
                     </p>
                     <p class="text-sm">
                         <span class="font-semibold">Started:</span> {{ $activeSession->start_time->diffForHumans() }}
@@ -41,7 +41,7 @@
     {{-- Recent Operating Sessions --}}
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h3 class="card-title">Recent Operating Sessions</h3>
+            <h2 class="card-title">Recent Operating Sessions</h2>
 
             @if($operatingSessions->isEmpty())
                 <x-alert icon="phosphor-info">
@@ -53,26 +53,26 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Event</th>
-                                <th>Station</th>
-                                <th>Band</th>
-                                <th>Mode</th>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Duration</th>
-                                <th>QSOs</th>
+                                <th scope="col">Event</th>
+                                <th scope="col">Station</th>
+                                <th scope="col">Band</th>
+                                <th scope="col">Mode</th>
+                                <th scope="col">Start Time</th>
+                                <th scope="col">End Time</th>
+                                <th scope="col">Duration</th>
+                                <th scope="col">QSOs</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($operatingSessions as $session)
                                 <tr>
-                                    <td>{{ $session->station->eventConfiguration->event->name ?? 'N/A' }}</td>
-                                    <td>{{ $session->station->name ?? 'N/A' }}</td>
-                                    <td>{{ $session->band->name ?? 'N/A' }}</td>
-                                    <td>{{ $session->mode->name ?? 'N/A' }}</td>
+                                    <td>{{ $session->station->eventConfiguration->event->name ?? spoken('N/A', 'not available') }}</td>
+                                    <td>{{ $session->station->name ?? spoken('N/A', 'not available') }}</td>
+                                    <td>{{ $session->band->name ?? spoken('N/A', 'not available') }}</td>
+                                    <td>{{ $session->mode->name ?? spoken('N/A', 'not available') }}</td>
                                     <td>{{ $session->start_time ? toLocalTime($session->start_time)->format('M j, g:i A T') : '' }}</td>
                                     <td>{{ $session->end_time ? toLocalTime($session->end_time)->format('M j, g:i A T') : 'Active' }}</td>
-                                    <td>{{ $session->duration ?? 'N/A' }}</td>
+                                    <td>{{ $session->duration ? spoken($session->duration, spokenDuration($session->duration)) : spoken('N/A', 'not available') }}</td>
                                     <td>{{ $session->qso_count ?? 0 }}</td>
                                 </tr>
                             @endforeach

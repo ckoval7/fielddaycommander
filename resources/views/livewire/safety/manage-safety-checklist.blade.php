@@ -84,7 +84,7 @@
                                         @if($item->entry?->is_completed)
                                             <span class="text-success text-sm">&#10003; Completed</span>
                                         @else
-                                            <span class="text-base-content/40 text-sm">&#9675; Pending</span>
+                                            <span class="text-base-content/70 text-sm">&#9675; Pending</span>
                                         @endif
                                     </div>
                                 </div>
@@ -150,7 +150,7 @@
                 @endif
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" @click="$wire.showItemModal = false" />
                 <x-button label="Save Item" wire:click="saveItem" class="btn-primary" spinner="saveItem" />
             </x-slot:actions>

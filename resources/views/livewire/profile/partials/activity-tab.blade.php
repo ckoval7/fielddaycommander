@@ -5,7 +5,7 @@
 <div class="space-y-6">
     <div class="card bg-base-100 shadow">
         <div class="card-body">
-            <h3 class="card-title">Your Recent Activity</h3>
+            <h2 class="card-title">Your Recent Activity</h2>
 
             @if($activityLog->isEmpty())
                 <x-alert icon="phosphor-info">

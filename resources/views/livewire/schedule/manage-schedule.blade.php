@@ -75,7 +75,7 @@
                                 class="alert-info alert-vertical sm:alert-horizontal"
                                 title="{{ $this->unresolvedPastAssignmentCount }} {{ Str::plural('assignment', $this->unresolvedPastAssignmentCount) }} on ended shifts {{ $this->unresolvedPastAssignmentCount === 1 ? 'needs' : 'need' }} to be marked worked or no-show"
                             >
-                                <x-slot:actions>
+                                <x-slot:actions class="flex-wrap max-sm:w-full">
                                     @if($timeFilter !== 'past')
                                         <x-button
                                             label="Show past shifts"
@@ -130,7 +130,7 @@
                                                     @endphp
                                                     {{ $shiftStart->format('M j, ' . timeFormat()) }} - {{ $shiftEnd->format(($shiftEnd->isSameDay($shiftStart) ? '' : 'M j, ') . timeFormat() . ' T') }}
                                                 </div>
-                                                <div class="text-sm text-base-content/50 mt-1">
+                                                <div class="text-sm text-base-content/70 mt-1">
                                                     Capacity: {{ $shift->slotsTaken() }}/{{ $shift->capacity }}
                                                     @if($shift->notes)
                                                         <span class="ml-2">| {{ $shift->notes }}</span>
@@ -163,7 +163,7 @@
                                                                 <div class="flex flex-wrap items-center gap-1.5">
                                                                     <span>{{ $assignment->user->first_name }} {{ $assignment->user->last_name }}</span>
                                                                     @if($assignment->user->call_sign)
-                                                                        <span class="text-base-content/50">({{ $assignment->user->call_sign }})</span>
+                                                                        <span class="text-base-content/70">({{ $assignment->user->call_sign }})</span>
                                                                     @endif
                                                                     {{-- Status badge --}}
                                                                     @switch($assignment->status)
@@ -249,7 +249,7 @@
                                                         @endforeach
                                                     </div>
                                                 @else
-                                                    <p class="text-sm text-base-content/40 italic">No assignments</p>
+                                                    <p class="text-sm text-base-content/70 italic">No assignments</p>
                                                 @endif
                                             </div>
 
@@ -325,10 +325,10 @@
                                                 @if($role->description)
                                                     <p class="text-sm text-base-content/60">{{ $role->description }}</p>
                                                 @endif
-                                                <div class="flex flex-col gap-1 mt-1 text-sm text-base-content/50">
+                                                <div class="flex flex-col gap-1 mt-1 text-sm text-base-content/70">
                                                     <div class="flex items-center gap-3">
                                                         @if($role->bonus_points)
-                                                            <span>Bonus: {{ $role->bonus_points }} pts</span>
+                                                            <span>Bonus: {{ $role->bonus_points }} <x-points-unit /></span>
                                                             @if($role->getBonusTypeCode())
                                                                 <x-badge value="Auto-awarded on confirmation" class="badge-success badge-sm badge-outline" />
                                                             @endif
@@ -387,7 +387,7 @@
                                                         {{ $confirmation->user->first_name }} {{ $confirmation->user->last_name }}
                                                     </span>
                                                     @if($confirmation->user->call_sign)
-                                                        <span class="text-base-content/50">({{ $confirmation->user->call_sign }})</span>
+                                                        <span class="text-base-content/70">({{ $confirmation->user->call_sign }})</span>
                                                     @endif
                                                 </div>
                                                 <div class="flex flex-col gap-1 text-sm text-base-content/60">
@@ -489,9 +489,10 @@
                             <button
                                 type="button"
                                 @click="selectedIcon = '{{ $iconValue }}'"
+                                :aria-pressed="(selectedIcon === '{{ $iconValue }}').toString()"
                                 :class="selectedIcon === '{{ $iconValue }}' ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-base-content/30'"
-                                class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors cursor-pointer"
-                                title="{{ $iconLabel }}"
+                                class="flex flex-col items-center gap-1 p-2 rounded-lg border-2 transition-colors cursor-pointer pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+                                title="{{ $iconLabel }}" aria-label="{{ $iconLabel }}"
                             >
                                 <x-icon :name="$iconValue" class="w-5 h-5" />
                                 <span class="text-xs text-base-content/60">{{ $iconLabel }}</span>
@@ -513,7 +514,7 @@
                 </div>
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" @click="$wire.showRoleModal = false" />
                 <x-button label="Save Role" wire:click="saveRole" class="btn-primary" spinner="saveRole" />
             </x-slot:actions>
@@ -565,7 +566,7 @@
                 />
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" @click="$wire.showShiftModal = false" />
                 <x-button label="Save Shift" wire:click="saveShift" class="btn-primary" spinner="saveShift" />
             </x-slot:actions>
@@ -620,7 +621,7 @@
                 />
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button label="Cancel" @click="$wire.showBulkModal = false" />
                 <x-button label="Create Shifts" wire:click="createBulkShifts" class="btn-primary" spinner="createBulkShifts" />
             </x-slot:actions>

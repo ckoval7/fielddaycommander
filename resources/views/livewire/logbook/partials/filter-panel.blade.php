@@ -8,6 +8,8 @@
         <button
             type="button"
             @click="open = !open"
+            :aria-expanded="open.toString()"
+            aria-controls="logbook-filters"
             class="btn btn-sm btn-outline gap-2"
         >
             <x-icon name="phosphor-funnel" class="w-4 h-4" />
@@ -39,7 +41,7 @@
                     <button
                         type="button"
                         wire:click="removeFilter('{{ $pill['key'] }}')"
-                        class="hover:text-error"
+                        class="hover:text-error pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                         aria-label="Remove {{ $pill['label'] }} filter"
                     ><span aria-hidden="true">&times;</span></button>
                 </span>
@@ -49,7 +51,7 @@
 
     {{-- Expanded filter controls --}}
     <template x-if="open">
-        <div class="p-4 rounded-lg bg-base-200/50 border border-base-300">
+        <div id="logbook-filters" class="p-3 sm:p-4 rounded-lg bg-base-200/50 border border-base-300">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                 {{-- Band Filter --}}

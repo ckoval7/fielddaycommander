@@ -51,7 +51,7 @@
                         <span class="font-semibold">{{ number_format($hours['worked_sum'], 1) }} hours worked</span>
                     @endif
 
-                    <span class="text-base-content/40">·</span>
+                    <span class="text-base-content/70">·</span>
 
                     @if($hours['signed_up_wall_clock'] !== $hours['signed_up_sum'])
                         <span class="text-base-content/70">{{ number_format($hours['signed_up_sum'], 1) }} shift hours, {{ number_format($hours['signed_up_wall_clock'], 1) }} actual hours signed up</span>

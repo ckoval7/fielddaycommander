@@ -124,7 +124,7 @@
         <x-slot:title>Volunteer Hours</x-slot:title>
 
         <div class="space-y-3">
-            <p class="text-sm opacity-70">
+            <p class="text-sm text-base-content/70">
                 How the reports page totals volunteer hours when a person has overlapping shifts
                 (for example, an event manager who is also a safety officer and an operator).
             </p>
@@ -138,7 +138,7 @@
                 />
                 <div>
                     <div class="font-medium">Count all hours (sum)</div>
-                    <div class="text-sm opacity-70">Each shift's hours count separately, including overlapping time.</div>
+                    <div class="text-sm text-base-content/70">Each shift's hours count separately, including overlapping time.</div>
                 </div>
             </label>
 
@@ -151,7 +151,7 @@
                 />
                 <div>
                     <div class="font-medium">Wall-clock hours (merge overlaps)</div>
-                    <div class="text-sm opacity-70">Count overlapping time once for both scheduled hours and hours worked.</div>
+                    <div class="text-sm text-base-content/70">Count overlapping time once for both scheduled hours and hours worked.</div>
                 </div>
             </label>
         </div>

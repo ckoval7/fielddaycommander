@@ -6,7 +6,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-start lg:items-center sm:justify-between gap-4">
         <div class="min-w-0">
-            <h3 class="text-lg font-semibold">Equipment Assignment</h3>
+            <h2 class="text-lg font-semibold">Equipment Assignment</h2>
             <p class="text-xs sm:text-sm text-base-content/70 truncate">
                 Assign additional equipment to {{ $this->stationModel?->name ?? 'this station' }}
             </p>
@@ -69,7 +69,7 @@
                         <x-icon name="phosphor-check-circle" class="w-5 h-5 text-success flex-shrink-0" />
                         <span>Assigned to Station</span>
                     </div>
-                    <div class="text-xs text-base-content/50 font-normal hidden sm:block">
+                    <div class="text-xs text-base-content/70 font-normal hidden sm:block">
                         Drag equipment here or use the assignment buttons
                     </div>
                 </div>
@@ -78,7 +78,7 @@
             @if($this->stationModel?->primaryRadio)
                 {{-- Primary Radio Section (Read-only) --}}
                 <div class="mb-4">
-                    <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-2">
+                    <div class="text-xs font-semibold text-base-content/70 uppercase tracking-wider mb-2">
                         Primary Radio
                     </div>
                     <div class="bg-base-200 rounded-lg p-2 sm:p-3 border border-base-300">
@@ -101,10 +101,10 @@
                                 icon="phosphor-eye"
                                 class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem] flex-shrink-0"
                                 wire:click="showDetails({{ $this->stationModel->primaryRadio->id }})"
-                                title="View equipment details"
+                                title="View equipment details" aria-label="View equipment details"
                             />
                         </div>
-                        <div class="mt-2 text-xs text-base-content/50 italic">
+                        <div class="mt-2 text-xs text-base-content/70 italic">
                             Select the primary radio on the Configuration tab
                         </div>
                     </div>
@@ -114,7 +114,7 @@
             {{-- Additional Equipment by Type --}}
             @forelse($this->assignedEquipmentByType as $type => $commitments)
                 <div class="mb-4 last:mb-0">
-                    <div class="text-xs font-semibold text-base-content/50 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <div class="text-xs font-semibold text-base-content/70 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <x-icon :name="$this->getTypeIcon($type)" class="w-4 h-4 flex-shrink-0" />
                         <span class="truncate">{{ $this->getTypeName($type) }}</span>
                         <x-badge value="{{ $commitments->count() }}" class="badge-xs badge-neutral flex-shrink-0" />
@@ -157,7 +157,7 @@
                                             icon="phosphor-eye"
                                             class="btn-ghost btn-sm btn-circle min-h-[2.75rem] sm:min-h-[1.75rem]"
                                             wire:click="showDetails({{ $commitment->equipment->id }})"
-                                            title="View equipment details"
+                                            title="View equipment details" aria-label="View equipment details"
                                         />
                                         @if($this->canManage)
                                             <x-button
@@ -166,7 +166,7 @@
                                                 wire:click="requestUnassign({{ $commitment->equipment->id }})"
                                                 wire:loading.attr="disabled"
                                                 wire:target="requestUnassign"
-                                                title="Unassign equipment"
+                                                title="Unassign equipment" aria-label="Unassign equipment"
                                             />
                                         @endif
                                     </div>
@@ -180,15 +180,15 @@
                     <output class="text-center py-6 sm:py-8 block" aria-label="No equipment assigned">
                         <x-icon name="phosphor-cube" class="w-10 sm:w-12 h-10 sm:h-12 mx-auto text-base-content/30" />
                         <p class="mt-2 text-xs sm:text-base text-base-content/70">No equipment assigned</p>
-                        <p class="text-xs sm:text-sm text-base-content/50 mt-1">
+                        <p class="text-xs sm:text-sm text-base-content/70 mt-1">
                             Use the available equipment tabs to find equipment to assign
                         </p>
-                        <p class="text-xs text-base-content/40 mt-2 hidden sm:block">
+                        <p class="text-xs text-base-content/70 mt-2 hidden sm:block">
                             Keyboard: Tab to an assignment button, then press Enter or Space
                         </p>
                     </output>
                 @else
-                    <output class="text-center py-4 text-xs sm:text-sm text-base-content/50 block">
+                    <output class="text-center py-4 text-xs sm:text-sm text-base-content/70 block">
                         No additional equipment assigned. Check the available equipment tabs.
                     </output>
                 @endif
@@ -322,7 +322,7 @@
                         @empty
                             <div class="text-center py-6 sm:py-8">
                                 <x-icon name="phosphor-tray" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
-                                <p class="mt-2 text-xs sm:text-sm text-base-content/50">
+                                <p class="mt-2 text-xs sm:text-sm text-base-content/70">
                                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all')
                                         No equipment matches your filters
                                     @else
@@ -415,7 +415,7 @@
                         @empty
                             <div class="text-center py-6 sm:py-8">
                                 <x-icon name="phosphor-tray" class="w-8 sm:w-10 h-8 sm:h-10 mx-auto text-base-content/30" />
-                                <p class="mt-2 text-xs sm:text-sm text-base-content/50">
+                                <p class="mt-2 text-xs sm:text-sm text-base-content/70">
                                     @if($searchQuery || $typeFilter || $ownerFilter !== 'all')
                                         No equipment matches your filters
                                     @else
@@ -468,7 +468,7 @@
             </div>
         @endif
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 wire:click="cancelConflict"
@@ -493,7 +493,7 @@
             The equipment will remain committed to this event but will no longer be assigned to this station.
         </p>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 wire:click="cancelUnassign"
@@ -526,7 +526,7 @@
             @endforeach
         </div>
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Cancel"
                 wire:click="cancelWarningAssignment"
@@ -568,24 +568,24 @@
                 {{-- Details Grid --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
                     <div>
-                        <span class="text-base-content/50">Owner</span>
+                        <span class="text-base-content/70">Owner</span>
                         <div class="font-medium break-words">{{ $this->getOwnerDisplay($this->detailsEquipment) }}</div>
                     </div>
                     @if($this->detailsEquipment->power_output_watts)
                         <div>
-                            <span class="text-base-content/50">Power Output</span>
-                            <div class="font-medium">{{ $this->detailsEquipment->power_output_watts }}W</div>
+                            <span class="text-base-content/70">Power Output</span>
+                            <div class="font-medium">{{ spokenWatts($this->detailsEquipment->power_output_watts) }}</div>
                         </div>
                     @endif
                     @if($this->detailsEquipment->serial_number)
                         <div>
-                            <span class="text-base-content/50">Serial Number</span>
+                            <span class="text-base-content/70">Serial Number</span>
                             <div class="font-medium font-mono text-xs break-all">{{ $this->detailsEquipment->serial_number }}</div>
                         </div>
                     @endif
                     @if($this->detailsEquipment->value_usd)
                         <div>
-                            <span class="text-base-content/50">Value</span>
+                            <span class="text-base-content/70">Value</span>
                             <div class="font-medium">${{ number_format($this->detailsEquipment->value_usd, 2) }}</div>
                         </div>
                     @endif
@@ -594,7 +594,7 @@
                 {{-- Bands --}}
                 @if($this->detailsEquipment->bands->count() > 0)
                     <div>
-                        <span class="text-xs sm:text-sm text-base-content/50">Supported Bands</span>
+                        <span class="text-xs sm:text-sm text-base-content/70">Supported Bands</span>
                         <div class="flex flex-wrap gap-1 mt-1">
                             @foreach($this->detailsEquipment->bands as $band)
                                 <x-badge value="{{ $band->name }}" class="badge-xs sm:badge-sm badge-primary badge-outline" />
@@ -606,7 +606,7 @@
                 {{-- Description --}}
                 @if($this->detailsEquipment->description)
                     <div>
-                        <span class="text-xs sm:text-sm text-base-content/50">Description</span>
+                        <span class="text-xs sm:text-sm text-base-content/70">Description</span>
                         <p class="mt-1 text-xs sm:text-sm">{{ $this->detailsEquipment->description }}</p>
                     </div>
                 @endif
@@ -614,14 +614,14 @@
                 {{-- Notes --}}
                 @if($this->detailsEquipment->notes)
                     <div>
-                        <span class="text-xs sm:text-sm text-base-content/50">Notes</span>
+                        <span class="text-xs sm:text-sm text-base-content/70">Notes</span>
                         <p class="mt-1 text-xs sm:text-sm whitespace-pre-line">{{ $this->detailsEquipment->notes }}</p>
                     </div>
                 @endif
             </div>
         @endif
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
                 label="Close"
                 wire:click="closeDetails"

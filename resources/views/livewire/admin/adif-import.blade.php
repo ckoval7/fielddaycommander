@@ -3,6 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
+    <h1 class="text-2xl font-bold mb-6">Import ADIF</h1>
+
     <x-slot:title>Import ADIF</x-slot:title>
 
     <div class="p-6 max-sm:px-0">
@@ -14,9 +16,9 @@
                         'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold',
                         'bg-primary text-primary-content' => $step === $num,
                         'bg-success text-success-content' => $step > $num,
-                        'bg-base-300 text-base-content/50' => $step < $num,
+                        'bg-base-300 text-base-content/70' => $step < $num,
                     ])>{{ $num }}</div>
-                    <span @class(['font-semibold' => $step === $num, 'text-base-content/50' => $step < $num])>{{ $label }}</span>
+                    <span @class(['font-semibold' => $step === $num, 'text-base-content/70' => $step < $num])>{{ $label }}</span>
                     @if ($num < 3)
                         <x-icon name="phosphor-caret-right" class="w-4 h-4 text-base-content/30" />
                     @endif
@@ -66,7 +68,7 @@
                         @foreach ($mappingReport['unmapped_bands'] as $bandName)
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="band-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $bandName }}</span>
-                                <span class="text-base-content/50">&rarr;</span>
+                                <span class="text-base-content/70">&rarr;</span>
                                 <select wire:model="bandMappings.{{ $bandName }}" aria-labelledby="band-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select band...</option>
                                     @foreach ($this->availableBands as $band)
@@ -85,7 +87,7 @@
                         @foreach ($mappingReport['unmapped_modes'] as $modeName)
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="mode-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $modeName }}</span>
-                                <span class="text-base-content/50">&rarr;</span>
+                                <span class="text-base-content/70">&rarr;</span>
                                 <select wire:model="modeMappings.{{ $modeName }}" aria-labelledby="mode-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select mode...</option>
                                     @foreach ($this->availableModes as $mode)
@@ -104,7 +106,7 @@
                         @foreach ($mappingReport['unmapped_sections'] as $sectionCode)
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="section-label-{{ $loop->index }}" class="font-mono font-bold w-24">{{ $sectionCode }}</span>
-                                <span class="text-base-content/50">&rarr;</span>
+                                <span class="text-base-content/70">&rarr;</span>
                                 <select wire:model="sectionMappings.{{ $sectionCode }}" aria-labelledby="section-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select section...</option>
                                     @foreach ($this->availableSections as $section)
@@ -123,7 +125,7 @@
                         @foreach ($mappingReport['unmapped_stations'] as $stationName)
                             <div class="flex items-center gap-4 mb-3">
                                 <span id="station-label-{{ $loop->index }}" class="font-mono font-bold w-48">{{ $stationName }}</span>
-                                <span class="text-base-content/50">&rarr;</span>
+                                <span class="text-base-content/70">&rarr;</span>
                                 <select wire:model="stationMappings.{{ $stationName }}" aria-labelledby="station-label-{{ $loop->index }}" class="select select-sm w-48">
                                     <option value="">Select station...</option>
                                     @foreach ($this->availableStations as $station)
@@ -294,15 +296,15 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Status</th>
-                                    <th>Callsign</th>
-                                    <th>QSO Time (UTC)</th>
-                                    <th>Band</th>
-                                    <th>Mode</th>
-                                    <th>Section</th>
-                                    <th>Class</th>
-                                    <th>Operator</th>
-                                    <th>Action</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Callsign</th>
+                                    <th scope="col">QSO Time (UTC)</th>
+                                    <th scope="col">Band</th>
+                                    <th scope="col">Mode</th>
+                                    <th scope="col">Section</th>
+                                    <th scope="col">Class</th>
+                                    <th scope="col">Operator</th>
+                                    <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -320,7 +322,7 @@
                                                     <span class="badge badge-warning badge-sm">Skipped</span>
                                                     @break
                                                 @case('imported')
-                                                    <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 pts)' : 'Imported' }}</span>
+                                                    <span @class(['badge badge-sm', 'badge-success' => ! $record->notes, 'badge-warning' => $record->notes]) title="{{ $record->notes }}">{{ $record->notes ? 'Imported (0 points)' : 'Imported' }}</span>
                                                     @break
                                                 @case('invalid')
                                                     <span class="badge badge-error badge-sm" title="{{ $record->notes }}">Invalid</span>

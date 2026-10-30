@@ -117,7 +117,7 @@
                         wire:click="showDetails({{ $log->id }})"
                         wire:loading.attr="disabled"
                         wire:target="showDetails({{ $log->id }})"
-                        class="w-full text-left rounded-lg border border-base-300 bg-base-100 p-3 min-h-11 active:bg-base-200 touch-manipulation"
+                        class="w-full text-left rounded-lg border border-base-300 bg-base-100 p-3 min-h-11 active:bg-base-200 touch-manipulation pointer-coarse:min-w-11"
                         aria-label="View details for {{ $log->action_label }} at {{ $log->created_at->format('M j, g:i A') }}"
                     >
                         <div class="flex items-start justify-between gap-2">
@@ -181,7 +181,7 @@
                             <div class="font-medium">{{ $log->user->call_sign }}</div>
                             <div class="text-xs text-base-content/60">{{ $log->user->first_name }} {{ $log->user->last_name }}</div>
                         @else
-                            <span class="text-base-content/40">System</span>
+                            <span class="text-base-content/70">System</span>
                         @endif
                     @endscope
 
@@ -220,6 +220,7 @@
                         <span>Per page:</span>
                         <x-select
                             wire:model.live="perPage"
+                            aria-label="Entries per page"
                             :options="[
                                 ['value' => 25, 'label' => '25'],
                                 ['value' => 50, 'label' => '50'],
@@ -240,7 +241,7 @@
             <x-card class="mt-6">
                 <div class="text-center py-12">
                     <x-icon name="phosphor-file-magnifying-glass" class="w-16 h-16 mx-auto mb-4 text-base-content/30" />
-                    <h3 class="text-lg font-semibold mb-2">No audit logs found</h3>
+                    <h2 class="text-lg font-semibold mb-2">No audit logs found</h2>
                     <p class="text-base-content/60">No activity matches the current filters. Clear filters to check for other entries.</p>
                 </div>
             </x-card>
@@ -282,7 +283,7 @@
                                 <span class="text-sm text-base-content/60">{{ $this->selectedLog->user->first_name }} {{ $this->selectedLog->user->last_name }}</span>
                             </div>
                         @else
-                            <div class="text-base text-base-content/40">System</div>
+                            <div class="text-base text-base-content/70">System</div>
                         @endif
                     </div>
 
@@ -341,7 +342,7 @@
                 @endif
             </div>
 
-            <x-slot:actions>
+            <x-slot:actions class="flex-wrap max-sm:w-full">
                 <x-button
                     label="Close"
                     @click="$wire.showDetailModal = false"

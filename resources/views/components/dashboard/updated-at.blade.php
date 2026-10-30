@@ -16,8 +16,8 @@ refreshing visibly goes stale instead of saying "just now" forever.
 @endphp
 
 <div
-    {{ $attributes->merge(['class' => 'text-xs text-base-content/40 text-right mt-auto pt-2']) }}
+    {{ $attributes->merge(['class' => 'text-xs text-base-content/70 text-right mt-auto pt-2']) }}
     x-data="updatedAgo"
     data-updated-at="{{ $updatedAt?->toIso8601String() }}"
     data-server-now="{{ appNow()->toIso8601String() }}"
->Updated <span x-text="label">{{ formatTimeAgo($updatedAt) }}</span></div>
+>Updated <span aria-hidden="true" x-text="label">{{ formatTimeAgo($updatedAt) }}</span><span class="sr-only" x-text="spokenLabel">{{ spokenDuration(formatTimeAgo($updatedAt)) }}</span></div>

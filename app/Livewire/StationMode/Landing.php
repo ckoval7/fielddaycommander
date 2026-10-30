@@ -269,6 +269,7 @@ class Landing extends Component
     public function render(): View
     {
         return view('livewire.station-mode.landing')
-            ->layout('components.layouts.guest');
+            ->layout('components.layouts.guest', ['ownHeading' => true])
+            ->title('Station Mode');
     }
 }

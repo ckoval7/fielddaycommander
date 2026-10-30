@@ -124,7 +124,7 @@
             @endif
         @endif
 
-        <x-slot:actions>
+        <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button label="Cancel" wire:click="$set('showModal', false)" class="btn-ghost" />
             <x-button label="{{ $editingUserId ? 'Save Changes' : ($inviteMode ? 'Create and Send Invite' : 'Create User') }}" wire:click="saveUser" class="btn-primary" spinner="saveUser" />
         </x-slot:actions>

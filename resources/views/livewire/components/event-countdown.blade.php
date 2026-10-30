@@ -90,8 +90,6 @@
         }
     }"
     class="w-full"
-    aria-live="polite"
-    aria-label="Event countdown timer"
 >
     @include('livewire.components.partials.event-countdown-display', ['formattedCountdown' => $this->formattedCountdown])
 </div>

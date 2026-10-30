@@ -24,7 +24,7 @@
             <div class="text-2xl sm:text-3xl font-bold text-success mt-1">{{ number_format($this->stats['total_points']) }}</div>
             @if($this->stats['gota_points'] > 0)
                 <div class="text-xs text-base-content/60 mt-1">
-                    Plus {{ number_format($this->stats['gota_points']) }} GOTA bonus pts
+                    Plus {{ number_format($this->stats['gota_points']) }} GOTA bonus <x-points-unit />
                 </div>
             @endif
         </div>
@@ -45,7 +45,7 @@
                 QSOs by Mode
             </div>
             @if(empty($this->stats['by_mode']))
-                <div class="text-center text-sm text-base-content/50 py-2">
+                <div class="text-center text-sm text-base-content/70 py-2">
                     No contacts to summarize
                 </div>
             @else
@@ -70,7 +70,7 @@
                 QSOs by Band
             </div>
             @if(empty($this->stats['by_band']))
-                <div class="text-center text-sm text-base-content/50 py-2">
+                <div class="text-center text-sm text-base-content/70 py-2">
                     No contacts to summarize
                 </div>
             @else

@@ -3,6 +3,10 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
+    <h1 class="text-2xl font-bold mb-6">External Loggers</h1>
+
+    <x-slot:title>External Loggers</x-slot:title>
+
     <div class="py-6">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex items-center justify-end">
@@ -29,13 +33,14 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">N1MM Logger+</h3>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">N1MM Logger+</h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Receive contact and radio data as XML over UDP</p>
                         </div>
                         <button
+                            role="switch" aria-checked="{{ $n1mmEnabled ? 'true' : 'false' }}"
                             wire:click="toggleN1mm"
                             @if ($isDemoMode) disabled @endif
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $n1mmEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $n1mmEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }} pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                         >
                             <span class="sr-only">Toggle N1MM Logger+ listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $n1mmEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -71,7 +76,7 @@
                             @if (! $isDemoMode)
                                 <button
                                     wire:click="restartProcess"
-                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                 >
                                     Restart Listener
                                 </button>
@@ -95,7 +100,7 @@
                             <button
                                 type="button"
                                 @click="open = !open"
-                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Contact Received</span>
@@ -152,11 +157,11 @@
                     </div>
 
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h4>
+                        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h3>
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
                             <li>In N1MM+, go to Config &gt; Configure Ports &gt; Broadcast Data</li>
                             <li>Check "Contacts" and "Radio" checkboxes</li>
-                            <li>Ensure your firewall allows inbound UDP on port {{ $n1mmPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $n1mmPort }}/udp</code>)</li>
+                            <li>Ensure your firewall allows inbound UDP on port {{ $n1mmPort }} (e.g., <code class="text-xs text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $n1mmPort }}/udp</code>)</li>
                             <li>Set the destination IP to this server's address with port {{ $n1mmPort }}</li>
                             <li>On Stations, set Hostname (NetBIOS Name) to the logging PC's computer name. N1MM Logger+ sends it as StationName. If no station name or hostname matches, a station is created</li>
                         </ol>
@@ -167,13 +172,14 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJT-X / JTDX</h3>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJT-X / JTDX</h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Receive contacts in WSJT-X binary UDP messages (Logged ADIF)</p>
                         </div>
                         <button
+                            role="switch" aria-checked="{{ $wsjtxEnabled ? 'true' : 'false' }}"
                             wire:click="toggleWsjtx"
                             @if ($isDemoMode) disabled @endif
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $wsjtxEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $wsjtxEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }} pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                         >
                             <span class="sr-only">Toggle WSJT-X / JTDX listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $wsjtxEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -215,7 +221,7 @@
                             @if (! $isDemoMode)
                                 <button
                                     wire:click="restartWsjtxProcess"
-                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                 >
                                     Restart Listener
                                 </button>
@@ -239,7 +245,7 @@
                             <button
                                 type="button"
                                 @click="open = !open"
-                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Contact Received</span>
@@ -296,12 +302,12 @@
                     </div>
 
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h4>
+                        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h3>
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
                             <li>In WSJT-X, go to File &gt; Settings &gt; Reporting &gt; UDP Server</li>
                             <li>Set the UDP server address to this server's IP and port {{ $wsjtxPort }}</li>
                             <li>Use this server's regular IP address, not a multicast address</li>
-                            <li>Ensure your firewall allows inbound UDP on port {{ $wsjtxPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $wsjtxPort }}/udp</code>)</li>
+                            <li>Ensure your firewall allows inbound UDP on port {{ $wsjtxPort }} (e.g., <code class="text-xs text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $wsjtxPort }}/udp</code>)</li>
                             <li>Set Settings &gt; Reporting &gt; Op Call to the operator's callsign so contacts are credited to them</li>
                             <li>Turn on Settings &gt; Advanced &gt; Special operating activity &gt; ARRL Field Day so the class and section are logged</li>
                             <li>Contacts are matched to a station by the station callsign (My Call in WSJT-X or JTDX). Give the receiving station's name or hostname that callsign on the Stations page. If neither matches, a station is created</li>
@@ -312,13 +318,14 @@
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">UDP ADIF (fldigi, etc.)</h3>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">UDP ADIF (fldigi, etc.)</h2>
                             <p class="text-sm text-gray-500 dark:text-gray-400">Receive live QSO data via plain ADIF text over UDP</p>
                         </div>
                         <button
+                            role="switch" aria-checked="{{ $udpAdifEnabled ? 'true' : 'false' }}"
                             wire:click="toggleUdpAdif"
                             @if ($isDemoMode) disabled @endif
-                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $udpAdifEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }}"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $udpAdifEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }} pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                         >
                             <span class="sr-only">Toggle UDP ADIF listener</span>
                             <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $udpAdifEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
@@ -354,7 +361,7 @@
                             @if (! $isDemoMode)
                                 <button
                                     wire:click="restartUdpAdifProcess"
-                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                                 >
                                     Restart Listener
                                 </button>
@@ -378,7 +385,7 @@
                             <button
                                 type="button"
                                 @click="open = !open"
-                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11"
                             >
                                 <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
                                 <span>Last Contact Received</span>
@@ -435,13 +442,13 @@
                     </div>
 
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                        <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h4>
+                        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h3>
                         <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
                             <li>Configure your logging application to send ADIF records via UDP</li>
                             <li>Set the destination to this server's IP and port {{ $udpAdifPort }}</li>
                             <li>In fldigi: Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP &gt; set UDP address and port and check enable</li>
                             <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign). Give the receiving station's name or hostname that callsign on the Stations page. If neither matches, a station is created</li>
-                            <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
+                            <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
                         </ol>
                     </div>
                 </div>
