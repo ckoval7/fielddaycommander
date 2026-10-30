@@ -36,6 +36,11 @@ fi
 # get their own stricter modes.
 umask 022
 
+# curl limited to HTTPS with TLS 1.2 or newer, including after redirects.
+https_curl() {
+    curl --proto '=https' --tlsv1.2 "$@"
+}
+
 # --- Logging ---
 # All output already goes through the tee to $LOG_FILE set up below, so these
 # only print; teeing here as well wrote every line to the log twice.
@@ -404,7 +409,7 @@ print_dry_run() {
 add_nodesource_repo_debian() {
     log_info "Adding NodeSource repo for Node ${NODE_MAJOR}..."
     install -d -m 0755 /etc/apt/keyrings
-    curl -fsSL --proto '=https' --tlsv1.2 https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    https_curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
         | gpg --dearmor --yes -o /etc/apt/keyrings/nodesource.gpg
     chmod 644 /etc/apt/keyrings/nodesource.gpg
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
@@ -520,9 +525,9 @@ install_composer() {
 
     log_info "Installing Composer..."
     local expected_sig
-    expected_sig=$(curl -fsSL --proto '=https' --tlsv1.2 https://composer.github.io/installer.sig)
+    expected_sig=$(https_curl -fsSL https://composer.github.io/installer.sig)
     local installer="${DEPLOY_WORK_DIR}/composer-setup.php"
-    curl -fsSL --proto '=https' --tlsv1.2 -o "$installer" https://getcomposer.org/installer
+    https_curl -fsSL -o "$installer" https://getcomposer.org/installer
     local actual_sig
     actual_sig=$(php -r "echo hash_file('sha384', \$argv[1]);" "$installer")
 
@@ -566,7 +571,7 @@ use_app_user_group() {
 # CLI to read the JSON, since jq isn't installed.
 frankenphp_asset_sha256() {
     local version="$1" asset="$2"
-    curl -fsSL --proto '=https' --tlsv1.2 \
+    https_curl -fsSL \
         "https://api.github.com/repos/php/frankenphp/releases/tags/v${version}" \
         | php -r '
             $release = json_decode(stream_get_contents(STDIN), true);
@@ -592,7 +597,7 @@ install_frankenphp() {
     local dest="/usr/local/bin/frankenphp"
     local tmp="${dest}.new"
     log_info "Downloading FrankenPHP from ${url}..."
-    curl -fSL --proto '=https' --tlsv1.2 -o "$tmp" "$url"
+    https_curl -fSL -o "$tmp" "$url"
     local expected_sha
     if ! expected_sha=$(frankenphp_asset_sha256 "$FRANKENPHP_VERSION" "frankenphp-${arch}"); then
         rm -f "$tmp"
