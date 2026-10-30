@@ -56,7 +56,7 @@ class BandModeSwitchService
             throw new BandModeSwitchException("{$station->name} has been marked unavailable by a station captain.");
         }
 
-        $bandRestriction = $station->bandRestrictionMessage($band);
+        $bandRestriction = $band->restrictionMessageAt($station);
 
         if ($bandRestriction !== null) {
             throw new BandModeSwitchException($bandRestriction);

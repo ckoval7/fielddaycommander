@@ -146,10 +146,11 @@ class JpegMetadata
         }
 
         $position = 2;
+        $scanStart = null;
 
         while ($position + 4 <= $length) {
             if ($bytes[$position] !== "\xFF") {
-                return ['segments' => $segments, 'scanStart' => null];
+                break;
             }
 
             $start = $position;
@@ -165,7 +166,9 @@ class JpegMetadata
             $marker = ord($bytes[$position]);
 
             if ($marker === self::MARKER_SOS) {
-                return ['segments' => $segments, 'scanStart' => $start];
+                $scanStart = $start;
+
+                break;
             }
 
             $segmentLength = unpack('n', substr($bytes, $position + 1, 2))[1];
@@ -179,7 +182,7 @@ class JpegMetadata
             $position = $end;
         }
 
-        return ['segments' => $segments, 'scanStart' => null];
+        return ['segments' => $segments, 'scanStart' => $scanStart];
     }
 
     /**
@@ -211,40 +214,32 @@ class JpegMetadata
     {
         $order = substr($tiff, 0, 2);
 
-        if ($order !== 'II' && $order !== 'MM') {
+        if (($order !== 'II' && $order !== 'MM') || strlen($tiff) < 8) {
             return 1;
         }
 
         $short = $order === 'II' ? 'v' : 'n';
         $long = $order === 'II' ? 'V' : 'N';
 
-        if (strlen($tiff) < 8) {
-            return 1;
-        }
-
         $ifdOffset = unpack($long, substr($tiff, 4, 4))[1];
-
-        if ($ifdOffset + 2 > strlen($tiff)) {
-            return 1;
-        }
-
-        $entries = unpack($short, substr($tiff, $ifdOffset, 2))[1];
+        $entries = $ifdOffset + 2 > strlen($tiff) ? 0 : unpack($short, substr($tiff, $ifdOffset, 2))[1];
+        $value = 1;
 
         for ($i = 0; $i < $entries; $i++) {
             $entry = $ifdOffset + 2 + ($i * 12);
 
             if ($entry + 12 > strlen($tiff)) {
-                return 1;
+                break;
             }
 
             if (unpack($short, substr($tiff, $entry, 2))[1] === self::TAG_ORIENTATION) {
                 $value = unpack($short, substr($tiff, $entry + 8, 2))[1];
 
-                return $value >= 1 && $value <= 8 ? $value : 1;
+                break;
             }
         }
 
-        return 1;
+        return $value >= 1 && $value <= 8 ? $value : 1;
     }
 
     /**

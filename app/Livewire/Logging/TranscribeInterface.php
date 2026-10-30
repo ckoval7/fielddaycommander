@@ -207,7 +207,7 @@ class TranscribeInterface extends Component
             'submode' => 'nullable|string|max:20',
         ]);
 
-        $bandRestriction = $this->station->bandRestrictionMessage(Band::findOrFail($this->selectedBandId));
+        $bandRestriction = Band::findOrFail($this->selectedBandId)->restrictionMessageAt($this->station);
         if ($bandRestriction !== null) {
             $this->parseError = $bandRestriction;
 

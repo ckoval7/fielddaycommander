@@ -128,7 +128,7 @@ class StoreContactSyncRequest extends FormRequest
     {
         $band = Band::find($this->band_id);
 
-        return $band === null ? null : $session->station->bandRestrictionMessage($band);
+        return $band === null ? null : $band->restrictionMessageAt($session->station);
     }
 
     /**

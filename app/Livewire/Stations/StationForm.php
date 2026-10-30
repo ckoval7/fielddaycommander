@@ -166,12 +166,6 @@ class StationForm extends Component
             ->get();
     }
 
-    #[Computed]
-    public function totalQsoCount(): int
-    {
-        return (int) $this->sessions->sum('qso_count');
-    }
-
     /**
      * Whether any radio is left to pick, so the form can say to add one
      * rather than show an empty picker.

@@ -86,11 +86,7 @@ class StationSelect extends Component
             && $contextEvent->start_time->copy()->subMinutes(15)->lte(appNow())
             && $contextEvent->start_time->gt(appNow());
 
-        if ($status !== 'active' && ! $withinPreStartWindow) {
-            return null;
-        }
-
-        if ($this->operatingPeriodEnded) {
+        if (($status !== 'active' && ! $withinPreStartWindow) || $this->operatingPeriodEnded) {
             return null;
         }
 
@@ -331,22 +327,10 @@ class StationSelect extends Component
             'powerWatts.max' => "This station's radio is rated for {$radioRating} W. Enter {$radioRating} W or less.",
         ]);
 
-        if (StationMode::isActive() && $station?->id !== StationMode::boundStationId()) {
-            $this->addError('selectedStationId', 'This browser can only log for its assigned station.');
+        $problem = $this->sessionStartProblem($station);
 
-            return;
-        }
-
-        if ($station?->isUnavailable()) {
-            $this->addError('selectedStationId', "{$station->name} has been marked unavailable by a station captain.");
-
-            return;
-        }
-
-        $bandRestriction = $station?->bandRestrictionMessage(Band::findOrFail($this->selectedBandId));
-
-        if ($bandRestriction !== null) {
-            $this->addError('selectedBandId', $bandRestriction);
+        if ($problem !== null) {
+            $this->addError(...$problem);
 
             return;
         }
@@ -391,6 +375,27 @@ class StationSelect extends Component
         ]);
 
         $this->redirect(route('logging.session', $session), navigate: true);
+    }
+
+    /**
+     * Why this browser can't start a session at the station, as the field and
+     * message to show, or null if it can.
+     *
+     * @return array{0: string, 1: string}|null
+     */
+    private function sessionStartProblem(?Station $station): ?array
+    {
+        if (StationMode::isActive() && $station?->id !== StationMode::boundStationId()) {
+            return ['selectedStationId', 'This browser can only log for its assigned station.'];
+        }
+
+        if ($station?->isUnavailable()) {
+            return ['selectedStationId', "{$station->name} has been marked unavailable by a station captain."];
+        }
+
+        $bandRestriction = $station === null ? null : Band::findOrFail($this->selectedBandId)->restrictionMessageAt($station);
+
+        return $bandRestriction === null ? null : ['selectedBandId', $bandRestriction];
     }
 
     public function confirmTakeover(): void

@@ -320,7 +320,7 @@ class LoggingInterface extends Component
             ->allowedForFieldDay()
             ->ordered()
             ->get()
-            ->map(fn (Band $band): array => ['name' => $band->name, 'message' => $station->bandRestrictionMessage($band)])
+            ->map(fn (Band $band): array => ['name' => $band->name, 'message' => $band->restrictionMessageAt($station)])
             ->filter(fn (array $band): bool => $band['message'] !== null)
             ->values()
             ->all();
