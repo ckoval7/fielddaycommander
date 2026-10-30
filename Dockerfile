@@ -41,7 +41,7 @@ RUN npm run build
 # Stage 3: Production runtime
 # ---------------------------------------------------------------------------
 # Pinned so a FrankenPHP release can't change the runtime under a rebuild.
-FROM dunglas/frankenphp:1.13.2-php8.4 AS production
+FROM dunglas/frankenphp:1.13.4-php8.4 AS production
 
 LABEL maintainer="Field Day Commander"
 LABEL description="Field Day Commander - Amateur Radio Field Day Logging"

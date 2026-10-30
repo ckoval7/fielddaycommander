@@ -10,6 +10,10 @@
 
 - Pages are much smaller to download, so they load faster on phones, slow Wi-Fi, and a Raspberry Pi server. On a test event, **Logbook** went from about 1 MB to about 235 KB, **Profile** from about 1.3 MB to about 175 KB, **System Settings** from about 1.35 MB to about 225 KB, and **Audit Logs** from about 450 KB to about 150 KB. Every other page is 15–35% smaller. Pages look and work the same, except searchable pickers for time zone, section, logger, band, mode, station, volunteer, owner, and the audit log filters show the first 100 matches and how many more there are. Typing narrows the list.
 
+### Security
+
+- In FrankenPHP 1.13.2 and 1.13.3, a single request from anyone who could reach the server could crash the web server in worker mode, which Field Day Commander uses. Field Day Commander now runs on FrankenPHP 1.13.4, a security release that fixes this high-severity flaw and several lesser worker-mode memory and cross-request leak issues. Update your `deploy.sh` install with `update.sh`, or pull the new Docker image (also used by Helm), as soon as you can.
+
 ### Fixed
 
 - During ARRL Field Day, GOTA contacts earned their 5-point bonus but were left out of QSO points on **Scoring**, the event dashboard, **Logbook**, and the ARRL submission sheet. They now earn QSO points by mode with the power multiplier applied, plus the unchanged GOTA bonus. Upgrading automatically rescores existing events with GOTA contacts, raising affected Field Day scores.
@@ -69,6 +73,7 @@
 - On **Users**, after selecting one or more users, picking a role from **Select Role** left **Assign Role** greyed out, so roles couldn't be assigned in bulk. The button now becomes clickable as soon as a role is picked.
 - On **Users**, bulk **Lock** and **Unlock** silently skipped the SYSTEM account while showing a **Success** toast, so locking it in bulk left it unlocked even though the row menu's **Lock Account** could lock it. Both bulk actions now include SYSTEM, like the row menu.
 - On **Users**, bulk **Assign Role** or **Delete** with only SYSTEM selected showed a **Success** toast reporting zero users changed. It now warns that the SYSTEM account is protected and nothing changed. With other users selected too, the success toast says SYSTEM was skipped. These two actions still leave SYSTEM unchanged.
+- Since 26.10.11, a fresh install with `deploy.sh` stopped with `[ERROR] FrankenPHP download does not match the pinned SHA-256` and didn't finish, while `update.sh` warned that the download didn't match and kept the old FrankenPHP. Both scripts now check the download against the fingerprint GitHub lists for it at install time, so installs and updates can go through.
 
 ## 26.10.13 - 2026-10-26
 
