@@ -79,8 +79,8 @@
         {{-- Content Card --}}
         <main id="main-content" tabindex="-1" class="w-full max-w-4xl focus:outline-none">
             <div class="card bg-base-100 shadow-xl p-8">
-                {{-- Pages with their own <h1> pass own-heading --}}
-                @if(isset($title) && ! $attributes->has('own-heading') && ! $attributes->has('ownHeading'))
+                {{-- Pages with their own <h1> pass own-heading (or ownHeading as Livewire layout data) --}}
+                @if(isset($title) && ! ($ownHeading ?? false) && ! $attributes->has('own-heading') && ! $attributes->has('ownHeading'))
                     <h1 class="text-2xl font-bold mb-6">{{ $title }}</h1>
                 @endif
                 {{ $slot }}

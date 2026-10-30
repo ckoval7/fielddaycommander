@@ -50,6 +50,16 @@ test('enrolled browser is sent to the station-mode landing page', function () {
         ->assertSee('GOTA');
 });
 
+test('landing page uses the station name as its only heading', function () {
+    $response = $this->withCookie(StationMode::COOKIE, 'device-token')
+        ->get(route('station-mode.landing'))
+        ->assertOk();
+
+    expect(substr_count($response->getContent(), '<h1'))->toBe(1);
+    $response->assertSeeInOrder(['<h1', 'GOTA', '</h1>'], false)
+        ->assertDontSee('>Station Mode</', false);
+});
+
 test('landing page without an enrolled browser redirects to login', function () {
     $this->get(route('station-mode.landing'))
         ->assertRedirect(route('login'));
