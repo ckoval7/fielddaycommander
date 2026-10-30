@@ -500,14 +500,15 @@ install_packages_rhel() {
         php-curl php-zip php-bcmath php-gd php-intl php-redis \
         mariadb-server redis nodejs unzip git
 
-    # SELinux: allow FrankenPHP network access and set binary context
-    if command -v setsebool &>/dev/null; then
+    # SELinux: allow FrankenPHP network access and set the binary's context
+    # (applied by install_frankenphp once the binary is in place).
+    if selinux_enabled; then
         log_info "Configuring SELinux for FrankenPHP..."
         setsebool -P httpd_can_network_connect on
-        if command -v semanage &>/dev/null; then
-            semanage fcontext -a -t httpd_exec_t '/usr/local/bin/frankenphp' 2>/dev/null || true
-            restorecon -v /usr/local/bin/frankenphp 2>/dev/null || true
-        fi
+        ensure_semanage
+        selinux_fcontext httpd_exec_t '/usr/local/bin/frankenphp'
+    else
+        log_info "SELinux is not enabled; skipping its FrankenPHP settings"
     fi
 }
 
@@ -520,18 +521,20 @@ install_composer() {
     log_info "Installing Composer..."
     local expected_sig
     expected_sig=$(curl -fsSL https://composer.github.io/installer.sig)
-    curl -fsSL -o composer-setup.php https://getcomposer.org/installer
+    local installer="${DEPLOY_WORK_DIR}/composer-setup.php"
+    curl -fsSL --proto '=https' --tlsv1.2 -o "$installer" https://getcomposer.org/installer
     local actual_sig
-    actual_sig=$(php -r "echo hash_file('sha384', 'composer-setup.php');")
+    actual_sig=$(php -r "echo hash_file('sha384', \$argv[1]);" "$installer")
 
     if [[ "$expected_sig" != "$actual_sig" ]]; then
         log_error "Composer installer signature mismatch"
-        rm composer-setup.php
+        rm -f "$installer"
         exit 1
     fi
 
-    php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-    rm composer-setup.php
+    php "$installer" --install-dir=/usr/local/bin --filename=composer
+    rm -f "$installer"
+    fapolicyd_trust /usr/local/bin/composer
     log_info "Composer installed successfully"
 }
 
@@ -604,6 +607,10 @@ install_frankenphp() {
     chmod 755 "$tmp"
     mv -f "$tmp" "$dest"
     setcap cap_net_bind_service=+ep "$dest"
+    if selinux_enabled; then
+        restorecon "$dest"
+    fi
+    fapolicyd_trust "$dest"
     if ! "$dest" version &>/dev/null; then
         log_error "FrankenPHP binary verification failed"
         exit 1
@@ -634,6 +641,334 @@ PHPEOF
     log_info "PHP configuration written to ${ini_file}"
 }
 
+# --- Hardened systems: SELinux, fapolicyd ---
+# Each step checks for the feature first and logs when it is skipped, so
+# nothing changes on a system without it. Safe to re-run. update.sh carries
+# the same functions.
+
+selinux_enabled() {
+    command -v selinuxenabled &>/dev/null && selinuxenabled
+}
+
+# The app path as a file-context regex (dots escaped).
+selinux_app_regex() {
+    printf '%s' "${APP_PATH//./\\.}"
+    return 0
+}
+
+ensure_semanage() {
+    command -v semanage &>/dev/null && return 0
+    log_info "SELinux: installing policycoreutils-python-utils for semanage..."
+    if [[ "$PKG_MANAGER" == "dnf" ]]; then
+        dnf install -y policycoreutils-python-utils
+    else
+        apt-get install -y policycoreutils-python-utils
+    fi
+    return 0
+}
+
+# selinux_fcontext <type> <regex>: a persistent file-context rule. Added
+# once, changed in place if it exists with another type, left alone if it
+# already matches.
+selinux_fcontext() {
+    local type="$1" spec="$2" current
+    # ENVIRON, not awk -v, which would turn the regex's \. into a plain dot.
+    current=$(semanage fcontext -l -C 2>/dev/null | SPEC="$spec" awk '$1 == ENVIRON["SPEC"] { split($NF, c, ":"); print c[3] }')
+    if [[ "$current" == "$type" ]]; then
+        log_info "SELinux: ${spec} is already ${type}"
+    elif [[ -n "$current" ]]; then
+        log_info "SELinux: changing ${spec} from ${current} to ${type}"
+        semanage fcontext -m -t "$type" "$spec"
+    else
+        log_info "SELinux: labeling ${spec} as ${type}"
+        semanage fcontext -a -t "$type" "$spec"
+    fi
+    return 0
+}
+
+# Label the app tree. systemd reads EnvironmentFile= as PID 1 (init_t)
+# before it switches to the service user, and init_t cannot read the
+# var_t or httpd content labels a fresh tree gets, so .env is etc_t.
+# Everything else takes the policy defaults. Run after every .env write:
+# sed -i and other replace-by-rename writes drop the label.
+selinux_label_app() {
+    if ! selinux_enabled; then
+        log_info "SELinux is not enabled; skipping file labels"
+        return 0
+    fi
+    ensure_semanage
+    selinux_fcontext etc_t "$(selinux_app_regex)/\.env"
+    # A parent such as /var/www made by mkdir or git clone gets var_t. Only
+    # the directory itself: other sites under it keep their labels.
+    restorecon -F "$(dirname "$APP_PATH")"
+    restorecon -RF "$APP_PATH"
+    log_info "SELinux: relabeled ${APP_PATH} ($(stat -c '%C' "$APP_PATH/.env" 2>/dev/null | cut -d: -f3) on .env)"
+    return 0
+}
+
+FAPOLICYD_RULES="/etc/fapolicyd/rules.d/39-fdcommander.rules"
+FAPOLICYD_TRUST_FILE="fdcommander"
+
+fapolicyd_active() {
+    systemctl is-active --quiet fapolicyd 2>/dev/null
+}
+
+# fapolicyd_trust <file>...: add the files, or their new contents, to
+# fapolicyd's trust database. No-op when fapolicyd isn't running.
+fapolicyd_trust() {
+    fapolicyd_active || return 0
+    local file trust_db="/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"
+    for file in "$@"; do
+        [[ -e "$file" ]] || continue
+        if grep -qs "^${file} " "$trust_db"; then
+            fapolicyd-cli --file update "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        else
+            fapolicyd-cli --file add "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        fi
+        log_info "fapolicyd: trusted ${file}"
+    done
+    fapolicyd-cli --update
+    return 0
+}
+
+# fapolicyd_untrust <file>: drop a file (such as a staged download) from
+# the trust database.
+fapolicyd_untrust() {
+    fapolicyd_active || return 0
+    local file="$1"
+    if grep -qs "^${file} " "/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"; then
+        fapolicyd-cli --file delete "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        fapolicyd-cli --update
+    fi
+    return 0
+}
+
+# fapolicyd's stock rules stop interpreters opening PHP and JavaScript files
+# no package vouches for, which is all of the app, its compiled views and
+# the Vite build's native modules. Allow just those interpreters, just under
+# the app path. Numbered 39 so it comes before the stock deny rules (40+).
+configure_fapolicyd() {
+    if ! fapolicyd_active; then
+        log_info "fapolicyd is not running; skipping its rules"
+        return 0
+    fi
+    local rules
+    rules=$(cat <<FAPEOF
+# Written by deploy.sh/update.sh. Lets PHP, FrankenPHP and Node load
+# Field Day Commander's own code under ${APP_PATH}.
+allow perm=open exe=/usr/bin/php : dir=${APP_PATH}/
+allow perm=open exe=/usr/bin/php : dir=/var/lib/fd-commander/deploy-tmp/
+allow perm=open exe=/usr/local/bin/frankenphp : dir=${APP_PATH}/
+allow perm=any exe=/usr/bin/node : dir=${APP_PATH}/node_modules/
+allow perm=open exe=/usr/bin/node : dir=${APP_PATH}/
+FAPEOF
+)
+    if [[ -f "$FAPOLICYD_RULES" && "$(cat "$FAPOLICYD_RULES")" == "$rules" ]]; then
+        log_info "fapolicyd: rules in ${FAPOLICYD_RULES} are up to date"
+    else
+        printf '%s\n' "$rules" > "$FAPOLICYD_RULES"
+        chmod 644 "$FAPOLICYD_RULES"
+        log_info "fapolicyd: wrote ${FAPOLICYD_RULES}"
+        fagenrules --load
+    fi
+    fapolicyd_trust /usr/local/bin/frankenphp /usr/local/bin/composer
+    return 0
+}
+
+# --- Work directory for downloads and builds ---
+# A hardened /tmp is often mounted noexec, which breaks installers and build
+# tools that unpack and run code there. When it is, point TMPDIR at a
+# directory that allows exec instead, and remove it when the deploy ends.
+DEPLOY_WORK_DIR="/var/lib/fd-commander/deploy-tmp"
+APP_TMP_ENV=()
+
+mount_is_noexec() {
+    findmnt -no OPTIONS --target "$1" 2>/dev/null | tr ',' '\n' | grep -qx noexec
+}
+
+prepare_work_dir() {
+    install -d -m 0770 -o root -g "$WEB_GROUP" "$DEPLOY_WORK_DIR"
+    if ! mount_is_noexec /tmp; then
+        log_info "/tmp allows exec; Composer and npm use it as usual"
+        return 0
+    fi
+    if mount_is_noexec "$DEPLOY_WORK_DIR"; then
+        log_warn "/tmp and ${DEPLOY_WORK_DIR} are both mounted noexec; Composer or npm may fail"
+        return 0
+    fi
+    APP_TMP_ENV=(TMPDIR="$DEPLOY_WORK_DIR")
+    export TMPDIR="$DEPLOY_WORK_DIR"
+    log_info "/tmp is mounted noexec; using ${DEPLOY_WORK_DIR} for temporary files"
+    return 0
+}
+
+cleanup_work_dir() {
+    rm -rf "$DEPLOY_WORK_DIR"
+    return 0
+}
+
+# --- Checking the result ---
+APP_UNITS=(fdcommander fdcommander-queue fdcommander-reverb fdcommander-scheduler)
+
+# unit_restarts <unit>: how many times systemd has restarted the unit.
+unit_restarts() {
+    systemctl show -p NRestarts --value "${1}.service" 2>/dev/null || echo 0
+    return 0
+}
+
+# Wait until every unit has stayed active, without a restart, for a few
+# seconds. A unit that crashes on start shows as active between restarts,
+# so a single is-active is not enough. update.sh carries the same check.
+check_units_stay_up() {
+    local stable_for=5 timeout=60 elapsed=0 i all_stable now
+    local -a restarts=() stable=()
+    FAILED_UNITS=()
+    for i in "${!APP_UNITS[@]}"; do
+        restarts[i]=$(unit_restarts "${APP_UNITS[i]}")
+        stable[i]=0
+    done
+    while (( elapsed < timeout )); do
+        all_stable=1
+        for i in "${!APP_UNITS[@]}"; do
+            now=$(unit_restarts "${APP_UNITS[i]}")
+            if [[ "$(systemctl is-active "${APP_UNITS[i]}.service" 2>/dev/null)" == "active" && "$now" == "${restarts[i]}" ]]; then
+                stable[i]=$(( stable[i] + 1 ))
+            else
+                stable[i]=0
+                restarts[i]=$now
+            fi
+            (( stable[i] >= stable_for )) || all_stable=0
+        done
+        (( all_stable )) && return 0
+        sleep 1
+        elapsed=$(( elapsed + 1 ))
+    done
+    for i in "${!APP_UNITS[@]}"; do
+        (( stable[i] >= stable_for )) || FAILED_UNITS+=("${APP_UNITS[i]}")
+    done
+    return 1
+}
+
+# Print what went wrong for each unit that did not stay up, with any SELinux
+# denials. Never switches SELinux to permissive.
+print_unit_failures() {
+    local unit
+    for unit in "${FAILED_UNITS[@]}"; do
+        log_error "${unit}.service did not stay running ($(systemctl is-active "${unit}.service" 2>/dev/null || true)). Last log lines:"
+        journalctl -u "${unit}.service" -n 50 --no-pager 2>/dev/null || true
+    done
+    if selinux_enabled && command -v ausearch &>/dev/null; then
+        log_error "Recent SELinux denials (empty means none):"
+        ausearch -m AVC -ts recent 2>/dev/null || true
+    fi
+    return 0
+}
+
+# The SELinux domain the FrankenPHP server process runs in. On a stock
+# install systemd starts the PHP CLI in unconfined_service_t and FrankenPHP
+# stays there. If it lands in a confined web domain (httpd_t), it needs
+# write labels on storage/, bootstrap/cache and Caddy's data, and its port.
+check_web_domain() {
+    selinux_enabled || return 0
+    local domain="" tries
+    for (( tries = 0; tries < 10; tries++ )); do
+        domain=$(ps -eZ -o label=,comm= 2>/dev/null | awk '$2 == "frankenphp" { split($1, c, ":"); print c[3]; exit }')
+        [[ -n "$domain" ]] && break
+        sleep 1
+    done
+    case "$domain" in
+        unconfined_service_t)
+            log_info "SELinux: FrankenPHP runs as unconfined_service_t, as expected; no extra labels needed"
+            ;;
+        httpd_t)
+            log_warn "SELinux: FrankenPHP runs confined as httpd_t; labeling its writable paths and port"
+            local app_re
+            app_re=$(selinux_app_regex)
+            selinux_fcontext httpd_sys_rw_content_t "${app_re}/storage(/.*)?"
+            selinux_fcontext httpd_sys_rw_content_t "${app_re}/bootstrap/cache(/.*)?"
+            selinux_fcontext httpd_var_lib_t "/var/lib/caddy(/.*)?"
+            restorecon -RF "$APP_PATH/storage" "$APP_PATH/bootstrap/cache" /var/lib/caddy
+            if ! semanage port -l | awk '$1 == "http_port_t" && $2 == "tcp"' | grep -qE "[ ,]${APP_PORT}(,|$)"; then
+                semanage port -a -t http_port_t -p tcp "$APP_PORT"
+                log_info "SELinux: added tcp/${APP_PORT} to http_port_t"
+            fi
+            setsebool -P httpd_can_network_connect on
+            systemctl restart fdcommander.service
+            ;;
+        "")
+            log_warn "SELinux: no FrankenPHP process found to check its domain"
+            ;;
+        *)
+            log_warn "SELinux: FrankenPHP runs as ${domain}. If it misbehaves, check: ausearch -m AVC -ts recent"
+            ;;
+    esac
+    return 0
+}
+
+verify_deploy() {
+    log_phase "Phase 10: Checking services"
+    if ! check_units_stay_up; then
+        print_unit_failures
+        return 1
+    fi
+    check_web_domain
+    if ! check_units_stay_up; then
+        print_unit_failures
+        return 1
+    fi
+    log_info "All services are running"
+    return 0
+}
+
+# How getting the HTTPS certificate went, and what to do if it didn't.
+# Caddy requests a Let's Encrypt certificate in the background once the web
+# server starts and keeps retrying, so a missing one doesn't fail the deploy.
+CADDY_CERT_STORE="/var/lib/caddy/.local/share/caddy/certificates"
+
+report_certificate() {
+    $SSL_ENABLED || return 0
+    log_phase "Phase 11: Checking the HTTPS certificate"
+
+    if [[ -n "$SSL_CERT" ]]; then
+        log_info "Serving your certificate ${SSL_CERT}"
+        log_info "  $(openssl x509 -noout -subject -in "$SSL_CERT" 2>/dev/null), expires $(openssl x509 -noout -enddate -in "$SSL_CERT" 2>/dev/null | cut -d= -f2)"
+        return 0
+    fi
+
+    local host="${DOMAIN,,}" cert="" waited=0
+    log_info "Waiting up to 90 seconds for Caddy to get a certificate for ${host}..."
+    while (( waited < 90 )); do
+        cert=$(find "$CADDY_CERT_STORE" -path "*/${host}/${host}.crt" -print -quit 2>/dev/null || true)
+        [[ -n "$cert" ]] && break
+        sleep 3
+        waited=$(( waited + 3 ))
+    done
+
+    if [[ -n "$cert" ]]; then
+        log_info "Caddy got a certificate for ${host}. It expires $(openssl x509 -noout -enddate -in "$cert" 2>/dev/null | cut -d= -f2) and renews automatically."
+        return 0
+    fi
+
+    local errors
+    errors=$(journalctl -u fdcommander.service --since "$DEPLOY_STARTED" --no-pager -o cat 2>/dev/null \
+        | grep -iE 'acme|challenge|obtain' | grep -iE 'error|fail' | tail -5 || true)
+    log_warn "No certificate for ${host} yet. The site won't load over HTTPS until it has one."
+    if [[ -n "$errors" ]]; then
+        log_warn "Latest errors from Caddy:"
+        printf '%s\n' "$errors"
+    fi
+    log_warn "Caddy keeps retrying on its own. Things to check:"
+    log_warn "  - ${host} must resolve to this server's public IP address from the internet."
+    log_warn "  - Ports 443 and 80 must be reachable from the internet. Check port forwarding on"
+    log_warn "    your router, any cloud firewall, and this server's firewall."
+    log_warn "  - After several failed attempts, Let's Encrypt makes you wait about an hour."
+    log_warn "  - A LAN IP or .local name can't get a certificate. Re-run with --ssl-cert and"
+    log_warn "    --ssl-key and your own certificate, or run without --ssl."
+    log_warn "Watch progress with: journalctl -u fdcommander.service -f | grep -i acme"
+    log_warn "Once it's fixed, restart the web server: systemctl restart fdcommander.service"
+    return 0
+}
+
 install_packages() {
     case "$DISTRO_FAMILY" in
         debian) install_packages_debian ;;
@@ -644,9 +979,11 @@ install_packages() {
             ;;
     esac
 
-    install_composer
     create_system_user
     use_app_user_group
+    prepare_work_dir
+    configure_fapolicyd
+    install_composer
     install_frankenphp
     configure_php_ini
 }
@@ -867,13 +1204,17 @@ setup_app() {
     # Step 4: Install dependencies
     log_info "Installing Composer dependencies..."
     cd "$APP_PATH"
-    sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} COMPOSER_HOME="$APP_PATH/.composer" /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
     # Step 5: Install Node dependencies and build
     log_info "Installing Node dependencies and building assets..."
     cd "$APP_PATH"
-    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
-    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
+
+    # Explicit modes on what the builds created, whatever umask the app
+    # user's session had (STIG profiles set 077).
+    apply_app_permissions
 
     # Step 6: Storage link (what storage:link creates; public/ is root-owned)
     if [[ ! -L "$APP_PATH/public/storage" ]]; then
@@ -1295,6 +1636,10 @@ REVERBEOF
 
     write_unit_hardening
 
+    # Last .env write is behind us (configure_ssl), and systemd reads it
+    # before starting the web server.
+    selinux_label_app
+
     # Reload and enable
     systemctl daemon-reload
     systemctl enable --now fdcommander.service
@@ -1319,15 +1664,20 @@ configure_firewall() {
     elif [[ "$DISTRO_FAMILY" == "$DISTRO_RHEL" ]]; then
         if systemctl is-active --quiet firewalld; then
             log_info "Configuring firewalld..."
+            # Only the web port: Reverb listens on 127.0.0.1 behind Caddy.
+            local -a rule=(--add-port="${APP_PORT}/tcp") query=(--query-port="${APP_PORT}/tcp")
             if [[ "$APP_PORT" == "80" ]]; then
-                firewall-cmd --permanent --add-service=http
+                rule=(--add-service=http) query=(--query-service=http)
             elif [[ "$APP_PORT" == "443" ]]; then
-                firewall-cmd --permanent --add-service=https
-            else
-                firewall-cmd --permanent --add-port="${APP_PORT}/tcp"
+                rule=(--add-service=https) query=(--query-service=https)
             fi
-            firewall-cmd --reload
-            log_info "firewalld configured: port ${APP_PORT} open"
+            if firewall-cmd --permanent "${query[@]}" &>/dev/null; then
+                log_info "firewalld: port ${APP_PORT} is already open"
+            else
+                firewall-cmd --permanent "${rule[@]}"
+                firewall-cmd --reload
+                log_info "firewalld configured: port ${APP_PORT} open"
+            fi
         else
             log_warn "firewalld not active. Recommend enabling and opening port ${APP_PORT}"
         fi
@@ -1341,6 +1691,14 @@ finalize() {
 
     log_info "Optimizing application (config/route/view/event caches)..."
     sudo -u fdcommander php artisan optimize
+    apply_app_permissions
+
+    if ! verify_deploy; then
+        log_error "Field Day Commander was installed but is not running (see above)."
+        log_error "Fix the cause and re-run deploy.sh with the same options. Deploy log: ${LOG_FILE}"
+        exit 1
+    fi
+    report_certificate
 
     # Print summary
     echo ""
@@ -1418,6 +1776,8 @@ main() {
     fi
 
     log_phase "Starting Field Day Commander deployment to ${SCHEME}://${DOMAIN}"
+    DEPLOY_STARTED=$(date '+%Y-%m-%d %H:%M:%S')
+    trap cleanup_work_dir EXIT
 
     install_packages
     setup_app

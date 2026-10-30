@@ -593,7 +593,10 @@ stage_frankenphp_update() {
         return 0
     fi
     chmod 755 "$tmp"
+    # fapolicyd won't run a binary it doesn't trust, even for this check.
+    fapolicyd_trust "$tmp"
     if ! "$tmp" version &>/dev/null || ! "$tmp" php-cli -r 'hash("sha256", "x");' &>/dev/null; then
+        fapolicyd_untrust "$tmp"
         rm -f "$tmp"
         log_warn "Downloaded FrankenPHP binary did not run on this server — keeping FrankenPHP ${current}"
         return 0
@@ -625,9 +628,11 @@ install_staged_frankenphp() {
     local binary="/usr/local/bin/frankenphp"
     mv -f "$FRANKENPHP_STAGED" "$binary"
     FRANKENPHP_STAGED=""
-    if command -v restorecon &>/dev/null; then
-        restorecon "$binary" 2>/dev/null || true
+    if selinux_enabled; then
+        restorecon "$binary"
     fi
+    fapolicyd_untrust "${binary}.new"
+    fapolicyd_trust "$binary"
     log_info "FrankenPHP $("$binary" version | awk '{print $2}') installed"
     return 0
 }
@@ -908,6 +913,171 @@ ensure_node_version() {
     rm -f "$NPM_LOCK_HASH_FILE"
 }
 
+# --- Hardened systems: SELinux, fapolicyd ---
+# Each step checks for the feature first and logs when it is skipped, so
+# nothing changes on a system without it. Safe to re-run. deploy.sh carries
+# the same functions.
+
+selinux_enabled() {
+    command -v selinuxenabled &>/dev/null && selinuxenabled
+}
+
+# The app path as a file-context regex (dots escaped).
+selinux_app_regex() {
+    printf '%s' "${APP_PATH//./\\.}"
+    return 0
+}
+
+ensure_semanage() {
+    command -v semanage &>/dev/null && return 0
+    log_info "SELinux: installing policycoreutils-python-utils for semanage..."
+    if [[ "$PKG_MANAGER" == "dnf" ]]; then
+        dnf install -y policycoreutils-python-utils
+    else
+        apt-get install -y policycoreutils-python-utils
+    fi
+    return 0
+}
+
+# selinux_fcontext <type> <regex>: a persistent file-context rule. Added
+# once, changed in place if it exists with another type, left alone if it
+# already matches.
+selinux_fcontext() {
+    local type="$1" spec="$2" current
+    # ENVIRON, not awk -v, which would turn the regex's \. into a plain dot.
+    current=$(semanage fcontext -l -C 2>/dev/null | SPEC="$spec" awk '$1 == ENVIRON["SPEC"] { split($NF, c, ":"); print c[3] }')
+    if [[ "$current" == "$type" ]]; then
+        log_info "SELinux: ${spec} is already ${type}"
+    elif [[ -n "$current" ]]; then
+        log_info "SELinux: changing ${spec} from ${current} to ${type}"
+        semanage fcontext -m -t "$type" "$spec"
+    else
+        log_info "SELinux: labeling ${spec} as ${type}"
+        semanage fcontext -a -t "$type" "$spec"
+    fi
+    return 0
+}
+
+# Label the app tree. systemd reads EnvironmentFile= as PID 1 (init_t)
+# before it switches to the service user, and init_t cannot read the
+# var_t or httpd content labels a fresh tree gets, so .env is etc_t.
+# Everything else takes the policy defaults. Run after every .env write:
+# sed -i and other replace-by-rename writes drop the label.
+selinux_label_app() {
+    if ! selinux_enabled; then
+        log_info "SELinux is not enabled; skipping file labels"
+        return 0
+    fi
+    ensure_semanage
+    selinux_fcontext etc_t "$(selinux_app_regex)/\.env"
+    # A parent such as /var/www made by mkdir or git clone gets var_t. Only
+    # the directory itself: other sites under it keep their labels.
+    restorecon -F "$(dirname "$APP_PATH")"
+    restorecon -RF "$APP_PATH"
+    log_info "SELinux: relabeled ${APP_PATH} ($(stat -c '%C' "$APP_PATH/.env" 2>/dev/null | cut -d: -f3) on .env)"
+    return 0
+}
+
+FAPOLICYD_RULES="/etc/fapolicyd/rules.d/39-fdcommander.rules"
+FAPOLICYD_TRUST_FILE="fdcommander"
+
+fapolicyd_active() {
+    systemctl is-active --quiet fapolicyd 2>/dev/null
+}
+
+# fapolicyd_trust <file>...: add the files, or their new contents, to
+# fapolicyd's trust database. No-op when fapolicyd isn't running.
+fapolicyd_trust() {
+    fapolicyd_active || return 0
+    local file trust_db="/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"
+    for file in "$@"; do
+        [[ -e "$file" ]] || continue
+        if grep -qs "^${file} " "$trust_db"; then
+            fapolicyd-cli --file update "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        else
+            fapolicyd-cli --file add "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        fi
+        log_info "fapolicyd: trusted ${file}"
+    done
+    fapolicyd-cli --update
+    return 0
+}
+
+# fapolicyd_untrust <file>: drop a file (such as a staged download) from
+# the trust database.
+fapolicyd_untrust() {
+    fapolicyd_active || return 0
+    local file="$1"
+    if grep -qs "^${file} " "/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"; then
+        fapolicyd-cli --file delete "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
+        fapolicyd-cli --update
+    fi
+    return 0
+}
+
+# fapolicyd's stock rules stop interpreters opening PHP and JavaScript files
+# no package vouches for, which is all of the app, its compiled views and
+# the Vite build's native modules. Allow just those interpreters, just under
+# the app path. Numbered 39 so it comes before the stock deny rules (40+).
+configure_fapolicyd() {
+    if ! fapolicyd_active; then
+        log_info "fapolicyd is not running; skipping its rules"
+        return 0
+    fi
+    local rules
+    rules=$(cat <<FAPEOF
+# Written by deploy.sh/update.sh. Lets PHP, FrankenPHP and Node load
+# Field Day Commander's own code under ${APP_PATH}.
+allow perm=open exe=/usr/bin/php : dir=${APP_PATH}/
+allow perm=open exe=/usr/bin/php : dir=/var/lib/fd-commander/deploy-tmp/
+allow perm=open exe=/usr/local/bin/frankenphp : dir=${APP_PATH}/
+allow perm=any exe=/usr/bin/node : dir=${APP_PATH}/node_modules/
+allow perm=open exe=/usr/bin/node : dir=${APP_PATH}/
+FAPEOF
+)
+    if [[ -f "$FAPOLICYD_RULES" && "$(cat "$FAPOLICYD_RULES")" == "$rules" ]]; then
+        log_info "fapolicyd: rules in ${FAPOLICYD_RULES} are up to date"
+    else
+        printf '%s\n' "$rules" > "$FAPOLICYD_RULES"
+        chmod 644 "$FAPOLICYD_RULES"
+        log_info "fapolicyd: wrote ${FAPOLICYD_RULES}"
+        fagenrules --load
+    fi
+    fapolicyd_trust /usr/local/bin/frankenphp /usr/local/bin/composer
+    return 0
+}
+# --- Work directory for downloads and builds ---
+# Same as deploy.sh. A hardened /tmp is often mounted noexec, which breaks installers and build
+# tools that unpack and run code there. When it is, point TMPDIR at a
+# directory that allows exec instead, and remove it when the update ends.
+DEPLOY_WORK_DIR="/var/lib/fd-commander/deploy-tmp"
+APP_TMP_ENV=()
+
+mount_is_noexec() {
+    findmnt -no OPTIONS --target "$1" 2>/dev/null | tr ',' '\n' | grep -qx noexec
+}
+
+prepare_work_dir() {
+    install -d -m 0770 -o root -g "$WEB_GROUP" "$DEPLOY_WORK_DIR"
+    if ! mount_is_noexec /tmp; then
+        log_info "/tmp allows exec; Composer and npm use it as usual"
+        return 0
+    fi
+    if mount_is_noexec "$DEPLOY_WORK_DIR"; then
+        log_warn "/tmp and ${DEPLOY_WORK_DIR} are both mounted noexec; Composer or npm may fail"
+        return 0
+    fi
+    APP_TMP_ENV=(TMPDIR="$DEPLOY_WORK_DIR")
+    export TMPDIR="$DEPLOY_WORK_DIR"
+    log_info "/tmp is mounted noexec; using ${DEPLOY_WORK_DIR} for temporary files"
+    return 0
+}
+
+cleanup_work_dir() {
+    rm -rf "$DEPLOY_WORK_DIR"
+    return 0
+}
+
 # --- Install dependencies ---
 install_dependencies() {
     log_phase "Installing dependencies"
@@ -915,13 +1085,16 @@ install_dependencies() {
     cd "$APP_PATH"
 
     log_info "Installing Composer dependencies..."
-    sudo -u fdcommander COMPOSER_HOME="$APP_PATH/.composer" \
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} COMPOSER_HOME="$APP_PATH/.composer" \
         /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
     install_node_dependencies
-
     log_info "Building assets..."
-    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm run build
+
+    # Explicit modes on what the builds created, whatever umask the app
+    # user's session had (STIG profiles set 077).
+    apply_app_permissions
 }
 
 # Run `npm ci` only when the dependency set actually changed.
@@ -938,7 +1111,7 @@ install_node_dependencies() {
 
     if [[ ! -f "$lock_file" ]]; then
         log_warn "No package-lock.json found — running npm install"
-        sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm install --ignore-scripts --cache "$APP_PATH/.npm"
+        sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm install --ignore-scripts --cache "$APP_PATH/.npm"
         return 0
     fi
 
@@ -960,7 +1133,7 @@ install_node_dependencies() {
         log_info "Installing Node dependencies..."
     fi
 
-    sudo -u fdcommander HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
+    sudo -u fdcommander ${APP_TMP_ENV[@]+"${APP_TMP_ENV[@]}"} HOME="$APP_PATH" NO_UPDATE_NOTIFIER=1 npm ci --ignore-scripts --cache "$APP_PATH/.npm"
 
     # Root-owned like the rest of the checkout, so the app user cannot mark
     # a tampered node_modules as current.
@@ -1244,8 +1417,10 @@ leave_maintenance() {
 on_exit() {
     leave_maintenance
     if [[ -n "$FRANKENPHP_STAGED" ]]; then
+        fapolicyd_untrust "$FRANKENPHP_STAGED"
         rm -f "$FRANKENPHP_STAGED"
     fi
+    cleanup_work_dir
     return 0
 }
 
@@ -1267,6 +1442,8 @@ restart_services() {
     rename_unit_descriptions
     migrate_queue_unit
     write_unit_hardening
+    # After every .env write above, and before systemd reads it.
+    selinux_label_app
 
     local unit
     for unit in "${APP_UNITS[@]}"; do
@@ -1400,6 +1577,8 @@ main() {
         log_warn "Skipping Redis bootstrap and .env driver migration"
     fi
     ensure_node_version
+    prepare_work_dir
+    configure_fapolicyd
     install_dependencies
     stage_frankenphp_update
     harden_php_ini
