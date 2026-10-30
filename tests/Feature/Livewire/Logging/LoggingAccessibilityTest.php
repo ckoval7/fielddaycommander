@@ -145,7 +145,7 @@ test('logged contacts can be recalled with a named button', function () {
     ]);
 
     Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
-        ->assertSeeHtml('@click.stop="recallByContactId('.$contact->id.')" aria-label="K1ABC, edit contact"');
+        ->assertSeeHtml('data-roving-item class="uppercase cursor-pointer" @click.stop="recallByContactId('.$contact->id.')" aria-label="K1ABC, edit contact"');
 });
 
 test('editing a synced contact with a bad exchange shows and announces the error', function () {
@@ -188,4 +188,22 @@ test('saving and deleting a synced contact are announced', function () {
         ->assertDispatched('announce', message: 'K1ABC saved')
         ->call('deleteContact', $contact->id)
         ->assertDispatched('announce', message: 'K1ABC deleted');
+});
+
+test('the recent contacts are one tab stop, with arrow keys between them', function () {
+    $this->actingAs($this->user);
+
+    Contact::factory()->count(2)->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'section_id' => $this->section->id,
+    ]);
+
+    $html = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])->html();
+
+    expect($html)->toContain('x-roving-focus')
+        // Two table buttons, two cards, plus the queued row and card templates.
+        ->and(substr_count($html, 'data-roving-item'))->toBe(6);
 });

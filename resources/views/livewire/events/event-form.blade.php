@@ -119,13 +119,18 @@
                     </div>
                 @endif
 
-                @if($this->isFieldDay)
+                @if($this->offersEarlySetupChoice)
                     <div class="col-span-full">
                         <x-toggle
-                            label="Setup started before the contest"
+                            label="Setup began before 1800 UTC Saturday"
                             wire:model="setup_started_early"
-                            hint="Turn this on if your station began setting up before 1800 UTC Saturday. Operating then ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first."
+                            hint="Turn on for a 24-hour operating limit from the event's first contact, including GOTA. The event end may shorten this."
                         />
+                    </div>
+                @elseif($this->hasFixedTwentyFourHourLimit)
+                    <div class="col-span-full flex items-start gap-2 text-sm text-base-content/70">
+                        <x-icon name="phosphor-clock" class="w-4 h-4 mt-0.5 shrink-0" />
+                        <span>Class {{ $this->selectedOperatingClass->code }} stations have 24 consecutive hours from the event's first contact, including GOTA. The event end may shorten this.</span>
                     </div>
                 @endif
             </div>

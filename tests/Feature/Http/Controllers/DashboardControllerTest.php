@@ -344,3 +344,15 @@ test('index falls back to default when dashboard id does not exist', function ()
     $response->assertStatus(200);
     $response->assertViewHas('dashboard', $default);
 });
+
+test('get-ready invite link wraps instead of running off a narrow screen', function () {
+    $user = User::factory()->create();
+    Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $this->actingAs($user)->get(route('dashboard'))
+        ->assertViewIs('dashboard.get-ready')
+        ->assertSee('class="min-w-0 break-all text-left text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all" data-invite-link', escape: false);
+});

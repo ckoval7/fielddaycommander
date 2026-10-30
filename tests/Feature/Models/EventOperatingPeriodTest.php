@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventType;
 use App\Models\Mode;
+use App\Models\OperatingClass;
 use App\Models\OperatingSession;
 use App\Models\Station;
 use App\Services\DuplicateCheckService;
@@ -184,6 +185,53 @@ test('expired session cleanup closes sessions when the 24 hours run out', functi
     $this->travelTo(Carbon::parse('2026-06-28 18:00:00'));
     $this->artisan('sessions:close-expired')->assertSuccessful();
     expect($session->fresh()->end_time)->toBeNull();
+
+    $this->travelTo(Carbon::parse('2026-06-28 19:00:00'));
+    $this->artisan('sessions:close-expired')->assertSuccessful();
+    expect($session->fresh()->end_time->toDateTimeString())->toBe('2026-06-28 18:30:00');
+});
+
+test('Class C, D and E stations always operate 24 hours from the first contact', function (string $code) {
+    $this->event->update(['setup_started_early' => false]);
+    $this->config->update([
+        'operating_class_id' => OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', $code)->value('id'),
+    ]);
+    ($this->logAt)('2026-06-27 18:30:00');
+
+    expect($this->event->fresh()->operatingEndsAt()->toDateTimeString())->toBe('2026-06-28 18:30:00');
+})->with(['C', 'D', 'E']);
+
+test('a Class B or F station that waited for the start keeps the full period', function (string $code) {
+    $this->event->update(['setup_started_early' => false]);
+    $this->config->update([
+        'operating_class_id' => OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', $code)->value('id'),
+    ]);
+    ($this->logAt)('2026-06-27 18:30:00');
+
+    expect($this->event->fresh()->operatingEndsAt()->toDateTimeString())->toBe('2026-06-28 20:59:00');
+})->with(['B', 'F']);
+
+test('a Winter Field Day event is never held to 24 hours', function () {
+    $wfd = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day', 'description' => 'Winter Field Day', 'is_active' => true]);
+    $this->event->update(['event_type_id' => $wfd->id, 'setup_started_early' => false]);
+    $this->config->update([
+        'operating_class_id' => OperatingClass::firstOrCreate(['event_type_id' => $wfd->id, 'code' => 'H'], ['name' => 'Home', 'description' => 'Home'])->id,
+    ]);
+    ($this->logAt)('2026-06-27 18:30:00');
+
+    expect($this->event->fresh()->operatingEndsAt()->toDateTimeString())->toBe('2026-06-28 20:59:00');
+});
+
+test('expired session cleanup closes a Class D session when its 24 hours run out', function () {
+    $this->event->update(['setup_started_early' => false]);
+    $this->config->update([
+        'operating_class_id' => OperatingClass::where('event_type_id', $this->event->event_type_id)->where('code', 'D')->value('id'),
+    ]);
+    ($this->logAt)('2026-06-27 18:30:00');
+    $session = OperatingSession::factory()->active()->create([
+        'station_id' => $this->station->id,
+        'start_time' => '2026-06-28 10:00:00',
+    ]);
 
     $this->travelTo(Carbon::parse('2026-06-28 19:00:00'));
     $this->artisan('sessions:close-expired')->assertSuccessful();

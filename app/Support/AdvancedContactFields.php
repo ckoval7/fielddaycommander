@@ -68,6 +68,9 @@ final class AdvancedContactFields
 
     public const MAX_FREQUENCY_HZ = 300_000_000_000;
 
+    /** Highest TX_PWR taken from an ADIF record; anything above is a typo. */
+    public const MAX_POWER_WATTS = 100_000;
+
     /**
      * Every field name, as stored on the contact.
      *
@@ -172,6 +175,25 @@ final class AdvancedContactFields
             'notes' => mb_strlen($value) <= self::NOTES_MAX ? $value : null,
             default => null,
         };
+    }
+
+    /**
+     * Transmit power from an ADIF record's TX_PWR tag, in whole watts rounded
+     * up so a power limit is never under-reported, or null when the tag is
+     * missing or not a positive number. A trailing "W" is tolerated.
+     *
+     * @param  array<string, mixed>  $tags
+     */
+    public static function powerWattsFromAdif(array $tags): ?int
+    {
+        $tags = array_change_key_case($tags, CASE_UPPER);
+        $value = preg_replace('/\s*W$/i', '', trim((string) ($tags['TX_PWR'] ?? '')));
+
+        if (! is_numeric($value) || (float) $value <= 0 || (float) $value > self::MAX_POWER_WATTS) {
+            return null;
+        }
+
+        return (int) ceil((float) $value);
     }
 
     /**

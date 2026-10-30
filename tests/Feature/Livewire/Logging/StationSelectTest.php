@@ -1249,3 +1249,19 @@ test('cannot start a session on an unavailable station', function () {
 
     expect(OperatingSession::where('station_id', $station->id)->exists())->toBeFalse();
 });
+
+test('each station\'s button names the station for screen readers', function () {
+    $this->actingAs($this->user);
+
+    $event = Event::factory()->create([
+        'start_time' => now()->subHours(12),
+        'end_time' => now()->addHours(12),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+    Station::factory()->create(['event_configuration_id' => $config->id, 'name' => 'Phone Station 1']);
+    Station::factory()->create(['event_configuration_id' => $config->id, 'name' => 'CW Station']);
+
+    Livewire::test(StationSelect::class)
+        ->assertSeeHtml('aria-label="Select Station Phone Station 1"')
+        ->assertSeeHtml('aria-label="Select Station CW Station"');
+});

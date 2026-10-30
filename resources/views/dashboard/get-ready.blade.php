@@ -5,7 +5,7 @@
 <x-layouts.app>
     <x-slot:title>Get Ready for {{ $event->name }}</x-slot:title>
 
-    <div class="container mx-auto px-4 sm:px-6 py-8">
+    <div class="container mx-auto max-sm:px-0 px-4 sm:px-6 py-8">
         <div class="max-w-2xl mx-auto">
             {{-- Event Header --}}
             <div class="text-center mb-8">
@@ -110,10 +110,11 @@
                 <div class="card-body text-center py-6">
                     <h2 class="text-lg font-bold mb-1">Invite participants</h2>
                     <p class="text-sm text-base-content/60 mb-3">Share this link so operators can create accounts, claim shifts, and log contacts.</p>
-                    <div class="flex items-center gap-2 justify-center mb-4">
-                        <code class="text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all">{{ route('register') }}</code>
+                    {{-- min-w-0 and break-all let a long link wrap; centered overflow would be cut off on the left --}}
+                    <div class="flex items-center gap-2 justify-center mb-4 max-w-full">
+                        <code class="min-w-0 break-all text-left text-sm bg-base-200 px-3 py-1.5 rounded-lg select-all" data-invite-link>{{ route('register') }}</code>
                         <button
-                            class="btn btn-ghost btn-sm btn-square"
+                            class="btn btn-ghost btn-sm btn-square shrink-0"
                             @click="if (await $copy(@js(route('register')))) { copied = true; failed = false; setTimeout(() => copied = false, 2000) } else { failed = true; setTimeout(() => failed = false, 4000) }"
                             aria-label="Copy registration link"
                             :title="copied ? 'Copied!' : (failed ? 'Could not copy' : 'Copy link')"

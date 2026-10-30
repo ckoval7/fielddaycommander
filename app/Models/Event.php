@@ -134,17 +134,47 @@ class Event extends Model
     }
 
     /**
+     * Field Day classes that may operate the whole 27-hour period when they
+     * wait for the start to begin setting up. Rule 3.1 names A and B; Class F
+     * (an EOC activated by a group) is treated like A, as the rulebook ties
+     * F to A's rules without saying so for the operating period.
+     *
+     * @var list<string>
+     */
+    public const FULL_PERIOD_CLASSES = ['A', 'B', 'F'];
+
+    /**
+     * Whether this Field Day station may operate only 24 consecutive hours
+     * from its first contact: it started setup before the contest (rule 3.2),
+     * or its class is not one that rule 3.1 allows the full 27 hours.
+     */
+    public function isLimitedToTwentyFourHours(): bool
+    {
+        if ($this->setup_started_early) {
+            return true;
+        }
+
+        if ($this->eventType?->code !== 'FD') {
+            return false;
+        }
+
+        $classCode = $this->eventConfiguration?->operatingClass?->code;
+
+        return $classCode !== null && ! in_array($classCode, self::FULL_PERIOD_CLASSES, true);
+    }
+
+    /**
      * When contacts stop counting: the end of the operating period.
      *
-     * Normally the event end. A Field Day station that started setup before
-     * the contest (rule 3.2) may operate only 24 consecutive hours from its
-     * first contact, so once that contact exists the period ends at the
-     * earlier of the event end and 24 hours after it. Event lifecycle
-     * (active, grace, archived) always follows the real end_time.
+     * Normally the event end. A Field Day station limited to 24 consecutive
+     * hours (see isLimitedToTwentyFourHours()) stops at the earlier of the
+     * event end and 24 hours after its first contact, once that contact
+     * exists. Event lifecycle (active, grace, archived) always follows the
+     * real end_time.
      */
     public function operatingEndsAt(): ?Carbon
     {
-        if ($this->end_time === null || ! $this->setup_started_early) {
+        if ($this->end_time === null || ! $this->isLimitedToTwentyFourHours()) {
             return $this->end_time;
         }
 

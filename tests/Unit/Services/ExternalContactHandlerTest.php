@@ -535,3 +535,22 @@ test('stores YT and MX from an external logger as logged for a Winter Field Day 
 
     expect($contact->section_id)->toBe(Section::where('code', $logged)->value('id'));
 })->with(['YT', 'MX']);
+
+test('a contact from an ADIF logger records its TX_PWR as the contact power', function () {
+    $dto = new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'adif',
+        modeName: 'CW',
+        operatorCallsign: 'K3CPK',
+        stationIdentifier: 'CONTEST-PC',
+        frequencyHz: 3525190,
+        sectionCode: 'CT',
+        adifFields: ['TX_PWR' => '400'],
+    );
+
+    $contact = $this->handler->handleContact($dto, $this->config);
+
+    expect($contact->power_watts)->toBe(400)
+        ->and($this->config->fresh()->highestContactPowerWatts())->toBe(400);
+});

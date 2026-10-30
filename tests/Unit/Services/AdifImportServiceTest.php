@@ -663,3 +663,85 @@ test('an import with a spent time budget stops after a batch and resumes without
         ->and(OperatingSession::count())->toBe(1)
         ->and(OperatingSession::sole()->qso_count)->toBe(150);
 });
+
+test('an imported contact takes its power from TX_PWR, as does the session it creates', function () {
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'user_id' => $this->user->id,
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'exchange_class' => '3A',
+        'raw_data' => ['CALL' => 'W1AW', 'TX_PWR' => '400'],
+        'status' => AdifRecordStatus::Ready,
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'K1ABC',
+        'qso_time' => Carbon::parse('2026-04-10 12:05:00'),
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'exchange_class' => '2A',
+        'raw_data' => ['CALL' => 'K1ABC'],
+        'status' => AdifRecordStatus::Ready,
+    ]);
+
+    $this->service->import($import);
+
+    $highPower = Contact::where('callsign', 'W1AW')->firstOrFail();
+    expect($highPower->power_watts)->toBe(400)
+        ->and($highPower->operatingSession->power_watts)->toBe(400)
+        ->and(Contact::where('callsign', 'K1ABC')->value('power_watts'))->toBe(400)
+        ->and($this->config->fresh()->highestContactPowerWatts())->toBe(400);
+});
+
+test('merging fills a matched contact\'s missing power from TX_PWR', function () {
+    $session = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+    ]);
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $session->id,
+        'callsign' => 'W1AW',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        'power_watts' => null,
+        'logger_user_id' => $this->user->id,
+    ]);
+
+    $import = AdifImport::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'user_id' => $this->user->id,
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'qso_time' => Carbon::parse('2026-04-10 12:00:00'),
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'section_id' => $this->section->id,
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'matched_contact_id' => $contact->id,
+        'raw_data' => ['CALL' => 'W1AW', 'TX_PWR' => '5.5'],
+        'status' => AdifRecordStatus::DuplicateMatch,
+    ]);
+
+    $this->service->import($import);
+
+    expect($contact->fresh()->power_watts)->toBe(6);
+});
