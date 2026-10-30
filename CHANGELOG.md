@@ -10,6 +10,7 @@
 - For keyboard users, **Recent QSOs** on **Log Contact** and **Recently Transcribed** on **Transcribe Paper Log** now each take a single Tab stop instead of one per contact. Tab lands on the newest contact or the one you last used. Up and Down move between contacts, and Home and End jump to the first and last.
 - On **Select Station**, screen reader names for **Select Station** and **Take Over** buttons now include the station name.
 - On **Get Ready**, the registration link in **Invite participants** could run off the left edge of narrow windows and phones. It now wraps.
+- After you dismissed the weather alert banner, an NWS update or any alert being added, removed, or changed brought back every dismissed alert that was still active. Dismissed alerts now stay hidden for your browser session, including across page loads and NWS updates. The banner shows only new alerts, nearby NWS alerts that move over the event site, local alerts whose message changes, or alerts of the same type that return after the earlier one ended.
 
 ## 26.10.14 - 2026-10-29
 

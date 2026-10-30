@@ -125,3 +125,78 @@ test('app layout pins the weather alert banner below the header at any scroll po
         ->toContain("setProperty('--desktop-header-height'")
         ->toContain("setProperty('--weather-banner-height'");
 });
+
+/**
+ * @return array<string, mixed>
+ */
+function nwsAlert(string $event, string $headline, string $severityLevel = 'yellow', ?string $expires = null): array
+{
+    return ['event' => $event, 'headline' => $headline, 'description' => '', 'severity' => 'Severe', 'expires' => $expires, 'severity_level' => $severityLevel];
+}
+
+test('dismissed NWS alert stays hidden when NWS reissues it with a new headline and expiry', function () {
+    Setting::set('weather.alerts', [nwsAlert('High Wind Warning', 'Wind warning until 4PM', expires: '2026-10-30T16:00:00-04:00')]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => [nwsAlert('High Wind Warning', 'Wind warning until 8PM', expires: '2026-10-30T20:00:00-04:00')]])
+        ->assertDontSee('Wind warning until 8PM');
+});
+
+test('dismissed alert stays hidden when an unchanged alert list is broadcast', function () {
+    $alerts = [nwsAlert('High Wind Warning', 'Wind warning')];
+    Setting::set('weather.alerts', $alerts);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => $alerts])
+        ->assertDontSee('Wind warning');
+});
+
+test('dismissed alert stays hidden on the next page load', function () {
+    Setting::set('weather.alerts', [nwsAlert('High Wind Warning', 'Wind warning')]);
+
+    Livewire::test(WeatherAlertBanner::class)->call('dismiss');
+
+    Livewire::test(WeatherAlertBanner::class)->assertDontSee('Wind warning');
+});
+
+test('a new alert shows without bringing back the dismissed one', function () {
+    $wind = nwsAlert('High Wind Warning', 'Wind warning');
+    Setting::set('weather.alerts', [$wind]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => [$wind, nwsAlert('Tornado Warning', 'Tornado incoming', 'red')]])
+        ->assertSee('Tornado incoming')
+        ->assertDontSee('Wind warning');
+});
+
+test('dismissed alert shows again when it moves over the event site', function () {
+    Setting::set('weather.alerts', [nwsAlert('Severe Thunderstorm Warning', 'Storm nearby')]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => [nwsAlert('Severe Thunderstorm Warning', 'Storm overhead', 'red')]])
+        ->assertSee('Storm overhead');
+});
+
+test('alert of a dismissed kind shows again after the earlier one ended', function () {
+    Setting::set('weather.alerts', [nwsAlert('Severe Thunderstorm Warning', 'First storm')]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => []])
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => [nwsAlert('Severe Thunderstorm Warning', 'Second storm')]])
+        ->assertSee('Second storm');
+});
+
+test('a new local alert message shows after an earlier one was dismissed', function () {
+    $local = fn (string $message): array => ['event' => 'Local Alert', 'headline' => $message, 'description' => $message, 'severity' => 'Severe', 'expires' => null];
+    Setting::set('weather.alerts', [$local('Lightning within 10 miles')]);
+
+    Livewire::test(WeatherAlertBanner::class)
+        ->call('dismiss')
+        ->dispatch('echo:weather,WeatherAlertChanged', ['alerts' => [$local('Lightning within 5 miles')]])
+        ->assertSee('Lightning within 5 miles');
+});
