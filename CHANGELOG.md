@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- On the station-mode sign-in page, a large **Station Mode** heading and a small **STATION MODE** label appeared above the station name. The station name is now the only heading.
 - On **Log Contact**, pressing Enter right after typing an exchange could make a screen reader say "K9SR logged" even though the contact was saved as a dupe. The confirmation now uses the server's answer and says "K9SR logged, dupe" for a dupe. If the server takes more than 3 seconds or you're offline, it uses the live dupe check as before.
 - ARRL Field Day Classes C, D, and E could use the full 27 hours with the setup switch off. They now have 24 consecutive hours from the event's first contact, including GOTA, or until the event end if sooner. Contacts after that earn no points, and **Select Station** stops new sessions. Only Classes A, B, and F see the switch, now labeled **Setup began before 1800 UTC Saturday**.
 - ADIF file imports ignored `TX_PWR` and used 100 W or the matching open session's power. Imports now use `TX_PWR` when present, rounded up to whole watts, and fill a matched contact's missing power from it. Contacts received live over ADIF UDP or WSJT-X logged-ADIF now use `TX_PWR` too.
