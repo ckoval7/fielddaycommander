@@ -5,6 +5,8 @@
 ### Added
 
 - On **Create Event** and **Edit Event** for ARRL Field Day, a new **Setup started before the contest** switch is for stations that began setting up before 1800 UTC Saturday. When it's on, the operating period ends 24 hours after the event's first contact from any station, including GOTA, or at the event end if that comes first. Contacts after that time earn no points, aren't accepted from **Log Contact**, **Transcribe Paper Log**, or external loggers, and are left out of the Cabrillo log. **Select Station** stops new sessions. The header countdown and the dashboard's **Time Remaining** count down to the new end once the first contact is logged. The switch is off by default, so existing events don't change.
+- deploy.sh and update.sh now support hardened RHEL-family servers (Rocky Linux, AlmaLinux and RHEL 9) with fapolicyd, a `noexec` `/tmp` and a 077 umask, as in STIG and CIS profiles. See **Hardened systems** in the README for what the scripts set up.
+- At the end of `deploy.sh`, it now checks that the services stayed running. If one didn't, the script shows its recent log lines and exits with an error instead of finishing with a summary that says "failed". With `--ssl` and Let's Encrypt, it also reports whether Caddy got the certificate and when it expires, or shows the latest error and what to check.
 
 ### Changed
 
@@ -16,6 +18,8 @@
 
 ### Fixed
 
+- On Rocky Linux, AlmaLinux or RHEL with SELinux enforcing, the web server could fail to start after `deploy.sh`, logging "Failed to load environment files: Permission denied" over and over. The install directory and its `.env` had the wrong SELinux label. `deploy.sh`, `update.sh` and `restore.sh` now label them so systemd can read `.env`.
+- On those systems with SELinux disabled, `deploy.sh` stopped early because it tried to change an SELinux setting anyway. It now skips SELinux setup when SELinux is off.
 - During ARRL Field Day, GOTA contacts earned their 5-point bonus but were left out of QSO points on **Scoring**, the event dashboard, **Logbook**, and the ARRL submission sheet. They now earn QSO points by mode with the power multiplier applied, plus the unchanged GOTA bonus. Upgrading automatically rescores existing events with GOTA contacts, raising affected Field Day scores.
 - On **Scoring** and the event dashboard, the band/mode tables now show GOTA contacts on their own **GOTA** row. The ARRL submission sheet's **Band/Mode QSO Breakdown** also includes a **GOTA** row instead of telling you to leave those contacts out.
 - On **Logbook**, the GOTA bonus line below **QSO Points** could show the wrong total for contacts brought into the log. It now uses the same contact count times 5 as **Scoring**.

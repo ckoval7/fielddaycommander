@@ -387,6 +387,12 @@ restore_native() {
     # restore.sh or update.sh could leave it root:root).
     chown "root:${WEB_GROUP}" "$CURRENT_ENV"
     chmod 640 "$CURRENT_ENV"
+    # Rewriting .env drops its SELinux label, and systemd must read it to
+    # start the web server. deploy.sh set up the rule restorecon applies.
+    if command -v selinuxenabled &>/dev/null && selinuxenabled; then
+        restorecon -F "$CURRENT_ENV"
+        restorecon -RF "$APP_PATH/storage"
+    fi
 
     cd "$APP_PATH"
     begin_step "Running migrations"
