@@ -109,7 +109,7 @@ test('sessions computed property returns sessions for the station ordered newest
         ->and($sessions->last()->id)->toBe($older->id);
 });
 
-test('totalQsoCount sums qso_count across all sessions for the station', function () {
+test('activity tab totals qso_count across all sessions for the station', function () {
     $band = Band::factory()->create();
     $mode = Mode::factory()->create();
     $op = User::factory()->create();
@@ -125,9 +125,9 @@ test('totalQsoCount sums qso_count across all sessions for the station', functio
         'mode_id' => $mode->id,
     ]);
 
-    $component = Livewire::test(StationForm::class, ['station' => $this->station]);
-
-    expect($component->instance()->totalQsoCount)->toBe(20);
+    Livewire::test(StationForm::class, ['station' => $this->station])
+        ->set('activeTab', 'activity')
+        ->assertSeeHtml('<div class="text-3xl font-bold">20</div>');
 });
 
 test('activity tab shows empty state when station has no sessions', function () {

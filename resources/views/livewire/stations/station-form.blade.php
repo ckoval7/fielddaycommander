@@ -68,7 +68,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <x-card>
                             <div class="text-sm text-base-content/60">Total QSOs</div>
-                            <div class="text-3xl font-bold">{{ $this->totalQsoCount }}</div>
+                            <div class="text-3xl font-bold">{{ (int) $this->sessions->sum('qso_count') }}</div>
                         </x-card>
                         <x-card>
                             <div class="text-sm text-base-content/60">Total Sessions</div>

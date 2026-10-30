@@ -46,29 +46,10 @@ class GalleryUpload extends Component
         $this->validate();
 
         $imageService = app(ImageService::class);
+        $problem = $this->photoProblem($imageService);
 
-        if (! $imageService->isValidImage($this->photo)) {
-            $this->addError('photo', 'Please upload a valid JPEG, PNG, GIF, or WebP photo up to 25 MB.');
-
-            return;
-        }
-
-        if (! $imageService->hasAcceptableDimensions($this->photo)) {
-            $this->addError('photo', 'This photo is too large or too narrow. Please resize or crop it and try again.');
-
-            return;
-        }
-
-        $hash = $imageService->calculateHash($this->photo);
-
-        // A deleted copy doesn't block the upload: it comes back as a new photo
-        $alreadyInGallery = Image::query()
-            ->where('event_configuration_id', $this->eventConfiguration->id)
-            ->where('file_hash', $hash)
-            ->exists();
-
-        if ($alreadyInGallery) {
-            $this->addError('photo', 'This photo is already in this album.');
+        if ($problem !== null) {
+            $this->addError('photo', $problem);
 
             return;
         }
@@ -98,6 +79,28 @@ class GalleryUpload extends Component
         session()->flash('toast', ['title' => 'Success', 'description' => 'Photo uploaded!', 'type' => 'success']);
 
         $this->redirectRoute('gallery.show', $this->eventConfiguration);
+    }
+
+    /**
+     * Why the chosen photo can't be uploaded, or null if it can.
+     */
+    private function photoProblem(ImageService $imageService): ?string
+    {
+        if (! $imageService->isValidImage($this->photo)) {
+            return 'Please upload a valid JPEG, PNG, GIF, or WebP photo up to 25 MB.';
+        }
+
+        if (! $imageService->hasAcceptableDimensions($this->photo)) {
+            return 'This photo is too large or too narrow. Please resize or crop it and try again.';
+        }
+
+        // A deleted copy doesn't block the upload: it comes back as a new photo
+        $alreadyInGallery = Image::query()
+            ->where('event_configuration_id', $this->eventConfiguration->id)
+            ->where('file_hash', $imageService->calculateHash($this->photo))
+            ->exists();
+
+        return $alreadyInGallery ? 'This photo is already in this album.' : null;
     }
 
     public function render(): View

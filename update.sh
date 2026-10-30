@@ -977,6 +977,7 @@ selinux_label_app() {
 
 FAPOLICYD_RULES="/etc/fapolicyd/rules.d/39-fdcommander.rules"
 FAPOLICYD_TRUST_FILE="fdcommander"
+FAPOLICYD_TRUST_DB="/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"
 
 fapolicyd_active() {
     systemctl is-active --quiet fapolicyd 2>/dev/null
@@ -986,10 +987,10 @@ fapolicyd_active() {
 # fapolicyd's trust database. No-op when fapolicyd isn't running.
 fapolicyd_trust() {
     fapolicyd_active || return 0
-    local file trust_db="/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"
+    local file
     for file in "$@"; do
         [[ -e "$file" ]] || continue
-        if grep -qs "^${file} " "$trust_db"; then
+        if grep -qs "^${file} " "$FAPOLICYD_TRUST_DB"; then
             fapolicyd-cli --file update "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
         else
             fapolicyd-cli --file add "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
@@ -1005,7 +1006,7 @@ fapolicyd_trust() {
 fapolicyd_untrust() {
     fapolicyd_active || return 0
     local file="$1"
-    if grep -qs "^${file} " "/etc/fapolicyd/trust.d/${FAPOLICYD_TRUST_FILE}"; then
+    if grep -qs "^${file} " "$FAPOLICYD_TRUST_DB"; then
         fapolicyd-cli --file delete "$file" --trust-file "$FAPOLICYD_TRUST_FILE"
         fapolicyd-cli --update
     fi
@@ -1051,7 +1052,8 @@ DEPLOY_WORK_DIR="/var/lib/fd-commander/deploy-tmp"
 APP_TMP_ENV=()
 
 mount_is_noexec() {
-    findmnt -no OPTIONS --target "$1" 2>/dev/null | tr ',' '\n' | grep -qx noexec
+    local path="$1"
+    findmnt -no OPTIONS --target "$path" 2>/dev/null | tr ',' '\n' | grep -qx noexec
 }
 
 prepare_work_dir() {

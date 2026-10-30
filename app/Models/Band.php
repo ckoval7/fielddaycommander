@@ -88,6 +88,19 @@ class Band extends Model
     }
 
     /**
+     * Why the station can't log on this band, or null when it can. Only the
+     * free VHF station is limited: it operates exclusively above 50 MHz.
+     */
+    public function restrictionMessageAt(Station $station): ?string
+    {
+        if ($this->isAllowedAtStation($station)) {
+            return null;
+        }
+
+        return "{$station->name} is marked VHF/UHF Only, so it can't log on {$this->name}. Choose 6m or a higher band.";
+    }
+
+    /**
      * Keep only the bands the station may log on (see isAllowedAtStation()).
      */
     public function scopeAllowedAtStation(Builder $query, ?Station $station): Builder

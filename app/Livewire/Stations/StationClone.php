@@ -261,11 +261,21 @@ class StationClone extends Component
         }
 
         // Warnings already shown in the success toast aren't repeated
-        if (! $clonedWithWarnings) {
-            $this->toastEach($result['warnings'] ?? [], 'Warning', 'phosphor-warning', 'alert-warning');
-        }
+        $toasts = [
+            ['Warning', 'phosphor-warning', 'alert-warning', $clonedWithWarnings ? [] : ($result['warnings'] ?? [])],
+            ['Error', 'phosphor-x-circle', 'alert-error', $result['errors'] ?? []],
+        ];
 
-        $this->toastEach($result['errors'] ?? [], 'Error', 'phosphor-x-circle', 'alert-error');
+        foreach ($toasts as [$title, $icon, $css, $messages]) {
+            foreach ($messages as $message) {
+                $this->dispatch('toast', [
+                    'title' => $title,
+                    'description' => $message,
+                    'icon' => $icon,
+                    'css' => $css,
+                ]);
+            }
+        }
 
         if (! $result['success']) {
             $this->addError('general', 'Unable to clone stations. Please review the errors and try again.');
@@ -306,23 +316,6 @@ class StationClone extends Component
         $this->closeModal();
 
         return $withWarnings;
-    }
-
-    /**
-     * Show one toast per message.
-     *
-     * @param  array<int, string>  $messages
-     */
-    private function toastEach(array $messages, string $title, string $icon, string $css): void
-    {
-        foreach ($messages as $message) {
-            $this->dispatch('toast', [
-                'title' => $title,
-                'description' => $message,
-                'icon' => $icon,
-                'css' => $css,
-            ]);
-        }
     }
 
     /**

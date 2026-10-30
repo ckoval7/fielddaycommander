@@ -92,7 +92,7 @@ class AdifValidationService
             return null;
         }
 
-        $message = $station->bandRestrictionMessage($band);
+        $message = $band->restrictionMessageAt($station);
 
         // Record notes join their errors with "; ", so drop the closing period.
         return $message === null ? null : rtrim($message, '.');
