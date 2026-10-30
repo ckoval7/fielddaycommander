@@ -519,12 +519,30 @@ SCHEDEOF
     return 0
 }
 
-# Download and verify the FrankenPHP version deploy.sh pins if this server
+# Download and verify the FrankenPHP version deploy.sh names if this server
 # runs a different one, so a version bump only needs changing in deploy.sh.
 # Runs before maintenance mode; install_staged_frankenphp swaps it in during
 # the restart. A failed download or check keeps the current binary rather than
 # aborting the update.
 FRANKENPHP_STAGED=""
+
+# Print the SHA-256 GitHub reports for a FrankenPHP release asset (same as
+# deploy.sh). FrankenPHP publishes no checksum file.
+frankenphp_asset_sha256() {
+    local version="$1" asset="$2"
+    curl -fsSL --proto '=https' --tlsv1.2 \
+        "https://api.github.com/repos/php/frankenphp/releases/tags/v${version}" \
+        | php -r '
+            $release = json_decode(stream_get_contents(STDIN), true);
+            foreach ($release["assets"] ?? [] as $a) {
+                if ($a["name"] === $argv[1] && preg_match("/^sha256:([0-9a-f]{64})$/", $a["digest"] ?? "", $m)) {
+                    echo $m[1];
+                    exit(0);
+                }
+            }
+            exit(1);
+        ' "$asset"
+}
 
 stage_frankenphp_update() {
     local binary="/usr/local/bin/frankenphp"
@@ -540,29 +558,18 @@ stage_frankenphp_update() {
     fi
 
     current=$("$binary" version 2>/dev/null | awk '{print $2}' | sed 's/^v//' || true)
-
-    local arch sha_var
-    case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64-gnu";  sha_var="FRANKENPHP_SHA256_X86_64" ;;
-        aarch64) arch="linux-aarch64-gnu"; sha_var="FRANKENPHP_SHA256_AARCH64" ;;
-        *)       log_warn "Unsupported architecture $(uname -m) — keeping FrankenPHP ${current}"
-                 return 0 ;;
-    esac
-
-    # deploy.sh pins the binary's SHA-256 next to the version.
-    local expected_sha
-    expected_sha=$(grep -m1 -E "^${sha_var}=" "$APP_PATH/deploy.sh" 2>/dev/null | cut -d'"' -f2 || true)
-    if [[ ! "$expected_sha" =~ ^[0-9a-f]{64}$ ]]; then
-        log_warn "No ${sha_var} pinned in $APP_PATH/deploy.sh — keeping FrankenPHP ${current}"
-        return 0
-    fi
-
-    # Compare the binary itself, not just the version: 1.13.2 installs got the
-    # musl build, which has to be swapped for the -gnu build of the same version.
-    if echo "${expected_sha}  ${binary}" | sha256sum --check --quiet --status; then
+    if [[ "$current" == "$desired" ]]; then
         log_info "FrankenPHP already at ${desired}"
         return 0
     fi
+
+    local arch
+    case "$(uname -m)" in
+        x86_64)  arch="linux-x86_64-gnu" ;;
+        aarch64) arch="linux-aarch64-gnu" ;;
+        *)       log_warn "Unsupported architecture $(uname -m) — keeping FrankenPHP ${current}"
+                 return 0 ;;
+    esac
 
     local url="https://github.com/php/frankenphp/releases/download/v${desired}/frankenphp-${arch}"
     local tmp="${binary}.new"
@@ -572,9 +579,17 @@ stage_frankenphp_update() {
         log_warn "Download failed — keeping FrankenPHP ${current}"
         return 0
     fi
+    # FrankenPHP rebuilds the latest release's binaries nightly, so there's no
+    # fixed checksum to pin. Check against the digest GitHub reports right now.
+    local expected_sha
+    if ! expected_sha=$(frankenphp_asset_sha256 "$desired" "frankenphp-${arch}"); then
+        rm -f "$tmp"
+        log_warn "Could not read the FrankenPHP ${desired} SHA-256 from GitHub — keeping FrankenPHP ${current}"
+        return 0
+    fi
     if ! echo "${expected_sha}  ${tmp}" | sha256sum --check --quiet --status; then
         rm -f "$tmp"
-        log_warn "Downloaded FrankenPHP does not match the pinned SHA-256 — keeping FrankenPHP ${current}"
+        log_warn "Downloaded FrankenPHP does not match the SHA-256 GitHub reports — keeping FrankenPHP ${current}"
         return 0
     fi
     chmod 755 "$tmp"

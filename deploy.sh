@@ -6,17 +6,13 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.13.2"
-# The glibc (-gnu) builds, which need glibc 2.28+. The musl builds of 1.13.2
-# die with SIGILL in hash('sha256') on CPUs without SHA-NI, which is most VPS
-# hosts (php/frankenphp#2743).
-# SHA-256 of the release binaries. FrankenPHP publishes no checksum file, so
-# these are GitHub's asset digests; update them with FRANKENPHP_VERSION:
-#   curl -fsS https://api.github.com/repos/php/frankenphp/releases/tags/v<ver> \
-#     | jq -r '.assets[] | select(.name|test("^frankenphp-linux-(x86_64|aarch64)-gnu$")) | "\(.name) \(.digest)"'
-# update.sh reads all three values from this file.
-FRANKENPHP_SHA256_X86_64="5fdef42b73c19f8ff601edbde6f205836c0903bd3fb0ef807b8ae7fb088d9536"
-FRANKENPHP_SHA256_AARCH64="555a3c531b01da66cf77e04290d81d68c1a9c2c8ee98de4a9961293f6b087047"
+FRANKENPHP_VERSION="1.13.4"
+# The glibc (-gnu) builds, which need glibc 2.28+. FrankenPHP's maintainers
+# advise against the musl static builds in production.
+# FrankenPHP rebuilds the latest release's binaries every night, so a pinned
+# SHA-256 goes stale within a day. The install checks the download against the
+# digest GitHub reports for the asset at that moment instead.
+# update.sh reads FRANKENPHP_VERSION from this file.
 NODE_MAJOR="22"
 LOG_FILE="/var/log/fd-commander-deploy.log"
 readonly DISTRO_DEBIAN="debian"
@@ -562,12 +558,31 @@ use_app_user_group() {
     return 0
 }
 
+# Print the SHA-256 GitHub reports for a FrankenPHP release asset. FrankenPHP
+# publishes no checksum file, and its assets are rebuilt nightly. Uses the PHP
+# CLI to read the JSON, since jq isn't installed.
+frankenphp_asset_sha256() {
+    local version="$1" asset="$2"
+    curl -fsSL --proto '=https' --tlsv1.2 \
+        "https://api.github.com/repos/php/frankenphp/releases/tags/v${version}" \
+        | php -r '
+            $release = json_decode(stream_get_contents(STDIN), true);
+            foreach ($release["assets"] ?? [] as $a) {
+                if ($a["name"] === $argv[1] && preg_match("/^sha256:([0-9a-f]{64})$/", $a["digest"] ?? "", $m)) {
+                    echo $m[1];
+                    exit(0);
+                }
+            }
+            exit(1);
+        ' "$asset"
+}
+
 install_frankenphp() {
     log_info "Installing FrankenPHP ${FRANKENPHP_VERSION}..."
-    local arch expected_sha
+    local arch
     case "$(uname -m)" in
-        x86_64)  arch="linux-x86_64-gnu";  expected_sha="$FRANKENPHP_SHA256_X86_64" ;;
-        aarch64) arch="linux-aarch64-gnu"; expected_sha="$FRANKENPHP_SHA256_AARCH64" ;;
+        x86_64)  arch="linux-x86_64-gnu" ;;
+        aarch64) arch="linux-aarch64-gnu" ;;
         *)       log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
     esac
     local url="https://github.com/php/frankenphp/releases/download/v${FRANKENPHP_VERSION}/frankenphp-${arch}"
@@ -575,9 +590,15 @@ install_frankenphp() {
     local tmp="${dest}.new"
     log_info "Downloading FrankenPHP from ${url}..."
     curl -fSL --proto '=https' --tlsv1.2 -o "$tmp" "$url"
+    local expected_sha
+    if ! expected_sha=$(frankenphp_asset_sha256 "$FRANKENPHP_VERSION" "frankenphp-${arch}"); then
+        rm -f "$tmp"
+        log_error "Could not read the SHA-256 of frankenphp-${arch} ${FRANKENPHP_VERSION} from GitHub"
+        exit 1
+    fi
     if ! echo "${expected_sha}  ${tmp}" | sha256sum --check --quiet --status; then
         rm -f "$tmp"
-        log_error "FrankenPHP download does not match the pinned SHA-256 (${expected_sha})"
+        log_error "FrankenPHP download does not match the SHA-256 GitHub reports (${expected_sha}). Run deploy.sh again; the release may have been rebuilt mid-download."
         exit 1
     fi
     chmod 755 "$tmp"
