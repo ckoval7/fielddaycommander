@@ -341,8 +341,10 @@
 
                 {{-- Pending/Failed contacts from local queue (newest, so last) --}}
                 <template x-for="contact in [...queue].reverse()" :key="contact.uuid">
+                    {{-- The callsign button is the keyboard way in; .self keeps Enter on it from recalling twice --}}
                     <tr
                         @click="recallByUuid(contact.uuid)"
+                        @keydown.enter.self="recallByUuid(contact.uuid)"
                         class="cursor-pointer hover:bg-base-200"
                         :aria-current="recalledUuid === contact.uuid"
                         :class="{
