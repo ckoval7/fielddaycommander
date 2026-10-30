@@ -5,7 +5,7 @@
 <div>
     @if($this->isVisible())
         <div class="relative">
-            @foreach($alerts as $alert)
+            @foreach($this->visibleAlerts() as $alert)
                 @php
                     $isManual = ($alert['event'] ?? '') === 'Local Alert';
                     $isRed = $isManual || ($alert['severity_level'] ?? '') === 'red';

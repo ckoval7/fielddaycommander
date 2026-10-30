@@ -15,12 +15,17 @@ class WeatherAlertBanner extends Component
 {
     public array $alerts = [];
 
+    /**
+     * Keys of the alerts this browser session has dismissed.
+     *
+     * @var list<string>
+     */
     #[Session]
-    public ?string $dismissedFingerprint = null;
+    public array $dismissedAlertKeys = [];
 
     public function mount(): void
     {
-        $this->alerts = app(WeatherService::class)->getAlerts();
+        $this->setAlerts(app(WeatherService::class)->getAlerts());
     }
 
     /**
@@ -47,8 +52,7 @@ class WeatherAlertBanner extends Component
      */
     public function handleSharedAlertUpdate(): void
     {
-        $this->alerts = app(WeatherService::class)->getAlerts();
-        $this->dismissedFingerprint = null;
+        $this->setAlerts(app(WeatherService::class)->getAlerts());
     }
 
     /**
@@ -57,27 +61,65 @@ class WeatherAlertBanner extends Component
      */
     public function handleAlertUpdate(): void
     {
-        $this->alerts = app(WeatherService::class)->getAlerts();
-        $this->dismissedFingerprint = null;
+        $this->setAlerts(app(WeatherService::class)->getAlerts());
     }
 
     public function dismiss(): void
     {
-        $this->dismissedFingerprint = $this->currentFingerprint();
+        $this->dismissedAlertKeys = array_values(array_unique([
+            ...$this->dismissedAlertKeys,
+            ...array_map($this->alertKey(...), $this->alerts),
+        ]));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function visibleAlerts(): array
+    {
+        return array_values(array_filter(
+            $this->alerts,
+            fn (array $alert): bool => ! in_array($this->alertKey($alert), $this->dismissedAlertKeys, true),
+        ));
     }
 
     public function isVisible(): bool
     {
-        if (empty($this->alerts)) {
-            return false;
-        }
-
-        return $this->dismissedFingerprint !== $this->currentFingerprint();
+        return $this->visibleAlerts() !== [];
     }
 
-    protected function currentFingerprint(): string
+    /**
+     * Stores the alert list and forgets dismissals for alerts that have ended,
+     * so a later alert of the same kind shows again.
+     *
+     * @param  list<array<string, mixed>>  $alerts
+     */
+    protected function setAlerts(array $alerts): void
     {
-        return hash('xxh128', json_encode($this->alerts));
+        $this->alerts = $alerts;
+        $this->dismissedAlertKeys = array_values(array_intersect(
+            $this->dismissedAlertKeys,
+            array_map($this->alertKey(...), $alerts),
+        ));
+    }
+
+    /**
+     * Identifies an alert across NWS reissues, which rewrite the headline,
+     * description and expiry every update. A local alert is keyed by its
+     * message, and an NWS alert by its type and whether it covers the site,
+     * so an escalation from nearby to on-site shows again.
+     *
+     * @param  array<string, mixed>  $alert
+     */
+    protected function alertKey(array $alert): string
+    {
+        $event = (string) ($alert['event'] ?? '');
+
+        if ($event === 'Local Alert') {
+            return 'local|'.($alert['headline'] ?? '');
+        }
+
+        return 'nws|'.$event.'|'.($alert['severity_level'] ?? '');
     }
 
     public function render(): View
