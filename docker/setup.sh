@@ -14,7 +14,7 @@ ENV_FILE="${1:-.env}"
 EXAMPLE_FILE=".env.example"
 
 if [[ ! -f "$EXAMPLE_FILE" ]]; then
-    echo "Error: $EXAMPLE_FILE not found. Run this script from the project root."
+    echo "Error: $EXAMPLE_FILE not found. Run this script from the project root." >&2
     exit 1
 fi
 
