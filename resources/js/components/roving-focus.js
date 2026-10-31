@@ -15,8 +15,8 @@
  *
  * Usage in Blade: <div x-roving-focus> ... <button data-roving-item> ... </div>
  */
-const KEYS_BACK = ['ArrowUp', 'ArrowLeft'];
-const KEYS_FORWARD = ['ArrowDown', 'ArrowRight'];
+const KEYS_BACK = new Set(['ArrowUp', 'ArrowLeft']);
+const KEYS_FORWARD = new Set(['ArrowDown', 'ArrowRight']);
 
 function visibleItems(root) {
     return [...root.querySelectorAll('[data-roving-item]')].filter(item => item.offsetParent !== null);
@@ -53,9 +53,9 @@ export function rovingFocus(el, { cleanup }) {
         const index = items.indexOf(item);
         let next = null;
 
-        if (KEYS_BACK.includes(event.key)) {
+        if (KEYS_BACK.has(event.key)) {
             next = items[Math.max(0, index - 1)];
-        } else if (KEYS_FORWARD.includes(event.key)) {
+        } else if (KEYS_FORWARD.has(event.key)) {
             next = items[Math.min(items.length - 1, index + 1)];
         } else if (event.key === 'Home') {
             next = items[0];
