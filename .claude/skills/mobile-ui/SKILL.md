@@ -159,7 +159,27 @@ it('gives the callsign field a mobile-friendly keyboard', function () {
 
 For Livewire components, use `Livewire::test(...)->assertSeeHtml(...)`.
 
-The project has no browser tests in the suite. `pestphp/pest-plugin-browser` would add real viewport tests (`visit('/')->on()->mobile()`), but it is a new dependency, so ask before installing it. Instead, run the browser audit below; it needs only Docker.
+### Browser layout tests (`tests/Browser`)
+
+Feature tests only see the HTML; layout regressions need a real browser. `tests/Browser/LayoutTest.php` (Pest browser plugin, Playwright Chromium) opens every screen at phone 360, tablet 810, tablet 1024 (sidebar open) and desktop 1280, with a seeded event that fills each screen (`Support/FieldDayScene.php`: contacts, shifts with unresolved assignments, guestbook entries, equipment, messages, and a Winter Field Day variant). It also covers states that only appear after an action: logbook rows selected, a modal submitted empty so the validation summary opens, and station mode on an enrolled browser. `Support/layout-audit.js` fails a page for:
+
+- sideways page scroll, or a control off screen outside a scroll container
+- controls overlapping each other, or covered by another element at first paint
+- content spilling out of its card, tile, stat, alert, modal or button
+- touch targets under 44px tall or 24px wide (24px for checkboxes), and field text under 16px, on touch screens
+- content sitting more than 28px from the left edge on phones (stacked padding)
+
+Run it after any view, CSS or layout change, and before merging such a branch into `dev`. It doesn't run with `php artisan test`; it needs the `fdc-browser-tests` image (built automatically from `tests/Browser/Dockerfile`) and current assets (`npm run build`):
+
+```bash
+tests/Browser/run.sh                              # everything, about 7 minutes
+tests/Browser/run.sh --filter='manage schedule'   # one screen, all widths
+tests/Browser/run.sh --filter='rows_selected'     # one interaction test
+```
+
+When you add a screen, add its path to the `screens` dataset. When a state only appears after an action, add an interaction test like the logbook one. When a page has an intentional overlay that isn't a layout bug (like the sidebar scroll arrows), mark it `data-layout-audit-ignore` rather than loosening a check. Keep the scene deterministic: Faker is seeded, so a new random field shifts every name after it.
+
+The Docker and Playwright audit below is still useful for screenshots, WebKit, and the side-by-side before/after comparison.
 
 ### Browser audit (Docker + Playwright)
 
@@ -218,3 +238,4 @@ Then check the screen by hand:
 - [ ] Server actions show loading state and can't double-submit
 - [ ] Works in light and dark; state not shown by color alone
 - [ ] Feature test asserts the mobile-relevant markup
+- [ ] `tests/Browser/run.sh` passes for the screens you touched

@@ -249,6 +249,7 @@
                     type="button"
                     class="absolute inset-x-0 top-0 z-10 flex justify-center pt-1 pb-3 bg-linear-to-b from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll up"
+                    data-layout-audit-ignore
                 >
                     <x-icon name="phosphor-caret-up" class="size-4" />
                 </button>
@@ -402,6 +403,7 @@
                     type="button"
                     class="absolute inset-x-0 bottom-0 z-10 flex justify-center items-end pt-3 pb-1 pointer-coarse:min-h-11 bg-linear-to-t from-base-100 lg:from-base-200 to-transparent text-base-content/60 hover:text-base-content transition-[opacity,visibility] duration-150"
                     aria-label="Scroll down"
+                    data-layout-audit-ignore
                 >
                     <x-icon name="phosphor-caret-down" class="size-4" />
                 </button>

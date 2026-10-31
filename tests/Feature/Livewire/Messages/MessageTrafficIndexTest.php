@@ -160,6 +160,20 @@ describe('sent tracking', function () {
             ->and($message->sent_by_user_id)->toBeNull();
     });
 
+    test('names the clear sent status button for what it does', function () {
+        $message = Message::factory()->create([
+            'event_configuration_id' => $this->eventConfig->id,
+            'user_id' => $this->operator->id,
+            'message_number' => 42,
+            'sent_at' => now(),
+            'sent_by_user_id' => $this->operator->id,
+        ]);
+
+        Livewire::actingAs($this->operator)
+            ->test(MessageTrafficIndex::class, ['event' => $this->event])
+            ->assertSeeHtml('aria-label="Clear sent status for message 42"');
+    });
+
     test('can change who sent a message', function () {
         $otherOp = User::factory()->create(['call_sign' => 'K2XYZ']);
         $otherOp->givePermissionTo('log-contacts');

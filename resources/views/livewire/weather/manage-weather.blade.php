@@ -325,7 +325,7 @@
                 </div>
                 <div>
                     <label for="weather-notes" class="block py-1 text-sm text-xs">Notes (optional)</label>
-                    <textarea id="weather-notes" wire:model="notes" class="textarea w-full text-sm" rows="2"
+                    <textarea id="weather-notes" wire:model="notes" class="textarea w-full" rows="2"
                         placeholder="Radar showing cells to the west, monitor closely"></textarea>
                     @error('notes') <p class="text-error text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
@@ -409,7 +409,7 @@
 
             {{-- Lightning monitoring guidance --}}
             <details class="border border-base-300 rounded px-3 py-2 bg-base-100">
-                <summary class="cursor-pointer text-sm font-medium">How to monitor for lightning</summary>
+                <summary class="cursor-pointer text-sm font-medium pointer-coarse:py-3">How to monitor for lightning</summary>
                 <div class="mt-3 space-y-3 text-sm">
                     <div>
                         <p class="font-semibold">NWS alerts won't tell you distance</p>

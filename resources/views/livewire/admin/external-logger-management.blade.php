@@ -134,7 +134,8 @@
                                 wire:change="updatePort"
                                 min="1024"
                                 max="65535"
-                                class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                inputmode="numeric"
+                                class="input w-32"
                                 {{ $n1mmEnabled ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 12060</span>
@@ -276,7 +277,8 @@
                                 wire:change="updateWsjtxPort"
                                 min="1024"
                                 max="65535"
-                                class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                inputmode="numeric"
+                                class="input w-32"
                                 {{ $wsjtxEnabled ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 2237</span>
@@ -413,7 +415,8 @@
                                 wire:change="updateUdpAdifPort"
                                 min="1024"
                                 max="65535"
-                                class="block w-32 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                inputmode="numeric"
+                                class="input w-32"
                                 {{ $udpAdifEnabled ? 'disabled' : '' }}
                             >
                             <span class="text-sm text-gray-500 dark:text-gray-400">Default: 2238</span>

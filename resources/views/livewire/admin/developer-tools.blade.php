@@ -25,7 +25,7 @@
         {{-- Time Travel Section --}}
         <x-card title="Clock Override" subtitle="Override the application's current time for testing" icon="phosphor-clock">
             <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     <x-flatpickr
                         label="Date"
                         wire:model.live="fakeDate"
@@ -48,7 +48,7 @@
                         />
                     </div>
 
-                    <div class="flex items-end gap-2">
+                    <div class="flex flex-wrap items-end gap-2">
                         <x-button
                             label="Set Time"
                             wire:click="setTime"

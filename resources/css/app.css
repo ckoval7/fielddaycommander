@@ -440,6 +440,13 @@
         font-size: 1rem;
     }
 
+    /* Laravel and Livewire pagination links and buttons. */
+    nav[aria-label="Pagination Navigation"] .relative.inline-flex {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        justify-content: center;
+    }
+
     .tabs:not(.tabs-lg, .tabs-xl) {
         --tab-height: 2.75rem;
     }
@@ -452,11 +459,13 @@
         align-content: center;
     }
 
-    /* Small checkboxes and radios meet the 24px WCAG minimum. */
+    /* Small checkboxes, radios and toggles meet the 24px WCAG minimum. */
     .checkbox-xs,
     .checkbox-sm,
     .radio-xs,
-    .radio-sm {
+    .radio-sm,
+    .toggle-xs,
+    .toggle-sm {
         --size: calc(var(--size-selector, 0.25rem) * 6);
     }
 }

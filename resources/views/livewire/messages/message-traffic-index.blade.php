@@ -231,7 +231,7 @@
                                                     >{{ $message->sentByUser->call_sign ?? trim($message->sentByUser->first_name . ' ' . $message->sentByUser->last_name) }}<span class="sr-only">, change sender</span></button>
                                                 @endif
                                             </div>
-                                            <x-button aria-label="Delete message {{ $message->message_number }}"
+                                            <x-button aria-label="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status for message {{ $message->message_number }}"
                                                 icon="phosphor-x"
                                                 class="btn-ghost btn-xs"
                                                 tooltip="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status"
@@ -239,7 +239,7 @@
                                             />
                                         </div>
                                     @else
-                                        <div class="flex items-center gap-1">
+                                        <div class="flex flex-wrap items-center gap-1">
                                             <x-badge value="{{ $message->role->value === 'received_delivered' ? 'Not delivered' : 'Not sent' }}" class="badge-warning badge-outline badge-sm" />
                                             <x-button
                                                 label="Mark {{ $message->role->value === 'received_delivered' ? 'Delivered' : 'Sent' }}"
@@ -346,8 +346,8 @@
                             @endif
 
                             {{-- Date & Sent Status --}}
-                            <div class="flex items-center justify-between pt-2 border-t border-base-300 text-sm">
-                                <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-base-300 text-sm">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <span class="text-xs text-base-content/60">{{ $message->filed_at?->format('M j, Y') ?? '—' }}</span>
                                     @if($message->sent_at)
                                         <div class="flex items-center gap-1">
@@ -374,7 +374,7 @@
                                 </div>
                                 <div class="flex items-center gap-1">
                                     @if($message->sent_at)
-                                        <x-button aria-label="Delete message {{ $message->message_number }}"
+                                        <x-button aria-label="Clear {{ $message->role->value === 'received_delivered' ? 'delivered' : 'sent' }} status for message {{ $message->message_number }}"
                                             icon="phosphor-x"
                                             class="btn-ghost btn-xs"
                                             tooltip="Clear status"
