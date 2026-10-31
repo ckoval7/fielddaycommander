@@ -169,7 +169,7 @@ Feature tests only see the HTML; layout regressions need a real browser. `tests/
 - touch targets under 44px tall or 24px wide (24px for checkboxes), and field text under 16px, on touch screens
 - content sitting more than 28px from the left edge on phones (stacked padding)
 
-Run it after any view, CSS or layout change, and before merging such a branch into `dev`. It doesn't run with `php artisan test`; it needs the `fdc-browser-tests` image (built automatically from `tests/Browser/Dockerfile`) and current assets (`npm run build`):
+Run it after any view, CSS or layout change, and before merging such a branch into `dev`. It doesn't run with `php artisan test`; it needs the `fdc-browser-tests` image (built automatically from `tests/Browser/Dockerfile`). `run.sh` runs `npm run build` first, so the tests always see the current JavaScript and CSS, and it refuses to run while `public/hot` points at a Vite dev server:
 
 ```bash
 tests/Browser/run.sh                              # everything, about 7 minutes

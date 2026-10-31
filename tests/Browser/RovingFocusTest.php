@@ -9,7 +9,8 @@ it('moves between recent QSOs with the arrow, Home and End keys', function () {
     $scene = FieldDayScene::create();
     $this->actingAs($scene->admin);
 
-    $page = visit($scene->path('/logging/session/{session}'))->on()->desktop()->resize(1280, 800);
+    $page = visit($scene->path('/logging/session/{session}'))->on()->desktop()->resize(1280, 800)
+        ->assertNoJavaScriptErrors();
 
     $focused = '() => document.activeElement?.getAttribute("aria-label")';
     $visible = '[...document.querySelectorAll("[x-roving-focus] [data-roving-item]")].filter((i) => i.offsetParent !== null)';
