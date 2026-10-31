@@ -22,7 +22,7 @@ function visibleItems(root) {
     return [...root.querySelectorAll('[data-roving-item]')].filter(item => item.offsetParent !== null);
 }
 
-export function rovingFocus(el, { cleanup }) {
+export function rovingFocus(el, directive, { cleanup }) {
     let current = null;
 
     const settle = () => {
