@@ -293,7 +293,7 @@ describe('bulk actions', function () {
 
         expect($component->get('selectedIds'))
             ->toHaveCount(5)
-            ->toEqual($entries->pluck('id')->toArray());
+            ->toEqualCanonicalizing($entries->pluck('id')->toArray());
     });
 
     test('bulk verifies selected entries', function () {

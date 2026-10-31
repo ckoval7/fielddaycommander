@@ -80,7 +80,7 @@ The app runs under Octane, so the application boots once and is reused across re
 - Every change gets a new or updated test. Most are feature tests: `php artisan make:test --pest NameTest` (`--unit` for unit tests; don't include the suite directory in the name).
 - Use model factories and their states; use `fake()` (not `$this->faker`).
 - Tests run on in-memory SQLite (`phpunit.xml`), so avoid MySQL-only SQL in code paths that tests touch, or guard it.
-- Run only the affected file, directory or `--filter`, never the full suite. Don't delete tests without asking.
+- While working, run the affected file, directory or `--filter`. Before merging a branch into `dev`, run the full suite in parallel (about two minutes); the command is in the `branch-workflow` skill. Don't delete tests without asking.
 - Don't write throwaway verification scripts or tinker sessions when a test can prove it.
 
 Commands, and the container to run them in, are in the `branch-workflow` skill (host PHP is too old). In short: `php artisan test --compact <path>`, then `vendor/bin/pint --dirty --format agent` after changing PHP. Don't run Pint with `--test`; just run it to fix.

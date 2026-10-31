@@ -33,7 +33,7 @@ The repo is used from two checkouts that sit side by side:
 
 ## Merging a feature branch into dev
 
-Count the branch's commits first. More than one: squash. Exactly one: a regular merge.
+Run the full suite on the branch first (see "Running PHP tooling") and fix what fails, including flaky tests it turns up. Then count the branch's commits. More than one: squash. Exactly one: a regular merge.
 
 ```bash
 git switch dev
@@ -85,7 +85,7 @@ To update an existing ruleset, look up its id with `gh api repos/ckoval7/fieldda
 
 ## Running PHP tooling
 
-Host PHP is too old (8.3, and it lacks ext-xml), so always run PHP tooling in a container. Keep test runs targeted to a file, directory or filter, not the full suite.
+Host PHP is too old (8.3, and it lacks ext-xml), so always run PHP tooling in a container. While working, run the tests for what you touched. Before merging a branch into `dev`, run the full suite in parallel in the background (about two minutes on 16 processes) and fix any failures first. Never run the full suite without `--parallel`: serially it's slow enough to hit command timeouts.
 
 The local `.env` is in demo mode, so tests need `DEMO_MODE=false` and `DB_CONNECTION=sqlite` set in the environment.
 
@@ -93,6 +93,7 @@ The local `.env` is in demo mode, so tests need `DEMO_MODE=false` and `DB_CONNEC
 
 ```bash
 docker exec -e DEMO_MODE=false -e DB_CONNECTION=sqlite fielddaycommander-laravel.test-1 php artisan test --compact <path>
+docker exec -e DEMO_MODE=false -e DB_CONNECTION=sqlite fielddaycommander-laravel.test-1 php artisan test --compact --parallel --processes=16   # full suite
 docker exec fielddaycommander-laravel.test-1 vendor/bin/pint --dirty --format agent
 ```
 
@@ -102,6 +103,10 @@ docker exec fielddaycommander-laravel.test-1 vendor/bin/pint --dirty --format ag
 docker run --rm -v "$PWD":/var/www/html -w /var/www/html -u 1000:1000 \
   -e DEMO_MODE=false -e DB_CONNECTION=sqlite \
   --entrypoint php sail-8.4/app artisan test --compact <path>
+
+docker run --rm -v "$PWD":/var/www/html -w /var/www/html -u 1000:1000 \
+  -e DEMO_MODE=false -e DB_CONNECTION=sqlite \
+  --entrypoint php sail-8.4/app artisan test --compact --parallel --processes=16   # full suite
 
 docker run --rm -v "$PWD":/var/www/html -w /var/www/html -u 1000:1000 \
   --entrypoint vendor/bin/pint sail-8.4/app --dirty --format agent
