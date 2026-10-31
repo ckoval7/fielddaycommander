@@ -18,7 +18,7 @@ One flow takes `dev` from "finished work" to a tagged release on `main`. Run the
 
 **Where to stop:** "promote dev", "PR dev to main" and similar requests stop after step 6, with the PR green and carrying the new version. A request to release, tag or ship runs all the way through. If a promote run already happened (`VERSION` on `dev` is a number with no tag, and the PR is open), a release picks up at step 7, after checking that `dev` hasn't moved since: if it has, re-run steps 1–2 and 5 on the new commits.
 
-Work in the **main checkout**. The `branch-workflow` skill covers the checkouts, merge rules and how to run PHP tooling. Keep test runs targeted, never the full suite.
+Work in the **main checkout**. The `branch-workflow` skill covers the checkouts, merge rules and how to run PHP tooling. Run targeted tests while fixing things, and the full suite in parallel (see `branch-workflow`) before each merge into `dev`.
 
 **Pushing:** invoking this skill is the user's request to push `dev` and `feature/demo-mode`, in steps 4, 5 and 6. Push `main` (step 7) and the tag only when the user asks for it in this session. Never force-push.
 
@@ -121,7 +121,7 @@ npm run build
 ```
 
 - **Major version bumps** change the dependencies, so the user must approve them. List them with what would change, ask, and only bump the ones they approve.
-- **Testing:** run the targeted tests for the areas the updated packages touch. Livewire and maryUI updates need tests that exercise components. Pest and PHPUnit updates need one test directory. Ask before running anything broader.
+- **Testing:** run the targeted tests for the areas the updated packages touch. Livewire and maryUI updates need tests that exercise components. Then run the full suite in parallel before merging the updates into `dev`.
 - **Re-scan:** run Trivy again, and `$S scan` too if updates changed any code, such as published vendor assets or config.
 - **Commit:** `chore(deps): update composer and npm packages`. Merge into `dev` and demo.
 

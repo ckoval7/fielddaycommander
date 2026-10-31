@@ -100,7 +100,7 @@
 
                     @if($this->eventOperators->isNotEmpty())
                         <details class="collapse collapse-arrow bg-base-200/50 rounded-box">
-                            <summary class="collapse-title text-sm min-h-0 py-2">Operators in this event ({{ $this->eventOperators->count() }})</summary>
+                            <summary class="collapse-title text-sm min-h-0 py-2 pointer-coarse:py-3">Operators in this event ({{ $this->eventOperators->count() }})</summary>
                             <div class="collapse-content">
                                 <ul class="divide-y divide-base-300">
                                     @foreach($this->eventOperators as $operator)

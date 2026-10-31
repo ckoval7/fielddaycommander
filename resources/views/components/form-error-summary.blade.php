@@ -19,7 +19,7 @@
                     {{-- Bullet is drawn manually: a <button> is always laid out inline-block, which pushes a native list marker down to its last line. --}}
                     <li class="flex items-start gap-2">
                         <span aria-hidden="true">&bull;</span>
-                        <button type="button" class="text-left cursor-pointer hover:underline" x-on:click="$store.formErrors.focusField(error.field)" x-text="error.message"></button>
+                        <button type="button" class="text-left cursor-pointer hover:underline pointer-coarse:min-h-11" x-on:click="$store.formErrors.focusField(error.field)" x-text="error.message"></button>
                     </li>
                 </template>
             </ul>

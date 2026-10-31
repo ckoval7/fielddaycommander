@@ -149,12 +149,12 @@ Props from controller:
             @if($widgets->isNotEmpty())
                 <div
                     class="tv-widget-grid"
-                    style="grid-template-columns: repeat({{ $columns }}, minmax(0, 1fr)); grid-template-rows: repeat({{ $rows }}, minmax(0, 1fr));"
+                    style="--tv-columns: {{ $columns }}; --tv-rows: {{ $rows }};"
                 >
                     @foreach($widgets as $widget)
                         <div
                             class="tv-widget-item"
-                            style="grid-column: span {{ $widget['col_span'] }} / span {{ $widget['col_span'] }}; grid-row: span {{ $widget['row_span'] }} / span {{ $widget['row_span'] }};"
+                            style="--tv-col-span: {{ $widget['col_span'] }}; --tv-row-span: {{ $widget['row_span'] }};"
                         >
                             {{-- Render Widget Component in TV size --}}
                             @switch($widget['type'])
@@ -291,18 +291,44 @@ Props from controller:
 
         .tv-widget-grid {
             display: grid;
+            grid-template-columns: repeat(var(--tv-columns), minmax(0, 1fr));
+            grid-template-rows: repeat(var(--tv-rows), minmax(0, 1fr));
             gap: 1.5rem;
             width: 100%;
             height: 100%;
         }
 
         .tv-widget-item {
+            grid-column: span var(--tv-col-span) / span var(--tv-col-span);
+            grid-row: span var(--tv-row-span) / span var(--tv-row-span);
             display: flex;
             flex-direction: column;
             min-height: 0;
             overflow: hidden;
             animation: tv-fade-in 0.5s ease-out;
             animation-fill-mode: both;
+        }
+
+        /* On a phone the one-screen TV grid leaves each tile a few dozen
+           pixels wide, so stack the widgets in one scrolling column. */
+        @media (max-width: 639px) {
+            .tv-dashboard-content {
+                height: auto;
+                min-height: 100dvh;
+            }
+
+            .tv-widget-grid {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: none;
+                height: auto;
+                gap: 1rem;
+            }
+
+            .tv-widget-item {
+                grid-column: auto;
+                grid-row: auto;
+                min-height: 10rem;
+            }
         }
 
         /* Stagger animation for TV widgets */

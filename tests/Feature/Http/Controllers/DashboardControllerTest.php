@@ -121,7 +121,7 @@ test('tv dashboard honours spans, skips hidden widgets and sizes rows from them'
         && $widgets[0]['col_span'] === 1);
     // 1 cell + 4×2 cells = 9 cells over 4 columns → 3 rows
     $response->assertViewHas('rows', 3);
-    $response->assertSee('grid-column: span 4 / span 4; grid-row: span 2 / span 2;', false);
+    $response->assertSee('--tv-col-span: 4; --tv-row-span: 2;', false);
 });
 
 test('tv dashboard reloads itself rather than leaving when the session expires', function () {

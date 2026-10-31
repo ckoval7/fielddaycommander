@@ -64,7 +64,7 @@
                             <th scope="col">Name</th>
                             <th scope="col">Email</th>
                             <th scope="col">Roles</th>
-                            <th scope="col">License</th>
+                            <th scope="col" class="hidden 2xl:table-cell">License</th>
                             <th scope="col">Status</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -77,13 +77,13 @@
                                 </td>
                                 <td class="font-semibold">{{ $user->call_sign }}</td>
                                 <td>{{ $user->first_name }} {{ $user->last_name }}</td>
-                                <td>{{ $user->email }}</td>
+                                <td class="break-all">{{ $user->email }}</td>
                                 <td>
                                     @foreach($user->roles as $role)
                                         <span class="badge badge-primary badge-sm">{{ $role->name }}</span>
                                     @endforeach
                                 </td>
-                                <td>{{ $user->license_class ?? '-' }}</td>
+                                <td class="hidden 2xl:table-cell">{{ $user->license_class ?? '-' }}</td>
                                 <td>
                                     <div class="flex flex-col gap-1">
                                         @if($user->is_ghost)
