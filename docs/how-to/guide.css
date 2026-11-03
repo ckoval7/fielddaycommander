@@ -1,0 +1,286 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+
+.guide-layout {
+  max-width: 780px;
+  margin: 0 auto;
+}
+.guide-layout h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.guide-layout h2:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+.guide-layout h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.guide-layout p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+.guide-layout ul, .guide-layout ol {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.guide-layout li {
+  margin-bottom: 0.5rem;
+}
+.guide-layout strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.guide-layout code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  color: var(--accent-emerald);
+}
+.guide-breadcrumb {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+.guide-breadcrumb a {
+  color: var(--text-muted);
+}
+.guide-breadcrumb a:hover {
+  color: var(--text-primary);
+}
+
+.step-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+.step-box p {
+  margin-bottom: 0.5rem;
+}
+.step-box p:last-child {
+  margin-bottom: 0;
+}
+.step-number {
+  display: inline-block;
+  background: var(--accent-sky);
+  color: #15191e;
+  font-weight: 700;
+  font-size: 0.75rem;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.callout {
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.callout-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.callout p {
+  margin-bottom: 0;
+}
+.callout.tip {
+  background: rgba(76, 175, 80, 0.08);
+  border: 1px solid rgba(76, 175, 80, 0.25);
+}
+.callout.tip .callout-title { color: var(--accent-green); }
+.callout.info {
+  background: rgba(74, 141, 247, 0.08);
+  border: 1px solid rgba(74, 141, 247, 0.25);
+}
+.callout.info .callout-title { color: var(--accent-sky); }
+.callout.warning {
+  background: rgba(251, 146, 60, 0.08);
+  border: 1px solid rgba(251, 146, 60, 0.25);
+}
+.callout.warning .callout-title { color: var(--accent-orange); }
+.callout.danger {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.callout.danger .callout-title { color: #ef4444; }
+
+.code-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+.code-block .comment { color: var(--text-muted); }
+.code-block .cmd { color: var(--text-primary); }
+.code-block .output { color: var(--accent-sky); }
+
+/* Command block with a header naming the computer to run it on. */
+.code-block:has(> .command-header) {
+  padding: 0;
+  overflow: hidden;
+  white-space: normal;
+}
+.command-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.command-header strong { color: var(--text-primary); }
+.command-body {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+.guide-layout .device-context {
+  margin-bottom: 0.75rem;
+  color: var(--accent-sky);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.feature-list {
+  list-style: none;
+  padding-left: 0;
+}
+.feature-list li {
+  padding-left: 1.5rem;
+  position: relative;
+}
+.feature-list li::before {
+  content: "~";
+  position: absolute;
+  left: 0;
+  color: var(--accent-emerald);
+  font-weight: 700;
+}
+.feature-list li.hidden::before {
+  content: "~";
+  color: var(--text-muted);
+}
+
+.badge-advanced {
+  display: inline-block;
+  background: rgba(251, 146, 60, 0.15);
+  color: var(--accent-orange);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.guide-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.guide-nav a {
+  color: var(--accent-sky);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .guide-layout h2 { font-size: 1.3rem; }
+}
+
+.port-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+.port-table th, .port-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.port-table th {
+  color: var(--text-primary);
+  font-weight: 600;
+  background: var(--bg-card);
+}
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+.table-wrap .port-table { margin-bottom: 0; }
+
+.cmd-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+.cmd-table th {
+  text-align: left;
+  padding: 0.6rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
+}
+.cmd-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.cmd-table td:first-child {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--accent-emerald);
+  white-space: nowrap;
+}

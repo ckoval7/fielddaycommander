@@ -23,183 +23,7 @@
 <meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
-<style>
-  .guide-layout {
-    max-width: 780px;
-    margin: 0 auto;
-  }
-  .guide-layout h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-top: 3rem;
-    margin-bottom: 1rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-  .guide-layout h2:first-of-type {
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
-  }
-  .guide-layout h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-  }
-  .guide-layout p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.75;
-    margin-bottom: 1rem;
-  }
-  .guide-layout ul, .guide-layout ol {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.75;
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-  }
-  .guide-layout li {
-    margin-bottom: 0.5rem;
-  }
-  .guide-layout strong {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-  .guide-layout code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 0.15rem 0.45rem;
-    border-radius: 4px;
-    color: var(--accent-emerald);
-  }
-  .guide-breadcrumb {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 2rem;
-  }
-  .guide-breadcrumb a {
-    color: var(--text-muted);
-  }
-  .guide-breadcrumb a:hover {
-    color: var(--text-primary);
-  }
-
-  .step-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .step-box p {
-    margin-bottom: 0.5rem;
-  }
-  .step-box p:last-child {
-    margin-bottom: 0;
-  }
-  .step-number {
-    display: inline-block;
-    background: var(--accent-sky);
-    color: #15191e;
-    font-weight: 700;
-    font-size: 0.75rem;
-    width: 22px;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
-    border-radius: 50%;
-    margin-right: 0.5rem;
-  }
-
-  .callout {
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .callout-title {
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-  }
-  .callout p {
-    margin-bottom: 0;
-  }
-  .callout.tip {
-    background: rgba(76, 175, 80, 0.08);
-    border: 1px solid rgba(76, 175, 80, 0.25);
-  }
-  .callout.tip .callout-title { color: var(--accent-green); }
-  .callout.info {
-    background: rgba(74, 141, 247, 0.08);
-    border: 1px solid rgba(74, 141, 247, 0.25);
-  }
-  .callout.info .callout-title { color: var(--accent-sky); }
-  .callout.warning {
-    background: rgba(251, 146, 60, 0.08);
-    border: 1px solid rgba(251, 146, 60, 0.25);
-  }
-  .callout.warning .callout-title { color: var(--accent-orange); }
-  .callout.danger {
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-  }
-  .callout.danger .callout-title { color: #ef4444; }
-
-  .code-block {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-  }
-  .code-block .comment { color: var(--text-muted); }
-  .code-block .cmd { color: var(--text-primary); }
-  .code-block .output { color: var(--accent-sky); }
-  .code-block .prompt { color: var(--text-muted); }
-
-  .guide-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-  .guide-nav a {
-    color: var(--accent-sky);
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  .badge-advanced {
-    display: inline-block;
-    background: rgba(251, 146, 60, 0.15);
-    color: var(--accent-orange);
-    font-weight: 700;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-  }
-
-  @media (max-width: 768px) {
-    .guide-layout h2 { font-size: 1.3rem; }
-  }
-</style>
+<link rel="stylesheet" href="guide.css">
 </head>
 <body>
 <div class="topo-bg"></div>
@@ -258,8 +82,11 @@
 
       <p>From any computer on the network where Field Day Commander will run, find your public IP address:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">curl -s ifconfig.me</span>
-<span class="output">203.0.113.42</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On any computer at the site</strong><span>Terminal</span></div>
+        <pre class="command-body"><span class="cmd">curl -s ifconfig.me</span>
+<span class="output">203.0.113.42</span></pre>
+      </div>
 
       <p>This is the IP address the rest of the internet uses to reach your network. Write it down. You'll enter it in your DNS settings.</p>
 
@@ -291,9 +118,12 @@
 
       <p>After a few minutes, confirm the record is working:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">nslookup fd.yourcallsign.com</span>
+      <div class="code-block">
+        <div class="command-header"><strong>On any computer</strong><span>Terminal</span></div>
+        <pre class="command-body"><span class="cmd">nslookup fd.yourcallsign.com</span>
 <span class="output">Name:    fd.yourcallsign.com
-Address: 203.0.113.42</span></div>
+Address: 203.0.113.42</span></pre>
+      </div>
 
       <p>If it returns your public IP, DNS is set up correctly.</p>
 
@@ -324,13 +154,19 @@ Address: 203.0.113.42</span></div>
 
       <p>When you run the deploy script, include the <code>--ssl</code> and <code>--email</code> flags:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ./deploy.sh --domain fd.yourcallsign.com --ssl --email you@example.com</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ./deploy.sh --domain fd.yourcallsign.com --ssl --email you@example.com</span></pre>
+      </div>
 
       <p>If you've already deployed without TLS, you'll need to redeploy with these flags to enable it.</p>
 
       <p>If the server runs a firewall, the deploy script opens port 443 for you but not port 80. With UFW active, open it yourself:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ufw allow 80/tcp</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ufw allow 80/tcp</span></pre>
+      </div>
 
       <p>On a server that uses firewalld, run <code>sudo firewall-cmd --permanent --add-service=http</code> and then <code>sudo firewall-cmd --reload</code>.</p>
 
@@ -352,7 +188,7 @@ Address: 203.0.113.42</span></div>
 
       <p>Caddy automatically redirects HTTP to HTTPS, so if someone types <code>http://fd.yourcallsign.com</code> they'll be sent to the secure version automatically.</p>
 
-      <h2>Summary</h2>
+      <h2>Quick Reference</h2>
 
       <p>Once all the pieces are in place, the setup looks like this:</p>
 

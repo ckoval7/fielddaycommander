@@ -23,221 +23,7 @@
 <meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../fd-commander.css">
-<style>
-  .guide-layout {
-    max-width: 780px;
-    margin: 0 auto;
-  }
-  .guide-layout h2 {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-top: 3rem;
-    margin-bottom: 1rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-  .guide-layout h2:first-of-type {
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
-  }
-  .guide-layout h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-  }
-  .guide-layout p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.75;
-    margin-bottom: 1rem;
-  }
-  .guide-layout ul, .guide-layout ol {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.75;
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-  }
-  .guide-layout li {
-    margin-bottom: 0.5rem;
-  }
-  .guide-layout strong {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-  .guide-layout code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 0.15rem 0.45rem;
-    border-radius: 4px;
-    color: var(--accent-emerald);
-  }
-  .guide-breadcrumb {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 2rem;
-  }
-  .guide-breadcrumb a {
-    color: var(--text-muted);
-  }
-  .guide-breadcrumb a:hover {
-    color: var(--text-primary);
-  }
-
-  .step-box {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .step-box p {
-    margin-bottom: 0.5rem;
-  }
-  .step-box p:last-child {
-    margin-bottom: 0;
-  }
-  .step-number {
-    display: inline-block;
-    background: var(--accent-sky);
-    color: #15191e;
-    font-weight: 700;
-    font-size: 0.75rem;
-    width: 22px;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
-    border-radius: 50%;
-    margin-right: 0.5rem;
-  }
-
-  .callout {
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .callout-title {
-    font-weight: 700;
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-  }
-  .callout p {
-    margin-bottom: 0;
-  }
-  .callout.tip {
-    background: rgba(76, 175, 80, 0.08);
-    border: 1px solid rgba(76, 175, 80, 0.25);
-  }
-  .callout.tip .callout-title { color: var(--accent-green); }
-  .callout.info {
-    background: rgba(74, 141, 247, 0.08);
-    border: 1px solid rgba(74, 141, 247, 0.25);
-  }
-  .callout.info .callout-title { color: var(--accent-sky); }
-  .callout.warning {
-    background: rgba(251, 146, 60, 0.08);
-    border: 1px solid rgba(251, 146, 60, 0.25);
-  }
-  .callout.warning .callout-title { color: var(--accent-orange); }
-
-  .code-block {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-  }
-  .code-block .comment { color: var(--text-muted); }
-  .code-block .cmd { color: var(--text-primary); }
-  .code-block .output { color: var(--accent-sky); }
-  .code-block .prompt { color: var(--text-muted); }
-
-  .feature-list {
-    list-style: none;
-    padding-left: 0;
-  }
-  .feature-list li {
-    padding-left: 1.5rem;
-    position: relative;
-  }
-  .feature-list li::before {
-    content: "~";
-    position: absolute;
-    left: 0;
-    color: var(--accent-emerald);
-    font-weight: 700;
-  }
-  .feature-list li.hidden::before {
-    content: "~";
-    color: var(--text-muted);
-  }
-
-  .badge-advanced {
-    display: inline-block;
-    background: rgba(251, 146, 60, 0.15);
-    color: var(--accent-orange);
-    font-weight: 700;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-  }
-
-  .guide-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-  }
-  .guide-nav a {
-    color: var(--accent-sky);
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  @media (max-width: 768px) {
-    .guide-layout h2 { font-size: 1.3rem; }
-  }
-
-  .port-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-  }
-  .port-table th, .port-table td {
-    text-align: left;
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-    color: var(--text-secondary);
-  }
-  .port-table th {
-    color: var(--text-primary);
-    font-weight: 600;
-    background: var(--bg-card);
-  }
-  .table-wrap {
-    overflow-x: auto;
-    margin-bottom: 1.5rem;
-  }
-  .table-wrap .port-table { margin-bottom: 0; }
-</style>
+<link rel="stylesheet" href="guide.css">
 </head>
 <body>
 <div class="topo-bg"></div>
@@ -298,17 +84,26 @@
 
       <p>This command sets up two <a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd timers</a> (Linux's built-in job scheduler): a database backup every hour, and a full backup of all three files every night at 02:30.</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh --install-schedule</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo /var/www/fd-commander/backup.sh --install-schedule</span></pre>
+      </div>
 
       <p>You should see <code>Hourly database backups and nightly full backups (02:30) enabled</code>, followed by where the backups go and how many days they're kept.</p>
 
       <p>Backups go to <code>/var/backups/fd-commander</code>, and anything older than 7 days is deleted each time a backup runs. To change either, add <code>--dest</code> or <code>--keep-days</code>. The timers remember whatever you pass here. <code>--keep-days 0</code> keeps everything.</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh --install-schedule --keep-days 30</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo /var/www/fd-commander/backup.sh --install-schedule --keep-days 30</span></pre>
+      </div>
 
       <p>To change the settings later, run <code>--install-schedule</code> again with the new values. It replaces the old schedule. To see when the next backups will run:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">systemctl list-timers 'fdcommander-backup*'</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">systemctl list-timers 'fdcommander-backup*'</span></pre>
+      </div>
 
       <p>You should see two timers, <code>fdcommander-backup-db.timer</code> and <code>fdcommander-backup.timer</code>, each with its next run time. If the list is empty, run the <code>--install-schedule</code> command again and look for an error in its output.</p>
 
@@ -325,8 +120,11 @@
 
       <p>The schedule option is for native installs only. On a Docker host, run <code>backup.sh --docker</code> from cron instead. Create a file named <code>/etc/cron.d/fd-commander</code> with these two lines, changing <code>/opt/fd-commander</code> to the folder that holds your <code>docker-compose.yml</code>:</p>
 
-      <div class="code-block"><span class="cmd">0 * * * *  root  cd /opt/fd-commander &amp;&amp; ./backup.sh --docker --db-only
-30 2 * * * root  cd /opt/fd-commander &amp;&amp; ./backup.sh --docker</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>New file: /etc/cron.d/fd-commander</span></div>
+        <pre class="command-body"><span class="cmd">0 * * * *  root  cd /opt/fd-commander &amp;&amp; ./backup.sh --docker --db-only
+30 2 * * * root  cd /opt/fd-commander &amp;&amp; ./backup.sh --docker</span></pre>
+      </div>
 
       <p>That's a database backup on the hour and a full backup at 02:30, the same as the native timers. Docker backups go to a <code>backups</code> folder next to <code>docker-compose.yml</code>. If the path in the cron file is wrong, the jobs fail quietly. After the top of the next hour, check that a new <code>fdc-db-*</code> file has appeared in <code>backups</code>.</p>
 
@@ -336,17 +134,23 @@
 
       <p>The schedule runs on the clock, not on what's happening at your site. Take a full backup by hand before an update, right after the event ends, and before you shut the server down to pack it up. If an update goes wrong, a backup from five minutes earlier is much better than one from last night.</p>
 
-      <div class="code-block"><span class="comment"># Native install</span>
-<span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/backup.sh</span>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="comment"># Native install</span>
+<span class="cmd">sudo /var/www/fd-commander/backup.sh</span>
 
 <span class="comment"># Docker, from the folder with docker-compose.yml</span>
-<span class="prompt">$</span> <span class="cmd">sudo ./backup.sh --docker</span></div>
+<span class="cmd">sudo ./backup.sh --docker</span></pre>
+      </div>
 
       <p>You'll see a <code>Wrote</code> line for each file with its size, and then a line like <code>Backup complete: /var/backups/fd-commander (stamp 20260628-180512)</code>. Note the stamp. You'll need it to copy or restore. Add <code>--db-only</code> to skip the photos and env file, which is quicker. Add <code>--dest</code> to write somewhere other than the default folder.</p>
 
       <p>The backup folder belongs to root, so list it with <code>sudo</code>:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ls -lh /var/backups/fd-commander</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ls -lh /var/backups/fd-commander</span></pre>
+      </div>
 
       <div class="callout info">
         <div class="callout-title">Hourly backups are database only</div>
@@ -361,18 +165,27 @@
 
       <div class="step-box">
         <p><span class="step-number">1</span> In an SSH session on the server, bundle the backups and make the bundle yours:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo tar -czf ~/fdc-backups.tar.gz -C /var/backups/fd-commander --exclude='pre-restore-*' .</span>
-<span class="prompt">$</span> <span class="cmd">sudo chown "$USER" ~/fdc-backups.tar.gz</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo tar -czf ~/fdc-backups.tar.gz -C /var/backups/fd-commander --exclude='pre-restore-*' .</span>
+<span class="cmd">sudo chown "$USER" ~/fdc-backups.tar.gz</span></pre>
+        </div>
         <p>On a Docker host, use the <code>backups</code> folder next to your <code>docker-compose.yml</code> instead of <code>/var/backups/fd-commander</code>. The <code>--exclude</code> leaves out the <code>pre-restore-*</code> folders, which you won't need on the laptop.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> On your laptop (not in the SSH session), copy the bundle down:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">scp your-username@fd-commander.local:fdc-backups.tar.gz .</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On your laptop</strong><span>Local terminal, outside SSH</span></div>
+          <pre class="command-body"><span class="cmd">scp your-username@fd-commander.local:fdc-backups.tar.gz .</span></pre>
+        </div>
         <p>Open a new terminal window for this. You'll see a progress line reach 100%, and <code>fdc-backups.tar.gz</code> will be in the folder you ran it from.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Back on the server, delete the bundle so your passwords don't stay in your home folder:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">rm ~/fdc-backups.tar.gz</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">rm ~/fdc-backups.tar.gz</span></pre>
+        </div>
       </div>
 
       <p>PowerShell on Windows has <code>scp</code> and <code>tar</code> built in. To unpack the bundle, run <code>tar -xzf fdc-backups.tar.gz</code> in an empty folder.</p>
@@ -391,7 +204,10 @@
       <h3>USB drive</h3>
 
       <p>Point the schedule at the drive with <code>--dest</code> (see above), or keep the schedule on the server and copy to the drive whenever it's plugged in:</p>
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo rsync -a /var/backups/fd-commander/ /media/usb/fdc-backups/</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo rsync -a /var/backups/fd-commander/ /media/usb/fdc-backups/</span></pre>
+      </div>
       <p>You can run it as often as you like, since <code>rsync</code> only copies what changed. Store the drive somewhere other than with the server.</p>
 
       <h3>rsync to another computer</h3>
@@ -400,16 +216,25 @@
 
       <div class="step-box">
         <p><span class="step-number">1</span> Create a key for root and authorize it on the other computer. Accept the default file and leave the passphrase empty, so the copy can run unattended:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ssh-keygen -t ed25519</span>
-<span class="prompt">$</span> <span class="cmd">sudo ssh-copy-id backup@nas.local</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo ssh-keygen -t ed25519</span>
+<span class="cmd">sudo ssh-copy-id backup@nas.local</span></pre>
+        </div>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Run a copy by hand to test it. You should see no errors, and the files should appear in <code>fdc-backups</code> on the other computer:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo rsync -a /var/backups/fd-commander/ backup@nas.local:fdc-backups/</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo rsync -a /var/backups/fd-commander/ backup@nas.local:fdc-backups/</span></pre>
+        </div>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Schedule it by creating <code>/etc/cron.d/fdc-offsite</code> with this line:</p>
-        <div class="code-block">15 * * * * root rsync -a /var/backups/fd-commander/ backup@nas.local:fdc-backups/</div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>New file: /etc/cron.d/fdc-offsite</span></div>
+          <pre class="command-body">15 * * * * root rsync -a /var/backups/fd-commander/ backup@nas.local:fdc-backups/</pre>
+        </div>
         <p>This copies at a quarter past every hour, after the hourly backup. When the other computer can't be reached, such as at a site with no internet, the copy will fail and the next one will catch up.</p>
       </div>
 
@@ -421,24 +246,36 @@
 
       <div class="step-box">
         <p><span class="step-number">1</span> Install restic and create a password file for it. On Rocky or AlmaLinux, restic comes from EPEL.</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo apt install restic</span>
-<span class="prompt">$</span> <span class="cmd">sudo sh -c 'openssl rand -base64 32 &gt; /root/.restic-password &amp;&amp; chmod 600 /root/.restic-password'</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo apt install restic</span>
+<span class="cmd">sudo sh -c 'openssl rand -base64 32 &gt; /root/.restic-password &amp;&amp; chmod 600 /root/.restic-password'</span></pre>
+        </div>
         <p>Save a copy of that password somewhere safe off the server. Without it, nobody can read the snapshots, including you.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Create the repository. This example uses the other computer over SFTP with root's SSH key from the rsync steps above. For a USB drive, use a path like <code>/media/usb/restic</code> instead.</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo restic -r sftp:backup@nas.local:/srv/restic/fd-commander --password-file /root/.restic-password init</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo restic -r sftp:backup@nas.local:/srv/restic/fd-commander --password-file /root/.restic-password init</span></pre>
+        </div>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Schedule a nightly snapshot by creating <code>/etc/cron.d/fdc-restic</code>:</p>
-        <div class="code-block">RESTIC_REPOSITORY=sftp:backup@nas.local:/srv/restic/fd-commander
+        <div class="code-block">
+          <div class="command-header"><strong>On the server</strong><span>New file: /etc/cron.d/fdc-restic</span></div>
+          <pre class="command-body">RESTIC_REPOSITORY=sftp:backup@nas.local:/srv/restic/fd-commander
 RESTIC_PASSWORD_FILE=/root/.restic-password
-30 3 * * * root restic backup /var/backups/fd-commander &amp;&amp; restic forget --keep-daily 14 --keep-weekly 8 --prune</div>
+30 3 * * * root restic backup /var/backups/fd-commander &amp;&amp; restic forget --keep-daily 14 --keep-weekly 8 --prune</pre>
+        </div>
         <p>This runs at 03:30, after the nightly full backup. It keeps two weeks of daily snapshots and eight weekly ones. See <a href="https://restic.readthedocs.io/en/stable/060_forget.html">restic’s retention-policy documentation</a> for how daily and weekly retention select snapshots.</p>
       </div>
 
       <p>To get files back, restore a snapshot to a folder, then use <code>restore.sh</code> on the files as described below:</p>
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo restic -r sftp:backup@nas.local:/srv/restic/fd-commander --password-file /root/.restic-password restore latest --target /root/fdc-restore</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo restic -r sftp:backup@nas.local:/srv/restic/fd-commander --password-file /root/.restic-password restore latest --target /root/fdc-restore</span></pre>
+      </div>
       <p>The <a href="https://restic.readthedocs.io/en/stable/050_restore.html">restic restore documentation</a> covers <code>latest</code> and <code>--target</code>. restic recreates the full path, so the files land in <code>/root/fdc-restore/var/backups/fd-commander</code>. Point <code>restore.sh</code> at the database file there. The matching files and env backups are next to it.</p>
 
       <h2>Restoring</h2>
@@ -449,11 +286,14 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 
       <p>A full restore replaces the database and uploaded files with the backup contents. Contacts logged and files uploaded after that backup will no longer be in the restored system. Settings handling differs between a same-server restore and a move to new hardware; see <a href="#new-server">Moving to a New Server</a> for the latter.</p>
 
-      <div class="code-block"><span class="comment"># Native install</span>
-<span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/restore.sh /var/backups/fd-commander/fdc-db-20260628-023000.sql.gz</span>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="comment"># Native install</span>
+<span class="cmd">sudo /var/www/fd-commander/restore.sh /var/backups/fd-commander/fdc-db-20260628-023000.sql.gz</span>
 
 <span class="comment"># Docker, from the folder with docker-compose.yml</span>
-<span class="prompt">$</span> <span class="cmd">sudo ./restore.sh backups/fdc-db-20260628-023000.sql.gz --docker</span></div>
+<span class="cmd">sudo ./restore.sh backups/fdc-db-20260628-023000.sql.gz --docker</span></pre>
+      </div>
 
       <p>To restore an hourly backup, add <code>--db-only</code>. Without it, the script stops and tells you the files archive is missing. Photos and other uploads on the server stay as they are.</p>
 
@@ -474,9 +314,12 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 
       <p>Every restore saves the data it replaced in a <code>pre-restore-YYYYMMDD-HHMMSS</code> folder inside the backup folder. To undo a restore, restore the database file from that folder. Use <code>sudo ls</code> to find its name, since the folder is readable by root only:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ls /var/backups/fd-commander/pre-restore-20260628-191544/</span>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ls /var/backups/fd-commander/pre-restore-20260628-191544/</span>
 <span class="output">fdc-db-20260628-191544.sql.gz  fdc-env-20260628-191544  fdc-files-20260628-191544.tar.gz</span>
-<span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/restore.sh /var/backups/fd-commander/pre-restore-20260628-191544/fdc-db-20260628-191544.sql.gz</span></div>
+<span class="cmd">sudo /var/www/fd-commander/restore.sh /var/backups/fd-commander/pre-restore-20260628-191544/fdc-db-20260628-191544.sql.gz</span></pre>
+      </div>
 
       <p>On Docker, the folder is in <code>backups/</code> next to <code>docker-compose.yml</code>, and the command takes <code>--docker</code>. If you restored with <code>--new-server</code>, undo with <code>--new-server</code> too, so the old <code>APP_KEY</code> goes back.</p>
 
@@ -493,12 +336,18 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Copy all three files from one backup set to your home folder on the new server:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">scp fdc-*-20260628-023000* your-username@fd-commander.local:~/</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On your laptop</strong><span>Local terminal, in the folder with the backup files</span></div>
+          <pre class="command-body"><span class="cmd">scp fdc-*-20260628-023000* your-username@fd-commander.local:~/</span></pre>
+        </div>
         <p>Pick a nightly or hand-made set. <code>--new-server</code> needs the env file, and hourly backups don't have one.</p>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Restore with <code>--new-server</code>:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo /var/www/fd-commander/restore.sh ~/fdc-db-20260628-023000.sql.gz --new-server</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the new server</strong><span>Terminal or SSH session</span></div>
+          <pre class="command-body"><span class="cmd">sudo /var/www/fd-commander/restore.sh ~/fdc-db-20260628-023000.sql.gz --new-server</span></pre>
+        </div>
         <p>This copies <code>APP_KEY</code> and the <code>MAIL_*</code> settings from the backup into the new server's <code>.env</code>, so two-factor sign-in and email keep working. The new server keeps its own database password. You'll get the usual <code>yes</code> prompt.</p>
       </div>
       <div class="step-box">
@@ -514,7 +363,10 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
       </div>
       <div class="step-box">
         <p><span class="step-number">2</span> Copy the three backup files into the <code>backups</code> folder next to <code>docker-compose.yml</code>, and restore:</p>
-        <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ./restore.sh backups/fdc-db-20260628-023000.sql.gz --docker</span></div>
+        <div class="code-block">
+          <div class="command-header"><strong>On the new server</strong><span>Terminal or SSH session, in the folder with docker-compose.yml</span></div>
+          <pre class="command-body"><span class="cmd">sudo ./restore.sh backups/fdc-db-20260628-023000.sql.gz --docker</span></pre>
+        </div>
       </div>
       <div class="step-box">
         <p><span class="step-number">3</span> Open <code>backups/fdc-env-20260628-023000</code> and copy the <code>APP_KEY</code> line, plus any <code>MAIL_*</code> lines, into the new host's <code>.env</code>. Leave <code>DB_PASSWORD</code> and <code>DB_ROOT_PASSWORD</code> alone. The new database volume was created with the new passwords and won't accept the old ones.</p>
@@ -529,8 +381,11 @@ RESTIC_PASSWORD_FILE=/root/.restic-password
 
       <p>The <code>--keep-days</code> cleanup only removes backups at the top of the backup folder. The <code>pre-restore-*</code> folders are never deleted automatically, since they're your way back from a restore. Once you're happy with a restore, remove its folder by hand. Check the name first, because <code>rm -r</code> doesn't ask before it deletes:</p>
 
-      <div class="code-block"><span class="prompt">$</span> <span class="cmd">sudo ls /var/backups/fd-commander</span>
-<span class="prompt">$</span> <span class="cmd">sudo rm -r /var/backups/fd-commander/pre-restore-20260628-191544</span></div>
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body"><span class="cmd">sudo ls /var/backups/fd-commander</span>
+<span class="cmd">sudo rm -r /var/backups/fd-commander/pre-restore-20260628-191544</span></pre>
+      </div>
 
       <p>With the default 7 days, you'll have about 168 hourly database backups plus 7 full sets. Field Day data is small, so this rarely matters. On a small SD card, check free space now and then with <code>df -h</code>.</p>
 
