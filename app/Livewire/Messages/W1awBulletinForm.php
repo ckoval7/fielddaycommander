@@ -10,18 +10,30 @@ use App\Models\BulletinScheduleEntry;
 use App\Models\Event;
 use App\Models\W1awBulletin;
 use App\Scoring\Dto\Nomenclature;
+use App\Services\BulletinScheduleCsvService;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class W1awBulletinForm extends Component
 {
     use AuthorizesRequests;
+    use WithFileUploads;
+
+    /**
+     * How times are shown in the form fields and compared on import.
+     */
+    private const TIME_FORMAT = 'Y-m-d H:i';
 
     public Event $event;
 
@@ -49,6 +61,16 @@ class W1awBulletinForm extends Component
 
     public string $scheduleNotes = '';
 
+    /** @var TemporaryUploadedFile|null */
+    public $scheduleCsv = null;
+
+    public bool $replaceSchedule = false;
+
+    public bool $showScheduleUpload = false;
+
+    /** @var list<string> */
+    public array $scheduleImportErrors = [];
+
     public function mount(): void
     {
         $event = app(EventContextService::class)->getContextEvent();
@@ -65,7 +87,7 @@ class W1awBulletinForm extends Component
             $this->bulletinId = $bulletin->id;
             $this->frequency = $bulletin->frequency;
             $this->mode = $bulletin->mode;
-            $this->receivedAt = $bulletin->received_at->format('Y-m-d H:i');
+            $this->receivedAt = $bulletin->received_at->format(self::TIME_FORMAT);
             $this->bulletinText = $bulletin->bulletin_text;
         }
     }
@@ -241,7 +263,7 @@ class W1awBulletinForm extends Component
         $this->scheduleMode = $entry->mode;
         $this->scheduleFrequencies = $entry->frequencies;
         $this->scheduleSource = $entry->source;
-        $this->scheduleScheduledAt = $entry->scheduled_at->format('Y-m-d H:i');
+        $this->scheduleScheduledAt = $entry->scheduled_at->format(self::TIME_FORMAT);
         $this->scheduleNotes = $entry->notes ?? '';
     }
 
@@ -289,6 +311,117 @@ class W1awBulletinForm extends Component
 
         BulletinScheduleEntry::forEvent($this->event->id)->findOrFail($entryId)->delete();
         $this->dispatch('toast', title: 'Transmission deleted', type: 'success');
+    }
+
+    public function openScheduleUpload(): void
+    {
+        if (! auth()->user()->can('manage-bulletins')) {
+            abort(403);
+        }
+
+        $this->reset(['scheduleCsv', 'replaceSchedule', 'scheduleImportErrors']);
+        $this->resetValidation('scheduleCsv');
+        $this->showScheduleUpload = true;
+    }
+
+    /**
+     * Load transmissions from a schedule CSV. Nothing is saved unless every
+     * row is valid; rows already on the schedule are skipped.
+     */
+    public function importScheduleCsv(BulletinScheduleCsvService $csv): void
+    {
+        if (! auth()->user()->can('manage-bulletins')) {
+            abort(403);
+        }
+
+        $this->scheduleImportErrors = [];
+
+        $this->validate([
+            'scheduleCsv' => ['required', 'file', 'max:256', 'mimes:csv,txt'],
+        ]);
+
+        $result = $csv->parse(
+            $this->scheduleCsv->get(),
+            $this->event,
+            $this->nomenclature()->bulletinSources,
+            $this->defaultScheduleSource(),
+        );
+
+        if ($result['errors'] !== []) {
+            $this->scheduleImportErrors = $result['errors'];
+
+            return;
+        }
+
+        [$added, $skipped] = DB::transaction(function () use ($result): array {
+            if ($this->replaceSchedule) {
+                BulletinScheduleEntry::forEvent($this->event->id)->delete();
+            }
+
+            $seen = BulletinScheduleEntry::forEvent($this->event->id)
+                ->get()
+                ->map(fn (BulletinScheduleEntry $entry): string => $this->scheduleKey($entry->scheduled_at->format(self::TIME_FORMAT), $entry->mode, $entry->source))
+                ->flip()
+                ->all();
+
+            $added = 0;
+            $skipped = 0;
+
+            foreach ($result['rows'] as $row) {
+                $key = $this->scheduleKey($row['scheduled_at']->format(self::TIME_FORMAT), $row['mode'], $row['source']);
+
+                if (isset($seen[$key])) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $seen[$key] = true;
+
+                BulletinScheduleEntry::create([
+                    ...$row,
+                    'event_id' => $this->event->id,
+                    'created_by' => auth()->id(),
+                ]);
+                $added++;
+            }
+
+            return [$added, $skipped];
+        });
+
+        $this->reset(['scheduleCsv', 'replaceSchedule', 'showScheduleUpload']);
+
+        $title = 'Imported '.$added.' '.Str::plural('transmission', $added);
+
+        if ($skipped > 0) {
+            $title .= ", skipped {$skipped} already on the schedule";
+        }
+
+        $this->dispatch('toast', title: $title, type: 'success');
+    }
+
+    /**
+     * Download the schedule as a CSV that another server can import.
+     */
+    public function exportScheduleCsv(BulletinScheduleCsvService $csv): StreamedResponse
+    {
+        if (! auth()->user()->can('manage-bulletins')) {
+            abort(403);
+        }
+
+        $entries = BulletinScheduleEntry::forEvent($this->event->id)->orderBy('scheduled_at')->get();
+        $filename = Str::slug($this->event->name ?: 'event').'-bulletin-schedule.csv';
+
+        return response()->streamDownload(function () use ($csv, $entries): void {
+            $handle = fopen('php://output', 'w');
+            $csv->write($entries, $handle);
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    private function scheduleKey(string $time, string $mode, string $source): string
+    {
+        return "{$time}|{$mode}|".strtoupper($source);
     }
 
     /**
@@ -390,6 +523,7 @@ class W1awBulletinForm extends Component
             'scheduleScheduledAt' => 'scheduled time',
             'scheduleSource' => 'source',
             'scheduleNotes' => 'notes',
+            'scheduleCsv' => 'schedule file',
         ];
     }
 }

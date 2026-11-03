@@ -39,6 +39,27 @@
                 Transmission Schedule
             </div>
         </x-slot:title>
+        @can('manage-bulletins')
+            <x-slot:menu class="shrink-0 gap-1">
+                <x-button
+                    wire:click="openScheduleUpload"
+                    aria-label="Upload schedule"
+                    class="btn-ghost btn-sm"
+                    icon="phosphor-upload-simple"
+                    spinner="openScheduleUpload"
+                >
+                    <span class="sm:hidden">Upload</span>
+                    <span class="max-sm:hidden">Upload Schedule</span>
+                </x-button>
+                <x-button
+                    icon="phosphor-download-simple"
+                    wire:click="exportScheduleCsv"
+                    class="btn-ghost btn-sm btn-square"
+                    spinner="exportScheduleCsv"
+                    title="Download schedule as CSV" aria-label="Download schedule as CSV"
+                />
+            </x-slot:menu>
+        @endcan
 
         @if($this->scheduleEntries->isNotEmpty())
             {{-- Next transmission countdown --}}
@@ -198,6 +219,7 @@
                     @endif
                 </div>
             </div>
+
         @endcan
     </x-card>
 
@@ -341,6 +363,68 @@
             @endif
 
         </form>
+    @endcan
+    @can('manage-bulletins')
+        <x-modal wire:model="showScheduleUpload" title="Upload Schedule" class="backdrop-blur" box-class="max-h-[90dvh] overflow-y-auto overscroll-contain" separator>
+            <div class="space-y-3">
+                <p class="text-sm text-base-content/70">
+                    Import a published CSV schedule. Required headers: time_utc, mode, frequencies. Optional: source, notes. Use UTC times (YYYY-MM-DD HH:MM) and comma-separated frequencies in MHz.
+                </p>
+                <x-file
+                    label="Schedule CSV"
+                    wire:model="scheduleCsv"
+                    accept=".csv,text/csv"
+                    hint="CSV, up to 256 KB and 500 transmissions."
+                >
+                    <x-slot:append>
+                        <div wire:loading wire:target="scheduleCsv" class="text-sm text-primary">
+                            Uploading...
+                        </div>
+                    </x-slot:append>
+                </x-file>
+                <x-checkbox
+                    label="Replace the current schedule"
+                    hint="Deletes existing transmissions if the file is valid. Leave unchecked to keep them and skip matches."
+                    wire:model="replaceSchedule"
+                />
+
+                @if($scheduleImportErrors)
+                    <x-alert
+                        class="alert-error"
+                        icon="phosphor-warning-circle"
+                        data-testid="schedule-import-errors"
+                    >
+                        <div>
+                            <p class="font-medium">Nothing was imported. Fix these errors and try again:</p>
+                            <ul class="list-disc ml-5 mt-1 text-sm break-words">
+                                @foreach(array_slice($scheduleImportErrors, 0, 20) as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                            @if(count($scheduleImportErrors) > 20)
+                                <p class="text-sm mt-1">And {{ count($scheduleImportErrors) - 20 }} more.</p>
+                            @endif
+                        </div>
+                    </x-alert>
+                @endif
+            </div>
+
+            <x-slot:actions class="flex-wrap max-sm:w-full">
+                <x-button
+                    label="Cancel"
+                    wire:click="$set('showScheduleUpload', false)"
+                />
+                <x-button
+                    label="Import CSV"
+                    wire:click="importScheduleCsv"
+                    wire:loading.attr="disabled"
+                    wire:target="importScheduleCsv,scheduleCsv"
+                    class="btn-primary"
+                    icon="phosphor-upload-simple"
+                    spinner="importScheduleCsv"
+                />
+            </x-slot:actions>
+        </x-modal>
     @endcan
 </div>
 
