@@ -86,7 +86,7 @@ class ExchangeParserService
             return null;
         }
 
-        $tokens = preg_split('/\s+/', strtoupper($input));
+        $tokens = preg_split('/\s+/', self::normalize($input));
 
         if (count($tokens) !== 3) {
             $errors[] = count($tokens) < 3
@@ -195,7 +195,7 @@ class ExchangeParserService
             return null;
         }
 
-        $tokens = preg_split('/\s+/', strtoupper($partial));
+        $tokens = preg_split('/\s+/', self::normalize($partial));
         $candidate = $tokens[0];
 
         if ($this->isValidCallsign($candidate)) {
@@ -206,15 +206,26 @@ class ExchangeParserService
     }
 
     /**
+     * Upper-case logging input and turn a slashed zero (Ø) into 0.
+     */
+    public static function normalize(string $input): string
+    {
+        return strtoupper(str_replace(['Ø', 'ø'], '0', $input));
+    }
+
+    /**
      * Validate a callsign format.
-     * Must be 3-10 chars, contain at least one digit and one letter.
+     *
+     * Must be 3-20 chars (the contacts column width), contain at least one
+     * digit and one letter. Twenty leaves room for compound calls such as
+     * "KH6/VE3ABC/P" and long special event calls such as "VK100ANZAC".
      */
     private function isValidCallsign(string $callsign): bool
     {
         $length = strlen($callsign);
 
         return $length >= 3
-            && $length <= 10
+            && $length <= 20
             && preg_match('/^[A-Z0-9\/]+$/', $callsign)
             && preg_match('/\d/', $callsign)
             && preg_match('/[A-Z]/', $callsign);

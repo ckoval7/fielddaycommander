@@ -81,7 +81,7 @@ class ContactEditor extends Component
         $contact = Contact::findOrFail($this->contactId);
         $this->authorize('update', $contact);
 
-        $this->callsign = mb_strtoupper(trim($this->callsign));
+        $this->callsign = ExchangeParserService::normalize(trim($this->callsign));
 
         $validated = $this->validate([
             'callsign' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9\/]+$/'],

@@ -702,6 +702,7 @@ describe('csv export', function () {
             'first_name' => 'Jane',
             'last_name' => 'Smith',
             'callsign' => 'KC1XYZ',
+            'email' => 'jane@example.com',
         ]);
 
         $component = new GuestbookManager;

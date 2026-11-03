@@ -522,7 +522,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
          * Format: CALLSIGN CLASS SECTION (e.g. "W1AW 3A CT")
          */
         parseExchange(input) {
-            const tokens = input.toUpperCase().trim().split(/\s+/);
+            const tokens = input.toUpperCase().replaceAll('Ø', '0').trim().split(/\s+/);
 
             if (tokens.length < 3) {
                 this.parseError = 'Enter callsign, class, and section (e.g. W1AW 3A CT)';
@@ -534,7 +534,7 @@ export default function contactQueue(sessionId, csrfToken, sessionContext) {
             }
 
             const callsign = tokens[0];
-            if (callsign.length < 3 || callsign.length > 10 ||
+            if (callsign.length < 3 || callsign.length > 20 ||
                 !/\d/.test(callsign) || !/[A-Z]/.test(callsign) ||
                 !/^[A-Z0-9/]+$/.test(callsign)) {
                 this.parseError = `Invalid callsign: ${callsign}`;

@@ -23,6 +23,7 @@
 - On phones, the TV dashboard kept its one-screen grid, squeezing tiles until their icons and numbers ran out of them. Widgets now stack in one scrolling column on phones. TVs and larger screens keep the same layout.
 - On phones, the station-mode sign-in page squeezed the station name, buttons, and fields into the middle of the card with wide empty margins on both sides. They now use the full width of the card.
 - On touchscreens, several controls were too small to tap reliably: callsigns in **Recent QSOs** on **Log Contact** on tablets, **UDP Port** fields on **External Loggers**, switches and **How to monitor for lightning** on **Manage Weather**, page buttons under paged lists such as **Users**, **Operators in this event** under manual bonus claims, and links in **Please fix the following errors**. Tap targets are now at least 44 px tall, or 24 px for switches. The **UDP Port** fields now match the app's other fields, and those fields and **Notes (optional)** on **Manage Weather** use larger text so iPhones don't zoom in when tapped.
+- On **Log Contact** and **Transcribe Paper Log**, exchanges with callsigns longer than 10 characters, such as DL/HB9ABC/M, VP2E/W1ABCD, and KH6/VE3ABC/P, were refused with "Invalid callsign". Callsigns containing a slashed zero (Ø) were also refused. Both pages now accept callsigns up to 20 characters and read Ø as the digit 0, so AT15ØITU is logged as AT150ITU. The same limit and conversion apply when editing a contact in **Logbook**.
 
 ## 26.10.14 - 2026-10-29
 
