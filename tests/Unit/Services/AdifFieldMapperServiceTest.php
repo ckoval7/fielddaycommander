@@ -434,3 +434,68 @@ test('keeps a YT or MX picked by hand for a Winter Field Day import', function (
     'Yukon' => ['YT', 'TER'],
     'Mexico' => ['MX', 'DX'],
 ]);
+
+test('a section picked to resolve a conflict replaces the auto-mapped section', function () {
+    $import = AdifImport::factory()->create();
+    $ct = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'section_code' => 'CT',
+    ]);
+    $nnj = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'section_code' => 'NNJ',
+    ]);
+    $this->mapper->autoMap($import);
+
+    $this->mapper->applyResolutions($import, ['W1AW' => ['section_code' => 'NNJ']]);
+
+    expect($ct->refresh()->section_id)->toBe($this->sectionNnj->id)
+        ->and($ct->section_code)->toBe('NNJ')
+        ->and($nnj->refresh()->section_id)->toBe($this->sectionNnj->id);
+});
+
+test('a YT or MX picked to resolve a conflict stores as TER or DX for a Field Day import', function (string $picked, string $counted) {
+    $countedSection = Section::firstOrCreate(['code' => $counted], ['name' => $counted, 'region' => 'VE', 'is_active' => true]);
+    Section::firstOrCreate(['code' => $picked], ['name' => $picked, 'region' => 'VE', 'is_active' => true]);
+    $import = AdifImport::factory()->create();
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'VE8AA',
+        'section_code' => 'CT',
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'VE8AA',
+        'section_code' => $picked,
+    ]);
+    $this->mapper->autoMap($import);
+
+    $this->mapper->applyResolutions($import, ['VE8AA' => ['section_code' => $picked]]);
+
+    expect($record->refresh()->section_id)->toBe($countedSection->id);
+})->with([
+    'Yukon' => ['YT', 'TER'],
+    'Mexico' => ['MX', 'DX'],
+]);
+
+test('a picked section that was mapped by hand uses that mapping', function () {
+    $import = AdifImport::factory()->create();
+    $record = AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'section_code' => 'CT',
+    ]);
+    AdifImportRecord::factory()->create([
+        'adif_import_id' => $import->id,
+        'callsign' => 'W1AW',
+        'section_code' => 'NJN',
+    ]);
+    $this->mapper->autoMap($import);
+    $this->mapper->applyFieldMapping($import, ['sections' => ['NJN' => $this->sectionNnj->id]]);
+
+    $this->mapper->applyResolutions($import, ['W1AW' => ['section_code' => 'NJN']]);
+
+    expect($record->refresh()->section_id)->toBe($this->sectionNnj->id);
+});
