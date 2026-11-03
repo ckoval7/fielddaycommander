@@ -33,6 +33,7 @@
 - Station names received from N1MM Logger+ showed `&amp;` instead of `&`. They now show the ampersand correctly.
 - N1MM Logger+ contacts were dropped when the end of a QSO packet was cut off. They are now saved if the callsign and N1MM QSO ID are still present, without the trailing fields that were lost.
 - N1MM Logger+ score broadcasts filled the server log with "not well-formed XML" warnings when the club name contained `&`. Score packets are now skipped without a warning.
+- On **Import ADIF**, when a callsign had different sections in the file, picking a section in **Class/Section Inconsistencies** was ignored. Imported contacts kept their sections from the file or had no section. All of that callsign's imported contacts now get the section you picked. For ARRL Field Day, YT is stored as TER and MX as DX, as with sections read from the file. Winter Field Day keeps YT and MX.
 
 ## 26.10.14 - 2026-10-29
 
