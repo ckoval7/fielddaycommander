@@ -135,6 +135,9 @@ class AdifFieldMapperService
     /**
      * Apply user-chosen resolutions for callsign inconsistencies.
      *
+     * A picked section also replaces the section_id that auto-mapping set at
+     * upload, since that id is what the imported contact is created with.
+     *
      * @param  array<string, array{exchange_class?: string, section_code?: string}>  $resolutions
      */
     public function applyResolutions(AdifImport $import, array $resolutions): void
@@ -148,12 +151,43 @@ class AdifFieldMapperService
             }
             if (isset($fields['section_code'])) {
                 $updates['section_code'] = $fields['section_code'];
+
+                $sectionId = $this->resolvedSectionId($import, $fields['section_code']);
+                if ($sectionId !== null) {
+                    $updates['section_id'] = $sectionId;
+                }
             }
 
             if (! empty($updates)) {
                 $query->update($updates);
             }
         }
+    }
+
+    /**
+     * The section id a picked section code stores as for this import.
+     *
+     * Matches an active section by code, folding YT and MX to TER and DX as
+     * auto-mapping does. A code that isn't an active section falls back to
+     * the id another record with that code was mapped to by hand.
+     */
+    private function resolvedSectionId(AdifImport $import, string $sectionCode): ?int
+    {
+        $sectionId = Section::query()
+            ->where('code', strtoupper(trim($sectionCode)))
+            ->where('is_active', true)
+            ->value('id');
+
+        if ($sectionId !== null) {
+            return EventSections::countedSectionId((int) $sectionId, $import->eventConfiguration?->event);
+        }
+
+        $mappedId = $import->records()
+            ->where('section_code', $sectionCode)
+            ->whereNotNull('section_id')
+            ->value('section_id');
+
+        return $mappedId === null ? null : (int) $mappedId;
     }
 
     /**
