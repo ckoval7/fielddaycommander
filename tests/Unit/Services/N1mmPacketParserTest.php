@@ -244,3 +244,88 @@ test('handles localized band decimal separator', function () {
     // Frequency is the reliable source
     expect($result->frequencyHz)->toBe(3525190);
 });
+
+/**
+ * A contactinfo packet with the given band and rxfreq.
+ */
+function n1mmBandPacket(string $band, string $rxfreq): string
+{
+    return '<?xml version="1.0" encoding="utf-8"?>'
+        ."<contactinfo><app>N1MM</app><timestamp>2026-06-28 18:00:00</timestamp><band>{$band}</band>"
+        ."<rxfreq>{$rxfreq}</rxfreq><mode>CW</mode><call>W1AW</call><StationName>PC</StationName><ID>abc123</ID></contactinfo>";
+}
+
+test('maps N1MM band values in MHz to Field Day Commander bands', function (string $band, ?string $expected) {
+    expect($this->parser->parse(n1mmBandPacket($band, '0'))->bandName)->toBe($expected);
+})->with([
+    ['1.8', '160m'],
+    ['3.5', '80m'],
+    ['3,5', '80m'],
+    ['7', '40m'],
+    ['14', '20m'],
+    ['21', '15m'],
+    ['28', '10m'],
+    ['50', '6m'],
+    ['144', '2m'],
+    ['222', '1.25m'],
+    ['420', '70cm'],
+    ['432', '70cm'],
+    ['902', '33cm'],
+    ['1296', '23cm'],
+    ['2304', '13cm'],
+    ['10368', '3cm'],
+    ['20m', '20m'],
+    ['10', null],
+    ['', null],
+]);
+
+test('treats a zero N1MM frequency as no frequency', function () {
+    expect($this->parser->parse(n1mmBandPacket('14', '0'))->frequencyHz)->toBeNull();
+});
+
+test('recovers a contact whose end was cut off in transit', function () {
+    $whole = '<?xml version="1.0" encoding="utf-8"?>'
+        .'<contactinfo><app>N1MM</app><timestamp>2027-01-23 18:04:05</timestamp><band>14</band><rxfreq>1402500</rxfreq>'
+        .'<mode>CW</mode><call>W1AW</call><exchange1>2H</exchange1><section>CT</section><comment>Señor Müller</comment>'
+        .'<StationName>RUN-PC</StationName><ID>0f1e2d3c4b5a69788796a5b4c3d2e1f0</ID><IsClaimedQso>1</IsClaimedQso>'
+        .'<oldtimestamp>2027-01-23 18:04:05</oldtimestamp><oldcall>W1AW</oldcall><SentExchange>3O CT</SentExchange></contactinfo>';
+
+    $dto = $this->parser->parse(substr($whole, 0, -40));
+
+    expect($dto)->not->toBeNull()
+        ->and($dto->callsign)->toBe('W1AW')
+        ->and($dto->externalId)->toBe('0f1e2d3c4b5a69788796a5b4c3d2e1f0')
+        ->and($dto->sectionCode)->toBe('CT')
+        ->and($dto->timestamp->toIso8601String())->toBe('2027-01-23T18:04:05+00:00');
+});
+
+test('drops a damaged contact that lost its ID', function () {
+    expect($this->parser->parse('<contactinfo><call>W1AW</call><mode>CW'))->toBeNull();
+});
+
+test('credits a QSO relayed by another networked N1MM PC to the PC that logged it', function () {
+    $packet = fn (string $isOriginal) => '<contactinfo><timestamp>2027-01-23 18:04:05</timestamp><band>14</band>'
+        .'<rxfreq>1402500</rxfreq><mode>CW</mode><call>W1AW</call><NetBiosName>RUN-PC</NetBiosName>'
+        ."<IsOriginal>{$isOriginal}</IsOriginal><StationName>S&amp;P-PC</StationName><ID>abc</ID></contactinfo>";
+
+    expect($this->parser->parse($packet('False'))->stationIdentifier)->toBe('RUN-PC')
+        ->and($this->parser->parse($packet('True'))->stationIdentifier)->toBe('S&P-PC');
+});
+
+test('decodes the extra HTML encoding N1MM puts on station names', function () {
+    $xml = '<RadioInfo><StationName>S&amp;amp;P-PC</StationName><Freq>1402500</Freq><Mode>CW</Mode></RadioInfo>';
+
+    expect($this->parser->parse($xml)->stationIdentifier)->toBe('S&P-PC');
+});
+
+test('skips N1MM score packets even when they are not valid XML', function () {
+    expect($this->parser->isIgnoredPacket('<?xml version="1.0"?><dynamicresults><club>A & B ARC</club>'))->toBeTrue()
+        ->and($this->parser->parse('<?xml version="1.0"?><dynamicresults><club>A & B ARC</club>'))->toBeNull();
+});
+
+test('reads no old timestamp from N1MM\'s 1900 placeholder', function () {
+    $xml = '<contactreplace><timestamp>2027-01-23 18:04:05</timestamp><mode>CW</mode><call>W1AW</call><ID>abc</ID>'
+        .'<oldtimestamp>1900-01-01 00:00:00</oldtimestamp></contactreplace>';
+
+    expect($this->parser->parse($xml)->oldTimestamp)->toBeNull();
+});

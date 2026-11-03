@@ -1354,7 +1354,7 @@ write_caddy_tls_snippet() {
 # with a drop-in; the services may write only storage/ and bootstrap/cache
 # (plus Caddy's certificate store for the web server).
 write_unit_hardening() {
-    local protect_home="true" unit dir extra_paths
+    local protect_home="true" unit dir extra_paths bind_caps
     # An install or certificate under /home or /root must stay readable.
     if [[ "$APP_PATH" == /home/* || "$APP_PATH" == /root/* ]] \
         || grep -sqE '"/(home|root)/' "${CADDY_SNIPPET_DIR}"/*.caddy; then
@@ -1365,6 +1365,13 @@ write_unit_hardening() {
         dir="/etc/systemd/system/${unit}.service.d"
         extra_paths=""
         [[ "$unit" == "fdcommander" ]] && extra_paths=" /var/lib/caddy"
+        # The web server and the scheduler start the external logger
+        # listeners; the N3FJP server's default port is 1000, below 1024.
+        # Ambient capabilities reach only these units and what they start.
+        bind_caps=""
+        if [[ "$unit" == "fdcommander" || "$unit" == "fdcommander-scheduler" ]]; then
+            bind_caps=$'\nCapabilityBoundingSet=CAP_NET_BIND_SERVICE\nAmbientCapabilities=CAP_NET_BIND_SERVICE'
+        fi
         mkdir -p "$dir"
         cat > "${dir}/hardening.conf" <<HARDENEOF
 # Written by deploy.sh/update.sh.
@@ -1373,7 +1380,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=${protect_home}
 ProtectSystem=strict
-ReadWritePaths=${APP_PATH}/storage ${APP_PATH}/bootstrap/cache${extra_paths}
+ReadWritePaths=${APP_PATH}/storage ${APP_PATH}/bootstrap/cache${extra_paths}${bind_caps}
 HARDENEOF
     done
     systemctl daemon-reload

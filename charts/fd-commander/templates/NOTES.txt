@@ -32,7 +32,7 @@ it can take a few minutes before the app answers. Watch it with:
 
 {{- if .Values.externalLoggers.enabled }}
 
-3. External logger UDP ports. These must match the ports set in the admin UI
+3. External logger ports. These must match the ports set in the admin UI
    under Settings > External Loggers:
 {{- if .Values.externalLoggers.n1mm.enabled }}
      N1MM Logger+   {{ .Values.externalLoggers.n1mm.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ dig "nodePorts" "n1mm" "" .Values.externalLoggers.service | default "assigned by Kubernetes" }}){{ end }}
@@ -43,9 +43,12 @@ it can take a few minutes before the app answers. Watch it with:
 {{- if .Values.externalLoggers.udpAdif.enabled }}
      UDP ADIF       {{ .Values.externalLoggers.udpAdif.port }}/udp{{ if eq .Values.externalLoggers.service.type "NodePort" }} (node port {{ dig "nodePorts" "udpAdif" "" .Values.externalLoggers.service | default "assigned by Kubernetes" }}){{ end }}
 {{- end }}
+{{- if .Values.externalLoggers.n3fjp.enabled }}
+     N3FJP          {{ .Values.externalLoggers.n3fjp.port }}/tcp (node IP, hostPort, not a node port)
+{{- end }}
 {{- if eq .Values.externalLoggers.service.type "NodePort" }}
 
-   Note: with NodePort the logging software must send to the node port, which
+   Note: with NodePort the UDP logging software must send to the node port, which
    differs from the in-container port. Use a LoadBalancer service if you need
    the standard port numbers on the LAN. Node ports "assigned by Kubernetes"
    are listed by:

@@ -12,6 +12,7 @@ use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
@@ -21,6 +22,7 @@ use App\Support\AdvancedContactFields;
 use App\Support\EventSections;
 use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -52,6 +54,17 @@ class ExternalContactHandler
     private const EXTERNAL_ID_MAX_LENGTH = 100;
 
     /**
+     * Contact fields an external logger can change, recorded in the audit
+     * log when an edit changes them. Points and dupe flags follow from these.
+     *
+     * @var list<string>
+     */
+    private const AUDITED_FIELDS = [
+        'callsign', 'qso_time', 'band_id', 'mode_id', 'submode', 'section_id', 'exchange_class',
+        'frequency_hz', 'power_watts', 'rst_sent', 'rst_received', 'grid_square', 'contact_name', 'notes',
+    ];
+
+    /**
      * Width of contacts.submode.
      */
     private const SUBMODE_MAX_LENGTH = 20;
@@ -61,14 +74,61 @@ class ExternalContactHandler
         return $this->retryingOnLockContention(fn () => $this->storeContact($dto, $config));
     }
 
-    public function handleReplace(ExternalContactDto $dto, EventConfiguration $config): void
+    /**
+     * @param  string|null  $senderIp  Address the edit came from, for the audit log
+     */
+    public function handleReplace(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp = null): void
     {
-        $this->retryingOnLockContention(fn () => $this->replaceContact($dto, $config));
+        $this->retryingOnLockContention(fn () => $this->replaceContact($dto, $config, $senderIp));
     }
 
-    public function handleDelete(ExternalContactDto $dto, EventConfiguration $config): void
+    /**
+     * @param  string|null  $senderIp  Address the delete came from, for the audit log
+     */
+    public function handleDelete(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp = null): void
     {
-        $this->retryingOnLockContention(fn () => $this->deleteContact($dto, $config));
+        $this->retryingOnLockContention(fn () => $this->deleteContact($dto, $config, $senderIp));
+    }
+
+    /**
+     * Apply an external logger's edit to a contact it found by its own key
+     * rather than by external id (N3FJP numbers records, including ones
+     * logged in Field Day Commander).
+     *
+     * @param  string|null  $sender  The PC or station the edit came from, for the audit log
+     * @param  string|null  $senderIp  Its address, for the audit log
+     *
+     * @throws InvalidExternalContactException
+     */
+    public function handleEditOf(
+        Contact $contact,
+        ExternalContactDto $dto,
+        EventConfiguration $config,
+        ?string $sender = null,
+        ?string $senderIp = null,
+    ): void {
+        $this->assertValidCallsign($dto);
+
+        $this->retryingOnLockContention(function () use ($contact, $dto, $config, $sender, $senderIp) {
+            $this->restoreIfTrashed($contact);
+            $this->updateContact($contact, $dto, $config, $senderIp, $sender);
+        });
+    }
+
+    /**
+     * Delete a contact an external logger found by its own key.
+     *
+     * @param  string|null  $sender  The PC or station the delete came from, for the audit log
+     * @param  string|null  $senderIp  Its address, for the audit log
+     */
+    public function handleDeleteOf(
+        Contact $contact,
+        EventConfiguration $config,
+        string $source,
+        ?string $sender = null,
+        ?string $senderIp = null,
+    ): void {
+        $this->retryingOnLockContention(fn () => $this->deleteExisting($contact, $config, $source, $sender, $senderIp));
     }
 
     /**
@@ -104,12 +164,17 @@ class ExternalContactHandler
     {
         $this->assertValidCallsign($dto);
 
-        // Idempotency: if we already have this external ID, treat as replace
+        // Idempotency: if we already have this external ID, treat as replace.
+        // A deleted contact stays deleted: a second copy of a QSO logged
+        // before its delete (relayed by another networked N1MM PC, or
+        // arriving late, since N1MM doesn't keep its sends in order) must not
+        // bring it back.
         if ($dto->externalId !== null) {
             $existing = $this->findByExternalId($dto->externalId, $config);
             if ($existing !== null) {
-                $this->restoreIfTrashed($existing);
-                $this->updateContact($existing, $dto, $config);
+                if (! $existing->trashed()) {
+                    $this->updateContact($existing, $dto, $config);
+                }
 
                 return $existing;
             }
@@ -133,9 +198,10 @@ class ExternalContactHandler
         $operatorUserId = $this->resolveOperator($operatorCallsign);
 
         $frequencyHz = $dto->frequencyHz ?? $cachedRadioInfo?->frequencyHz;
-        $bandId = $frequencyHz
-            ? $this->bandResolver->resolveByFrequencyHz($frequencyHz)
-            : $this->bandResolver->resolveByName($dto->bandName);
+        // The frequency decides the band; the logger's band name covers a
+        // contact logged without one, or with one outside every known band.
+        $bandId = ($frequencyHz ? $this->bandResolver->resolveByFrequencyHz($frequencyHz) : null)
+            ?? $this->bandResolver->resolveByName($dto->bandName);
 
         $this->assertBandAllowedAtStation($station, $bandId, $dto);
 
@@ -186,7 +252,7 @@ class ExternalContactHandler
         return $contact;
     }
 
-    private function replaceContact(ExternalContactDto $dto, EventConfiguration $config): void
+    private function replaceContact(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp): void
     {
         if ($dto->externalId === null) {
             return;
@@ -197,7 +263,17 @@ class ExternalContactHandler
         // N1MM+ sends contactdelete then contactreplace with the same ID when an
         // operator edits a QSO, so the contact may already be soft-deleted.
         $contact = $this->findByExternalId($dto->externalId, $config);
+
+        // A replace for a QSO never seen is a whole record: N1MM's
+        // "Rebroadcast contest QSOs" sends every QSO this way, and an edit
+        // can overtake its contactinfo. Store it as new.
         if ($contact === null) {
+            try {
+                $this->storeContact($dto, $config);
+            } catch (OutOfPeriodContactException) {
+                // Like an edit outside the event window: ignored.
+            }
+
             return;
         }
 
@@ -207,10 +283,10 @@ class ExternalContactHandler
         }
 
         $this->restoreIfTrashed($contact);
-        $this->updateContact($contact, $dto, $config);
+        $this->updateContact($contact, $dto, $config, $senderIp);
     }
 
-    private function deleteContact(ExternalContactDto $dto, EventConfiguration $config): void
+    private function deleteContact(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp): void
     {
         if ($dto->externalId === null) {
             return;
@@ -219,14 +295,34 @@ class ExternalContactHandler
         $contact = Contact::query()
             ->where('event_configuration_id', $config->id)
             ->where('external_id', $this->storableExternalId($dto->externalId, $config->id))
-            ->first();
+            ->first() ?? $this->soleContactLoggedAt($dto, $config);
+
         if ($contact === null) {
             return;
         }
 
+        $this->deleteExisting($contact, $config, $dto->source, $dto->stationIdentifier, $senderIp);
+    }
+
+    /**
+     * Delete a contact for an external logger and audit it like a delete in
+     * the logbook. External loggers have no user, so the entry names the
+     * logger, the station or PC that sent the delete and its address.
+     */
+    private function deleteExisting(
+        Contact $contact,
+        EventConfiguration $config,
+        string $source,
+        ?string $sender = null,
+        ?string $senderIp = null,
+    ): void {
         $stationName = $contact->operatingSession?->station?->name;
         $contactId = $contact->id;
         $callsign = $contact->callsign;
+
+        if ($contact->trashed()) {
+            return;
+        }
 
         $this->dupes->locked($config->id, function () use ($contact) {
             $contact->delete();
@@ -234,7 +330,19 @@ class ExternalContactHandler
             $contact->operatingSession?->decrement('qso_count');
         });
 
-        $this->broadcastSafely(fn () => ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $dto->source, $stationName, $config->event_id));
+        AuditLog::log(
+            'contact.deleted',
+            auditable: $contact,
+            oldValues: [
+                'callsign' => $callsign,
+                'exchange_class' => $contact->exchange_class,
+                'session_id' => $contact->operating_session_id,
+            ],
+            newValues: $this->auditSender($source, $sender, $senderIp),
+            ipAddress: $senderIp,
+        );
+
+        $this->broadcastSafely(fn () => ExternalContactDeleted::dispatch($contactId, $callsign, $config->id, $source, $stationName, $config->event_id));
     }
 
     /**
@@ -280,6 +388,25 @@ class ExternalContactHandler
             $this->dupes->reevaluate($contact);
             $contact->operatingSession?->increment('qso_count');
         });
+    }
+
+    /**
+     * The one live contact from this logger with the delete's callsign and
+     * QSO time, for a delete whose id matches nothing. A networked N1MM PC
+     * that relays another PC's delete sends a new random id, so only the
+     * callsign and time identify the QSO. Null unless exactly one matches.
+     */
+    private function soleContactLoggedAt(ExternalContactDto $dto, EventConfiguration $config): ?Contact
+    {
+        $matches = Contact::query()
+            ->where('event_configuration_id', $config->id)
+            ->where('external_source', $dto->source)
+            ->where('callsign', strtoupper(trim($dto->callsign)))
+            ->where('qso_time', $dto->timestamp->copy()->utc()->format('Y-m-d H:i:s'))
+            ->limit(2)
+            ->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
     }
 
     /**
@@ -342,11 +469,19 @@ class ExternalContactHandler
         throw new InvalidExternalContactException('Band not allowed at the free VHF station', 'below 50 MHz at VHF station');
     }
 
-    private function updateContact(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): void
-    {
-        $bandId = $dto->frequencyHz
-            ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz)
-            : ($this->bandResolver->resolveByName($dto->bandName) ?? $contact->band_id);
+    /**
+     * @param  string|null  $sender  Who sent the edit, when not the DTO's station
+     */
+    private function updateContact(
+        Contact $contact,
+        ExternalContactDto $dto,
+        EventConfiguration $config,
+        ?string $senderIp = null,
+        ?string $sender = null,
+    ): void {
+        $bandId = ($dto->frequencyHz ? $this->bandResolver->resolveByFrequencyHz($dto->frequencyHz) : null)
+            ?? $this->bandResolver->resolveByName($dto->bandName)
+            ?? $contact->band_id;
         $station = $contact->operatingSession?->station;
         if ($station !== null) {
             $this->assertBandAllowedAtStation($station, $bandId, $dto);
@@ -372,9 +507,29 @@ class ExternalContactHandler
             'adif_fields' => $dto->adifFields ?? $contact->adif_fields,
         ]);
 
+        $changed = array_intersect_key($contact->getDirty(), array_flip(self::AUDITED_FIELDS));
+        $before = array_map(
+            fn (mixed $value) => $value instanceof \DateTimeInterface ? Carbon::instance($value)->toDateTimeString() : $value,
+            array_intersect_key($contact->getOriginal(), $changed),
+        );
+
         // Re-settles both the group the contact left and the one it joined,
         // repricing it for its (possibly new) mode.
         $this->dupes->save($contact, $previousKey);
+
+        if ($changed !== []) {
+            $after = array_map(fn (string $field) => $field === 'qso_time'
+                ? $contact->qso_time?->toDateTimeString()
+                : $contact->getAttribute($field), array_combine(array_keys($changed), array_keys($changed)));
+
+            AuditLog::log(
+                'contact.updated',
+                auditable: $contact,
+                oldValues: $before,
+                newValues: [...$after, ...$this->auditSender($dto->source, $sender ?? $dto->stationIdentifier, $senderIp)],
+                ipAddress: $senderIp,
+            );
+        }
 
         $this->broadcastSafely(fn () => ExternalContactUpdated::dispatch($contact, $config->id, $dto->source, $config->event_id));
     }
@@ -390,6 +545,22 @@ class ExternalContactHandler
         } catch (Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * Who made a change, for the audit log: external loggers have no user,
+     * so the entry names the logger, the station or PC and its address.
+     *
+     * @return array<string, string>
+     */
+    private function auditSender(string $source, ?string $sender, ?string $senderIp): array
+    {
+        return array_filter([
+            'changed_by' => 'external_logger',
+            'source' => $source,
+            'sender' => $sender !== null ? mb_substr($sender, 0, 100) : null,
+            'sender_ip' => $senderIp,
+        ], fn (?string $value) => $value !== null && $value !== '');
     }
 
     /**

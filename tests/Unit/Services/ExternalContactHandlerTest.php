@@ -8,6 +8,7 @@ use App\DTOs\ExternalRadioInfoDto;
 use App\Events\ExternalContactDeleted;
 use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\EventConfiguration;
@@ -553,4 +554,163 @@ test('a contact from an ADIF logger records its TX_PWR as the contact power', fu
 
     expect($contact->power_watts)->toBe(400)
         ->and($this->config->fresh()->highestContactPowerWatts())->toBe(400);
+});
+
+test('audits a contact an external logger deletes, naming the logger, station and address', function () {
+    $session = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+    ]);
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $session->id,
+        'callsign' => 'W1AW',
+        'exchange_class' => '2A',
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+        'external_id' => 'audit123',
+        'external_source' => 'n1mm',
+    ]);
+
+    $this->handler->handleDelete(new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        stationIdentifier: 'RUN-PC',
+        externalId: 'audit123',
+        isDelete: true,
+    ), $this->config, '192.168.1.40');
+
+    $entry = AuditLog::where('action', 'contact.deleted')->sole();
+
+    expect($entry->auditable_id)->toBe($contact->id)
+        ->and($entry->ip_address)->toBe('192.168.1.40')
+        ->and($entry->user_id)->toBeNull()
+        ->and($entry->old_values)->toMatchArray(['callsign' => 'W1AW', 'exchange_class' => '2A', 'session_id' => $session->id])
+        ->and($entry->new_values)->toBe([
+            'changed_by' => 'external_logger',
+            'source' => 'n1mm',
+            'sender' => 'RUN-PC',
+            'sender_ip' => '192.168.1.40',
+        ]);
+});
+
+test('audits the fields an external logger edit changes, and only edits that change something', function () {
+    $session = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+    ]);
+    $contact = Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $session->id,
+        'callsign' => 'W1AW',
+        'exchange_class' => '2A',
+        'qso_time' => $this->testTimestamp,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->modeCw->id,
+        'submode' => 'CW',
+        'external_id' => 'edit123',
+        'external_source' => 'n1mm',
+    ]);
+    $replace = fn (string $class) => new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: 'RUN-PC',
+        exchangeClass: $class,
+        externalId: 'edit123',
+        isReplace: true,
+    );
+
+    $this->handler->handleReplace($replace('2A'), $this->config, '192.168.1.40');
+    expect(AuditLog::where('action', 'contact.updated')->count())->toBe(0);
+
+    $this->handler->handleReplace($replace('3A'), $this->config, '192.168.1.40');
+
+    expect(AuditLog::where('action', 'contact.updated')->sole())
+        ->auditable_id->toBe($contact->id)
+        ->ip_address->toBe('192.168.1.40')
+        ->old_values->toBe(['exchange_class' => '2A'])
+        ->new_values->toBe([
+            'exchange_class' => '3A',
+            'changed_by' => 'external_logger',
+            'source' => 'n1mm',
+            'sender' => 'RUN-PC',
+            'sender_ip' => '192.168.1.40',
+        ]);
+});
+
+test('falls back to the logger band when the frequency is in no known band', function () {
+    $contact = $this->handler->handleContact(new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        bandName: $this->band->name,
+        modeName: 'CW',
+        stationIdentifier: $this->station->name,
+        frequencyHz: 10_120_000,
+        externalId: 'band123',
+    ), $this->config);
+
+    expect($contact->band_id)->toBe($this->band->id);
+
+    $this->handler->handleReplace(new ExternalContactDto(
+        callsign: 'W1AW',
+        timestamp: $this->testTimestamp,
+        source: 'n1mm',
+        modeName: 'CW',
+        stationIdentifier: $this->station->name,
+        frequencyHz: 10_120_000,
+        externalId: 'band123',
+        isReplace: true,
+    ), $this->config);
+
+    expect($contact->fresh()->band_id)->toBe($this->band->id);
+});
+
+/**
+ * An N1MM contact DTO for this test's event.
+ */
+function n1mmDto(object $test, string $id, array $overrides = []): ExternalContactDto
+{
+    return new ExternalContactDto(...[
+        'callsign' => 'W1AW',
+        'timestamp' => $test->testTimestamp,
+        'source' => 'n1mm',
+        'bandName' => $test->band->name,
+        'modeName' => 'CW',
+        'stationIdentifier' => $test->station->name,
+        'externalId' => $id,
+        ...$overrides,
+    ]);
+}
+
+test('stores a replace for a QSO it has never seen, as N1MM\'s rebroadcast sends', function () {
+    $this->handler->handleReplace(n1mmDto($this, 'rebroadcast1', ['isReplace' => true]), $this->config);
+
+    expect(Contact::where('external_id', 'rebroadcast1')->sole())
+        ->callsign->toBe('W1AW')
+        ->band_id->toBe($this->band->id);
+});
+
+test('deletes by callsign and time when a relayed delete carries a new id', function () {
+    $contact = $this->handler->handleContact(n1mmDto($this, 'original1'), $this->config);
+
+    $this->handler->handleDelete(n1mmDto($this, 'random-relay-id', ['isDelete' => true, 'bandName' => null]), $this->config);
+
+    expect($contact->fresh()->trashed())->toBeTrue();
+});
+
+test('leaves contacts alone when an unknown delete matches more than one', function () {
+    $first = $this->handler->handleContact(n1mmDto($this, 'one'), $this->config);
+    $second = $this->handler->handleContact(n1mmDto($this, 'two'), $this->config);
+
+    $this->handler->handleDelete(n1mmDto($this, 'unknown', ['isDelete' => true]), $this->config);
+
+    expect($first->fresh()->trashed())->toBeFalse()
+        ->and($second->fresh()->trashed())->toBeFalse();
 });

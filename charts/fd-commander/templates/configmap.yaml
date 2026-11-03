@@ -123,6 +123,9 @@ data:
   {{- if .Values.externalLoggers.udpAdif.enabled }}
   UDP_ADIF_PORT: {{ .Values.externalLoggers.udpAdif.port | quote }}
   {{- end }}
+  {{- if .Values.externalLoggers.n3fjp.enabled }}
+  N3FJP_PORT: {{ .Values.externalLoggers.n3fjp.port | quote }}
+  {{- end }}
   {{- end }}
 
   FILESYSTEM_DISK: "local"

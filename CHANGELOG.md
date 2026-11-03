@@ -5,6 +5,7 @@
 ### Added
 
 - On **W1AW Bulletin**, managers with **manage-bulletins** permission can import a published transmission schedule from CSV and download the current schedule as CSV to share with another server. Imports skip transmissions already scheduled, with an option to replace the current schedule.
+- Your club can use Field Day Commander as the N3FJP TCP network server, sharing contacts with N3FJP PCs so dupe checks work across both logs (Docker and Helm now publish port 1000, and bare-metal deploys and updates let the web and scheduler services bind it). N3FJP doesn't have a password: anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet.
 
 ### Fixed
 
@@ -24,6 +25,14 @@
 - On phones, the station-mode sign-in page squeezed the station name, buttons, and fields into the middle of the card with wide empty margins on both sides. They now use the full width of the card.
 - On touchscreens, several controls were too small to tap reliably: callsigns in **Recent QSOs** on **Log Contact** on tablets, **UDP Port** fields on **External Loggers**, switches and **How to monitor for lightning** on **Manage Weather**, page buttons under paged lists such as **Users**, **Operators in this event** under manual bonus claims, and links in **Please fix the following errors**. Tap targets are now at least 44 px tall, or 24 px for switches. The **UDP Port** fields now match the app's other fields, and those fields and **Notes (optional)** on **Manage Weather** use larger text so iPhones don't zoom in when tapped.
 - On **Log Contact** and **Transcribe Paper Log**, exchanges with callsigns longer than 10 characters, such as DL/HB9ABC/M, VP2E/W1ABCD, and KH6/VE3ABC/P, were refused with "Invalid callsign". Callsigns containing a slashed zero (Ø) were also refused. Both pages now accept callsigns up to 20 characters and read Ø as the digit 0, so AT15ØITU is logged as AT150ITU. The same limit and conversion apply when editing a contact in **Logbook**.
+- Contacts received over UDP from N1MM Logger+ could be saved without a band and earn 0 points when the frequency was missing or outside every band Field Day Commander knows, even though N1MM sent the band. The band sent by the logger is now used in those cases, including for WSJT-X/JTDX and ADIF UDP contacts, and editing a contact in N1MM no longer clears its band.
+- N1MM Logger+'s "Rebroadcast contest QSOs" skipped contacts that weren't already in Field Day Commander. Those contacts are now added, as are contacts whose edits arrive before the original QSO.
+- With networked N1MM Logger+ PCs, deleting a contact on one PC didn't delete it in Field Day Commander when another PC passed on the deletion under a different ID. It now matches by callsign and QSO time, leaving contacts alone if more than one matches.
+- With networked N1MM Logger+ PCs, a contact passed on by another PC could be credited to that PC instead of the PC that logged it. It is now credited to the PC that logged it.
+- A deleted N1MM Logger+ contact could reappear when a late or second copy of the original QSO arrived, including copies passed on by other networked PCs. Deleted contacts now stay deleted, while an edit from N1MM still restores them.
+- Station names received from N1MM Logger+ showed `&amp;` instead of `&`. They now show the ampersand correctly.
+- N1MM Logger+ contacts were dropped when the end of a QSO packet was cut off. They are now saved if the callsign and N1MM QSO ID are still present, without the trailing fields that were lost.
+- N1MM Logger+ score broadcasts filled the server log with "not well-formed XML" warnings when the club name contained `&`. Score packets are now skipped without a warning.
 
 ## 26.10.14 - 2026-10-29
 

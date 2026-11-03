@@ -135,6 +135,13 @@ externalLoggers:
   udpAdif:
     enabled: true
     port: 2238
+  # N3FJP network server (TCP). Published as a hostPort, so N3FJP PCs connect
+  # to the node's address on the same port the admin UI shows (N3FJP's
+  # default is 1000). A port below 1024 is allowed through the pod's
+  # net.ipv4.ip_unprivileged_port_start sysctl, not a capability.
+  n3fjp:
+    enabled: true
+    port: 1000
   service:
     # Separate service so UDP can use a different type than the web service.
     type: NodePort

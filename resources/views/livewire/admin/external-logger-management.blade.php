@@ -17,7 +17,7 @@
             </div>
             @if ($isDemoMode)
                 <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-4">
-                    <p class="text-amber-800 dark:text-amber-200"><strong>Demo Mode:</strong> UDP listeners are disabled in demo mode. Controls below are read-only.</p>
+                    <p class="text-amber-800 dark:text-amber-200"><strong>Demo Mode:</strong> UDP listeners and the N3FJP server are disabled in demo mode. Controls below are read-only.</p>
                 </div>
             @endif
 
@@ -27,7 +27,7 @@
                 </div>
             @else
                 <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
-                    <p class="text-red-800 dark:text-red-200"><strong>Security Notice:</strong> UDP logging should only be enabled on private, firewalled networks. Do not enable UDP logging on internet-hosted servers, as UDP is unauthenticated and anyone who can reach the port can send arbitrary data.</p>
+                    <p class="text-red-800 dark:text-red-200"><strong>Security Notice:</strong> Keep UDP logging and the N3FJP TCP server on your private, firewalled club LAN. UDP logging is unauthenticated. N3FJP doesn't have a password, so anyone who can reach its port can add, edit, and delete contacts. Never forward these ports from the internet.</p>
                 </div>
                 {{-- N1MM Logger+ Section --}}
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
@@ -452,6 +452,159 @@
                             <li>In fldigi: Configure &gt; Config Dialog &gt; Logging &gt; Cloud-UDP &gt; set UDP address and port and check enable</li>
                             <li>Contacts are matched to a station by the station callsign (fldigi's Station Callsign). Give the receiving station's name or hostname that callsign on the Stations page. If neither matches, a station is created</li>
                             <li>Ensure your firewall allows inbound UDP on port {{ $udpAdifPort }} (e.g., <code class="text-xs text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $udpAdifPort }}/udp</code>)</li>
+                        </ol>
+                    </div>
+                </div>
+                {{-- N3FJP network server Section --}}
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">N3FJP</h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Share the event log with N3FJP network clients over TCP</p>
+                        </div>
+                        <button
+                            role="switch" aria-checked="{{ $n3fjpEnabled ? 'true' : 'false' }}"
+                            wire:click="toggleN3fjp"
+                            wire:loading.attr="disabled"
+                            @if ($isDemoMode) disabled @endif
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {{ $isDemoMode ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer' }} {{ $n3fjpEnabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600' }} pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+                        >
+                            <span class="sr-only">Toggle N3FJP listener</span>
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $n3fjpEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                        </button>
+                    </div>
+
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200">N3FJP networking doesn't have a password, so anyone who can reach the port can add, edit, and delete contacts. Keep the port on your club LAN and never forward it from the internet.</p>
+                    </div>
+
+                    {{-- Process Status Indicator --}}
+                    <div class="flex flex-wrap items-center gap-2 mb-4">
+                        @if ($n3fjpProcessStatus === 'running')
+                            @php($n3fjpClients = $n3fjpHeartbeat['clients'] ?? 0)
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                            <span class="text-sm text-gray-700 dark:text-gray-300">
+                                Serving port {{ $n3fjpHeartbeat['port'] ?? $n3fjpPort }}
+                                &middot; {{ $n3fjpClients }} {{ $n3fjpClients === 1 ? 'PC' : 'PCs' }} connected
+                                &middot; {{ $n3fjpHeartbeat['packets_received'] ?? 0 }} {{ str('message')->plural($n3fjpHeartbeat['packets_received'] ?? 0) }}
+                                &middot; {{ $n3fjpHeartbeat['errors'] ?? 0 }} {{ str('error')->plural($n3fjpHeartbeat['errors'] ?? 0) }}
+                            </span>
+                        @elseif ($n3fjpProcessStatus === 'starting')
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
+                            </span>
+                            <span class="text-sm text-yellow-600 dark:text-yellow-400">Starting listener...</span>
+                        @elseif ($n3fjpProcessStatus === 'crashed')
+                            <span class="inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            <span class="text-sm text-red-600 dark:text-red-400">
+                                Listener stopped unexpectedly &middot; Restart pending
+                            </span>
+                            @if (! $isDemoMode)
+                                <button
+                                    wire:click="restartN3fjpProcess"
+                                    wire:loading.attr="disabled"
+                                    class="ml-2 text-sm text-blue-600 dark:text-blue-400 hover:underline pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+                                >
+                                    Restart Listener
+                                </button>
+                            @endif
+                        @else
+                            <span class="inline-flex rounded-full h-2.5 w-2.5 bg-gray-400"></span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Stopped</span>
+                        @endif
+                    </div>
+
+                    @if ($n3fjpStartupFailure !== null)
+                        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3 mb-4">
+                            <p class="text-sm text-red-800 dark:text-red-200 break-words">{{ $n3fjpStartupFailure['reason'] }}</p>
+                        </div>
+                    @endif
+
+                    {{-- Uptime --}}
+                    @if ($n3fjpProcessStatus === 'running' && ! empty($n3fjpHeartbeat['started_at']))
+                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                            Uptime: {{ \Carbon\Carbon::parse($n3fjpHeartbeat['started_at'])->diffForHumans(null, true) }}
+                        </div>
+                    @endif
+
+                    {{-- Last Log Received --}}
+                    @if ($n3fjpProcessStatus === 'running' || $n3fjpLastLog !== null)
+                        <div x-data="{ open: false }" class="mb-4">
+                            <button
+                                type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+                            >
+                                <x-icon name="phosphor-caret-right" class="w-4 h-4 transition-transform duration-150" x-bind:class="open ? 'rotate-90' : ''" />
+                                <span>Last Contact Received</span>
+                                @if ($n3fjpLastLog !== null)
+                                    @if ($n3fjpLastLog['accepted'])
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Accepted</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">{{ $n3fjpLastLog['rejection_reason'] }}</span>
+                                    @endif
+                                @endif
+                            </button>
+                            <div x-show="open" x-transition class="mt-2 ml-5 text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                @if ($n3fjpLastLog !== null)
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Callsign:</span> {{ $n3fjpLastLog['callsign'] }}</div>
+                                    @if ($n3fjpLastLog['band'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Band:</span> {{ $n3fjpLastLog['band'] }}</div>
+                                    @endif
+                                    @if ($n3fjpLastLog['mode'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Mode:</span> {{ $n3fjpLastLog['mode'] }}</div>
+                                    @endif
+                                    @if ($n3fjpLastLog['section'])
+                                        <div><span class="font-medium text-gray-700 dark:text-gray-300">Section:</span> {{ $n3fjpLastLog['section'] }}</div>
+                                    @endif
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">QSO Time:</span> {{ \Carbon\Carbon::parse($n3fjpLastLog['qso_time'])->format('Y-m-d H:i') }} UTC</div>
+                                    <div><span class="font-medium text-gray-700 dark:text-gray-300">Received:</span> {{ \Carbon\Carbon::parse($n3fjpLastLog['received_at'])->diffForHumans() }}</div>
+                                @else
+                                    <p class="text-gray-400 dark:text-gray-500">No contacts received yet.</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <label for="n3fjpPort" class="block text-sm font-medium text-gray-700 dark:text-gray-300">TCP Port</label>
+                        <div class="mt-1 flex flex-wrap items-center gap-2">
+                            <input
+                                type="number"
+                                id="n3fjpPort"
+                                wire:model="n3fjpPort"
+                                wire:change="updateN3fjpPort"
+                                min="1"
+                                max="65535"
+                                inputmode="numeric"
+                                class="input w-32"
+                                {{ ($n3fjpEnabled || $isDemoMode) ? 'disabled' : '' }}
+                            >
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Default: 1000</span>
+                        </div>
+                        @error('n3fjpPort')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        @if ($n3fjpEnabled)
+                            <p class="mt-1 text-sm text-yellow-600 dark:text-yellow-400">Disable the listener to change the port.</p>
+                        @endif
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Setup Instructions</h3>
+                        <ol class="text-sm text-gray-500 dark:text-gray-400 list-decimal list-inside space-y-1">
+                            <li>On every N3FJP PC, go to Settings &gt; Network. Some N3FJP programs have Network as a top-level menu</li>
+                            <li>Choose TCP networking. Every N3FJP PC must connect as a client. Don't set any PC as an N3FJP server or use File Share</li>
+                            <li>Check &quot;Enable Status / Chat Functions&quot;</li>
+                            <li>Set &quot;Server Name or IP&quot; to this server's IP address</li>
+                            <li>Set the port to match the TCP port above ({{ $n3fjpPort }}). N3FJP's default is 1000</li>
+                            <li>Set &quot;This Station Name&quot; to a name different from the server name, such as the PC's computer name. Contacts are credited to the station with that name or hostname on the Stations page. If neither matches, a station is created</li>
+                            <li>Ensure your firewall allows inbound TCP on port {{ $n3fjpPort }} (e.g., <code class="text-xs text-gray-800 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">sudo ufw allow {{ $n3fjpPort }}/tcp</code>)</li>
+                            <li>Wait for each PC to download the whole event log when it connects. Large logs can take a little while. Refused contacts return to the entry boxes with a chat message explaining why. Clock sync requests are ignored</li>
                         </ol>
                     </div>
                 </div>
