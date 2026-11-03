@@ -259,3 +259,48 @@ test('keeps YT and MX as logged for a Winter Field Day event', function (string 
         ->and($result['section_code'])->toBe($logged)
         ->and($result['section_id'])->toBe(Section::where('code', $logged)->value('id'));
 })->with(['YT', 'MX']);
+
+test('accepts every callsign shape issued around the world', function (string $callsign) {
+    $result = $this->parser->parse("{$callsign} 1D DX");
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['callsign'])->toBe(strtoupper($callsign));
+})->with([
+    '1x1 special event' => 'K1D',
+    'single-letter prefix' => 'B1Z',
+    'no separating numeral' => 'D9K',
+    'digit in prefix' => 'A22A',
+    'digit-led prefix' => '4X4AAA',
+    'three-character prefix' => '3DA0RS',
+    'UK intermediate' => '2E0ABC',
+    'United Nations' => '4U1UN',
+    'two digits' => 'S59DSC',
+    'digits in suffix' => 'I20000X',
+    'trailing digits' => 'CD5846',
+    'special event' => 'GB100RSGB',
+    'ten-character special event' => 'VK100ANZAC',
+    'portable' => 'W1AW/P',
+    'maritime mobile' => 'W1AW/MM',
+    'QRP' => 'W1AW/QRP',
+    'call area' => 'W1AW/7',
+    'foreign prefix' => 'F/G3ABC',
+    'prefix and mobile' => 'DL/HB9ABC/M',
+    'long DX portable' => 'VP2E/W1ABCD',
+    'prefix and portable' => 'KH6/VE3ABC/P',
+    'thirteen characters' => 'DL/HB9ABCD/MM',
+    'lowercase compound' => 'dl/hb9abc/m',
+]);
+
+test('reads a slashed zero as zero', function () {
+    $result = $this->parser->parse('AT15ØITU 1D DX');
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['callsign'])->toBe('AT150ITU');
+});
+
+test('rejects a callsign longer than twenty characters', function () {
+    $result = $this->parser->parse('KH6/VE3ABCD/ABCDEFGHI 1D DX');
+
+    expect($result['success'])->toBeFalse()
+        ->and($result['errors'])->toContain('Invalid callsign: KH6/VE3ABCD/ABCDEFGHI');
+});
