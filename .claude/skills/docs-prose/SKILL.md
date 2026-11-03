@@ -103,6 +103,21 @@ Also avoid:
 
 How-to guides sound like an experienced club member sitting next to you at the bench, walking you through it for the first time. Friendly, patient, and instructive, like a mentor.
 
+### Guide template
+
+Keep the guides uniform so a reader who has used one knows their way around the next. Stray from this only when the content really calls for it, such as a reference-style guide like SSH Basics or Plan Your Bonuses, which has no single procedure to number.
+
+- **Shell.** Copy the head, hero, breadcrumb, `guide-nav` and script tags from an existing guide. Styles come from `how-to/guide.css`, so don't add a `<style>` block. Put new shared styles in `guide.css`. Add each new guide to `guide-nav.js`, `how-to/index.html` and `sitemap.xml`.
+- **Intro.** One or two paragraphs under the breadcrumb about what the guide gets done. No heading.
+- **What You Need.** The first `<h2>` lists what to have in place before starting: hardware, access, permissions, other guides to finish first. Always use this heading, not "Before You Start" or "Prerequisites". Leave it out if there's nothing to list.
+- **Steps.** Sequential sections are `<h2>Step N: Verb Phrase</h2>` (`Step 2: Create a DNS Record`). Background sections that explain how something works (`How It Works`, `How Dupe Checking Works Across Stations`) aren't numbered, and can come before or after the steps.
+- **Troubleshooting.** Problems go under an `<h2>Troubleshooting</h2>`, with one `<h3>` per symptom written as the reader sees it ("The packet counter stays at zero").
+- **Closing.** End with `Quick Reference` for a cheat sheet of commands, ports or settings, or `Next Steps` to point at the guide that comes next. Don't use a summary that repeats the page.
+- **Headings.** Title Case for `<h2>`. `<h3>` symptom headings in Troubleshooting are sentence case. Keep an existing `id` when renaming a heading, because other pages link to it.
+- **Command blocks.** Every block of commands or file contents gets a `command-header` that says where it goes, as in `install.html`: `<strong>On the server</strong><span>Terminal or SSH session</span>`, `<strong>On your laptop</strong><span>Local terminal, outside SSH</span>`, or `<strong>On the server</strong><span>File: /path/to/file</span>` for a file to edit. Name the machine the way the page's prose does ("On the Pi" in the Pi guides, "On the logging PC" for a Windows logger). Put the body in `<pre class="command-body">`, with no `$` or `C:\>` prompt in front of commands. A plain `code-block` with no header is only for text nobody types or saves, like the sample fldigi exchange.
+- **Callouts.** `callout tip`, `info`, `warning` or `danger`, each with a short `callout-title`.
+- Don't leave HTML comments with drafting notes or section banners in the page.
+
 - Explain the why behind a step when it isn't obvious. "Give the Pi a static IP now, so the address you hand out to operators doesn't change halfway through Saturday."
 - Tell the reader what they should see after a step, so they know it worked. "You should see a green Listening badge."
 - Point out the mistakes people actually make before they make them. "If the packet counter stays at zero, it's almost always the firewall."
