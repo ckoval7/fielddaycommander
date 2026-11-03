@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- On **W1AW Bulletin**, managers with **manage-bulletins** permission can import a published transmission schedule from CSV and download the current schedule as CSV to share with another server. Imports skip transmissions already scheduled, with an option to replace the current schedule.
+
 ### Fixed
 
 - On the station-mode sign-in page, a large **Station Mode** heading and a small **STATION MODE** label appeared above the station name. The station name is now the only heading.
