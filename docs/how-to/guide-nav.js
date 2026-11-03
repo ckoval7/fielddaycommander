@@ -19,6 +19,7 @@
     { file: "station-mode.html", title: "Set Up Station Mode" },
     { file: "gota-station.html", title: "Run the GOTA Station" },
     { file: "external-loggers.html", title: "Connect External Loggers" },
+    { file: "n3fjp.html", title: "Connect N3FJP Contest Logs" },
     { file: "fldigi-digital-modes.html", title: "Digital Modes with fldigi" },
     { file: "submit-field-day-entry.html", title: "Submit Your Field Day Entry" },
     { file: "backup-restore.html", title: "Back Up and Restore" },

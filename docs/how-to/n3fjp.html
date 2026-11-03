@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N3FJP Contest Logs - Field Day Commander</title>
+<meta name="description" content="Prepare and test your N3FJP logging PCs with Field Day Commander as the TCP network server.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/n3fjp.html">
+<meta property="og:site_name" content="Field Day Commander">
+<meta property="og:type" content="article">
+<meta property="og:title" content="N3FJP Contest Logs - Field Day Commander">
+<meta property="og:description" content="Prepare and test your N3FJP logging PCs with Field Day Commander as the TCP network server.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/n3fjp.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="N3FJP Contest Logs - Field Day Commander">
+<meta name="twitter:description" content="Prepare and test your N3FJP logging PCs with Field Day Commander as the TCP network server.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Connect <span class="gradient">N3FJP Contest Logs</span></h1>
+    <p>Get your N3FJP logging PCs ready to share the event log with Field Day Commander.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; N3FJP Contest Logs
+      </div>
+
+      <div class="badge-advanced">Logging &middot; Optional</div>
+
+      <p>Keep the logging program your operators know, and connect it to Field Day Commander using N3FJP's own TCP networking. This guide covers N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log, with setup and checks to work through before the weekend or while you're getting the site ready.</p>
+
+      <h2 id="before-you-start">What You Need</h2>
+
+      <p>Have Field Day Commander <a href="install.html">installed</a> and your event <a href="first-event.html">set up</a> and active with the right dates. For a check before the weekend, use a practice event whose dates and times cover the test. A contact outside the active event's window will be refused.</p>
+
+      <p>Put every logging PC on the same <a href="lan-setup.html">club LAN</a> as the server. N3FJP networking doesn't have a password. Anyone who can reach its port can add, edit, and delete contacts, so keep it on the LAN and never forward the port from the internet.</p>
+
+      <p>Open TCP port 1000 on the server's firewall. With UFW, use <code>sudo ufw allow 1000/tcp</code>. The deploy script doesn't open external logger ports. If you choose a different port, use that number in the firewall rule too.</p>
+
+      <p>Docker publishes the port through <code>N3FJP_PORT</code>, which defaults to <code>1000</code>. Helm uses a <code>hostPort</code>, so give the PCs the node's IP address.</p>
+
+      <p>You can create a station for each PC on the <strong>Stations</strong> page now, using the names you'll enter in N3FJP. It's optional, but it gives you a chance to sort out station names before testing.</p>
+
+      <p>Check each PC's clock while you're at it. Field Day Commander checks contact times against the event's dates and times, and it ignores N3FJP's <strong>Sync Clocks</strong> button. Set the clocks correctly on the PCs themselves.</p>
+
+      <h2 id="enable-n3fjp">Step 1: Turn On the N3FJP Server</h2>
+
+      <ol>
+        <li>Open <strong>Logging &gt; External Loggers</strong> in Field Day Commander.</li>
+        <li>Find the <strong>N3FJP</strong> card and check <strong>TCP Port</strong>. It defaults to <code>1000</code>. If you need another port, change it while the server is off.</li>
+        <li>Flip the switch on the card to start the server.</li>
+      </ol>
+
+      <p>Look for <strong>Serving port 1000</strong>, or the port you chose. The card also shows the number of connected PCs, message and error counts, and uptime. Expand <strong>Last Contact Received</strong> after a test contact to see its details and an <strong>Accepted</strong> result or the reason it was refused.</p>
+
+      <p>If the server can't start, the reason appears in red. A bare-metal installation that hasn't run <code>update.sh</code> since this feature was added may not be able to bind port 1000. Run <code>update.sh</code> to apply the needed change, then use <strong>Restart Listener</strong> to retry right away.</p>
+
+      <p>Any contacts already in the event will be sent to each PC when it connects. You don't need to copy the log to the laptops first.</p>
+
+      <h2 id="set-up-each-pc">Step 2: Set Up Each N3FJP PC</h2>
+
+      <p>Get the logging PCs connected and test the network before Field Day weekend, or while you're setting up at the site. Point every N3FJP PC at Field Day Commander, including the PC you previously used as the server. Field Day Commander takes its place. Every PC now needs to be a TCP client. Don't configure any of them as a server or use File Share.</p>
+
+      <p>On each PC, open the <strong>Network Status Display</strong> from <strong>Settings &gt; Network</strong>. Some N3FJP programs put <strong>Network</strong> on the main menu instead. Work through these settings:</p>
+
+      <ol>
+        <li>Choose <strong>TCP</strong> for <strong>Network Method</strong>.</li>
+        <li>Fill in <strong>Server Name or IP</strong> with your Field Day Commander server's IP address or a name this PC can reach. The screenshot uses "fd.local".</li>
+        <li>Set <strong>This Station's Name</strong> to something different from the server name you entered in <strong>Server Name or IP</strong>. Use the name of the Field Day Commander station that should get credit for this PC's contacts, or that station's hostname. If Field Day Commander can't find either match, it creates a station using the name you entered.</li>
+        <li>Check <strong>Port</strong> against the <strong>N3FJP</strong> card on Field Day Commander's <strong>External Loggers</strong> page. Both programs default to <code>1000</code>. If you've changed it, put the same port in both places.</li>
+        <li>Tick <strong>Enable Status / Chat Functions</strong> to allow TCP networking to run. You need this checked even if nobody uses chat.</li>
+      </ol>
+
+      <p>You can leave <strong>Set Msg Server to Log File Host</strong> as it is. That setting belongs to File Share networking.</p>
+
+      <figure class="screenshot"><a href="../screenshots/n3fjp-network-settings.png"><img src="../screenshots/n3fjp-network-settings.png" alt="N3FJP Network Status Display with green boxes highlighting This Station's Name set to Alpha, Server Name or IP set to fd.local, Port set to 1000, TCP selected, and Enable Status / Chat Functions ticked. Set Msg Server to Log File Host is crossed out in red." loading="lazy" width="1841" height="1038"></a></figure>
+
+      <p>Give it about a minute to connect. Watch for "Attempting to connect to ..." to disappear from the status line, followed by "Retrieving full log via TCP, please wait..." as N3FJP downloads the whole event log. As you test the stations, check the band grid too. It should show the other stations, including those operating in Field Day Commander.</p>
+
+      <p>Still waiting? Clicking in <strong>Server Name or IP</strong> stops the connection attempt, so you can fix the setting there. Tick <strong>Enable Status / Chat Functions</strong> again when you're ready to retry.</p>
+
+      <p>Before you move to the next PC, fill in your club's own call, class, and section in N3FJP's setup. Those don't get shared between PCs, so you'll need to enter them at every keyboard.</p>
+
+      <h2 id="check-the-connection">Step 3: Check the Connection Before Operating</h2>
+
+      <p>With the PCs configured, go back to the <strong>N3FJP</strong> card in Field Day Commander. The connected-PC count should match the number you set up. Use your practice event for these checks, with its dates and times covering the test.</p>
+
+      <ol>
+        <li>Log a test contact on an N3FJP PC. Within about a second, it should appear in Field Day Commander's logbook and in the other N3FJP PCs' logs.</li>
+        <li>Log a test contact in Field Day Commander. Check that it appears in every N3FJP log.</li>
+        <li>Log the same call on the same band and mode from two places. The second contact should be a dupe everywhere.</li>
+        <li>Check N3FJP's band grid while testing the operating stations in Field Day Commander. Those stations should appear alongside the N3FJP stations.</li>
+        <li>Send an N3FJP chat message and check that the other PCs receive it.</li>
+        <li>Delete the test contacts. Try a deletion from each program and check that it carries through to the other logs.</li>
+      </ol>
+
+      <p>Edits and deletes made in N3FJP are recorded in Field Day Commander's audit log with the PC's name and IP address. You can check that record as part of the test too.</p>
+
+      <h2 id="troubleshooting">Troubleshooting</h2>
+
+      <p>If Field Day Commander's <strong>N3FJP</strong> card shows fewer PCs than you expected, check the missing PC's <strong>Server Name or IP</strong> first. Then compare its port with the card and check the server's firewall.</p>
+
+      <p>Watch for two settings that can undo the setup: <strong>This Station's Name</strong> must differ from <strong>Server Name or IP</strong>, or N3FJP makes that PC a server. A PC left on <strong>File Share</strong> or configured as the server will also break this arrangement. Every PC must be a TCP client.</p>
+
+      <p>If a test contact is refused, N3FJP shows a chat message beginning "Field Day Commander:" with the reason and puts the contact back in its entry boxes. It may also report that the server is taking an unexpectedly long time. Read the chat message first. Check for a PC clock that puts the contact outside the event's dates and times, an invalid callsign, or an HF contact assigned to the free VHF station.</p>
+
+      <p>If contacts appear under the wrong station, or a new station appears during the test, compare <strong>This Station's Name</strong> with the station name and hostname in Field Day Commander. A name that matches neither will create a station.</p>
+
+      <p>Don't use matching score totals as the connection test. N3FJP and Field Day Commander can score the same log differently. For example, N3FJP counts SSTV as phone, while Field Day Commander scores it as digital. Use Field Day Commander's score and Cabrillo when you prepare your submission.</p>
+
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
+<script src="../lightbox.js"></script>
+
+</body>
+</html>

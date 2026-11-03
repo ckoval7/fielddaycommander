@@ -1098,13 +1098,13 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="external-loggers">External Logger Integration</h2>
-    <p>Field Day Commander can receive contacts from external software in real time over UDP, and it can import ADIF files after the fact. This means operators running N1MM Logger+, digital-mode programs like WSJT-X and fldigi, or any other program that outputs ADIF don't need to double-log their contacts. That software handles the radio side and Field Day Commander handles scoring, deduplication, and Cabrillo export. All of this is optional: stations without external software log directly in Field Day Commander.</p>
+    <p>Field Day Commander can share the event log with N3FJP contest logs over TCP, receive contacts from external software over UDP, and import ADIF files after the fact. Operators running N3FJP, N1MM Logger+, digital-mode programs like WSJT-X and fldigi, or any other program that outputs ADIF don't need to double-log their contacts. That software handles the radio side and Field Day Commander handles scoring, deduplication, and Cabrillo export. All of this is optional: stations without external software log directly in Field Day Commander.</p>
 
-    <p>Contacts from external loggers keep frequency, sent and received reports, grid, name, and comment when supplied. Frequency, reports, grid, and name appear in <strong>Details</strong>, or on the card line on phones. These fields are exported like browser-logged fields. ADIF-based loggers also preserve other record fields for ADIF export. All listener settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and the UDP port is configurable.</p>
+    <p>Contacts from external loggers keep frequency, sent and received reports, grid, name, and comment when supplied. Frequency, reports, grid, and name appear in <strong>Details</strong>, or on the card line on phones. These fields are exported like browser-logged fields. ADIF-based loggers also preserve other record fields for ADIF export. All listener settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and its port is configurable.</p>
 
     <div class="callout warning">
       <div class="callout-title">Security Notice</div>
-      UDP logging should only be enabled on private, firewalled networks. Do not enable UDP logging on internet-hosted servers, as UDP is unauthenticated and anyone who can reach the port can send arbitrary data.
+      Keep UDP logging and the N3FJP TCP server on your private, firewalled club LAN. UDP logging is unauthenticated. N3FJP doesn't have a password, so anyone who can reach its port can add, edit, and delete contacts. Never forward these ports from the internet.
     </div>
 
     <h3>N1MM Logger+</h3>
@@ -1116,7 +1116,18 @@
       <li>Set the destination IP to the Field Day Commander server's address with the configured port.</li>
       <li>Optionally, enter each logging PC's computer name in its station's <strong>Hostname (NetBIOS Name)</strong> field on the Stations page for automatic station matching.</li>
     </ul>
-    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Contact Received" to see the most recent contact data. When an operator edits or deletes a contact in N1MM+, the change carries over to Field Day Commander.</p>
+    <p>The listener shows live stats: packets received, errors, and uptime. You can expand "Last Contact Received" to see the most recent contact data. When an operator edits or deletes a contact in N1MM+, the change carries over to Field Day Commander. Edits and deletes from N1MM and N3FJP are recorded in the audit log with the sending PC and its IP address.</p>
+
+    <h3>N3FJP</h3>
+    <p>Field Day Commander can act as the network server for N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log. Each N3FJP PC connects as a client instead of connecting to another PC running as the N3FJP server. To set it up:</p>
+    <ul>
+      <li>Under <strong>Logging &gt; External Loggers</strong>, turn on the <strong>N3FJP</strong> card. The <strong>TCP Port</strong> defaults to 1000.</li>
+      <li>In N3FJP, open <strong>Settings &gt; Network</strong> (or the top-level <strong>Network</strong> menu), choose TCP networking as a client, and check <strong>Enable Status / Chat Functions</strong>.</li>
+      <li>Set <strong>Server Name or IP</strong> to the Field Day Commander server's IP and use the same TCP port.</li>
+      <li>Allow inbound TCP on that port through the server's firewall. For the default port: <code>sudo ufw allow 1000/tcp</code>.</li>
+    </ul>
+    <p>The card shows the port the server is listening on and how many PCs are connected. Each PC downloads the whole event log when it connects. Contacts logged in either program reach every connected N3FJP log within about a second, so dupe checks include contacts from the other stations. Edits and deletes go both ways. N3FJP chat works between the PCs, and Field Day Commander's operating stations appear in N3FJP's band status grid. Clock sync requests are ignored.</p>
+    <p>For the full setup, see <a href="how-to/n3fjp.html">Connect N3FJP Contest Logs</a>.</p>
 
     <h3>WSJT-X / JTDX</h3>
     <p>WSJT-X and JTDX can send logged QSOs as ADIF records over UDP. This is ideal for FT8, FT4, JT65, and other digital modes where WSJT-X handles the decoding and the operator logs contacts from within WSJT-X. To set it up:</p>
@@ -1477,7 +1488,7 @@
 
     <div class="callout info">
       <div class="callout-title">Firewall Ports</div>
-      The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface. WebSocket traffic rides on the same port, so you don't need to open 8080. If you use external loggers, also open their UDP ports (12060, 2237, and 2238 by default).
+      The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface. WebSocket traffic rides on the same port, so you don't need to open 8080. The deploy script doesn't open external logger ports. If you use external loggers, also open their UDP ports (12060, 2237, and 2238 by default) or TCP port 1000 for N3FJP. For N3FJP's default port: <code>sudo ufw allow 1000/tcp</code>.
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -1560,7 +1571,7 @@
           <tr><td>DB_USERNAME</td><td>fd_commander</td><td>MySQL user</td></tr>
           <tr><td>DB_PASSWORD</td><td>(required)</td><td>MySQL password (auto-generated by setup.sh)</td></tr>
           <tr><td>DB_ROOT_PASSWORD</td><td>rootsecret</td><td>MySQL root password</td></tr>
-          <tr><td>N1MM_PORT, WSJTX_PORT, UDP_ADIF_PORT</td><td>12060, 2237, 2238</td><td>UDP ports for the external logger listeners</td></tr>
+          <tr><td>N1MM_PORT, WSJTX_PORT, UDP_ADIF_PORT, N3FJP_PORT</td><td>12060, 2237, 2238 (UDP), 1000 (TCP)</td><td>Published Docker ports for the external loggers. N3FJP_PORT publishes the N3FJP TCP server port</td></tr>
           <tr><td>REDIS_MAXMEMORY</td><td>256mb</td><td>Memory cap for Redis (setup.sh sizes it for your machine)</td></tr>
         </tbody>
       </table>

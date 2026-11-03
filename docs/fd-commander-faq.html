@@ -134,7 +134,7 @@
       "name": "Can I use my own logging software and still have contacts show up in Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. Field Day Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow in automatically. You can also import an ADIF file after the fact through a guided wizard."
+        "text": "Yes. Field Day Commander can act as the TCP network server for N3FJP contest logs. It also has UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Turn on the server or listener for your program, then point the program at the server's IP and port. You can also import an ADIF file through a guided wizard."
       }
     },
     {
@@ -142,7 +142,7 @@
       "name": "Do I need separate logging software to use Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP."
+        "text": "No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: N3FJP contest logs share the event log over TCP. N1MM Logger+, WSJT-X, JTDX, and fldigi can send contacts into the same log over UDP."
       }
     },
     {
@@ -224,6 +224,14 @@
         "@type": "Answer",
         "text": "More than you will need. The server uses persistent workers (Laravel Octane on FrankenPHP) and a dedicated WebSocket process for real-time updates. Even on a Raspberry Pi 4, the stack can handle dozens of simultaneous connections. A typical Field Day site runs 5 to 15 stations, which is nowhere near the limit."
       }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use N3FJP with Field Day Commander?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log can connect to Field Day Commander as TCP network clients. Each PC downloads the whole event log when it connects. New contacts, edits, and deletes go both ways, so contacts logged in Field Day Commander or on another N3FJP PC reach every connected N3FJP log within about a second for dupe checking. N3FJP networking doesn't have a password. Anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet. See Connect N3FJP Contest Logs for setup."
+      }
     }
   ]
 }
@@ -253,7 +261,7 @@
         <div class="faq-item">
           <div class="faq-question">My favorite Field Day logging software works fine. Why would I switch?</div>
           <div class="faq-answer">
-            You don't have to switch. Field Day Commander has its own built-in logger, but it doesn't force anyone off the software they know. It receives contacts over UDP from N1MM Logger+ and from digital-mode programs like WSJT-X, JTDX, and fldigi, and it can import ADIF files if you'd rather bring contacts in after the fact. The reason to bring Field Day Commander in is everything else Field Day involves: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories (or the Winter Field Day objectives). If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, Field Day Commander puts it in one place. Operators who prefer their own software can keep using it.
+            You don't have to switch. Field Day Commander has its own built-in logger, but it doesn't force anyone off the software they know. It shares the event log with N3FJP contest logs over TCP, receives contacts over UDP from N1MM Logger+ and from digital-mode programs like WSJT-X, JTDX, and fldigi, and can import ADIF files if you'd rather bring contacts in after the fact. The reason to bring Field Day Commander in is everything else Field Day involves: volunteer scheduling, equipment tracking, safety checklists, guestbooks, NTS message handling, and scoring with all 18 ARRL bonus categories (or the Winter Field Day objectives). If your club coordinates all of that with spreadsheets, paper sign-ups, and group texts, Field Day Commander puts it in one place. Operators who prefer their own software can keep using it.
           </div>
         </div>
 
@@ -345,7 +353,7 @@
         <div class="faq-item">
           <div class="faq-question">Do I need separate logging software to use Field Day Commander?</div>
           <div class="faq-answer">
-            No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: operators who prefer N1MM Logger+, or who run digital modes in WSJT-X, JTDX, or fldigi, can send those contacts into the same log over UDP.
+            No. Field Day Commander has a built-in logger. Operators open a browser on any laptop, tablet, or phone on the network and log contacts directly, with dupes checked across every station, live scoring, and Cabrillo export at the end. Connecting other software is optional: N3FJP contest logs share the event log over TCP. N1MM Logger+, WSJT-X, JTDX, and fldigi can send contacts into the same log over UDP.
           </div>
         </div>
 
@@ -368,7 +376,14 @@
         <div class="faq-item">
           <div class="faq-question">Can I use my own logging software and still have contacts show up in Field Day Commander?</div>
           <div class="faq-answer">
-            Yes. Field Day Commander has built-in UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Enable the listener for your program, point the program at the server's IP and port, and contacts flow into Field Day Commander automatically. Dupe checking, scoring, and Cabrillo export all work the same whether a contact was logged in Field Day Commander's built-in logger or received from another program. You can also import an ADIF file after the fact through a guided wizard that lets you map stations and review every record before it's committed.
+            Yes. Field Day Commander can act as the TCP network server for N3FJP contest logs. It also has UDP listeners for N1MM Logger+, WSJT-X / JTDX, and a generic ADIF endpoint that works with fldigi and others. Turn on the server or listener for your program, then point the program at the server's IP and port. Dupe checking, scoring, and Cabrillo export all work the same whether a contact was logged in Field Day Commander's built-in logger or received from another program. You can also import an ADIF file after the fact through a guided wizard that lets you map stations and review every record before it's committed.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Can I use N3FJP with Field Day Commander?</div>
+          <div class="faq-answer">
+            Yes. N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log can connect to Field Day Commander as TCP network clients. Each PC downloads the whole event log when it connects. New contacts, edits, and deletes go both ways, so contacts logged in Field Day Commander or on another N3FJP PC reach every connected N3FJP log within about a second for dupe checking. N3FJP networking doesn't have a password. Anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet. See <a href="how-to/n3fjp.html">Connect N3FJP Contest Logs</a> for setup.
           </div>
         </div>
 
