@@ -385,3 +385,110 @@ test('logger panels trim their padding on phones', function () {
     Livewire::test(ExternalLoggerManagement::class)
         ->assertSeeHtml('sm:rounded-lg p-3 sm:p-6');
 });
+
+test('toggleN3fjp enables the N3FJP server on port 1000 and starts it', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->call('toggleN3fjp')
+        ->assertHasNoErrors();
+
+    $setting = ExternalLoggerSetting::where('event_configuration_id', $this->config->id)
+        ->where('listener_type', 'n3fjp')
+        ->sole();
+
+    expect($setting->is_enabled)->toBeTrue()
+        ->and($setting->port)->toBe(1000)
+        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])->toContain('external-logger:n3fjp ');
+});
+
+test('toggleN3fjp disables and stops the N3FJP server', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n3fjp',
+        'is_enabled' => true,
+        'port' => 1000,
+        'pid' => 31337,
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSet('n3fjpEnabled', true)
+        ->call('toggleN3fjp');
+
+    expect(ExternalLoggerSetting::where('listener_type', 'n3fjp')->sole())
+        ->is_enabled->toBeFalse()
+        ->pid->toBeNull()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
+});
+
+test('the N3FJP port may be below 1024 but must be a real port', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n3fjp',
+        'is_enabled' => false,
+        'port' => 1000,
+    ]);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->set('n3fjpPort', 1001)
+        ->call('updateN3fjpPort')
+        ->assertHasNoErrors()
+        ->set('n3fjpPort', 0)
+        ->call('updateN3fjpPort')
+        ->assertHasErrors(['n3fjpPort']);
+
+    expect(ExternalLoggerSetting::where('listener_type', 'n3fjp')->value('port'))->toBe(1001);
+});
+
+test('shows the N3FJP server port and connected PCs when running', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n3fjp',
+        'is_enabled' => true,
+        'port' => 1000,
+        'pid' => 424242,
+    ]);
+    Cache::put("external-logger:n3fjp:{$this->config->id}:heartbeat", [
+        'pid' => 424242,
+        'started_at' => now()->subMinutes(5)->toIso8601String(),
+        'last_heartbeat_at' => now()->toIso8601String(),
+        'packets_received' => 42,
+        'packets_processed' => 42,
+        'errors' => 0,
+        'clients' => 3,
+        'port' => 1000,
+    ], 15);
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSet('n3fjpProcessStatus', 'running')
+        ->assertSeeInOrder(['1000', '3', '42']);
+});
+
+test('shows why the N3FJP server could not start, and a manual restart retries at once', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n3fjp',
+        'is_enabled' => true,
+        'port' => 1000,
+    ]);
+    Cache::put("external-logger:n3fjp:{$this->config->id}:startup-failure", [
+        'reason' => 'Failed to open TCP port 1000: Permission denied.',
+        'attempts' => 3,
+        'failed_at' => now()->getTimestamp(),
+    ], now()->addDay());
+
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Failed to open TCP port 1000: Permission denied.')
+        ->call('restartN3fjpProcess');
+
+    expect($this->processRunner->spawnedCommands)->toHaveCount(1)
+        ->and($this->processRunner->spawnedCommands[0])->toContain('external-logger:n3fjp ');
+});
+
+test('explains how to point N3FJP PCs at the server', function () {
+    Livewire::test(ExternalLoggerManagement::class)
+        ->assertSee('Settings > Network')
+        ->assertSee('Enable Status / Chat Functions')
+        ->assertSee('This Station Name')
+        ->assertSee('sudo ufw allow 1000/tcp')
+        ->assertSee('never forward it from the internet');
+});

@@ -271,7 +271,8 @@ class AuditLog extends Model
         ?Model $auditable = null,
         ?array $oldValues = null,
         ?array $newValues = null,
-        bool $isCritical = false
+        bool $isCritical = false,
+        ?string $ipAddress = null,
     ): void {
         if (! config('auth-security.audit_logging_enabled')) {
             return;
@@ -284,7 +285,7 @@ class AuditLog extends Model
             'auditable_id' => $auditable?->id,
             'old_values' => $oldValues,
             'new_values' => $newValues,
-            'ip_address' => request()->ip() ?? '127.0.0.1',
+            'ip_address' => $ipAddress ?? request()->ip() ?? '127.0.0.1',
             'user_agent' => request()->userAgent(),
             'is_critical' => $isCritical,
         ]);

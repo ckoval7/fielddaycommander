@@ -58,7 +58,9 @@ at an existing server through `externalDatabase` or `externalRedis`.
 | `redis.master.persistence.size` | Redis data volume size. | `2Gi` |
 | `redis.master.configuration` | `redis.conf` contents (AOF, eviction, `maxmemory`). | see `values.yaml` |
 | `reverb.enabled` | Run the Reverb WebSocket server for live updates. | `true` |
-| `externalLoggers.enabled` | Expose the UDP ports for radio logging software. | `true` |
+| `externalLoggers.enabled` | Expose the UDP and N3FJP TCP ports for radio logging software. | `true` |
+| `externalLoggers.n3fjp.enabled` | Publish the N3FJP TCP port as a hostPort. | `true` |
+| `externalLoggers.n3fjp.port` | N3FJP TCP port. Must match the port in the admin UI. | `1000` |
 
 ### Persistence
 
@@ -197,10 +199,19 @@ is not deleted, so delete it by hand once the restore checks out.
 
 ### External loggers
 
+N3FJP PCs connect to the node's IP on `externalLoggers.n3fjp.port` (default
+`1000`), published as a hostPort. This connection doesn't use the `-udp` Service
+or a node port. Match the port to **TCP Port** on **External Loggers**,
+in the **N3FJP** card. Only one release per node can use that port.
+For ports below 1024, the pod sets `net.ipv4.ip_unprivileged_port_start=0` in
+its own network namespace. Capabilities stay dropped. N3FJP doesn't have a
+password: anyone who can reach the port can add, edit, and delete contacts.
+Keep it on your club LAN and never forward it from the internet.
+
 N1MM Logger+, WSJT-X and fldigi send contacts to the application over UDP. Those
 listeners run inside the application pod, so the ports are exposed through a
-separate `-udp` service. A `ClusterIP` will not work here — the logging software
-sits on the LAN, outside the cluster:
+separate `-udp` service. A `ClusterIP` will not work here because the logging software
+runs on the LAN, outside the cluster:
 
 - **LoadBalancer** keeps the standard port numbers (12060, 2237, 2238), which is
   what the logging software expects. Prefer this.

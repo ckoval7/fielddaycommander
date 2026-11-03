@@ -36,9 +36,19 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "fd-commander.serviceAccountName" . }}
       automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
-      {{- with .Values.podSecurityContext }}
+      {{- $n3fjpLowPort := and .Values.externalLoggers.enabled .Values.externalLoggers.n3fjp.enabled (lt (int .Values.externalLoggers.n3fjp.port) 1024) }}
+      {{- if or .Values.podSecurityContext $n3fjpLowPort }}
       securityContext:
+        {{- with .Values.podSecurityContext }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if $n3fjpLowPort }}
+        # Lets the unprivileged app bind the N3FJP port inside the pod's own
+        # network namespace (a namespaced "safe" sysctl, no capability).
+        sysctls:
+          - name: net.ipv4.ip_unprivileged_port_start
+            value: "0"
+        {{- end }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -72,6 +82,15 @@ spec:
             - name: udp-adif
               containerPort: {{ .Values.externalLoggers.udpAdif.port }}
               protocol: UDP
+            {{- end }}
+            {{- if .Values.externalLoggers.n3fjp.enabled }}
+            # A hostPort, so N3FJP PCs use the node's address and the port the
+            # admin UI shows. The Recreate strategy above keeps a rollout from
+            # waiting on the old pod's claim to the port.
+            - name: n3fjp
+              containerPort: {{ .Values.externalLoggers.n3fjp.port }}
+              hostPort: {{ .Values.externalLoggers.n3fjp.port }}
+              protocol: TCP
             {{- end }}
             {{- end }}
           envFrom:

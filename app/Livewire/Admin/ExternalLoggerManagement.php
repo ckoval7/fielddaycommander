@@ -42,6 +42,19 @@ class ExternalLoggerManagement extends Component
 
     public ?array $udpAdifHeartbeat = null;
 
+    public bool $n3fjpEnabled = false;
+
+    public int $n3fjpPort = 1000;
+
+    public string $n3fjpProcessStatus = 'stopped';
+
+    public ?array $n3fjpHeartbeat = null;
+
+    public ?array $n3fjpLastLog = null;
+
+    /** @var array{reason: string, attempts: int, failed_at: int}|null Why the N3FJP server last failed to start */
+    public ?array $n3fjpStartupFailure = null;
+
     public ?array $lastLog = null;
 
     public ?array $wsjtxLastLog = null;
@@ -86,6 +99,15 @@ class ExternalLoggerManagement extends Component
         if ($udpAdifSetting) {
             $this->udpAdifEnabled = $udpAdifSetting->is_enabled;
             $this->udpAdifPort = $udpAdifSetting->port;
+        }
+
+        $n3fjpSetting = ExternalLoggerSetting::where('event_configuration_id', $config->id)
+            ->where('listener_type', 'n3fjp')
+            ->first();
+
+        if ($n3fjpSetting) {
+            $this->n3fjpEnabled = $n3fjpSetting->is_enabled;
+            $this->n3fjpPort = $n3fjpSetting->port;
         }
 
         $this->refreshStatus();
@@ -167,6 +189,11 @@ class ExternalLoggerManagement extends Component
 
         if ($this->udpAdifProcessStatus === 'crashed') {
             $manager->attemptRestart($this->eventConfigId, 'udp-adif');
+            $this->refreshStatus();
+        }
+
+        if ($this->n3fjpProcessStatus === 'crashed') {
+            $manager->attemptRestart($this->eventConfigId, 'n3fjp');
             $this->refreshStatus();
         }
     }
@@ -381,6 +408,89 @@ class ExternalLoggerManagement extends Component
         ]);
     }
 
+    public function toggleN3fjp(): void
+    {
+        $config = app(EventContextService::class)->getEventConfiguration();
+        if ($config === null) {
+            session()->flash('error', self::NO_ACTIVE_EVENT_MESSAGE);
+
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+
+        if ($this->n3fjpEnabled) {
+            $setting = $manager->getSetting($config->id, 'n3fjp');
+            $manager->disable($config->id, 'n3fjp');
+            $manager->stopProcess($config->id, 'n3fjp');
+            $this->n3fjpEnabled = false;
+
+            AuditLog::log('external_logger.disabled', auditable: $setting, newValues: ['listener_type' => 'n3fjp']);
+        } else {
+            $this->validateN3fjpPort();
+            $setting = $manager->enable($config->id, 'n3fjp', $this->n3fjpPort);
+            $manager->startProcess($config->id, 'n3fjp');
+            $this->n3fjpEnabled = true;
+
+            AuditLog::log('external_logger.enabled', auditable: $setting, newValues: [
+                'listener_type' => 'n3fjp',
+                'port' => $this->n3fjpPort,
+            ]);
+        }
+
+        $this->refreshStatus();
+    }
+
+    public function restartN3fjpProcess(): void
+    {
+        if ($this->eventConfigId === null) {
+            return;
+        }
+
+        $manager = app(ExternalLoggerManager::class);
+
+        // A manual restart skips the backoff after a failed start (such as a
+        // port that needed a capability the host has since been given).
+        $manager->clearStartupFailure($this->eventConfigId, 'n3fjp');
+        $restarted = $manager->attemptRestart($this->eventConfigId, 'n3fjp');
+        $this->refreshStatus();
+
+        if ($restarted) {
+            AuditLog::log('external_logger.restarted', auditable: $manager->getSetting($this->eventConfigId, 'n3fjp'), newValues: [
+                'listener_type' => 'n3fjp',
+            ]);
+        }
+    }
+
+    public function updateN3fjpPort(): void
+    {
+        $this->validateN3fjpPort();
+
+        if ($this->eventConfigId === null) {
+            return;
+        }
+
+        $setting = app(ExternalLoggerManager::class)->getSetting($this->eventConfigId, 'n3fjp');
+
+        if ($setting === null) {
+            return;
+        }
+
+        $oldPort = $setting->port;
+        $setting->update(['port' => $this->n3fjpPort]);
+
+        AuditLog::log('external_logger.port.updated', auditable: $setting, oldValues: ['port' => $oldPort], newValues: ['port' => $this->n3fjpPort]);
+    }
+
+    /**
+     * N3FJP's default port is 1000, so unlike the UDP listeners the N3FJP
+     * server accepts ports below 1024.
+     */
+    private function validateN3fjpPort(): void
+    {
+        $this->validate(['n3fjpPort' => 'required|integer|min:1|max:65535']);
+    }
+
     public function render(): View
     {
         $config = app(EventContextService::class)->getEventConfiguration();
@@ -414,6 +524,10 @@ class ExternalLoggerManagement extends Component
             $this->lastLog = null;
             $this->wsjtxLastLog = null;
             $this->udpAdifLastLog = null;
+            $this->n3fjpProcessStatus = 'stopped';
+            $this->n3fjpHeartbeat = null;
+            $this->n3fjpLastLog = null;
+            $this->n3fjpStartupFailure = null;
 
             return;
         }
@@ -428,6 +542,12 @@ class ExternalLoggerManagement extends Component
         $this->lastLog = Cache::get("external-logger:n1mm:{$this->eventConfigId}:last-log");
         $this->wsjtxLastLog = Cache::get("external-logger:wsjtx:{$this->eventConfigId}:last-log");
         $this->udpAdifLastLog = Cache::get("external-logger:udp-adif:{$this->eventConfigId}:last-log");
+        $this->n3fjpProcessStatus = $manager->getProcessStatus($this->eventConfigId, 'n3fjp');
+        $this->n3fjpHeartbeat = $manager->getHeartbeat($this->eventConfigId, 'n3fjp');
+        $this->n3fjpLastLog = Cache::get("external-logger:n3fjp:{$this->eventConfigId}:last-log");
+        $this->n3fjpStartupFailure = $this->n3fjpEnabled && $this->n3fjpProcessStatus !== 'running'
+            ? $manager->getStartupFailure($this->eventConfigId, 'n3fjp')
+            : null;
     }
 
     /**
@@ -441,6 +561,7 @@ class ExternalLoggerManagement extends Component
             'n1mmPort' => 'N1MM port',
             'wsjtxPort' => 'WSJT-X port',
             'udpAdifPort' => 'UDP ADIF port',
+            'n3fjpPort' => 'N3FJP port',
         ];
     }
 }

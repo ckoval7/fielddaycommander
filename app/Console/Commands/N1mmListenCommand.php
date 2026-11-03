@@ -50,7 +50,7 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         $dto = $this->parser->parse($buffer);
 
         if ($dto === null) {
-            if (! $this->isWellFormedXml($buffer)) {
+            if (! $this->parser->isIgnoredPacket($buffer) && ! $this->isWellFormedXml($buffer)) {
                 $this->throttledWarning('malformed-xml', 'N1MM listener dropped a packet that is not well-formed XML', [
                     'from' => $from,
                     'bytes' => strlen($buffer),
@@ -61,8 +61,16 @@ class N1mmListenCommand extends BaseUdpListenerCommand
             return 0;
         }
 
+        if (! $this->isWellFormedXml($buffer)) {
+            $this->throttledWarning('malformed-xml', 'N1MM listener recovered what it could from a packet that is not well-formed XML', [
+                'from' => $from,
+                'bytes' => strlen($buffer),
+                'preview' => mb_substr(preg_replace('/[^\x20-\x7E]/', '?', $buffer) ?? '', 0, 80),
+            ]);
+        }
+
         if ($dto instanceof ExternalContactDto) {
-            $this->handleContactPacket($dto, $config, $lastLogKey);
+            $this->handleContactPacket($dto, $config, $lastLogKey, $from);
         } elseif ($dto instanceof ExternalRadioInfoDto) {
             $this->handler->handleRadioInfo($dto, $config);
         }
@@ -86,17 +94,17 @@ class N1mmListenCommand extends BaseUdpListenerCommand
         }
     }
 
-    private function handleContactPacket(ExternalContactDto $dto, EventConfiguration $config, string $lastLogKey): void
+    private function handleContactPacket(ExternalContactDto $dto, EventConfiguration $config, string $lastLogKey, string $from): void
     {
         if ($dto->isDelete) {
-            $this->handler->handleDelete($dto, $config);
+            $this->handler->handleDelete($dto, $config, $from !== '' ? $from : null);
 
             return;
         }
 
         if ($dto->isReplace) {
             try {
-                $this->handler->handleReplace($dto, $config);
+                $this->handler->handleReplace($dto, $config, $from !== '' ? $from : null);
             } catch (InvalidExternalContactException $exception) {
                 $this->writeLastLogEntry($lastLogKey, $dto, false, $exception->rejectionReason);
             }

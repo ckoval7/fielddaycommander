@@ -15,6 +15,13 @@ services:
       - "${N1MM_PORT:-12060}:${N1MM_PORT:-12060}/udp"       # N1MM Logger+
       - "${WSJTX_PORT:-2237}:${WSJTX_PORT:-2237}/udp"       # WSJT-X / JTDX
       - "${UDP_ADIF_PORT:-2238}:${UDP_ADIF_PORT:-2238}/udp" # Plain UDP ADIF (fldigi, etc.)
+      # N3FJP network server (TCP). N3FJP contest logs connect on 1000 by default.
+      - "${N3FJP_PORT:-1000}:${N3FJP_PORT:-1000}/tcp"
+    sysctls:
+      # Let the unprivileged app bind the N3FJP server's port 1000 inside its
+      # own network namespace. Docker already defaults to this; setting it
+      # keeps every engine the same. It grants nothing on the host.
+      net.ipv4.ip_unprivileged_port_start: 0
     env_file: .env
     environment:
       # Override values for Docker networking — must match the mysql service

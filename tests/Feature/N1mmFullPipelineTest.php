@@ -347,7 +347,7 @@ test('full pipeline: edit in N1MM (delete then replace) restores and updates the
     Event::assertDispatched(ExternalContactUpdated::class);
 });
 
-test('full pipeline: contact resent after delete restores instead of duplicating', function () {
+test('full pipeline: a contact resent after its delete stays deleted and is not duplicated', function () {
     $ts = $this->testTimestampStr;
     $xmlCreate = "<?xml version=\"1.0\" encoding=\"utf-8\"?>
     <contactinfo>
@@ -378,9 +378,9 @@ test('full pipeline: contact resent after delete restores instead of duplicating
     $this->handler->handleDelete($this->parser->parse($xmlDelete), $this->config);
     $this->handler->handleContact($this->parser->parse($xmlCreate), $this->config);
 
+    // N1MM never resends a deleted QSO as contactinfo; a late or relayed
+    // copy of the original must not undo the delete.
     expect(Contact::withTrashed()->where('external_id', 'resend_test_id')->count())->toBe(1)
-        ->and(Contact::where('external_id', 'resend_test_id')->first()?->id)->toBe($contact->id)
-        ->and($contact->operatingSession->fresh()->qso_count)->toBe(1)
-        ->and($contact->fresh()->is_duplicate)->toBeFalse()
-        ->and($contact->fresh()->points)->toBe(2);
+        ->and(Contact::where('external_id', 'resend_test_id')->exists())->toBeFalse()
+        ->and($contact->operatingSession->fresh()->qso_count)->toBe(0);
 });

@@ -66,11 +66,22 @@ class BandResolverService
             return null;
         }
 
+        $bandName = $this->nameForFrequencyHz($frequencyHz);
+
+        return $bandName !== null ? $this->resolveByName($bandName) : null;
+    }
+
+    /**
+     * The name of the band a frequency in Hz falls in ("20m"), or null when
+     * it is in none. Needs no database.
+     */
+    public function nameForFrequencyHz(int $frequencyHz): ?string
+    {
         $frequencyMhz = $frequencyHz / 1_000_000;
 
         foreach (self::BAND_RANGES_MHZ as $bandName => [$low, $high]) {
             if ($frequencyMhz >= $low && $frequencyMhz <= $high) {
-                return $this->resolveByName($bandName);
+                return $bandName;
             }
         }
 
