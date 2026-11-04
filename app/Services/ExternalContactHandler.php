@@ -48,6 +48,12 @@ class ExternalContactHandler
     private const CALLSIGN_PATTERN = '/^[A-Z0-9\/]+$/';
 
     /**
+     * Operator callsigns linked to a user: the shape of a callsign, within
+     * the width of users.call_sign.
+     */
+    private const OPERATOR_PATTERN = '/^[A-Z0-9\/]{3,12}$/';
+
+    /**
      * Width of contacts.external_id. Longer ids are stored as a hash so the
      * contact is kept and later replace/delete packets still find it.
      */
@@ -63,6 +69,14 @@ class ExternalContactHandler
         'callsign', 'qso_time', 'band_id', 'mode_id', 'submode', 'section_id', 'exchange_class',
         'frequency_hz', 'power_watts', 'rst_sent', 'rst_received', 'grid_square', 'contact_name', 'notes',
     ];
+
+    private const N1MM_SOURCE = 'n1mm';
+
+    /**
+     * How long a delete for a QSO not yet seen is remembered, in case the
+     * QSO's own packet arrives after it.
+     */
+    private const EARLY_DELETE_MINUTES = 10;
 
     /**
      * Width of contacts.submode.
@@ -164,20 +178,9 @@ class ExternalContactHandler
     {
         $this->assertValidCallsign($dto);
 
-        // Idempotency: if we already have this external ID, treat as replace.
-        // A deleted contact stays deleted: a second copy of a QSO logged
-        // before its delete (relayed by another networked N1MM PC, or
-        // arriving late, since N1MM doesn't keep its sends in order) must not
-        // bring it back.
-        if ($dto->externalId !== null) {
-            $existing = $this->findByExternalId($dto->externalId, $config);
-            if ($existing !== null) {
-                if (! $existing->trashed()) {
-                    $this->updateContact($existing, $dto, $config);
-                }
-
-                return $existing;
-            }
+        $repeat = $this->repeatOf($dto, $config);
+        if ($repeat !== null) {
+            return $repeat;
         }
 
         $event = $config->event;
@@ -188,7 +191,8 @@ class ExternalContactHandler
             );
         }
 
-        $stationIdentifier = $dto->stationIdentifier ?? 'Unknown';
+        // A logger with no station name set sends a blank one.
+        $stationIdentifier = trim((string) $dto->stationIdentifier) !== '' ? trim((string) $dto->stationIdentifier) : 'Unknown';
         $station = $this->stationResolver->resolve($stationIdentifier, $config->id);
 
         // Fallback to cached RadioInfo for operator/band/mode if not in contact
@@ -231,7 +235,7 @@ class ExternalContactHandler
             'qso_time' => $dto->timestamp,
             'callsign' => $dto->callsign,
             'section_id' => $sectionId,
-            'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange),
+            'exchange_class' => $this->storableExchangeClass($dto->exchangeClass) ?? $this->extractClassFromExchange($dto->receivedExchange),
             'power_watts' => AdvancedContactFields::powerWattsFromAdif($dto->adifFields ?? []) ?? $session->power_watts,
             ...$dto->advancedFields,
             'adif_fields' => $dto->adifFields,
@@ -252,6 +256,45 @@ class ExternalContactHandler
         return $contact;
     }
 
+    /**
+     * The contact a packet repeats, when it is for a QSO already stored
+     * (updated first, unless it is only a copy of the original), or null
+     * for a new QSO.
+     *
+     * Idempotency: a known external ID is treated as a replace. A deleted
+     * contact stays deleted: a second copy of a QSO logged before its delete
+     * (relayed by another networked N1MM PC, or arriving late, since N1MM
+     * doesn't keep its sends in order) must not bring it back.
+     *
+     * @throws InvalidExternalContactException When the QSO was deleted before its own packet arrived
+     */
+    private function repeatOf(ExternalContactDto $dto, EventConfiguration $config): ?Contact
+    {
+        if ($dto->externalId === null) {
+            // A second copy of a QSO whose packets lost their ID to
+            // truncation (relayed by another PC, or sent again).
+            return $dto->source === self::N1MM_SOURCE ? $this->soleContactLoggedAt($dto, $config, withoutExternalId: true) : null;
+        }
+
+        $existing = $this->findByExternalId($dto->externalId, $config);
+
+        if ($existing !== null) {
+            if (! $existing->trashed() && ! $this->isCopyOfOriginal($dto)) {
+                $this->updateContact($existing, $dto, $config);
+            }
+
+            return $existing;
+        }
+
+        // N1MM sends each packet on its own task, so a delete can overtake
+        // the contactinfo it deletes; that QSO stays deleted.
+        if (! $dto->isReplace && Cache::has($this->earlyDeleteKey($dto->source, $config->id, $dto->externalId))) {
+            throw new InvalidExternalContactException('Deleted before it arrived', 'deleted before it arrived');
+        }
+
+        return null;
+    }
+
     private function replaceContact(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp): void
     {
         if ($dto->externalId === null) {
@@ -267,6 +310,13 @@ class ExternalContactHandler
         // A replace for a QSO never seen is a whole record: N1MM's
         // "Rebroadcast contest QSOs" sends every QSO this way, and an edit
         // can overtake its contactinfo. Store it as new.
+        // A QSO first stored without its ID (its contactinfo was cut short)
+        // takes the ID from its first replace, found by the call and time
+        // it had before the edit.
+        if ($contact === null && ($contact = $this->adoptContactWithoutId($dto, $config)) !== null) {
+            $contact->forceFill(['external_id' => $this->storableExternalId($dto->externalId, $config->id, $dto->source)])->saveQuietly();
+        }
+
         if ($contact === null) {
             try {
                 $this->storeContact($dto, $config);
@@ -288,16 +338,16 @@ class ExternalContactHandler
 
     private function deleteContact(ExternalContactDto $dto, EventConfiguration $config, ?string $senderIp): void
     {
-        if ($dto->externalId === null) {
-            return;
-        }
-
-        $contact = Contact::query()
+        $contact = ($dto->externalId !== null ? Contact::query()
             ->where('event_configuration_id', $config->id)
             ->where('external_id', $this->storableExternalId($dto->externalId, $config->id))
-            ->first() ?? $this->soleContactLoggedAt($dto, $config);
+            ->first() : null) ?? $this->soleContactLoggedAt($dto, $config);
 
         if ($contact === null) {
+            if ($dto->externalId !== null) {
+                Cache::put($this->earlyDeleteKey($dto->source, $config->id, $dto->externalId), true, now()->addMinutes(self::EARLY_DELETE_MINUTES));
+            }
+
             return;
         }
 
@@ -396,17 +446,48 @@ class ExternalContactHandler
      * that relays another PC's delete sends a new random id, so only the
      * callsign and time identify the QSO. Null unless exactly one matches.
      */
-    private function soleContactLoggedAt(ExternalContactDto $dto, EventConfiguration $config): ?Contact
+    private function soleContactLoggedAt(ExternalContactDto $dto, EventConfiguration $config, bool $withoutExternalId = false, ?string $callsign = null, ?Carbon $time = null): ?Contact
     {
         $matches = Contact::query()
             ->where('event_configuration_id', $config->id)
             ->where('external_source', $dto->source)
-            ->where('callsign', strtoupper(trim($dto->callsign)))
-            ->where('qso_time', $dto->timestamp->copy()->utc()->format('Y-m-d H:i:s'))
+            ->where('callsign', strtoupper(trim($callsign ?? $dto->callsign)))
+            ->where('qso_time', ($time ?? $dto->timestamp)->copy()->utc()->format('Y-m-d H:i:s'))
+            ->when($withoutExternalId, fn ($query) => $query->whereNull('external_id'))
             ->limit(2)
             ->get();
 
         return $matches->count() === 1 ? $matches->first() : null;
+    }
+
+    /**
+     * The live contact stored without an ID that a replace is an edit of,
+     * found by the call and time the replace says it had before.
+     */
+    private function adoptContactWithoutId(ExternalContactDto $dto, EventConfiguration $config): ?Contact
+    {
+        if ($dto->source !== self::N1MM_SOURCE) {
+            return null;
+        }
+
+        return $this->soleContactLoggedAt($dto, $config, withoutExternalId: true, callsign: $dto->oldCallsign ?: null, time: $dto->oldTimestamp)
+            ?? $this->soleContactLoggedAt($dto, $config, withoutExternalId: true);
+    }
+
+    /**
+     * Whether a contact packet for a QSO already stored is just another copy
+     * of the original. N1MM sends edits only as contactreplace, so a second
+     * contactinfo (relayed by a networked PC, or overtaken by an edit) never
+     * carries anything newer and must not undo an edit.
+     */
+    private function isCopyOfOriginal(ExternalContactDto $dto): bool
+    {
+        return $dto->source === self::N1MM_SOURCE && ! $dto->isReplace;
+    }
+
+    private function earlyDeleteKey(string $source, int $eventConfigurationId, string $externalId): string
+    {
+        return "external-logger:{$source}:{$eventConfigurationId}:deleted:".hash('sha256', $externalId);
     }
 
     /**
@@ -499,7 +580,7 @@ class ExternalContactHandler
             'mode_id' => $modeId,
             'submode' => $dto->modeName !== null ? $this->storableSubmode($dto->modeName, $dto) : $contact->submode,
             'section_id' => $sectionId,
-            'exchange_class' => $dto->exchangeClass ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
+            'exchange_class' => $this->storableExchangeClass($dto->exchangeClass) ?? $this->extractClassFromExchange($dto->receivedExchange) ?? $contact->exchange_class,
             // A replace carries the logger's full record, so what it sends
             // wins; fields it leaves out keep their values.
             'power_watts' => AdvancedContactFields::powerWattsFromAdif($dto->adifFields ?? []) ?? $contact->power_watts,
@@ -624,13 +705,38 @@ class ExternalContactHandler
         return null;
     }
 
+    /**
+     * The user for the operator a logger names, or null when the name is not
+     * a callsign that fits users.call_sign. An operator field is free text
+     * in most loggers, and anything else would make a ghost account out of
+     * it (or, on MySQL, fail the insert and lose the contact).
+     */
     private function resolveOperator(?string $callsign): ?int
     {
-        if ($callsign === null) {
+        $callsign = strtoupper(trim((string) $callsign));
+
+        if (preg_match(self::OPERATOR_PATTERN, $callsign) !== 1) {
             return null;
         }
 
         return $this->userResolver->resolveOrCreate($callsign)->id;
+    }
+
+    /**
+     * A logger's class field, or the class found in it, when it holds a
+     * Field Day class; otherwise null, so the class is looked for in the
+     * received exchange instead of overflowing contacts.exchange_class.
+     */
+    private function storableExchangeClass(?string $class): ?string
+    {
+        $class = strtoupper(trim((string) $class));
+
+        if (preg_match(ExchangeParserService::EXCHANGE_CLASS_PATTERN, $class) === 1) {
+            return $class;
+        }
+
+        // An operator who typed the whole exchange ("2A CT") into the field.
+        return $this->extractClassFromExchange($class);
     }
 
     /**

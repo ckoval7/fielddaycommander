@@ -8,6 +8,16 @@ namespace App\Services;
 class AdifParserService
 {
     /**
+     * An ADIF tag at the current offset: <NAME>, <NAME:LEN> or <NAME:LEN:T>.
+     */
+    private const TAG_PATTERN = '/\G<(\w+)(?::(\d+)(?::[A-Za-z])?)?>/';
+
+    /**
+     * The next data tag anywhere after the offset.
+     */
+    private const TAG_PATTERN_ANYWHERE = '/<(\w+):(\d+)(?::[A-Za-z])?>|<eo[hr]>/i';
+
+    /**
      * Parse an ADIF string into structured data.
      *
      * @return array{version: int, header: array<string, string>, records: array<int, array<string, string>>, errors: array<string>}
@@ -28,71 +38,130 @@ class AdifParserService
             return $result;
         }
 
-        $eohPos = stripos($content, '<EOH>');
-        if ($eohPos !== false) {
-            $headerText = substr($content, 0, $eohPos);
-            $result['header'] = $this->extractTags($headerText);
-            $body = substr($content, $eohPos + 5);
-        } else {
-            $body = $content;
+        $current = [];
+
+        foreach ($this->scan($content) as [$tagName, $value]) {
+            if ($tagName === 'EOH') {
+                $result['header'] = $current;
+                $current = [];
+            } elseif ($tagName === 'EOR') {
+                if ($current !== []) {
+                    $result['records'][] = $current;
+                }
+                $current = [];
+            } else {
+                $current[$tagName] = $value;
+            }
+        }
+
+        // A last record without <EOR> still counts.
+        if ($current !== []) {
+            $result['records'][] = $current;
         }
 
         if (isset($result['header']['ADIF_VER']) && str_starts_with($result['header']['ADIF_VER'], '3')) {
             $result['version'] = 3;
         }
 
-        $recordChunks = preg_split('/<EOR>/i', $body);
-        foreach ($recordChunks as $chunk) {
-            $chunk = trim($chunk);
-            if ($chunk === '') {
-                continue;
-            }
-
-            $tags = $this->extractTags($chunk);
-            if (! empty($tags)) {
-                $result['records'][] = $tags;
-            }
-        }
-
         return $result;
     }
 
     /**
-     * Extract tag-value pairs from an ADIF text segment.
+     * Walk the text tag by tag, reading each value by its declared length,
+     * so "<EOR>" or a tag-like string inside a value is read as text.
+     * Yields [TAG, value] pairs, with [EOH, ''] and [EOR, ''] markers.
      *
-     * Supports both ADIF 2 (<TAG:LEN>VALUE) and ADIF 3 (<TAG:LEN:TYPE>VALUE) formats.
-     *
-     * @return array<string, string>
+     * @return \Generator<int, array{string, string}>
      */
-    private function extractTags(string $text): array
+    private function scan(string $text): \Generator
     {
-        $tags = [];
+        $position = 0;
+        $length = strlen($text);
 
-        preg_match_all('/<(\w+):(\d+)(?::[A-Za-z])?>/', $text, $matches, PREG_OFFSET_CAPTURE);
+        while (($open = strpos($text, '<', $position)) !== false) {
+            if (preg_match(self::TAG_PATTERN, $text, $match, 0, $open) !== 1) {
+                $position = $open + 1;
 
-        for ($i = 0; $i < count($matches[0]); $i++) {
-            $tagName = strtoupper($matches[1][$i][0]);
-            $length = (int) $matches[2][$i][0];
-            $valueStart = $matches[0][$i][1] + strlen($matches[0][$i][0]);
-            $valueEnd = $matches[0][$i + 1][1] ?? strlen($text);
-            $tags[$tagName] = trim($this->readValue(substr($text, $valueStart, $valueEnd - $valueStart), $length));
+                continue;
+            }
+
+            $tagName = strtoupper($match[1]);
+            $valueStart = $open + strlen($match[0]);
+
+            if (! isset($match[2]) || $match[2] === '') {
+                $position = $valueStart;
+
+                if ($tagName === 'EOH' || $tagName === 'EOR') {
+                    yield [$tagName, ''];
+                }
+
+                continue;
+            }
+
+            [$value, $position] = $this->readValue($text, $valueStart, (int) $match[2], $length);
+
+            yield [$tagName, trim($this->toUtf8($value))];
         }
-
-        return $tags;
     }
 
     /**
-     * The first $length units of the text before the next tag. Loggers
+     * The value starting at $start and the offset just after it. Loggers
      * disagree on whether ADIF lengths count characters or UTF-8 bytes, so
-     * valid UTF-8 is read by character; stopping at the next tag keeps a
-     * byte count from running into the following field.
+     * the reading that ends where the next tag (or the end) begins wins;
+     * when neither does, the value stops at the next tag, so a wrong length
+     * never runs into the following field.
+     *
+     * @return array{string, int}
      */
-    private function readValue(string $segment, int $length): string
+    private function readValue(string $text, int $start, int $declared, int $length): array
     {
-        if (mb_check_encoding($segment, 'UTF-8')) {
-            return mb_substr($segment, 0, $length, 'UTF-8');
+        $byBytes = substr($text, $start, $declared);
+
+        if ($this->endsAtBoundary($text, $start + strlen($byBytes), $length)) {
+            return [$byBytes, $start + strlen($byBytes)];
         }
 
-        return substr($segment, 0, $length);
+        $rest = substr($text, $start);
+
+        if (mb_check_encoding($rest, 'UTF-8')) {
+            $byCharacters = mb_substr($rest, 0, $declared, 'UTF-8');
+
+            if ($this->endsAtBoundary($text, $start + strlen($byCharacters), $length)) {
+                return [$byCharacters, $start + strlen($byCharacters)];
+            }
+        }
+
+        $nextTag = preg_match(self::TAG_PATTERN_ANYWHERE, $text, $match, PREG_OFFSET_CAPTURE, $start) === 1
+            ? $match[0][1]
+            : $length;
+        $segment = substr($text, $start, $nextTag - $start);
+
+        $value = mb_check_encoding($segment, 'UTF-8')
+            ? mb_substr($segment, 0, $declared, 'UTF-8')
+            : substr($segment, 0, $declared);
+
+        return [$value, $nextTag];
+    }
+
+    /**
+     * Whether only whitespace lies between $offset and the next tag or the end.
+     */
+    private function endsAtBoundary(string $text, int $offset, int $length): bool
+    {
+        while ($offset < $length && ctype_space($text[$offset])) {
+            $offset++;
+        }
+
+        return $offset >= $length || preg_match(self::TAG_PATTERN, $text, $match, 0, $offset) === 1;
+    }
+
+    /**
+     * Text from a PC set to a legacy Windows code page arrives as bytes that
+     * are not UTF-8; read those as Windows-1252, the code page Windows
+     * loggers use in the US and Western Europe.
+     */
+    private function toUtf8(string $value): string
+    {
+        return mb_check_encoding($value, 'UTF-8') ? $value : mb_convert_encoding($value, 'UTF-8', 'Windows-1252');
     }
 }

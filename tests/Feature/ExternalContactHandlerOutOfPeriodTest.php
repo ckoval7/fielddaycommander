@@ -40,12 +40,12 @@ function makeConfig(array $eventOverrides = []): EventConfiguration
     return $config;
 }
 
-function makeDto(string $callsign = 'W1AW', ?Carbon $timestamp = null, ?string $externalId = null): ExternalContactDto
+function makeDto(string $callsign = 'W1AW', ?Carbon $timestamp = null, ?string $externalId = null, string $source = 'n1mm'): ExternalContactDto
 {
     return new ExternalContactDto(
         callsign: $callsign,
         timestamp: $timestamp ?? now(),
-        source: 'n1mm',
+        source: $source,
         bandName: '20m',
         modeName: 'SSB',
         sectionCode: 'CT',
@@ -179,7 +179,7 @@ test('idempotency re-send bypasses window check and updates the existing contact
     $config = makeConfig(['start_time' => null, 'end_time' => null]);
 
     $this->handler->handleContact(
-        makeDto(callsign: 'W1AW', timestamp: now()->subHours(2), externalId: 'ext-id-idempotent'),
+        makeDto(callsign: 'W1AW', timestamp: now()->subHours(2), externalId: 'ext-id-idempotent', source: 'udp-adif'),
         $config
     );
 
@@ -192,7 +192,7 @@ test('idempotency re-send bypasses window check and updates the existing contact
 
     // Re-send the same externalId after the window closes — idempotency path bypasses the check
     $this->handler->handleContact(
-        makeDto(callsign: 'K1XYZ', timestamp: now()->subHour(), externalId: 'ext-id-idempotent'),
+        makeDto(callsign: 'K1XYZ', timestamp: now()->subHour(), externalId: 'ext-id-idempotent', source: 'udp-adif'),
         $config
     );
 
