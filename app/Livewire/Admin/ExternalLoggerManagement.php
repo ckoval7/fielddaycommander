@@ -7,7 +7,6 @@ namespace App\Livewire\Admin;
 
 use App\Models\AuditLog;
 use App\Models\Contact;
-use App\Models\EventConfiguration;
 use App\Models\ExternalLoggerSetting;
 use App\Services\EventContextService;
 use App\Services\ExternalLoggerManager;
@@ -497,19 +496,11 @@ class ExternalLoggerManagement extends Component
 
         return view('livewire.admin.external-logger-management', [
             'hasActiveEvent' => $config !== null,
-            'wsjtxNoCreditReason' => $config !== null ? $this->wsjtxNoCreditReason($config) : null,
+            // Why the rulebook gives WSJT-X contacts no credit, if it does. Asks about a
+            // representative FT8 contact, so the notice follows whichever rulebook bans
+            // WSJT modes (e.g. WFD 2027).
+            'wsjtxNoCreditReason' => $config?->contactNoCreditReason(new Contact(['submode' => 'FT8', 'is_satellite' => false])),
         ])->layout('components.layouts.app', ['title' => 'External Loggers']);
-    }
-
-    /**
-     * Why the active event's rulebook gives WSJT-X contacts no credit, if it does.
-     *
-     * Asks the rulebook about a representative FT8 contact, so the notice
-     * follows whichever rulebook bans WSJT modes (e.g. WFD 2027).
-     */
-    private function wsjtxNoCreditReason(EventConfiguration $config): ?string
-    {
-        return $config->contactNoCreditReason(new Contact(['submode' => 'FT8', 'is_satellite' => false]));
     }
 
     private function refreshStatus(): void

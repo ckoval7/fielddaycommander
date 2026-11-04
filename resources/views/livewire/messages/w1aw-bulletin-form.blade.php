@@ -345,7 +345,7 @@
                                                 Bulletin text changed
                                             </summary>
                                             <div class="mt-2 font-mono text-xs leading-relaxed overflow-x-auto">
-                                                @foreach($this->diffLines($entry->old_values['bulletin_text'], $entry->new_values['bulletin_text']) as $line)
+                                                @foreach(\App\Support\LineDiff::between($entry->old_values['bulletin_text'], $entry->new_values['bulletin_text']) as $line)
                                                     <div class="{{ match($line['type']) {
                                                         'added' => 'bg-success/10 text-success border-l-2 border-success pl-2',
                                                         'removed' => 'bg-error/10 text-error border-l-2 border-error pl-2',
