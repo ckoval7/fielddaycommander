@@ -53,6 +53,7 @@ class AdifExporter
         'FT8' => ['FT8', null],
         'FT4' => ['MFSK', 'FT4'],
         'JS8' => ['MFSK', 'JS8'],
+        'JTTY' => ['MFSK', 'JTTY'],
         'FST4' => ['MFSK', 'FST4'],
         'FST4W' => ['MFSK', 'FST4W'],
         'Q65' => ['MFSK', 'Q65'],

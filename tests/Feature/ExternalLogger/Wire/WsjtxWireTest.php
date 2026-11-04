@@ -4,11 +4,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Models\Contact;
+use App\Models\Event as EventModel;
 use App\Models\EventConfiguration;
+use App\Models\EventType;
 use App\Models\Station;
 use Database\Seeders\BandSeeder;
 use Database\Seeders\ModeSeeder;
 use Database\Seeders\SectionSeeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -110,6 +113,49 @@ test('FT4, which WSJT-X logs as MFSK with a submode, is a digital contact with s
 
     expect($contact->mode->name)->toBe('Digital')
         ->and($contact->submode)->toBe('FT4');
+});
+
+/**
+ * An active Winter Field Day 2027 event, and a time inside it.
+ *
+ * @return array{EventConfiguration, Carbon}
+ */
+function wfd2027Event(): array
+{
+    EventConfiguration::query()->update(['is_active' => false]);
+
+    $type = EventType::firstOrCreate(['code' => 'WFD'], ['name' => 'Winter Field Day']);
+    $event = EventModel::factory()->create(['event_type_id' => $type->id, 'rules_version' => '2027']);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id, 'is_active' => true, 'callsign' => 'W2XYZ']);
+
+    return [$config, $event->start_time->copy()->addHours(2)->setTime(20, 2, 15)];
+}
+
+test('a JTTY contact at Winter Field Day 2027 is logged with its exchange and earns credit', function () {
+    [$config, $qsoTime] = wfd2027Event();
+
+    wsjtxSends($config, Wsjtx::logged(Wsjtx::fieldDayQso('W1AW', $qsoTime, ['mode' => 'JTTY', 'x_rcvd' => '2H EMA'])));
+
+    $contact = Contact::sole();
+
+    expect($contact->mode->name)->toBe('Digital')
+        ->and($contact->submode)->toBe('JTTY')
+        ->and($contact->exchange_class)->toBe('2H')
+        ->and($contact->section->code)->toBe('EMA')
+        ->and($contact->points)->toBe(2)
+        ->and($config->contactNoCreditReason($contact))->toBeNull()
+        ->and($config->creditableContacts()->count())->toBe(1);
+});
+
+test('without the Field Day activity selected, the section still comes from the received exchange', function () {
+    [$config, $qsoTime] = wfd2027Event();
+
+    wsjtxSends($config, Wsjtx::logged(Wsjtx::fieldDayQso('W1AW', $qsoTime, ['mode' => 'JTTY', 'x_rcvd' => '2H EMA', 'field_day' => false])));
+
+    $contact = Contact::sole();
+
+    expect($contact->exchange_class)->toBe('2H')
+        ->and($contact->section->code)->toBe('EMA');
 });
 
 test('a WSJT-X that has negotiated schema 3 is understood', function () {
