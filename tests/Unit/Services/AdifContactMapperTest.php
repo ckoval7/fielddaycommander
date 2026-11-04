@@ -106,6 +106,23 @@ test('maps Field Day exchange fields', function () {
         ->and($dto->sectionCode)->toBe('CT');
 });
 
+test('takes the section from a class and section exchange when ARRL_SECT is absent', function (string $exchange, ?string $section) {
+    $dto = $this->mapper->map([
+        'CALL' => 'W1AW',
+        'QSO_DATE' => '20260410',
+        'TIME_ON' => '005505',
+        'SRX_STRING' => $exchange,
+    ], $this->source);
+
+    expect($dto->sectionCode)->toBe($section);
+})->with([
+    'field day class' => ['3A CT', 'CT'],
+    'winter field day class' => ['2H ema', 'EMA'],
+    'report and state, not a class' => ['599 CT', null],
+    'class alone' => ['3A', null],
+    'three words' => ['3A CT EXTRA', null],
+]);
+
 test('falls back to SRX when SRX_STRING is absent', function () {
     $tags = [
         'CALL' => 'W1AW',
