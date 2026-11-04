@@ -283,10 +283,23 @@ class N3fjpContactMapper
 
     /**
      * The UTC QSO time from N3FJP's date (yyyy/MM/dd) and time (HH:mm:ss),
-     * or now when they can't be read, as N3FJP itself does.
+     * or now when they can't be read, as N3FJP itself does. .NET writes
+     * the PC's own separators in place of "/" and ":", so a German PC sends
+     * 2026.06.27 and some locales 18.42.07; a contact typed in post-contest
+     * mode can carry a bare 1842.
      */
     private function timestamp(string $date, string $time): Carbon
     {
+        $date = trim($date);
+        $time = trim($time);
+
+        if (preg_match('/^(\d{4})\D(\d{1,2})\D(\d{1,2})$/', $date, $d) === 1
+            && preg_match('/^(\d{1,2})\D?(\d{2})(?:\D?(\d{2}))?$/', $time, $t) === 1
+            && checkdate((int) $d[2], (int) $d[3], (int) $d[1])
+            && (int) $t[1] < 24 && (int) $t[2] < 60 && (int) ($t[3] ?? 0) < 60) {
+            return Carbon::create((int) $d[1], (int) $d[2], (int) $d[3], (int) $t[1], (int) $t[2], (int) ($t[3] ?? 0), 'UTC');
+        }
+
         try {
             return Carbon::parse(str_replace('/', '-', $date).' '.$time, 'UTC');
         } catch (Throwable) {

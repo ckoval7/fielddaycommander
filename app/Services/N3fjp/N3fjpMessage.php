@@ -30,6 +30,12 @@ readonly class N3fjpMessage
     {
         $upper = strtoupper($raw);
 
+        // A chat says what it is right after <BOR>; its text may hold
+        // anything, <NTWK> included, so it is not searched for other kinds.
+        if (preg_match('/^\s*<BOR>\s*<MESG>/', $upper) === 1) {
+            return new self(N3fjpMessageKind::Chat, $raw);
+        }
+
         $kind = match (true) {
             str_contains($upper, '<BOR><NTWK><OPEN>') => N3fjpMessageKind::Open,
             str_contains($upper, '<BOR><NTWK><CHECK>') => N3fjpMessageKind::Check,
@@ -113,6 +119,22 @@ readonly class N3fjpMessage
     {
         return '<BOR><MESG><TO>'.self::clean($to).'</TO><FROM>'.self::SERVER_NAME.'</FROM><MSGTXT>'
             .self::clean($text).'</MSGTXT><EOR>';
+    }
+
+    /**
+     * A client's chat, rebuilt for relaying with its text cleaned. N3FJP
+     * clients parse by the first closing tag and by <EOR>, so text with
+     * tags or "<EOR>" in it would break the message for every client.
+     */
+    public static function relayedChat(string $raw): string
+    {
+        $upper = strtoupper($raw);
+        $start = strpos($upper, '<MSGTXT>');
+        $end = strrpos($upper, '</MSGTXT>');
+        $text = $start !== false && $end !== false && $end > $start ? substr($raw, $start + 8, $end - $start - 8) : '';
+
+        return '<BOR><MESG><TO>'.self::clean(self::extract($raw, 'TO')).'</TO><FROM>'.self::clean(self::extract($raw, 'FROM'))
+            .'</FROM><MSGTXT>'.self::clean($text).'</MSGTXT><EOR>';
     }
 
     /**

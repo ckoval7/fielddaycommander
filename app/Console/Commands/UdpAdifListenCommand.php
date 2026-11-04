@@ -8,6 +8,7 @@ namespace App\Console\Commands;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Models\EventConfiguration;
+use App\Models\Station;
 use App\Services\AdifContactMapper;
 use App\Services\AdifParserService;
 use App\Services\ExternalContactHandler;
@@ -69,7 +70,7 @@ class UdpAdifListenCommand extends BaseUdpListenerCommand
 
         $count = 0;
         foreach ($records as $tags) {
-            $dto = $this->mapper->map($tags, 'udp-adif');
+            $dto = $this->mapper->map($tags, 'udp-adif', $this->stationFor($tags, $from, $config));
 
             if ($dto === null) {
                 continue;
@@ -87,5 +88,41 @@ class UdpAdifListenCommand extends BaseUdpListenerCommand
         }
 
         return $count;
+    }
+
+    /**
+     * The station a record was logged at. fldigi and most ADIF senders put
+     * the club call in STATION_CALLSIGN on every PC, so that alone would
+     * merge them all into one station; each sending PC gets its own
+     * ("W2XYZ @ 192.168.1.23") unless a station is already set up with
+     * STATION_CALLSIGN as its name or hostname.
+     *
+     * @param  array<string, string>  $tags
+     */
+    private function stationFor(array $tags, string $from, EventConfiguration $config): ?string
+    {
+        $stationCallsign = trim($tags['STATION_CALLSIGN'] ?? '');
+
+        if ($stationCallsign !== '' && $this->stationExists($stationCallsign, $config)) {
+            return null;
+        }
+
+        if ($from === '') {
+            return null;
+        }
+
+        $label = $stationCallsign !== '' ? mb_substr($stationCallsign, 0, 30) : 'ADIF';
+
+        return "{$label} @ {$from}";
+    }
+
+    private function stationExists(string $identifier, EventConfiguration $config): bool
+    {
+        $identifier = strtolower(mb_substr($identifier, 0, 50));
+
+        return Station::query()
+            ->where('event_configuration_id', $config->id)
+            ->where(fn ($query) => $query->whereRaw('LOWER(name) = ?', [$identifier])->orWhereRaw('LOWER(hostname) = ?', [$identifier]))
+            ->exists();
     }
 }
