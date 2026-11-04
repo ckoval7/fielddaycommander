@@ -16,7 +16,7 @@ It runs on modest hardware, including a Raspberry Pi 4, and works without an int
 ## Key Features
 
 - **Real-time contact logging:** multiple operators log QSOs simultaneously with live dupe checking across all stations and bands
-- **External logger integration:** receive contacts over UDP from N1MM Logger+, WSJT-X/JTDX, fldigi, and other loggers that send ADIF over UDP, so operators don't have to log each contact twice
+- **External logger integration:** receive contacts over UDP from N1MM Logger+, WSJT-X/JTDX, fldigi, and other ADIF loggers, and act as the TCP network server for N3FJP Field Day and Winter Field Day Contest Log clients, sharing contacts both ways for dupe checks across both logs so operators don't have to log each contact twice
 - **ADIF file import:** upload .adi/.adif files through a guided wizard with station mapping, validation, and review before import
 - **Live scoring:** scores update automatically under your event's rules, tracking bonus points for ARRL Field Day and objective multipliers for Winter Field Day
 - **Section map:** interactive map of all 86 ARRL/RAC sections, colored by band, QSO count, or recency, updated in real time
