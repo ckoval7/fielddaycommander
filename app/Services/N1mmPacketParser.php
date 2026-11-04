@@ -96,28 +96,33 @@ class N1mmPacketParser
         try {
             $doc = simplexml_load_string($xml);
 
-            if ($doc !== false) {
-                return $doc;
-            }
-
-            if (! in_array($this->rootName($xml), self::RECOVERABLE_TYPES, true)) {
-                return null;
-            }
-
-            $dom = new \DOMDocument;
-            $dom->recover = true;
-
-            if (! @$dom->loadXML($xml, LIBXML_NONET) || $dom->documentElement === null) {
-                return null;
-            }
-
-            $recovered = simplexml_import_dom($dom);
-
-            return $recovered !== null && $this->survivedTruncation($recovered) ? $recovered : null;
+            return $doc !== false ? $doc : $this->recover($xml);
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
         }
+    }
+
+    /**
+     * Recover a contact or radio packet that libxml couldn't parse, or null
+     * if it isn't one of those or too little of it survived.
+     */
+    private function recover(string $xml): ?\SimpleXMLElement
+    {
+        if (! in_array($this->rootName($xml), self::RECOVERABLE_TYPES, true)) {
+            return null;
+        }
+
+        $dom = new \DOMDocument;
+        $dom->recover = true;
+
+        if (! @$dom->loadXML($xml, LIBXML_NONET) || $dom->documentElement === null) {
+            return null;
+        }
+
+        $recovered = simplexml_import_dom($dom);
+
+        return $recovered !== null && $this->survivedTruncation($recovered) ? $recovered : null;
     }
 
     /**

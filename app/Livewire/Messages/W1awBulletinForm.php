@@ -15,7 +15,6 @@ use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -353,41 +352,7 @@ class W1awBulletinForm extends Component
             return;
         }
 
-        [$added, $skipped] = DB::transaction(function () use ($result): array {
-            if ($this->replaceSchedule) {
-                BulletinScheduleEntry::forEvent($this->event->id)->delete();
-            }
-
-            $seen = BulletinScheduleEntry::forEvent($this->event->id)
-                ->get()
-                ->map(fn (BulletinScheduleEntry $entry): string => $this->scheduleKey($entry->scheduled_at->format(self::TIME_FORMAT), $entry->mode, $entry->source))
-                ->flip()
-                ->all();
-
-            $added = 0;
-            $skipped = 0;
-
-            foreach ($result['rows'] as $row) {
-                $key = $this->scheduleKey($row['scheduled_at']->format(self::TIME_FORMAT), $row['mode'], $row['source']);
-
-                if (isset($seen[$key])) {
-                    $skipped++;
-
-                    continue;
-                }
-
-                $seen[$key] = true;
-
-                BulletinScheduleEntry::create([
-                    ...$row,
-                    'event_id' => $this->event->id,
-                    'created_by' => auth()->id(),
-                ]);
-                $added++;
-            }
-
-            return [$added, $skipped];
-        });
+        ['added' => $added, 'skipped' => $skipped] = $csv->store($result['rows'], $this->event, $this->replaceSchedule, auth()->id());
 
         $this->reset(['scheduleCsv', 'replaceSchedule', 'showScheduleUpload']);
 
@@ -417,11 +382,6 @@ class W1awBulletinForm extends Component
             $csv->write($entries, $handle);
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv']);
-    }
-
-    private function scheduleKey(string $time, string $mode, string $source): string
-    {
-        return "{$time}|{$mode}|".strtoupper($source);
     }
 
     /**
@@ -470,37 +430,6 @@ class W1awBulletinForm extends Component
             ->with('user')
             ->orderBy('created_at', 'desc')
             ->get();
-    }
-
-    /**
-     * Compute a line-by-line diff between two strings.
-     *
-     * @return list<array{type: string, text: string}>
-     */
-    protected function diffLines(string $old, string $new): array
-    {
-        $oldLines = explode("\n", $old);
-        $newLines = explode("\n", $new);
-        $diff = [];
-
-        $maxLen = max(count($oldLines), count($newLines));
-        for ($i = 0; $i < $maxLen; $i++) {
-            $oldLine = $oldLines[$i] ?? null;
-            $newLine = $newLines[$i] ?? null;
-
-            if ($oldLine === $newLine) {
-                $diff[] = ['type' => 'unchanged', 'text' => $oldLine];
-            } else {
-                if ($oldLine !== null) {
-                    $diff[] = ['type' => 'removed', 'text' => $oldLine];
-                }
-                if ($newLine !== null) {
-                    $diff[] = ['type' => 'added', 'text' => $newLine];
-                }
-            }
-        }
-
-        return $diff;
     }
 
     public function render(): View
