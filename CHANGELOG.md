@@ -2,10 +2,13 @@
 
 ## Unreleased
 
+## 26.11.1 - 2026-11-03
+
 ### Added
 
 - On **W1AW Bulletin**, managers with **manage-bulletins** permission can import a published transmission schedule from CSV and download the current schedule as CSV to share with another server. Imports skip transmissions already scheduled, with an option to replace the current schedule.
 - Your club can use Field Day Commander as the N3FJP TCP network server, sharing contacts with N3FJP PCs so dupe checks work across both logs (Docker and Helm now publish port 1000, and bare-metal deploys and updates let the web and scheduler services bind it). N3FJP doesn't have a password: anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet.
+- Edits and deletes of contacts received from external loggers (N1MM Logger+, WSJT-X/JTDX, fldigi, ADIF UDP, and N3FJP) now appear in the audit log, naming the logger, the sending PC or station, and its IP address, with old and new values for edits. Previously, these edits and deletes left no audit record.
 
 ### Fixed
 
@@ -34,7 +37,6 @@
 - N1MM Logger+ contacts were dropped when the end of a QSO packet was cut off. They are now saved if the callsign and N1MM QSO ID are still present, without the trailing fields that were lost.
 - N1MM Logger+ score broadcasts filled the server log with "not well-formed XML" warnings when the club name contained `&`. Score packets are now skipped without a warning.
 - On **Import ADIF**, when a callsign had different sections in the file, picking a section in **Class/Section Inconsistencies** was ignored. Imported contacts kept their sections from the file or had no section. All of that callsign's imported contacts now get the section you picked. For ARRL Field Day, YT is stored as TER and MX as DX, as with sections read from the file. Winter Field Day keeps YT and MX.
-
 - When N1MM Logger+ PCs sent many contacts at once, Field Day Commander could miss contacts. The N1MM Logger+, WSJT-X/JTDX, and ADIF UDP listeners now read waiting packets before saving each contact, so bursts are less likely to lose contacts. Contacts already received are still saved when you stop the listener.
 - With fldigi's "Broadcast UDP ADIF record", leaving the station callsign blank sent contacts to a station with a blank name. They now go to "Unknown", and empty band, mode, section, report, and station fields are treated as missing values.
 - Notes sent by fldigi or brought in through ADIF file import weren't saved as contact notes when they used `NOTES` instead of `COMMENT`. They now appear in the contact's notes when there is no `COMMENT`.
