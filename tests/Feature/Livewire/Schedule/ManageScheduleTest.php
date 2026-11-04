@@ -305,8 +305,9 @@ describe('bulk creation', function () {
     test('can bulk create shifts', function () {
         $this->actingAs($this->admin);
 
-        $startTime = appNow()->format('Y-m-d\TH:i');
-        $endTime = appNow()->addHours(6)->format('Y-m-d\TH:i');
+        $now = appNow();
+        $startTime = $now->format('Y-m-d\TH:i');
+        $endTime = $now->copy()->addHours(6)->format('Y-m-d\TH:i');
 
         Livewire::test(ManageSchedule::class)
             ->call('openBulkModal')
@@ -326,8 +327,9 @@ describe('bulk creation', function () {
     test('bulk create adds short shift to fill remaining time', function () {
         $this->actingAs($this->admin);
 
-        $startTime = appNow()->format('Y-m-d\TH:i');
-        $endTime = appNow()->addHours(5)->format('Y-m-d\TH:i');
+        $now = appNow();
+        $startTime = $now->format('Y-m-d\TH:i');
+        $endTime = $now->copy()->addHours(5)->format('Y-m-d\TH:i');
 
         Livewire::test(ManageSchedule::class)
             ->call('openBulkModal')
@@ -1710,11 +1712,14 @@ describe('shift boundaries', function () {
     test('creating multiple shifts past the event end warns but still creates them', function () {
         $this->actingAs($this->admin);
 
+        // One clock reading: two could straddle a minute and add a third shift.
+        $now = appNow();
+
         Livewire::test(ManageSchedule::class)
             ->call('openBulkModal')
             ->set('bulkRoleId', $this->role->id)
-            ->set('bulkStartTime', toLocalTime(appNow()->addHours(10))->format('Y-m-d H:i'))
-            ->set('bulkEndTime', toLocalTime(appNow()->addHours(14))->format('Y-m-d H:i'))
+            ->set('bulkStartTime', toLocalTime($now->copy()->addHours(10))->format('Y-m-d H:i'))
+            ->set('bulkEndTime', toLocalTime($now->copy()->addHours(14))->format('Y-m-d H:i'))
             ->set('bulkDurationMinutes', 120)
             ->set('bulkCapacity', 1)
             ->call('createBulkShifts')

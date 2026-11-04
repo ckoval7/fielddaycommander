@@ -131,15 +131,11 @@ class WsjtxPacketParser
     {
         $length = $this->readUint32($data, $offset);
 
-        if ($length === null) {
-            return false;
-        }
-
         if ($length === 0xFFFFFFFF) {
             return null;
         }
 
-        if ($offset + $length > strlen($data)) {
+        if ($length === null || $offset + $length > strlen($data)) {
             return false;
         }
 

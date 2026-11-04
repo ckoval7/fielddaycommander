@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Support\CsvSafe;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Throwable;
 
@@ -164,6 +165,57 @@ class BulletinScheduleCsvService
                 $entry->notes ?? '',
             ]);
         }
+    }
+
+    /**
+     * Save parsed rows to an event's schedule, all or nothing. Rows already on
+     * the schedule, or repeated within the file, are skipped.
+     *
+     * @param  list<array{scheduled_at: CarbonImmutable, mode: string, frequencies: string, source: string, notes: ?string}>  $rows
+     * @return array{added: int, skipped: int}
+     */
+    public function store(array $rows, Event $event, bool $replace, ?int $createdBy): array
+    {
+        return DB::transaction(function () use ($rows, $event, $replace, $createdBy): array {
+            if ($replace) {
+                BulletinScheduleEntry::forEvent($event->id)->delete();
+            }
+
+            $seen = BulletinScheduleEntry::forEvent($event->id)
+                ->get()
+                ->map(fn (BulletinScheduleEntry $entry): string => $this->scheduleKey($entry->scheduled_at->format(self::TIME_FORMAT), $entry->mode, $entry->source))
+                ->flip()
+                ->all();
+
+            $added = 0;
+            $skipped = 0;
+
+            foreach ($rows as $row) {
+                $key = $this->scheduleKey($row['scheduled_at']->format(self::TIME_FORMAT), $row['mode'], $row['source']);
+
+                if (isset($seen[$key])) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $seen[$key] = true;
+
+                BulletinScheduleEntry::create([
+                    ...$row,
+                    'event_id' => $event->id,
+                    'created_by' => $createdBy,
+                ]);
+                $added++;
+            }
+
+            return ['added' => $added, 'skipped' => $skipped];
+        });
+    }
+
+    private function scheduleKey(string $time, string $mode, string $source): string
+    {
+        return "{$time}|{$mode}|".strtoupper($source);
     }
 
     /**
@@ -329,13 +381,11 @@ class BulletinScheduleCsvService
      */
     private function parseTime(string $time): ?CarbonImmutable
     {
-        if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{1,2}:\d{2}(:\d{2})?\s*(?<zone>\S*)$/', $time, $matches) !== 1) {
-            return null;
-        }
+        $isValid = preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{1,2}:\d{2}(:\d{2})?\s*(?<zone>\S*)$/', $time, $matches) === 1
+            && (in_array(strtoupper($matches['zone']), ['', 'Z', 'UTC'], true)
+                || preg_match('/^[+-]\d{2}:?\d{2}$/', $matches['zone']) === 1);
 
-        $zone = strtoupper($matches['zone']);
-
-        if (! in_array($zone, ['', 'Z', 'UTC'], true) && preg_match('/^[+-]\d{2}:?\d{2}$/', $zone) !== 1) {
+        if (! $isValid) {
             return null;
         }
 
