@@ -122,8 +122,10 @@ class N1mmPacketParser
 
     /**
      * Whether a recovered packet kept what it needs. N1MM cuts packets from
-     * the end, so a contact that still has its call and ID (written near the
-     * end) lost only trailing fields; one without them can't be trusted.
+     * the end, by one byte per extra UTF-8 byte in the text, so a contact
+     * keeps its call and time (near the start) unless almost all of it is
+     * gone. A long non-ASCII comment can take the ID (near the end) with
+     * it; such a contact is still kept, and found by its call and time.
      */
     private function survivedTruncation(\SimpleXMLElement $doc): bool
     {
@@ -131,7 +133,7 @@ class N1mmPacketParser
             return $this->extractString($doc, 'Freq') !== null;
         }
 
-        return $this->extractString($doc, 'call') !== null && $this->extractString($doc, 'ID') !== null;
+        return $this->extractString($doc, 'call') !== null && $this->extractString($doc, 'timestamp') !== null;
     }
 
     /**

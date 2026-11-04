@@ -38,68 +38,109 @@ class WsjtxPacketParser
         $type = $this->readUint32($data, $offset);
 
         return match ($type) {
-            self::TYPE_HEARTBEAT => $this->parseHeartbeat($data, $offset, $schema),
+            self::TYPE_HEARTBEAT => $this->parseHeartbeat($data, $offset, (int) $schema),
             self::TYPE_LOGGED_ADIF => $this->parseLoggedAdif($data, $offset),
             default => null,
         };
     }
 
     /**
+     * The client id from a WSJT-X packet's header: "WSJT-X", "JTDX", or
+     * "WSJT-X - <rig name>" for an instance started with --rig-name. Null
+     * when the packet isn't a WSJT-X message or is cut off before the id.
+     */
+    public function clientId(string $data): ?string
+    {
+        if (strlen($data) < self::MIN_PACKET_LENGTH) {
+            return null;
+        }
+
+        $offset = 0;
+
+        if ($this->readUint32($data, $offset) !== self::MAGIC) {
+            return null;
+        }
+
+        $offset = self::MIN_PACKET_LENGTH;
+        $id = $this->readUtf8($data, $offset);
+
+        return is_string($id) && $id !== '' ? $id : null;
+    }
+
+    /**
      * Parse a Heartbeat message (type 0).
      *
-     * @return array<string, mixed>
+     * @return array<string, mixed>|null
      */
-    private function parseHeartbeat(string $data, int $offset, int $schema): array
+    private function parseHeartbeat(string $data, int $offset, int $schema): ?array
     {
         $id = $this->readUtf8($data, $offset);
 
-        $maxSchema = $offset + 4 <= strlen($data)
-            ? $this->readUint32($data, $offset)
-            : $schema;
+        if ($id === false) {
+            return null;
+        }
 
-        $version = $offset < strlen($data) ? $this->readUtf8($data, $offset) : null;
-        $revision = $offset < strlen($data) ? $this->readUtf8($data, $offset) : null;
+        $maxSchema = $this->readUint32($data, $offset) ?? $schema;
+        $version = $this->readUtf8($data, $offset);
+        $revision = $this->readUtf8($data, $offset);
 
         return [
             'id' => $id,
             'max_schema' => $maxSchema,
-            'version' => $version,
-            'revision' => $revision,
+            'version' => is_string($version) ? $version : null,
+            'revision' => is_string($revision) ? $revision : null,
         ];
     }
 
     /**
-     * Parse a Logged ADIF message (type 12).
+     * Parse a Logged ADIF message (type 12). Null when the datagram was cut
+     * short, so a damaged packet is dropped rather than half-read.
      */
     private function parseLoggedAdif(string $data, int $offset): ?string
     {
-        // Skip the Id field
-        $this->readUtf8($data, $offset);
+        if ($this->readUtf8($data, $offset) === false) {
+            return null;
+        }
 
-        return $this->readUtf8($data, $offset);
+        $adif = $this->readUtf8($data, $offset);
+
+        return is_string($adif) ? $adif : null;
     }
 
     /**
-     * Read a 4-byte big-endian unsigned integer.
+     * Read a 4-byte big-endian unsigned integer, or null past the end.
      */
-    private function readUint32(string $data, int &$offset): int
+    private function readUint32(string $data, int &$offset): ?int
     {
-        $value = unpack('N', $data, $offset);
+        if ($offset + 4 > strlen($data)) {
+            return null;
+        }
+
+        $value = unpack('N', $data, $offset)[1];
         $offset += 4;
 
-        return $value[1];
+        return $value;
     }
 
     /**
      * Read a QDataStream utf8 string: 4-byte length prefix + N bytes.
-     * A length of 0xffffffff indicates null.
+     * A length of 0xffffffff is a null string; false means the datagram
+     * ends before the string does.
      */
-    private function readUtf8(string $data, int &$offset): ?string
+    private function readUtf8(string $data, int &$offset): string|false|null
     {
         $length = $this->readUint32($data, $offset);
 
+        if ($length === null) {
+            return false;
+        }
+
         if ($length === 0xFFFFFFFF) {
             return null;
+        }
+
+        if ($offset + $length > strlen($data)) {
+            return false;
         }
 
         $value = substr($data, $offset, $length);

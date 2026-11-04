@@ -21,6 +21,13 @@ class WsjtxListenCommand extends BaseUdpListenerCommand
 
     protected $description = 'Listen for WSJTX UDP broadcasts and create contacts from ADIF data';
 
+    /**
+     * Ids WSJT-X and JTDX use when started without --rig-name.
+     *
+     * @var list<string>
+     */
+    private const DEFAULT_CLIENT_IDS = ['WSJT-X', 'JTDX'];
+
     private WsjtxPacketParser $wsjtxParser;
 
     private AdifParserService $adifParser;
@@ -69,7 +76,7 @@ class WsjtxListenCommand extends BaseUdpListenerCommand
 
         $adifResult = $this->adifParser->parse($parsed);
         $tags = ($adifResult['records'] ?? [])[0] ?? null;
-        $dto = $tags !== null ? $this->mapper->map($tags, 'wsjtx') : null;
+        $dto = $tags !== null ? $this->mapper->map($tags, 'wsjtx', $this->stationFor($buffer, $from)) : null;
 
         if ($dto === null) {
             return 0;
@@ -85,5 +92,28 @@ class WsjtxListenCommand extends BaseUdpListenerCommand
         }
 
         return 1;
+    }
+
+    /**
+     * The station a WSJT-X instance logs as. STATION_CALLSIGN is the club
+     * call on every PC at Field Day, so it can't tell them apart. An
+     * instance started with --rig-name has a unique id ("WSJT-X - IC7300");
+     * a default one ("WSJT-X", "JTDX") is told apart by the PC it runs on.
+     */
+    private function stationFor(string $buffer, string $from): ?string
+    {
+        $id = $this->wsjtxParser->clientId($buffer);
+
+        if ($id === null) {
+            return null;
+        }
+
+        $id = mb_substr(trim((string) preg_replace('/[\x00-\x1F\x7F]/u', '', $id)), 0, 50);
+
+        if (in_array(strtoupper($id), self::DEFAULT_CLIENT_IDS, true) && $from !== '') {
+            return "{$id} @ {$from}";
+        }
+
+        return $id !== '' ? $id : null;
     }
 }

@@ -26,6 +26,31 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
 
     private ?Socket $socket = null;
 
+    /**
+     * Datagrams read from the socket but not yet handled. Handling one can
+     * take tens of milliseconds (on a Pi, more), while a logger replaying
+     * its log sends faster than that; moving datagrams off the kernel's
+     * small socket buffer between packets keeps a burst from being dropped.
+     *
+     * @var list<array{string, string}>
+     */
+    private array $pending = [];
+
+    /**
+     * Most bytes of datagrams held in memory, so a flood can't exhaust a
+     * small Pi. Logger packets are under 2 KB, so this is thousands of
+     * contacts; past it, datagrams wait in (or overflow) the kernel buffer.
+     */
+    private const MAX_PENDING_BYTES = 8_388_608;
+
+    private int $pendingBytes = 0;
+
+    /**
+     * Socket receive buffer to ask for. The kernel caps it at
+     * net.core.rmem_max, so this is a request, not a promise.
+     */
+    private const RECEIVE_BUFFER_BYTES = 4_194_304;
+
     /** @var array<string, array{started_at: int, logged: int, suppressed: int}> Throttle state per warning key */
     private array $warningWindows = [];
 
@@ -184,6 +209,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         }
 
         socket_set_option($this->socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => 2, 'usec' => 0]);
+        @socket_set_option($this->socket, SOL_SOCKET, SO_RCVBUF, self::RECEIVE_BUFFER_BYTES);
 
         return null;
     }
@@ -274,7 +300,8 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         $lastPacketAt = null;
         $lastHeartbeatTime = 0;
 
-        while ($this->running) {
+        // On a stop, datagrams already read off the socket are still handled.
+        while ($this->running || $this->pending !== []) {
             $now = time();
             if ($now - $lastHeartbeatTime >= 5) {
                 $config->unsetRelation('event');
@@ -298,15 +325,13 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
                 break;
             }
 
-            $buffer = '';
-            $from = '';
-            $fromPort = 0;
-            $bytes = @socket_recvfrom($this->socket, $buffer, 65535, 0, $from, $fromPort);
+            $packet = $this->nextPacket();
 
-            if ($bytes === false) {
+            if ($packet === null) {
                 continue;
             }
 
+            [$buffer, $from] = $packet;
             $packetCount++;
             $lastPacketAt = now()->toIso8601String();
 
@@ -322,6 +347,65 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         }
 
         return [$processedCount, $errorCount];
+    }
+
+    /**
+     * The next datagram to handle: from the backlog if there is one,
+     * otherwise from the socket (waiting up to its two-second timeout).
+     * Either way, everything already waiting on the socket is moved to the
+     * backlog first.
+     *
+     * @return array{string, string}|null [datagram, sender address]
+     */
+    private function nextPacket(): ?array
+    {
+        if ($this->pending === []) {
+            if (! $this->running) {
+                return null;
+            }
+
+            $packet = $this->receive(0);
+
+            if ($packet === null) {
+                return null;
+            }
+
+            $this->hold($packet);
+        }
+
+        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receive(MSG_DONTWAIT)) !== null) {
+            $this->hold($packet);
+        }
+
+        $next = array_shift($this->pending);
+        $this->pendingBytes -= strlen($next[0]);
+
+        return $next;
+    }
+
+    /**
+     * @param  array{string, string}  $packet
+     */
+    private function hold(array $packet): void
+    {
+        $this->pending[] = $packet;
+        $this->pendingBytes += strlen($packet[0]);
+    }
+
+    /**
+     * @return array{string, string}|null
+     */
+    private function receive(int $flags): ?array
+    {
+        $buffer = '';
+        $from = '';
+        $fromPort = 0;
+
+        if (@socket_recvfrom($this->socket, $buffer, 65535, $flags, $from, $fromPort) === false) {
+            return null;
+        }
+
+        return [(string) $buffer, (string) $from];
     }
 
     private function teardown(

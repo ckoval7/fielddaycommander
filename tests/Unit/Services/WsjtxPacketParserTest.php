@@ -105,3 +105,22 @@ test('handles heartbeat without optional fields (schema 2)', function () {
         ->and($result['version'])->toBeNull()
         ->and($result['revision'])->toBeNull();
 });
+
+test('returns null for a Logged ADIF message cut off inside its id or record', function () {
+    $whole = buildWsjtxPacket(12, 'WSJT-X', packUtf8('<call:4>W1AW <eor>'));
+
+    expect($this->parser->parse(substr($whole, 0, 14)))->toBeNull()
+        ->and($this->parser->parse(substr($whole, 0, 24)))->toBeNull()
+        ->and($this->parser->parse(substr($whole, 0, strlen($whole) - 3)))->toBeNull();
+});
+
+test('returns null for a heartbeat cut off inside its id', function () {
+    expect($this->parser->parse(substr(buildWsjtxPacket(0, 'WSJT-X'), 0, 15)))->toBeNull();
+});
+
+test('reads the client id from any message header', function () {
+    expect($this->parser->clientId(buildWsjtxPacket(1, 'WSJT-X - IC7300')))->toBe('WSJT-X - IC7300')
+        ->and($this->parser->clientId(buildWsjtxPacket(12, 'JTDX', packUtf8('<call:4>W1AW <eor>'))))->toBe('JTDX')
+        ->and($this->parser->clientId(substr(buildWsjtxPacket(12, 'WSJT-X'), 0, 15)))->toBeNull()
+        ->and($this->parser->clientId('<CALL:4>W1AW<EOR>'))->toBeNull();
+});

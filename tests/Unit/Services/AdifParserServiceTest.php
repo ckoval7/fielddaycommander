@@ -153,3 +153,32 @@ test('reads multibyte values whether lengths count characters or bytes', functio
     expect($records[0])->toMatchArray(['NAME' => 'José', 'COMMENT' => 'Café ☕'])
         ->and($records[1])->toMatchArray(['CALL' => 'K1AB', 'NAME' => 'José', 'COMMENT' => 'Café ☕']);
 });
+
+test('reads an end-of-record marker inside a value as text', function () {
+    $records = $this->parser->parse('<CALL:4>W1AW<NOTES:13>see <EOR> now<ARRL_SECT:2>CT<EOR><CALL:4>K1AB<EOR>')['records'];
+
+    expect($records)->toHaveCount(2)
+        ->and($records[0])->toMatchArray(['NOTES' => 'see <EOR> now', 'ARRL_SECT' => 'CT'])
+        ->and($records[1]['CALL'])->toBe('K1AB');
+});
+
+test('reads a value with a tag-like string in it by its length', function () {
+    $records = $this->parser->parse('<CALL:4>W1AW<COMMENT:14>op <NAME:3>Bob<BAND:3>20m<EOR>')['records'];
+
+    expect($records[0])->toMatchArray(['COMMENT' => 'op <NAME:3>Bob', 'BAND' => '20m'])
+        ->and($records[0])->not->toHaveKey('NAME');
+});
+
+test('reads text from a Windows-1252 PC as UTF-8', function () {
+    $qth = mb_convert_encoding('Montréal', 'Windows-1252', 'UTF-8');
+
+    $records = $this->parser->parse("<CALL:6>VE2ABC<QTH:8>{$qth}<EOR>")['records'];
+
+    expect($records[0]['QTH'])->toBe('Montréal');
+});
+
+test('still stops a value with a wrong length at the next tag', function () {
+    $records = $this->parser->parse('<CALL:6>W1AW<BAND:3>20m<NAME:2>Bobby <EOR>')['records'];
+
+    expect($records[0])->toMatchArray(['CALL' => 'W1AW', 'BAND' => '20m', 'NAME' => 'Bo']);
+});

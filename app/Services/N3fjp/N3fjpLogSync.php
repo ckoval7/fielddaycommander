@@ -236,7 +236,6 @@ class N3fjpLogSync
     {
         $record = $this->mapper->toRecord($contact, $contact->n3fjp_key);
         $this->sent[$contact->n3fjp_key] = self::fingerprint($record);
-        $this->contactIds[$contact->n3fjp_key] = $contact->id;
 
         return $record;
     }

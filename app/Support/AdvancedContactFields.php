@@ -157,6 +157,17 @@ final class AdvancedContactFields
             }
         }
 
+        // fldigi and some other loggers write notes as NOTES (ADIF's
+        // multi-line field) rather than COMMENT. The tag stays with the
+        // others so the record still writes back out whole.
+        if (! isset($fields['notes']) && isset($extra['NOTES'])) {
+            $notes = self::adifValue('notes', $extra['NOTES']);
+
+            if ($notes !== null) {
+                $fields['notes'] = $notes;
+            }
+        }
+
         return ['fields' => $fields, 'extra' => $extra];
     }
 

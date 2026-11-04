@@ -77,7 +77,8 @@ class N3fjpServer
             N3fjpMessageKind::Transaction => $this->handleTransaction($clientId, $message),
             N3fjpMessageKind::BandAndMode => $this->relayBandAndMode($message),
             N3fjpMessageKind::Who => $this->queueAll($clientId, $this->bandStatus->all()),
-            N3fjpMessageKind::Chat, N3fjpMessageKind::DxSpot => $this->broadcast($raw),
+            N3fjpMessageKind::Chat => $this->broadcast(N3fjpMessage::relayedChat($raw)),
+            N3fjpMessageKind::DxSpot => $this->broadcast($raw),
             N3fjpMessageKind::ClockSync, N3fjpMessageKind::Unknown => null,
         };
     }
