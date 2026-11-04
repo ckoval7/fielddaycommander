@@ -68,7 +68,7 @@ class AdifContactMapper
             sentExchange: $this->filled($tags, 'STX_STRING') ?? $this->filled($tags, 'STX'),
             receivedReport: $this->filled($tags, 'RST_RCVD'),
             receivedExchange: $receivedExchange !== '' ? $receivedExchange : null,
-            sectionCode: $this->filled($tags, 'ARRL_SECT'),
+            sectionCode: $this->filled($tags, 'ARRL_SECT') ?? $this->sectionFromExchange($receivedExchange),
             externalId: $externalId,
             isDelete: false,
             isReplace: false,
@@ -76,6 +76,22 @@ class AdifContactMapper
             advancedFields: $advancedFields,
             adifFields: $adifFields !== [] ? $adifFields : null,
         );
+    }
+
+    /**
+     * The section from a received "class section" exchange ("2H EMA"), or
+     * null for any other shape. WSJT-X sends only SRX_STRING, with no
+     * ARRL_SECT, unless its Field Day activity is selected.
+     */
+    private function sectionFromExchange(string $exchange): ?string
+    {
+        $tokens = preg_split('/\s+/', trim($exchange), -1, PREG_SPLIT_NO_EMPTY);
+
+        if (count($tokens) !== 2 || preg_match(ExchangeParserService::EXCHANGE_CLASS_PATTERN, $tokens[0]) !== 1) {
+            return null;
+        }
+
+        return strtoupper($tokens[1]);
     }
 
     /**

@@ -49,6 +49,8 @@
 - N1MM Logger+ sometimes sends packets out of order. A delete that arrived before its QSO let the contact appear anyway. It now stays deleted. A late copy of the original QSO, including one passed on by another networked PC, could also undo an edit. It no longer does.
 - N1MM Logger+ contacts with long comments in accented or non-Latin text were dropped when N1MM cut off the end of the packet, taking the QSO ID with it. They are now saved and matched by callsign and time, so later edits and deletes from N1MM still find them.
 - N3FJP chats containing tags or `<EOR>` reached other N3FJP PCs broken, and chats containing `<NTWK>` weren't passed on at all. Chats are now passed on as a single message with `<` and `>` removed from the text.
+- Exported JTTY contacts had `MODE` set to `JTTY`. ADIF export now writes `MODE` as `MFSK` with `SUBMODE` set to `JTTY`, matching WSJT-X.
+- Contacts received over UDP from WSJT-X/JTDX kept their class but lost their section when WSJT-X's "ARRL Field Day" special activity wasn't selected, even with a received exchange such as "2H EMA". The section now comes from the received exchange for any contact received through the external logger listeners using ADIF with a class-and-section exchange and no `ARRL_SECT` field.
 
 ## 26.10.14 - 2026-10-29
 

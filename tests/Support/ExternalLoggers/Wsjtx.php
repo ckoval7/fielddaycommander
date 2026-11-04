@@ -17,6 +17,7 @@ namespace Tests\Support\ExternalLoggers;
  * - QDateTime as julian day (qint64), ms since midnight (quint32) and a
  *   timespec byte (1 = UTC); bool as one byte; float as a double, since
  *   QDataStream defaults to double precision
+ * - FT4, FST4, Q65 and JTTY are logged as MODE MFSK with a SUBMODE
  * - a logged QSO is a QSOLogged (5) followed by a LoggedADIF (12); the
  *   ADIF is "\n<adif_ver:5>3.1.0\n<programid:6>WSJT-X\n<EOH>\n" + the record
  *   + " <EOR>", fields separated by single spaces, tags lower case except
@@ -88,7 +89,7 @@ final class Wsjtx
         $t = $field('call', $qso['call']);
         $t .= ' '.$field('gridsquare', $qso['grid']);
 
-        if (! in_array($qso['mode'], ['FT4', 'FST4', 'Q65'], true)) {
+        if (! in_array($qso['mode'], ['FT4', 'FST4', 'Q65', 'JTTY'], true)) {
             $t .= ' '.$field('mode', $qso['mode']);
         } else {
             $t .= ' <mode:4>MFSK '.$field('submode', $qso['mode']);
@@ -115,6 +116,8 @@ final class Wsjtx
         if (count($words) === 2 && ! ctype_digit($words[1]) && ! (ctype_digit($words[0]) && strlen($words[0]) > 3) && $qso['field_day']) {
             $t .= ' <contest_id:14>ARRL-FIELD-DAY '.$field('SRX_STRING', $qso['x_rcvd'])
                 .' '.$field('class', $words[0]).' '.$field('arrl_sect', $words[1]);
+        } elseif (count($words) === 2 && ! ctype_digit($words[1]) && ! (ctype_digit($words[0]) && strlen($words[0]) > 3)) {
+            $t .= ' '.$field('SRX_STRING', $qso['x_rcvd']);
         }
 
         return mb_convert_encoding($t, 'ISO-8859-1', 'UTF-8');
