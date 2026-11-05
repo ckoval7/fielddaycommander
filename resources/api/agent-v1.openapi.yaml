@@ -1,0 +1,190 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+openapi: 3.1.0
+info:
+  title: Field Day Commander Agent API
+  version: 1.0.0
+  description: >-
+    How Field Day Commander Agent talks to a Field Day Commander server. Agents
+    in the field depend on v1, so only add to it. A breaking change needs a v2.
+    Clients must ignore response fields they don't recognize.
+servers:
+  - url: /api/agent/v1
+components:
+  securitySchemes:
+    agentToken:
+      type: http
+      scheme: bearer
+  parameters:
+    agentVersion:
+      name: X-Agent-Version
+      in: header
+      description: The agent's version, recorded by the server.
+      schema: { type: string, pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
+  responses:
+    unauthenticated:
+      description: The token is missing, unknown or revoked, or its event was deleted. Enroll again.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    tooManyRequests:
+      description: Rate limited. Wait for the time in the Retry-After header.
+    validationFailed:
+      description: The request as a whole is malformed.
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    AgentSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+    Contact:
+      type: object
+      required: [idempotency_key, callsign, qso_time]
+      properties:
+        idempotency_key:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{16,64}$'
+          description: >-
+            Stable for this contact across retries and re-enrollment, and unique
+            within the event. Sending a known key again updates that contact. A
+            contact deleted on the server stays deleted.
+        callsign: { type: string, maxLength: 20 }
+        qso_time:
+          type: string
+          format: date-time
+          description: 'With a UTC offset or Z, to the second: 2026-06-27T18:05:00Z'
+        band: { type: [string, 'null'], maxLength: 10, description: 'Used when frequency_hz is missing or outside every band.' }
+        mode: { type: [string, 'null'], maxLength: 20 }
+        frequency_hz: { type: [integer, 'null'], minimum: 100000, maximum: 300000000000 }
+        operator: { type: [string, 'null'], maxLength: 20 }
+        station:
+          type: [string, 'null']
+          maxLength: 50
+          description: Station name or hostname. Defaults to the agent's name. An unknown station is created.
+        exchange_class: { type: [string, 'null'], maxLength: 10 }
+        section: { type: [string, 'null'], maxLength: 10 }
+        power_watts: { type: [integer, 'null'], minimum: 1, maximum: 100000 }
+        rst_sent: { type: [string, 'null'], maxLength: 4 }
+        rst_received: { type: [string, 'null'], maxLength: 4 }
+        grid_square: { type: [string, 'null'], maxLength: 6 }
+        contact_name: { type: [string, 'null'], maxLength: 50 }
+        notes: { type: [string, 'null'], maxLength: 500 }
+    ContactResult:
+      type: object
+      required: [index, status]
+      properties:
+        index: { type: integer, description: The contact's position in the request. }
+        status:
+          type: string
+          enum: [accepted, rejected, retry]
+          description: >-
+            accepted: stored, remove it from the queue. rejected: will never be
+            stored, so don't resend it unchanged. retry: not stored, send it
+            again later.
+        contact_uuid: { type: string, description: Present when accepted. }
+        code:
+          type: string
+          description: 'Rejected: invalid, invalid_contact or out_of_period. Retry: busy or server_error.'
+        message: { type: string, description: Present when rejected. }
+paths:
+  /enroll:
+    post:
+      summary: Trade a one-time enrollment code for a token
+      description: The token is only returned here. Limited to 10 requests a minute per address.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, maxLength: 32, description: Case and separators are ignored. }
+                agent_version: { type: [string, 'null'], pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
+      responses:
+        '201':
+          description: Enrolled.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, agent]
+                properties:
+                  token: { type: string }
+                  agent: { $ref: '#/components/schemas/AgentSummary' }
+        '422':
+          description: The code is invalid, expired or already used (code invalid_code), or the request is malformed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/tooManyRequests' }
+  /handshake:
+    get:
+      summary: Check compatibility and find out which event this agent sends to
+      security: [{ agentToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/agentVersion' }]
+      responses:
+        '200':
+          description: The server's capabilities.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [server_version, supported_api_versions, minimum_agent_version, server_time, agent, event]
+                properties:
+                  server_version: { type: string }
+                  supported_api_versions: { type: array, items: { type: integer } }
+                  minimum_agent_version: { type: [string, 'null'], description: Older agents should ask to be updated. }
+                  server_time: { type: string, format: date-time }
+                  agent: { $ref: '#/components/schemas/AgentSummary' }
+                  event:
+                    type: [object, 'null']
+                    required: [name, starts_at, ends_at]
+                    properties:
+                      name: { type: string }
+                      starts_at: { type: string, format: date-time }
+                      ends_at: { type: string, format: date-time, description: When operating ends. }
+        '401': { $ref: '#/components/responses/unauthenticated' }
+        '429': { $ref: '#/components/responses/tooManyRequests' }
+  /contacts:
+    post:
+      summary: Store a batch of contacts
+      description: >-
+        Each contact succeeds or fails on its own, so a 200 can include rejected
+        contacts. Check every result. Limited to 120 requests a minute per agent.
+      security: [{ agentToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/agentVersion' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contacts]
+              properties:
+                contacts:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { $ref: '#/components/schemas/Contact' }
+      responses:
+        '200':
+          description: One result per contact, in request order.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results]
+                properties:
+                  results: { type: array, items: { $ref: '#/components/schemas/ContactResult' } }
+        '401': { $ref: '#/components/responses/unauthenticated' }
+        '422': { $ref: '#/components/responses/validationFailed' }
+        '429': { $ref: '#/components/responses/tooManyRequests' }
