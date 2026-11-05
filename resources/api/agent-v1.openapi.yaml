@@ -73,7 +73,11 @@ components:
         station:
           type: [string, 'null']
           maxLength: 50
-          description: Station name or hostname. Defaults to the agent's name. An unknown station is created.
+          description: >-
+            Station name or hostname. Defaults to the agent's name. An unknown
+            station is created only if the person who enrolled the agent has
+            manage-stations. Otherwise the contact gets retry with
+            unknown_station until someone creates the station.
         exchange_class: { type: [string, 'null'], maxLength: 10 }
         section: { type: [string, 'null'], maxLength: 10 }
         power_watts: { type: [integer, 'null'], minimum: 1, maximum: 100000 }
@@ -97,8 +101,8 @@ components:
         contact_uuid: { type: string, description: Present when accepted. }
         code:
           type: string
-          description: 'Rejected: invalid, invalid_contact or out_of_period. Retry: busy or server_error.'
-        message: { type: string, description: Present when rejected. }
+          description: 'Rejected: invalid, invalid_contact or out_of_period. Retry: busy, server_error or unknown_station.'
+        message: { type: string, description: Present when rejected or unknown_station. }
 paths:
   /enroll:
     post:
@@ -134,7 +138,7 @@ paths:
         '429': { $ref: '#/components/responses/tooManyRequests' }
   /handshake:
     get:
-      summary: Check compatibility and find out which event this agent sends to
+      summary: Check compatibility and get the agent's event, stations and permissions
       security: [{ agentToken: [] }]
       parameters: [{ $ref: '#/components/parameters/agentVersion' }]
       responses:
@@ -144,7 +148,7 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [server_version, supported_api_versions, minimum_agent_version, server_time, agent, event]
+                required: [server_version, supported_api_versions, minimum_agent_version, server_time, agent, event, permissions, stations]
                 properties:
                   server_version: { type: string }
                   supported_api_versions: { type: array, items: { type: integer } }
@@ -158,6 +162,25 @@ paths:
                       name: { type: string }
                       starts_at: { type: string, format: date-time }
                       ends_at: { type: string, format: date-time, description: When operating ends. }
+                  permissions:
+                    type: object
+                    required: [create_stations]
+                    properties:
+                      create_stations:
+                        type: boolean
+                        description: >-
+                          Whether a contact naming an unknown station creates it.
+                          Follows the current permissions of the person who
+                          enrolled the agent, so handshake again to refresh it.
+                  stations:
+                    type: array
+                    description: The event's stations, sorted by name. Handshake again to refresh the list.
+                    items:
+                      type: object
+                      required: [name, hostname]
+                      properties:
+                        name: { type: string }
+                        hostname: { type: [string, 'null'] }
         '401': { $ref: '#/components/responses/unauthenticated' }
         '403': { $ref: '#/components/responses/httpsRequired' }
         '429': { $ref: '#/components/responses/tooManyRequests' }

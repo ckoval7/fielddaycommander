@@ -117,6 +117,7 @@ class AgentEnrollment extends Component
         return view('livewire.agents.agent-enrollment', [
             'isSecure' => app(AgentConnection::class)->isAllowed(request()),
             'eventName' => $config?->event?->name,
+            'canCreateStations' => auth()->user()->can('manage-stations'),
             'agents' => $config === null ? new Collection : $this->visibleAgents($config->id),
         ])->layout('components.layouts.app');
     }

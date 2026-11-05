@@ -11,8 +11,11 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
+use App\Models\Station;
 use App\Models\User;
 use App\Services\AgentEnrollmentService;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Facades\Cache;
@@ -35,6 +38,7 @@ beforeEach(function () {
         'event_configuration_id' => $this->config->id,
         'name' => 'Phone Tent',
     ]);
+    Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Phone Tent']);
 });
 
 /**
@@ -53,6 +57,14 @@ function agentContact(array $overrides = []): array
         'exchange_class' => '3a',
         ...$overrides,
     ];
+}
+
+function enrollAs(string $role, Agent $agent): User
+{
+    $user = User::factory()->create()->assignRole($role);
+    $agent->update(['created_by_user_id' => $user->id]);
+
+    return $user;
 }
 
 describe('https', function () {
@@ -236,6 +248,32 @@ describe('handshake', function () {
             ->agent_version->toBe('26.11.2')
             ->last_seen_at->not->toBeNull();
     });
+
+    test('lists only this event\'s stations, sorted by name', function () {
+        Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'CW Tent', 'hostname' => 'cw-laptop']);
+        Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'Removed'])->delete();
+        Station::factory()->create(['name' => 'Other Event']);
+
+        $this->withToken(AGENT_TOKEN)
+            ->getJson('https://localhost/api/agent/v1/handshake')
+            ->assertOk()
+            ->assertJsonPath('stations.0', ['name' => 'CW Tent', 'hostname' => 'cw-laptop'])
+            ->assertJsonPath('stations.1.name', 'Phone Tent')
+            ->assertJsonCount(2, 'stations');
+    });
+
+    test('reports whether the agent can create stations', function () {
+        $this->seed([PermissionSeeder::class, RoleSeeder::class]);
+        $handshake = fn () => $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake');
+
+        $handshake()->assertJsonPath('permissions.create_stations', false);
+
+        $user = enrollAs('Operator', $this->agent);
+        $handshake()->assertJsonPath('permissions.create_stations', false);
+
+        $user->syncRoles('Station Captain');
+        $handshake()->assertJsonPath('permissions.create_stations', true);
+    });
 });
 
 describe('contacts', function () {
@@ -257,6 +295,102 @@ describe('contacts', function () {
             ->rst_sent->toBe('59')
             ->power_watts->toBe(5);
         expect($contact->operatingSession->station->name)->toBe('Phone Tent');
+    });
+
+    describe('unknown stations', function () {
+        beforeEach(function () {
+            $this->seed([PermissionSeeder::class, RoleSeeder::class]);
+        });
+
+        test('are created when the person who enrolled the agent has manage-stations', function () {
+            enrollAs('Station Captain', $this->agent);
+
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['station' => 'New Tent'])]])
+                ->assertOk()
+                ->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Station::where('name', 'New Tent')->exists())->toBeTrue();
+        });
+
+        test('wait in the agent\'s queue when that person doesn\'t', function () {
+            enrollAs('Operator', $this->agent);
+
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['station' => 'New Tent'])]])
+                ->assertOk()
+                ->assertJsonPath('results.0.status', 'retry')
+                ->assertJsonPath('results.0.code', 'unknown_station');
+
+            expect(Station::where('name', 'New Tent')->exists())->toBeFalse()
+                ->and(Contact::count())->toBe(0);
+        });
+
+        test('wait the same way when the contact falls back to the agent\'s name', function () {
+            enrollAs('Operator', $this->agent);
+            Station::where('name', 'Phone Tent')->delete();
+
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact()]])
+                ->assertJsonPath('results.0.code', 'unknown_station');
+
+            expect(Station::count())->toBe(0);
+        });
+
+        test('are stored on retry once someone creates the station', function () {
+            enrollAs('Operator', $this->agent);
+            $request = ['contacts' => [agentContact(['station' => 'New Tent'])]];
+
+            $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', $request)
+                ->assertJsonPath('results.0.status', 'retry');
+
+            $station = Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'New Tent']);
+
+            $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', $request)
+                ->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::sole()->operatingSession->station_id)->toBe($station->id);
+        });
+
+        test('match an existing station by hostname without manage-stations', function () {
+            enrollAs('Operator', $this->agent);
+            Station::factory()->create(['event_configuration_id' => $this->config->id, 'name' => 'CW Tent', 'hostname' => 'cw-laptop']);
+
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['station' => 'CW-LAPTOP'])]])
+                ->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Station::count())->toBe(2);
+        });
+
+        test('stop being created when the person loses manage-stations', function () {
+            $user = enrollAs('Station Captain', $this->agent);
+            $user->syncRoles('Operator');
+
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['station' => 'New Tent'])]])
+                ->assertJsonPath('results.0.code', 'unknown_station');
+        });
+
+        test('aren\'t created by an agent with no enrolling person', function () {
+            $this->withToken(AGENT_TOKEN)
+                ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['station' => 'New Tent'])]])
+                ->assertJsonPath('results.0.code', 'unknown_station');
+        });
+
+        test('don\'t block a repeat of a contact already stored', function () {
+            enrollAs('Operator', $this->agent);
+            $request = ['contacts' => [agentContact()]];
+
+            $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', $request)
+                ->assertJsonPath('results.0.status', 'accepted');
+            Station::where('name', 'Phone Tent')->delete();
+
+            $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', $request)
+                ->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Station::withTrashed()->count())->toBe(1);
+        });
     });
 
     test('accepts a time with a UTC offset', function () {

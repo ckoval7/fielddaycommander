@@ -38,7 +38,9 @@
                     wire:model="name"
                     maxlength="50"
                     placeholder="Phone tent laptop"
-                    hint="Contacts use this as their station unless the agent sends a station name."
+                    :hint="$canCreateStations
+                        ? 'Used as the station name when a contact does not name one.'
+                        : 'Used when a contact does not name a station. The station must already exist.'"
                     autocomplete="off"
                     enterkeyhint="done"
                 />

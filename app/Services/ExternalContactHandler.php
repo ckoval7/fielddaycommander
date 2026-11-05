@@ -12,6 +12,7 @@ use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Exceptions\UnknownStationException;
 use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
@@ -193,7 +194,13 @@ class ExternalContactHandler
 
         // A logger with no station name set sends a blank one.
         $stationIdentifier = trim((string) $dto->stationIdentifier) !== '' ? trim((string) $dto->stationIdentifier) : 'Unknown';
-        $station = $this->stationResolver->resolve($stationIdentifier, $config->id);
+        $station = $dto->mayCreateStation
+            ? $this->stationResolver->resolve($stationIdentifier, $config->id)
+            : $this->stationResolver->find($stationIdentifier, $config->id);
+
+        if ($station === null) {
+            throw new UnknownStationException("No station named {$stationIdentifier}");
+        }
 
         // Fallback to cached RadioInfo for operator/band/mode if not in contact
         $cachedRadioInfo = $this->getCachedRadioInfo($stationIdentifier, $dto->source);

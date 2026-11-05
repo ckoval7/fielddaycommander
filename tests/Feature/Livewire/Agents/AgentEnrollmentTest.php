@@ -186,3 +186,9 @@ test('an unused, expired code is cleared when the same person creates another', 
 
     expect(Agent::pluck('name')->all())->toBe(['Phone Tent']);
 });
+
+test('tells people without manage-stations that the station must already exist', function () {
+    agentScreen($this->operator)->assertSee('must already exist');
+
+    agentScreen(User::factory()->create()->assignRole('Station Captain'))->assertDontSee('must already exist');
+});

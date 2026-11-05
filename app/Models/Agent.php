@@ -73,6 +73,16 @@ class Agent extends Model
     }
 
     /**
+     * Whether contacts from this agent can create stations. Follows the
+     * current permissions of the person who enrolled it, so an agent with no
+     * such person, such as one enrolled from the command line, can't.
+     */
+    public function canCreateStations(): bool
+    {
+        return $this->createdBy?->can('manage-stations') === true;
+    }
+
+    /**
      * Scope to agents that have not been revoked.
      */
     public function scopeActive(Builder $query): Builder

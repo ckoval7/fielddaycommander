@@ -8,6 +8,7 @@ namespace App\Services;
 use App\DTOs\ExternalContactDto;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Exceptions\UnknownStationException;
 use App\Models\Agent;
 use App\Support\AdvancedContactFields;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -75,19 +76,36 @@ class AgentContactIngestService
             // stored, and the handler's repeat check doesn't hold a lock.
             $stored = Cache::lock("agent-contact:{$config->id}:{$dto->externalId}", self::LOCK_SECONDS)
                 ->block(self::LOCK_WAIT_SECONDS, fn () => $this->handler->handleContact($dto, $config));
-        } catch (OutOfPeriodContactException) {
-            return $this->rejected('out_of_period', 'The contact is outside the event\'s operating period.');
-        } catch (InvalidExternalContactException $exception) {
-            return $this->rejected('invalid_contact', $exception->rejectionReason);
-        } catch (LockTimeoutException) {
-            return ['status' => self::STATUS_RETRY, 'code' => 'busy'];
         } catch (Throwable $exception) {
-            report($exception);
-
-            return ['status' => self::STATUS_RETRY, 'code' => 'server_error'];
+            return $this->failureResult($exception);
         }
 
         return ['status' => self::STATUS_ACCEPTED, 'contact_uuid' => $stored->uuid];
+    }
+
+    /**
+     * @return array{status: string, code: string, message?: string}
+     */
+    private function failureResult(Throwable $exception): array
+    {
+        return match (true) {
+            $exception instanceof OutOfPeriodContactException => $this->rejected('out_of_period', 'The contact is outside the event\'s operating period.'),
+            $exception instanceof InvalidExternalContactException => $this->rejected('invalid_contact', $exception->rejectionReason),
+            // Kept in the agent's queue: it's stored once someone creates the station.
+            $exception instanceof UnknownStationException => ['status' => self::STATUS_RETRY, 'code' => 'unknown_station', 'message' => 'Ask someone with manage-stations permission to create a station with the name or hostname sent for this contact. The contact stays in the agent\'s queue until then.'],
+            $exception instanceof LockTimeoutException => ['status' => self::STATUS_RETRY, 'code' => 'busy'],
+            default => $this->serverError($exception),
+        };
+    }
+
+    /**
+     * @return array{status: string, code: string}
+     */
+    private function serverError(Throwable $exception): array
+    {
+        report($exception);
+
+        return ['status' => self::STATUS_RETRY, 'code' => 'server_error'];
     }
 
     /**
@@ -143,6 +161,7 @@ class AgentContactIngestService
             externalId: self::SOURCE.':'.$contact['idempotency_key'],
             advancedFields: $advancedFields,
             adifFields: isset($contact['power_watts']) ? ['TX_PWR' => (string) $contact['power_watts']] : null,
+            mayCreateStation: $agent->canCreateStations(),
         );
     }
 }

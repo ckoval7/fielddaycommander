@@ -8,12 +8,14 @@ namespace App\Http\Controllers\Api\Agent\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthenticateAgent;
 use App\Models\Agent;
+use App\Models\Station;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * Tells an agent what this server supports, so an outdated agent can say so
- * clearly, and which event its contacts go to.
+ * clearly, which event its contacts go to, and what its station picker can
+ * offer.
  */
 class HandshakeController extends Controller
 {
@@ -44,6 +46,13 @@ class HandshakeController extends Controller
                 'starts_at' => $event->start_time->utc()->toIso8601ZuluString(),
                 'ends_at' => $event->operatingEndsAt()->utc()->toIso8601ZuluString(),
             ],
+            'permissions' => ['create_stations' => $agent->canCreateStations()],
+            'stations' => Station::query()
+                ->where('event_configuration_id', $agent->event_configuration_id)
+                ->orderBy('name')
+                ->get(['name', 'hostname'])
+                ->map(fn (Station $station): array => ['name' => $station->name, 'hostname' => $station->hostname])
+                ->all(),
         ]);
     }
 }
