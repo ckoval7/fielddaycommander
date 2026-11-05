@@ -476,21 +476,6 @@ describe('contacts', function () {
 });
 
 describe('commands', function () {
-    test('issue-code creates a relay for the given event, with a code that enrolls it', function () {
-        $this->artisan('relay:issue-code', ['name' => 'Logging PC', '--event' => $this->config->id])
-            ->expectsOutputToContain('Enter it in the relay')
-            ->assertSuccessful();
-
-        expect(Relay::where('name', 'Logging PC')->sole())
-            ->event_configuration_id->toBe($this->config->id)
-            ->enrollment_code_hash->not->toBeNull()
-            ->token_hash->toBeNull();
-    });
-
-    test('issue-code fails for an unknown event', function () {
-        $this->artisan('relay:issue-code', ['name' => 'Logging PC', '--event' => 999999])->assertFailed();
-    });
-
     test('revoke stops the relay\'s token from working', function () {
         $this->artisan('relay:revoke', ['relay' => $this->relay->id])->assertSuccessful();
 

@@ -5,7 +5,7 @@
 <div class="space-y-6">
     <x-slot:title>Relays</x-slot:title>
 
-    <x-header use-h1 title="Relays" subtitle="Field Day Commander Relay sends contacts from logging software on another computer to this server. This separate desktop program has not been released yet." separator progress-indicator />
+    <x-header use-h1 title="Relays" subtitle="Field Day Commander Relay sends contacts from logging software on another computer to this server." separator progress-indicator />
 
     @unless ($isSecure)
         <x-alert icon="phosphor-lock-open" class="alert-warning" title="HTTPS required for relays">
