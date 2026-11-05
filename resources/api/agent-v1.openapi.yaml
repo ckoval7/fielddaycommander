@@ -24,7 +24,7 @@ components:
       schema: { type: string, pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
   responses:
     httpsRequired:
-      description: The request came over plain HTTP (code https_required). Agents must use HTTPS.
+      description: The request came over plain HTTP (code https_required). Agents must use HTTPS, unless the agent runs on the server's own machine and connects to localhost.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }

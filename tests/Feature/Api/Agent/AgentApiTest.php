@@ -56,9 +56,10 @@ function agentContact(array $overrides = []): array
 }
 
 describe('https', function () {
-    test('every agent route refuses plain HTTP', function (string $method, string $path) {
-        $this->withToken(AGENT_TOKEN)
-            ->json($method, 'http://localhost/api/agent/v1/'.$path, ['code' => 'WRONG', 'contacts' => [agentContact()]])
+    test('every agent route refuses plain HTTP from another computer', function (string $method, string $path) {
+        $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.20'])
+            ->withToken(AGENT_TOKEN)
+            ->json($method, 'http://192.168.1.50/api/agent/v1/'.$path, ['code' => 'WRONG', 'contacts' => [agentContact()]])
             ->assertForbidden()
             ->assertJsonPath('code', 'https_required');
 
@@ -69,18 +70,47 @@ describe('https', function () {
         ['POST', 'contacts'],
     ]);
 
-    test('a client outside the trusted proxies can\'t claim to be on HTTPS', function () {
-        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
-            ->withHeader('X-Forwarded-Proto', 'https')
+    test('plain HTTP works from the server itself over localhost', function (string $host, string $address) {
+        $this->withServerVariables(['REMOTE_ADDR' => $address])
+            ->withToken(AGENT_TOKEN)
+            ->getJson("http://{$host}/api/agent/v1/handshake")
+            ->assertOk();
+    })->with([
+        ['localhost', '127.0.0.1'],
+        ['127.0.0.1', '127.0.0.1'],
+        ['[::1]', '::1'],
+    ]);
+
+    test('another computer can\'t pass as localhost with a forged Host header', function () {
+        $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.20'])
             ->withToken(AGENT_TOKEN)
             ->getJson('http://localhost/api/agent/v1/handshake')
             ->assertForbidden();
     });
 
-    test('a trusted TLS proxy counts as HTTPS', function () {
-        $this->withHeader('X-Forwarded-Proto', 'https')
+    test('a request forwarded by a proxy on the same machine isn\'t localhost', function (string $host) {
+        $this->withHeader('X-Forwarded-For', '192.168.1.20')
             ->withToken(AGENT_TOKEN)
-            ->getJson('http://localhost/api/agent/v1/handshake')
+            ->getJson("http://{$host}/api/agent/v1/handshake")
+            ->assertForbidden();
+    })->with(['localhost', '192.168.1.50']);
+
+    test('a loopback sender reaching the server by a LAN address isn\'t localhost', function () {
+        $this->withToken(AGENT_TOKEN)->getJson('http://192.168.1.50/api/agent/v1/handshake')->assertForbidden();
+    });
+
+    test('a client outside the trusted proxies can\'t claim to be on HTTPS', function () {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
+            ->withHeader('X-Forwarded-Proto', 'https')
+            ->withToken(AGENT_TOKEN)
+            ->getJson('http://192.168.1.50/api/agent/v1/handshake')
+            ->assertForbidden();
+    });
+
+    test('a trusted TLS proxy counts as HTTPS', function () {
+        $this->withHeaders(['X-Forwarded-Proto' => 'https', 'X-Forwarded-For' => '192.168.1.20'])
+            ->withToken(AGENT_TOKEN)
+            ->getJson('http://192.168.1.50/api/agent/v1/handshake')
             ->assertOk();
     });
 });

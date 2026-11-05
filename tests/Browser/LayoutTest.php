@@ -91,6 +91,17 @@ it('lays out signed-in screens cleanly', function (string $path, int $width, int
     LayoutAudit::assertClean(visitAt($scene->path($path), $width, $height, $touch));
 })->with('screens')->with('viewports');
 
+it('lays out the agents screen over plain HTTP from another computer', function (int $width, int $height, bool $touch) {
+    $scene = FieldDayScene::create();
+    $this->actingAs($scene->admin);
+
+    $page = visit('/agents', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-For', 'value' => '192.168.1.20']]]);
+    $page = ($touch ? $page->on()->mobile() : $page->on()->desktop())->resize($width, $height);
+
+    $page->assertSee('HTTPS required for agents');
+    LayoutAudit::assertClean($page);
+})->with('viewports');
+
 it('lays out the agents screen over HTTPS, with the form and a new code', function (int $width, int $height, bool $touch) {
     $scene = FieldDayScene::create();
     $this->actingAs($scene->admin);

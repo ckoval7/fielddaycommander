@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\User;
+use App\Support\AgentConnection;
 use App\Support\StationMode;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -32,12 +33,33 @@ beforeEach(function () {
 });
 
 /**
- * The component, reached over HTTPS through a trusted proxy.
+ * The component on an allowed connection. Tests run as localhost.
  */
-function agentScreen(User $user, array $params = []): mixed
+function agentScreen(User $user): mixed
 {
-    return Livewire::actingAs($user)->withHeaders(['X-Forwarded-Proto' => 'https'])->test(AgentEnrollment::class, $params);
+    return Livewire::actingAs($user)->test(AgentEnrollment::class);
 }
+
+/**
+ * The component over plain HTTP from another computer. Livewire's test client
+ * drops custom headers on action calls, so the connection check is swapped
+ * out. AgentApiTest covers the check itself, with real requests.
+ */
+function agentScreenOverLan(User $user): mixed
+{
+    test()->mock(AgentConnection::class)->shouldReceive('isAllowed')->andReturn(false);
+
+    return agentScreen($user);
+}
+
+test('a code can be created over plain HTTP from the server itself', function () {
+    agentScreen($this->operator)
+        ->set('name', 'Phone Tent')
+        ->call('issue')
+        ->assertHasNoErrors();
+
+    expect(Agent::count())->toBe(1);
+});
 
 test('every role from operator up can enroll agents by default', function (string $role) {
     expect(Role::findByName($role)->hasPermissionTo('enroll-agents'))->toBeTrue();
@@ -58,7 +80,7 @@ test('someone without the permission is refused', function () {
     $this->actingAs($user)->get(route('agents.index'))->assertForbidden();
 });
 
-test('an operator creates a code over HTTPS, and only its hash is stored', function () {
+test('an operator creates a code, and only its hash is stored', function () {
     $screen = agentScreen($this->operator)
         ->set('name', 'Phone Tent')
         ->call('issue')
@@ -78,9 +100,8 @@ test('an operator creates a code over HTTPS, and only its hash is stored', funct
     expect(AuditLog::where('action', 'agent.code_issued')->sole()->user_id)->toBe($this->operator->id);
 });
 
-test('no code is created over plain HTTP', function () {
-    Livewire::actingAs($this->operator)
-        ->test(AgentEnrollment::class)
+test('no code is created over plain HTTP from another computer', function () {
+    agentScreenOverLan($this->operator)
         ->assertSee('HTTPS required for agents')
         ->assertDontSee('Create Code')
         ->set('name', 'Phone Tent')
@@ -142,7 +163,7 @@ test('external logger managers see and revoke every agent', function () {
 test('revoking works over plain HTTP, so an agent can always be stopped', function () {
     $agent = Agent::factory()->create(['event_configuration_id' => $this->config->id, 'created_by_user_id' => $this->operator->id]);
 
-    Livewire::actingAs($this->operator)->test(AgentEnrollment::class)->call('revoke', $agent->id)->assertOk();
+    agentScreenOverLan($this->operator)->call('revoke', $agent->id)->assertOk();
 
     expect($agent->refresh()->revoked_at)->not->toBeNull();
 });

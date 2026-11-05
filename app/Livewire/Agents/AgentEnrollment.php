@@ -8,6 +8,7 @@ namespace App\Livewire\Agents;
 use App\Models\Agent;
 use App\Services\AgentEnrollmentService;
 use App\Services\EventContextService;
+use App\Support\AgentConnection;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -44,7 +45,7 @@ class AgentEnrollment extends Component
         $validated = $this->validate(['name' => ['required', 'string', 'max:50']]);
 
         // Checked on each request: the code travels back in this response.
-        if (! request()->secure()) {
+        if (! app(AgentConnection::class)->isAllowed(request())) {
             $this->addError('name', 'Open this page over HTTPS to enroll an agent.');
 
             return;
@@ -114,7 +115,7 @@ class AgentEnrollment extends Component
         $config = $events->getEventConfiguration();
 
         return view('livewire.agents.agent-enrollment', [
-            'isSecure' => request()->secure(),
+            'isSecure' => app(AgentConnection::class)->isAllowed(request()),
             'eventName' => $config?->event?->name,
             'agents' => $config === null ? new Collection : $this->visibleAgents($config->id),
         ])->layout('components.layouts.app');
