@@ -9,7 +9,7 @@ use App\DTOs\ExternalContactDto;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Exceptions\UnknownStationException;
-use App\Models\Agent;
+use App\Models\Relay;
 use App\Support\AdvancedContactFields;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Carbon;
@@ -18,21 +18,21 @@ use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 /**
- * Stores batches of contacts sent by an agent, through the same handler as
+ * Stores batches of contacts sent by a relay, through the same handler as
  * the local logger listeners. Each contact succeeds or fails on its own.
  */
-class AgentContactIngestService
+class RelayContactIngestService
 {
-    public const SOURCE = 'agent';
+    public const SOURCE = 'relay';
 
     public const MAX_BATCH_SIZE = 100;
 
     public const STATUS_ACCEPTED = 'accepted';
 
-    /** Will never be stored, so the agent shouldn't send it again unchanged. */
+    /** Will never be stored, so the relay shouldn't send it again unchanged. */
     public const STATUS_REJECTED = 'rejected';
 
-    /** Not stored this time. The agent should send it again later. */
+    /** Not stored this time. The relay should send it again later. */
     public const STATUS_RETRY = 'retry';
 
     private const LOCK_SECONDS = 30;
@@ -45,12 +45,12 @@ class AgentContactIngestService
      * @param  array<int, array<string, mixed>>  $contacts
      * @return list<array{index: int, status: string, contact_uuid?: string, code?: string, message?: string}>
      */
-    public function ingest(Agent $agent, array $contacts): array
+    public function ingest(Relay $relay, array $contacts): array
     {
         $results = [];
 
         foreach (array_values($contacts) as $index => $contact) {
-            $results[] = ['index' => $index, ...$this->ingestOne($agent, $contact)];
+            $results[] = ['index' => $index, ...$this->ingestOne($relay, $contact)];
         }
 
         return $results;
@@ -60,7 +60,7 @@ class AgentContactIngestService
      * @param  array<string, mixed>  $contact
      * @return array{status: string, contact_uuid?: string, code?: string, message?: string}
      */
-    private function ingestOne(Agent $agent, array $contact): array
+    private function ingestOne(Relay $relay, array $contact): array
     {
         $validator = Validator::make($contact, $this->rules(), AdvancedContactFields::messages());
 
@@ -68,13 +68,13 @@ class AgentContactIngestService
             return $this->rejected('invalid', $validator->errors()->first());
         }
 
-        $dto = $this->toDto($validator->validated(), $agent);
-        $config = $agent->eventConfiguration;
+        $dto = $this->toDto($validator->validated(), $relay);
+        $config = $relay->eventConfiguration;
 
         try {
             // A retry can arrive while its timed-out original is still being
             // stored, and the handler's repeat check doesn't hold a lock.
-            $stored = Cache::lock("agent-contact:{$config->id}:{$dto->externalId}", self::LOCK_SECONDS)
+            $stored = Cache::lock("relay-contact:{$config->id}:{$dto->externalId}", self::LOCK_SECONDS)
                 ->block(self::LOCK_WAIT_SECONDS, fn () => $this->handler->handleContact($dto, $config));
         } catch (Throwable $exception) {
             return $this->failureResult($exception);
@@ -91,8 +91,8 @@ class AgentContactIngestService
         return match (true) {
             $exception instanceof OutOfPeriodContactException => $this->rejected('out_of_period', 'The contact is outside the event\'s operating period.'),
             $exception instanceof InvalidExternalContactException => $this->rejected('invalid_contact', $exception->rejectionReason),
-            // Kept in the agent's queue: it's stored once someone creates the station.
-            $exception instanceof UnknownStationException => ['status' => self::STATUS_RETRY, 'code' => 'unknown_station', 'message' => 'Ask someone with manage-stations permission to create a station with the name or hostname sent for this contact. The contact stays in the agent\'s queue until then.'],
+            // Kept in the relay's queue: it's stored once someone creates the station.
+            $exception instanceof UnknownStationException => ['status' => self::STATUS_RETRY, 'code' => 'unknown_station', 'message' => 'Ask someone with manage-stations permission to create a station with the name or hostname sent for this contact. The contact stays in the relay\'s queue until then.'],
             $exception instanceof LockTimeoutException => ['status' => self::STATUS_RETRY, 'code' => 'busy'],
             default => $this->serverError($exception),
         };
@@ -139,7 +139,7 @@ class AgentContactIngestService
     /**
      * @param  array<string, mixed>  $contact  Validated contact
      */
-    private function toDto(array $contact, Agent $agent): ExternalContactDto
+    private function toDto(array $contact, Relay $relay): ExternalContactDto
     {
         $advancedFields = array_filter(
             array_intersect_key($contact, array_flip(AdvancedContactFields::FIELDS)),
@@ -154,14 +154,14 @@ class AgentContactIngestService
             bandName: $contact['band'] ?? null,
             modeName: $contact['mode'] ?? null,
             operatorCallsign: $upper('operator'),
-            stationIdentifier: $contact['station'] ?? $agent->name,
+            stationIdentifier: $contact['station'] ?? $relay->name,
             frequencyHz: $contact['frequency_hz'] ?? null,
             exchangeClass: $upper('exchange_class'),
             sectionCode: $upper('section'),
             externalId: self::SOURCE.':'.$contact['idempotency_key'],
             advancedFields: $advancedFields,
             adifFields: isset($contact['power_watts']) ? ['TX_PWR' => (string) $contact['power_watts']] : null,
-            mayCreateStation: $agent->canCreateStations(),
+            mayCreateStation: $relay->canCreateStations(),
         );
     }
 }

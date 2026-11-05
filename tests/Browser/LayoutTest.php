@@ -25,7 +25,7 @@ dataset('screens', [
     'transcribe station picker' => '/logging/transcribe',
     'transcribe' => '/logging/transcribe/{station}',
     'logbook' => '/logbook',
-    'agents' => '/agents',
+    'relays' => '/relays',
     'events' => '/events',
     'event' => '/events/{event}',
     'create event' => '/events/create',
@@ -91,33 +91,33 @@ it('lays out signed-in screens cleanly', function (string $path, int $width, int
     LayoutAudit::assertClean(visitAt($scene->path($path), $width, $height, $touch));
 })->with('screens')->with('viewports');
 
-it('lays out the agents screen over plain HTTP from another computer', function (int $width, int $height, bool $touch) {
+it('lays out the relays screen over plain HTTP from another computer', function (int $width, int $height, bool $touch) {
     $scene = FieldDayScene::create();
     $this->actingAs($scene->admin);
 
-    $page = visit('/agents', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-For', 'value' => '192.168.1.20']]]);
+    $page = visit('/relays', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-For', 'value' => '192.168.1.20']]]);
     $page = ($touch ? $page->on()->mobile() : $page->on()->desktop())->resize($width, $height);
 
-    $page->assertSee('HTTPS required for agents');
+    $page->assertSee('HTTPS required for relays');
     LayoutAudit::assertClean($page);
 })->with('viewports');
 
-it('lays out the agents screen over HTTPS, with the form and a new code', function (int $width, int $height, bool $touch) {
+it('lays out the relays screen over HTTPS, with the form and a new code', function (int $width, int $height, bool $touch) {
     $scene = FieldDayScene::create();
     $this->actingAs($scene->admin);
 
     // The test server is plain HTTP, so stand in for a TLS proxy. Assets stay
     // relative, since the browser can't reach them at an https:// address.
     URL::useAssetOrigin('/');
-    $page = visit('/agents', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-Proto', 'value' => 'https']]]);
+    $page = visit('/relays', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-Proto', 'value' => 'https']]]);
     $page = ($touch ? $page->on()->mobile() : $page->on()->desktop())->resize($width, $height);
 
-    $page->assertSee('Enroll an agent');
+    $page->assertSee('Enroll a relay');
     LayoutAudit::assertClean($page);
 
     $page->type('input[maxlength="50"]', 'Phone Tent Laptop')
         ->press('Create Code')
-        ->assertSee('Enter this code in the agent');
+        ->assertSee('Enter this code in the relay');
     LayoutAudit::assertClean($page);
 })->with('viewports');
 

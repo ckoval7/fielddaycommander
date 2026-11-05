@@ -9,10 +9,10 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\IpUtils;
 
 /**
- * Whether a request's connection is safe for agent enrollment codes and
+ * Whether a request's connection is safe for relay enrollment codes and
  * tokens: HTTPS, or plain HTTP that never leaves the server's own machine.
  */
-class AgentConnection
+class RelayConnection
 {
     /**
      * @var list<string>

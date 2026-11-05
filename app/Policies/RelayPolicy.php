@@ -5,23 +5,23 @@
 
 namespace App\Policies;
 
-use App\Models\Agent;
+use App\Models\Relay;
 use App\Models\User;
 
-class AgentPolicy
+class RelayPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can('enroll-agents');
+        return $user->can('enroll-relays');
     }
 
     public function create(User $user): bool
     {
-        return $user->can('enroll-agents');
+        return $user->can('enroll-relays');
     }
 
     /**
-     * Anyone who manages external loggers can see every agent. Everyone else
+     * Anyone who manages external loggers can see every relay. Everyone else
      * only sees the ones they enrolled.
      */
     public function viewAll(User $user): bool
@@ -29,9 +29,9 @@ class AgentPolicy
         return $user->can('import-contacts');
     }
 
-    public function revoke(User $user, Agent $agent): bool
+    public function revoke(User $user, Relay $relay): bool
     {
         return $this->viewAll($user)
-            || ($user->can('enroll-agents') && $agent->created_by_user_id === $user->id);
+            || ($user->can('enroll-relays') && $relay->created_by_user_id === $user->id);
     }
 }

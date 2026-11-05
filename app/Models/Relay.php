@@ -5,19 +5,19 @@
 
 namespace App\Models;
 
-use Database\Factories\AgentFactory;
+use Database\Factories\RelayFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A Field Day Commander Agent install, allowed to send contacts to one event.
+ * A Field Day Commander Relay install, allowed to send contacts to one event.
  * It starts with a one-time enrollment code, which it trades for a token.
  */
-class Agent extends Model
+class Relay extends Model
 {
-    /** @use HasFactory<AgentFactory> */
+    /** @use HasFactory<RelayFactory> */
     use HasFactory;
 
     public const STATUS_WAITING = 'waiting';
@@ -34,7 +34,7 @@ class Agent extends Model
         'enrollment_code_hash',
         'enrollment_expires_at',
         'token_hash',
-        'agent_version',
+        'relay_version',
         'created_by_user_id',
         'enrolled_at',
         'last_seen_at',
@@ -57,7 +57,7 @@ class Agent extends Model
     }
 
     /**
-     * Get the event configuration this agent sends contacts to.
+     * Get the event configuration this relay sends contacts to.
      */
     public function eventConfiguration(): BelongsTo
     {
@@ -65,7 +65,7 @@ class Agent extends Model
     }
 
     /**
-     * Get the user who issued this agent's enrollment code.
+     * Get the user who issued this relay's enrollment code.
      */
     public function createdBy(): BelongsTo
     {
@@ -73,8 +73,8 @@ class Agent extends Model
     }
 
     /**
-     * Whether contacts from this agent can create stations. Follows the
-     * current permissions of the person who enrolled it, so an agent with no
+     * Whether contacts from this relay can create stations. Follows the
+     * current permissions of the person who enrolled it, so a relay with no
      * such person, such as one enrolled from the command line, can't.
      */
     public function canCreateStations(): bool
@@ -83,7 +83,7 @@ class Agent extends Model
     }
 
     /**
-     * Scope to agents that have not been revoked.
+     * Scope to relays that have not been revoked.
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -91,7 +91,7 @@ class Agent extends Model
     }
 
     /**
-     * Where this agent is in its life: waiting for its code to be used, code
+     * Where this relay is in its life: waiting for its code to be used, code
      * expired unused, enrolled, or revoked.
      */
     public function status(): string

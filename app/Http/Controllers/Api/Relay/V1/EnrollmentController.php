@@ -3,18 +3,18 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-namespace App\Http\Controllers\Api\Agent\V1;
+namespace App\Http\Controllers\Api\Relay\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\EnrollAgentRequest;
-use App\Services\AgentEnrollmentService;
+use App\Http\Requests\EnrollRelayRequest;
+use App\Services\RelayEnrollmentService;
 use Illuminate\Http\JsonResponse;
 
 class EnrollmentController extends Controller
 {
-    public function __invoke(EnrollAgentRequest $request, AgentEnrollmentService $enrollment): JsonResponse
+    public function __invoke(EnrollRelayRequest $request, RelayEnrollmentService $enrollment): JsonResponse
     {
-        $enrolled = $enrollment->redeem($request->validated('code'), $request->validated('agent_version'));
+        $enrolled = $enrollment->redeem($request->validated('code'), $request->validated('relay_version'));
 
         if ($enrolled === null) {
             return response()->json([
@@ -25,7 +25,7 @@ class EnrollmentController extends Controller
 
         return response()->json([
             'token' => $enrolled['token'],
-            'agent' => ['id' => $enrolled['agent']->id, 'name' => $enrolled['agent']->name],
+            'relay' => ['id' => $enrolled['relay']->id, 'name' => $enrolled['relay']->name],
         ], 201);
     }
 }

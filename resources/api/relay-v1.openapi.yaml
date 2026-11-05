@@ -3,28 +3,28 @@
 
 openapi: 3.1.0
 info:
-  title: Field Day Commander Agent API
+  title: Field Day Commander Relay API
   version: 1.0.0
   description: >-
-    How Field Day Commander Agent talks to a Field Day Commander server. Agents
-    in the field depend on v1, so only add to it. A breaking change needs a v2.
+    How Field Day Commander Relay talks to a Field Day Commander server. The relay
+    depends on v1, so only add to it. A breaking change needs a v2.
     Clients must ignore response fields they don't recognize.
 servers:
-  - url: /api/agent/v1
+  - url: /api/relay/v1
 components:
   securitySchemes:
-    agentToken:
+    relayToken:
       type: http
       scheme: bearer
   parameters:
-    agentVersion:
-      name: X-Agent-Version
+    relayVersion:
+      name: X-Relay-Version
       in: header
-      description: The agent's version, recorded by the server.
+      description: The relay's version, recorded by the server.
       schema: { type: string, pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
   responses:
     httpsRequired:
-      description: The request came over plain HTTP (code https_required). Agents must use HTTPS, unless the agent runs on the server's own machine and connects to localhost.
+      description: The request came over plain HTTP (code https_required). Relays must use HTTPS, unless the relay runs on the server's own machine and connects to localhost.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -44,7 +44,7 @@ components:
       properties:
         code: { type: string }
         message: { type: string }
-    AgentSummary:
+    RelaySummary:
       type: object
       required: [id, name]
       properties:
@@ -74,8 +74,8 @@ components:
           type: [string, 'null']
           maxLength: 50
           description: >-
-            Station name or hostname. Defaults to the agent's name. An unknown
-            station is created only if the person who enrolled the agent has
+            Station name or hostname. Defaults to the relay's name. An unknown
+            station is created only if the person who enrolled the relay has
             manage-stations. Otherwise the contact gets retry with
             unknown_station until someone creates the station.
         exchange_class: { type: [string, 'null'], maxLength: 10 }
@@ -117,7 +117,7 @@ paths:
               required: [code]
               properties:
                 code: { type: string, maxLength: 32, description: Case and separators are ignored. }
-                agent_version: { type: [string, 'null'], pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
+                relay_version: { type: [string, 'null'], pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
       responses:
         '201':
           description: Enrolled.
@@ -125,10 +125,10 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [token, agent]
+                required: [token, relay]
                 properties:
                   token: { type: string }
-                  agent: { $ref: '#/components/schemas/AgentSummary' }
+                  relay: { $ref: '#/components/schemas/RelaySummary' }
         '422':
           description: The code is invalid, expired or already used (code invalid_code), or the request is malformed.
           content:
@@ -138,9 +138,9 @@ paths:
         '429': { $ref: '#/components/responses/tooManyRequests' }
   /handshake:
     get:
-      summary: Check compatibility and get the agent's event, stations and permissions
-      security: [{ agentToken: [] }]
-      parameters: [{ $ref: '#/components/parameters/agentVersion' }]
+      summary: Check compatibility and get the relay's event, stations and permissions
+      security: [{ relayToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/relayVersion' }]
       responses:
         '200':
           description: The server's capabilities.
@@ -148,13 +148,13 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [server_version, supported_api_versions, minimum_agent_version, server_time, agent, event, permissions, stations]
+                required: [server_version, supported_api_versions, minimum_relay_version, server_time, relay, event, permissions, stations]
                 properties:
                   server_version: { type: string }
                   supported_api_versions: { type: array, items: { type: integer } }
-                  minimum_agent_version: { type: [string, 'null'], description: Older agents should ask to be updated. }
+                  minimum_relay_version: { type: [string, 'null'], description: Older relays should ask to be updated. }
                   server_time: { type: string, format: date-time }
-                  agent: { $ref: '#/components/schemas/AgentSummary' }
+                  relay: { $ref: '#/components/schemas/RelaySummary' }
                   event:
                     type: [object, 'null']
                     required: [name, starts_at, ends_at]
@@ -171,7 +171,7 @@ paths:
                         description: >-
                           Whether a contact naming an unknown station creates it.
                           Follows the current permissions of the person who
-                          enrolled the agent, so handshake again to refresh it.
+                          enrolled the relay, so handshake again to refresh it.
                   stations:
                     type: array
                     description: The event's stations, sorted by name. Handshake again to refresh the list.
@@ -189,9 +189,9 @@ paths:
       summary: Store a batch of contacts
       description: >-
         Each contact succeeds or fails on its own, so a 200 can include rejected
-        contacts. Check every result. Limited to 120 requests a minute per agent.
-      security: [{ agentToken: [] }]
-      parameters: [{ $ref: '#/components/parameters/agentVersion' }]
+        contacts. Check every result. Limited to 120 requests a minute per relay.
+      security: [{ relayToken: [] }]
+      parameters: [{ $ref: '#/components/parameters/relayVersion' }]
       requestBody:
         required: true
         content:

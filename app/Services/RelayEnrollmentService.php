@@ -5,15 +5,15 @@
 
 namespace App\Services;
 
-use App\Models\Agent;
 use App\Models\AuditLog;
 use App\Models\EventConfiguration;
+use App\Models\Relay;
 use Illuminate\Support\Str;
 
 /**
- * Issues one-time enrollment codes and trades them for agent tokens.
+ * Issues one-time enrollment codes and trades them for relay tokens.
  */
-class AgentEnrollmentService
+class RelayEnrollmentService
 {
     public const CODE_LIFETIME_MINUTES = 15;
 
@@ -25,29 +25,29 @@ class AgentEnrollmentService
     private const CODE_LENGTH = 12;
 
     /**
-     * Create an agent waiting to enroll. The code is only available here,
+     * Create a relay waiting to enroll. The code is only available here,
      * because only its hash is stored.
      *
-     * @return array{agent: Agent, code: string}
+     * @return array{relay: Relay, code: string}
      */
     public function issue(EventConfiguration $config, string $name, ?int $createdByUserId = null): array
     {
         $code = $this->generateCode();
 
-        $agent = Agent::create([
+        $relay = Relay::create([
             'event_configuration_id' => $config->id,
             'name' => $name,
-            'enrollment_code_hash' => Agent::hashSecret($this->normalizeCode($code)),
+            'enrollment_code_hash' => Relay::hashSecret($this->normalizeCode($code)),
             'enrollment_expires_at' => now()->addMinutes(self::CODE_LIFETIME_MINUTES),
             'created_by_user_id' => $createdByUserId,
         ]);
 
-        AuditLog::log('agent.code_issued', userId: $createdByUserId, auditable: $agent, newValues: [
+        AuditLog::log('relay.code_issued', userId: $createdByUserId, auditable: $relay, newValues: [
             'name' => $name,
             'event_configuration_id' => $config->id,
         ]);
 
-        return ['agent' => $agent, 'code' => $code];
+        return ['relay' => $relay, 'code' => $code];
     }
 
     /**
@@ -55,19 +55,19 @@ class AgentEnrollmentService
      * it expires. The token is only available here, because only its hash is
      * stored.
      *
-     * @return array{agent: Agent, token: string}|null Null when the code can't be used
+     * @return array{relay: Relay, token: string}|null Null when the code can't be used
      */
-    public function redeem(string $code, ?string $agentVersion = null): ?array
+    public function redeem(string $code, ?string $relayVersion = null): ?array
     {
-        $codeHash = Agent::hashSecret($this->normalizeCode($code));
+        $codeHash = Relay::hashSecret($this->normalizeCode($code));
 
-        $agent = Agent::active()
+        $relay = Relay::active()
             ->where('enrollment_code_hash', $codeHash)
             ->where('enrollment_expires_at', '>', now())
             ->first();
 
-        if ($agent === null) {
-            AuditLog::log('agent.enrollment_failed');
+        if ($relay === null) {
+            AuditLog::log('relay.enrollment_failed');
 
             return null;
         }
@@ -76,50 +76,50 @@ class AgentEnrollmentService
 
         // Conditional on the code still being there, so two requests racing
         // with the same code can't both get a token.
-        $claimed = Agent::query()
-            ->whereKey($agent->id)
+        $claimed = Relay::query()
+            ->whereKey($relay->id)
             ->where('enrollment_code_hash', $codeHash)
             ->update([
                 'enrollment_code_hash' => null,
                 'enrollment_expires_at' => null,
-                'token_hash' => Agent::hashSecret($token),
-                'agent_version' => $agentVersion,
+                'token_hash' => Relay::hashSecret($token),
+                'relay_version' => $relayVersion,
                 'enrolled_at' => now(),
                 'last_seen_at' => now(),
             ]);
 
         if ($claimed !== 1) {
-            AuditLog::log('agent.enrollment_failed', auditable: $agent);
+            AuditLog::log('relay.enrollment_failed', auditable: $relay);
 
             return null;
         }
 
         AuditLog::log(
-            'agent.enrolled',
-            userId: $agent->created_by_user_id,
-            auditable: $agent,
+            'relay.enrolled',
+            userId: $relay->created_by_user_id,
+            auditable: $relay,
             newValues: [
-                'name' => $agent->name,
-                'event_configuration_id' => $agent->event_configuration_id,
-                'agent_version' => $agentVersion,
+                'name' => $relay->name,
+                'event_configuration_id' => $relay->event_configuration_id,
+                'relay_version' => $relayVersion,
             ],
         );
 
-        return ['agent' => $agent->refresh(), 'token' => $token];
+        return ['relay' => $relay->refresh(), 'token' => $token];
     }
 
     /**
-     * Stop an agent's token or unused code from working.
+     * Stop a relay's token or unused code from working.
      */
-    public function revoke(Agent $agent, ?int $revokedByUserId = null): void
+    public function revoke(Relay $relay, ?int $revokedByUserId = null): void
     {
-        $agent->update([
+        $relay->update([
             'revoked_at' => now(),
             'enrollment_code_hash' => null,
             'enrollment_expires_at' => null,
         ]);
 
-        AuditLog::log('agent.revoked', userId: $revokedByUserId, auditable: $agent, newValues: ['name' => $agent->name], isCritical: true);
+        AuditLog::log('relay.revoked', userId: $revokedByUserId, auditable: $relay, newValues: ['name' => $relay->name], isCritical: true);
     }
 
     private function generateCode(): string

@@ -5,14 +5,14 @@
 
 namespace App\Http\Requests;
 
-use App\Services\AgentContactIngestService;
+use App\Services\RelayContactIngestService;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Checks the batch's shape. Each contact is validated on its own by
- * AgentContactIngestService, so one bad contact can't hold up the rest.
+ * RelayContactIngestService, so one bad contact can't hold up the rest.
  */
-class StoreAgentContactsRequest extends FormRequest
+class StoreRelayContactsRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -25,7 +25,7 @@ class StoreAgentContactsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'contacts' => ['required', 'array', 'list', 'min:1', 'max:'.AgentContactIngestService::MAX_BATCH_SIZE],
+            'contacts' => ['required', 'array', 'list', 'min:1', 'max:'.RelayContactIngestService::MAX_BATCH_SIZE],
             'contacts.*' => ['required', 'array'],
         ];
     }

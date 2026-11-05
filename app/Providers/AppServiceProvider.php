@@ -216,12 +216,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perHour(5)->by($request->ip());
         });
 
-        RateLimiter::for('agent-enroll', function (Request $request) {
+        RateLimiter::for('relay-enroll', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
 
-        // Keyed on the token, because the throttle runs before AuthenticateAgent.
-        RateLimiter::for('agent', function (Request $request) {
+        // Keyed on the token, because the throttle runs before AuthenticateRelay.
+        RateLimiter::for('relay', function (Request $request) {
             return Limit::perMinute(120)->by(hash('sha256', $request->bearerToken() ?? (string) $request->ip()));
         });
     }

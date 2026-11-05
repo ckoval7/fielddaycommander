@@ -20,8 +20,8 @@ return new class extends Migration
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permission = Permission::firstOrCreate(
-            ['name' => 'enroll-agents', 'guard_name' => 'web'],
-            ['description' => 'Create Field Day Commander Agent enrollment codes and revoke your agents'],
+            ['name' => 'enroll-relays', 'guard_name' => 'web'],
+            ['description' => 'Create Field Day Commander Relay enrollment codes and revoke your relays'],
         );
 
         Role::whereIn('name', self::ROLES)->where('guard_name', 'web')->get()
@@ -32,6 +32,6 @@ return new class extends Migration
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Permission::where('name', 'enroll-agents')->where('guard_name', 'web')->delete();
+        Permission::where('name', 'enroll-relays')->where('guard_name', 'web')->delete();
     }
 };

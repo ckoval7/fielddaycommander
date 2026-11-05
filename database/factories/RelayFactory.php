@@ -5,15 +5,15 @@
 
 namespace Database\Factories;
 
-use App\Models\Agent;
 use App\Models\EventConfiguration;
+use App\Models\Relay;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<Agent>
+ * @extends Factory<Relay>
  */
-class AgentFactory extends Factory
+class RelayFactory extends Factory
 {
     /**
      * @return array<string, mixed>
@@ -23,26 +23,26 @@ class AgentFactory extends Factory
         return [
             'event_configuration_id' => EventConfiguration::factory(),
             'name' => fake()->unique()->word().' PC',
-            'token_hash' => Agent::hashSecret(Str::random(64)),
+            'token_hash' => Relay::hashSecret(Str::random(64)),
             'enrolled_at' => now(),
         ];
     }
 
     /**
-     * An agent holding the given raw token.
+     * A relay holding the given raw token.
      */
     public function withToken(string $token): static
     {
-        return $this->state(['token_hash' => Agent::hashSecret($token)]);
+        return $this->state(['token_hash' => Relay::hashSecret($token)]);
     }
 
     /**
-     * An agent whose enrollment code has been issued but not yet redeemed.
+     * A relay whose enrollment code has been issued but not yet redeemed.
      */
     public function pending(string $code): static
     {
         return $this->state([
-            'enrollment_code_hash' => Agent::hashSecret($code),
+            'enrollment_code_hash' => Relay::hashSecret($code),
             'enrollment_expires_at' => now()->addMinutes(15),
             'token_hash' => null,
             'enrolled_at' => null,

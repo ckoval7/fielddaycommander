@@ -17,7 +17,6 @@ use App\Livewire\Admin\AdifImport;
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\DeveloperTools;
 use App\Livewire\Admin\ExternalLoggerManagement;
-use App\Livewire\Agents\AgentEnrollment;
 use App\Livewire\Equipment\AllEquipmentList;
 use App\Livewire\Equipment\ClubEquipmentList;
 use App\Livewire\Equipment\EquipmentForm;
@@ -38,6 +37,7 @@ use App\Livewire\Messages\MessageForm;
 use App\Livewire\Messages\MessageTrafficIndex;
 use App\Livewire\Messages\W1awBulletinForm;
 use App\Livewire\Profile\UserProfile;
+use App\Livewire\Relays\RelayEnrollment;
 use App\Livewire\Reports\ReportsIndex;
 use App\Livewire\Safety\ManageSafetyChecklist;
 use App\Livewire\Safety\SiteSafetyChecklist;
@@ -306,8 +306,8 @@ Route::middleware(['auth', 'verified', 'can:import-contacts'])->prefix('admin')-
     Route::get('/external-loggers', ExternalLoggerManagement::class)->name('admin.external-loggers');
 });
 
-Route::middleware(['auth', 'verified', 'can:enroll-agents'])->group(function () {
-    Route::get('/agents', AgentEnrollment::class)->name('agents.index');
+Route::middleware(['auth', 'verified', 'can:enroll-relays'])->group(function () {
+    Route::get('/relays', RelayEnrollment::class)->name('relays.index');
 });
 
 // Developer Tools (only available when DEVELOPER_MODE=true in .env)

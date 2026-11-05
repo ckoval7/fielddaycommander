@@ -3,12 +3,12 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-namespace App\Livewire\Agents;
+namespace App\Livewire\Relays;
 
-use App\Models\Agent;
-use App\Services\AgentEnrollmentService;
+use App\Models\Relay;
 use App\Services\EventContextService;
-use App\Support\AgentConnection;
+use App\Services\RelayEnrollmentService;
+use App\Support\RelayConnection;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -16,10 +16,10 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Lets people enroll a Field Day Commander Agent for the current event and
- * revoke the agents they're allowed to manage.
+ * Lets people enroll a Field Day Commander Relay for the current event and
+ * revoke the relays they're allowed to manage.
  */
-class AgentEnrollment extends Component
+class RelayEnrollment extends Component
 {
     public string $name = '';
 
@@ -27,26 +27,26 @@ class AgentEnrollment extends Component
     public ?string $issuedCode = null;
 
     #[Locked]
-    public ?int $issuedAgentId = null;
+    public ?int $issuedRelayId = null;
 
     #[Locked]
     public string $serverUrl = '';
 
     public function mount(): void
     {
-        $this->authorize('viewAny', Agent::class);
+        $this->authorize('viewAny', Relay::class);
         $this->serverUrl = request()->getSchemeAndHttpHost();
     }
 
-    public function issue(AgentEnrollmentService $enrollment, EventContextService $events): void
+    public function issue(RelayEnrollmentService $enrollment, EventContextService $events): void
     {
-        $this->authorize('create', Agent::class);
+        $this->authorize('create', Relay::class);
 
         $validated = $this->validate(['name' => ['required', 'string', 'max:50']]);
 
         // Checked on each request: the code travels back in this response.
-        if (! app(AgentConnection::class)->isAllowed(request())) {
-            $this->addError('name', 'Open this page over HTTPS to enroll an agent.');
+        if (! app(RelayConnection::class)->isAllowed(request())) {
+            $this->addError('name', 'Open this page over HTTPS to enroll a relay.');
 
             return;
         }
@@ -69,10 +69,10 @@ class AgentEnrollment extends Component
 
         $this->deleteOwnExpiredCodes();
 
-        ['agent' => $agent, 'code' => $code] = $enrollment->issue($config, trim($validated['name']), Auth::id());
+        ['relay' => $relay, 'code' => $code] = $enrollment->issue($config, trim($validated['name']), Auth::id());
 
         $this->issuedCode = $code;
-        $this->issuedAgentId = $agent->id;
+        $this->issuedRelayId = $relay->id;
         $this->reset('name');
     }
 
@@ -81,31 +81,31 @@ class AgentEnrollment extends Component
      */
     public function checkIssuedCode(): void
     {
-        if ($this->issuedAgentId === null) {
+        if ($this->issuedRelayId === null) {
             return;
         }
 
-        $agent = Agent::find($this->issuedAgentId);
+        $relay = Relay::find($this->issuedRelayId);
 
-        if ($agent === null || $agent->status() !== Agent::STATUS_WAITING) {
+        if ($relay === null || $relay->status() !== Relay::STATUS_WAITING) {
             $this->dismissCode();
         }
     }
 
     public function dismissCode(): void
     {
-        $this->reset('issuedCode', 'issuedAgentId');
+        $this->reset('issuedCode', 'issuedRelayId');
     }
 
-    public function revoke(int $agentId, AgentEnrollmentService $enrollment): void
+    public function revoke(int $relayId, RelayEnrollmentService $enrollment): void
     {
-        $agent = Agent::active()->findOrFail($agentId);
+        $relay = Relay::active()->findOrFail($relayId);
 
-        $this->authorize('revoke', $agent);
+        $this->authorize('revoke', $relay);
 
-        $enrollment->revoke($agent, Auth::id());
+        $enrollment->revoke($relay, Auth::id());
 
-        if ($this->issuedAgentId === $agent->id) {
+        if ($this->issuedRelayId === $relay->id) {
             $this->dismissCode();
         }
     }
@@ -114,30 +114,30 @@ class AgentEnrollment extends Component
     {
         $config = $events->getEventConfiguration();
 
-        return view('livewire.agents.agent-enrollment', [
-            'isSecure' => app(AgentConnection::class)->isAllowed(request()),
+        return view('livewire.relays.relay-enrollment', [
+            'isSecure' => app(RelayConnection::class)->isAllowed(request()),
             'eventName' => $config?->event?->name,
             'canCreateStations' => auth()->user()->can('manage-stations'),
-            'agents' => $config === null ? new Collection : $this->visibleAgents($config->id),
+            'relays' => $config === null ? new Collection : $this->visibleRelays($config->id),
         ])->layout('components.layouts.app');
     }
 
     /**
-     * @return Collection<int, Agent>
+     * @return Collection<int, Relay>
      */
-    private function visibleAgents(int $eventConfigurationId): Collection
+    private function visibleRelays(int $eventConfigurationId): Collection
     {
-        return Agent::query()
+        return Relay::query()
             ->where('event_configuration_id', $eventConfigurationId)
             ->when(
-                ! Auth::user()->can('viewAll', Agent::class),
+                ! Auth::user()->can('viewAll', Relay::class),
                 fn ($query) => $query->where('created_by_user_id', Auth::id()),
             )
             ->with('createdBy')
             ->latest('id')
             ->limit(100)
             ->get()
-            ->reject(fn (Agent $agent): bool => $agent->status() === Agent::STATUS_EXPIRED)
+            ->reject(fn (Relay $relay): bool => $relay->status() === Relay::STATUS_EXPIRED)
             ->values();
     }
 
@@ -146,7 +146,7 @@ class AgentEnrollment extends Component
      */
     private function deleteOwnExpiredCodes(): void
     {
-        Agent::query()
+        Relay::query()
             ->where('created_by_user_id', Auth::id())
             ->whereNull('token_hash')
             ->whereNull('revoked_at')

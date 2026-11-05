@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class EnrollAgentRequest extends FormRequest
+class EnrollRelayRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -21,7 +21,7 @@ class EnrollAgentRequest extends FormRequest
     {
         return [
             'code' => ['required', 'string', 'max:32'],
-            'agent_version' => ['nullable', 'string', 'regex:/^[0-9A-Za-z.+_-]{1,32}$/'],
+            'relay_version' => ['nullable', 'string', 'regex:/^[0-9A-Za-z.+_-]{1,32}$/'],
         ];
     }
 }
