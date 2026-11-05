@@ -12,6 +12,7 @@ use App\Events\ExternalContactReceived;
 use App\Events\ExternalContactUpdated;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
+use App\Exceptions\UnknownStationException;
 use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
@@ -24,6 +25,7 @@ use Closure;
 use Illuminate\Database\DetectsConcurrencyErrors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
@@ -86,6 +88,51 @@ class ExternalContactHandler
     public function handleContact(ExternalContactDto $dto, EventConfiguration $config): Contact
     {
         return $this->retryingOnLockContention(fn () => $this->storeContact($dto, $config));
+    }
+
+    /**
+     * Store a contact that an edit gave a new external id. The contact holding
+     * $previousExternalId takes the new id and the edit. When the new id is
+     * already known or the previous one isn't, this acts like handleContact,
+     * so a retry can't store the contact twice.
+     *
+     * Rolls back together, so a refused edit leaves the contact under its old id.
+     *
+     * @throws InvalidExternalContactException
+     * @throws OutOfPeriodContactException
+     * @throws UnknownStationException
+     */
+    public function handleContactReplacing(ExternalContactDto $dto, EventConfiguration $config, string $previousExternalId): Contact
+    {
+        return $this->retryingOnLockContention(fn () => DB::transaction(function () use ($dto, $config, $previousExternalId) {
+            $this->assertValidCallsign($dto);
+            $this->moveExternalId($dto, $config, $previousExternalId);
+
+            return $this->storeContact($dto, $config);
+        }));
+    }
+
+    /**
+     * @throws OutOfPeriodContactException When the edit moves the contact outside the event
+     */
+    private function moveExternalId(ExternalContactDto $dto, EventConfiguration $config, string $previousExternalId): void
+    {
+        if ($dto->externalId === null || $dto->externalId === $previousExternalId || $this->findByExternalId($dto->externalId, $config) !== null) {
+            return;
+        }
+
+        $contact = $this->findByExternalId($previousExternalId, $config);
+
+        if ($contact === null) {
+            return;
+        }
+
+        $event = $config->event;
+        if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
+            throw new OutOfPeriodContactException("Edited QSO time {$dto->timestamp->toIso8601String()} is outside the event window");
+        }
+
+        $contact->forceFill(['external_id' => $this->storableExternalId($dto->externalId, $config->id, $dto->source)])->saveQuietly();
     }
 
     /**
@@ -193,7 +240,13 @@ class ExternalContactHandler
 
         // A logger with no station name set sends a blank one.
         $stationIdentifier = trim((string) $dto->stationIdentifier) !== '' ? trim((string) $dto->stationIdentifier) : 'Unknown';
-        $station = $this->stationResolver->resolve($stationIdentifier, $config->id);
+        $station = $dto->mayCreateStation
+            ? $this->stationResolver->resolve($stationIdentifier, $config->id)
+            : $this->stationResolver->find($stationIdentifier, $config->id);
+
+        if ($station === null) {
+            throw new UnknownStationException("No station named {$stationIdentifier}");
+        }
 
         // Fallback to cached RadioInfo for operator/band/mode if not in contact
         $cachedRadioInfo = $this->getCachedRadioInfo($stationIdentifier, $dto->source);
