@@ -20,6 +20,14 @@ class Agent extends Model
     /** @use HasFactory<AgentFactory> */
     use HasFactory;
 
+    public const STATUS_WAITING = 'waiting';
+
+    public const STATUS_EXPIRED = 'expired';
+
+    public const STATUS_ENROLLED = 'enrolled';
+
+    public const STATUS_REVOKED = 'revoked';
+
     protected $fillable = [
         'event_configuration_id',
         'name',
@@ -70,6 +78,20 @@ class Agent extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('revoked_at');
+    }
+
+    /**
+     * Where this agent is in its life: waiting for its code to be used, code
+     * expired unused, enrolled, or revoked.
+     */
+    public function status(): string
+    {
+        return match (true) {
+            $this->revoked_at !== null => self::STATUS_REVOKED,
+            $this->token_hash !== null => self::STATUS_ENROLLED,
+            $this->enrollment_expires_at?->isFuture() === true => self::STATUS_WAITING,
+            default => self::STATUS_EXPIRED,
+        };
     }
 
     /**

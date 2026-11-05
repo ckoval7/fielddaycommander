@@ -92,6 +92,7 @@ $gatedPages = [
     'admin.audit-logs' => ['admin.audit-logs', 'view-security-logs', fn () => []],
     'admin.import-adif' => ['admin.import-adif', 'import-contacts', fn () => []],
     'admin.external-loggers' => ['admin.external-loggers', 'import-contacts', fn () => []],
+    'agents.index' => ['agents.index', 'enroll-agents', fn () => []],
     'admin.developer' => ['admin.developer', 'manage-settings', fn () => []],
     'weather.manage' => ['weather.manage', 'manage-weather', fn () => []],
 ];

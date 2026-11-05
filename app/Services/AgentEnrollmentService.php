@@ -42,7 +42,10 @@ class AgentEnrollmentService
             'created_by_user_id' => $createdByUserId,
         ]);
 
-        AuditLog::log('agent.code_issued', userId: $createdByUserId, auditable: $agent, newValues: ['name' => $name]);
+        AuditLog::log('agent.code_issued', userId: $createdByUserId, auditable: $agent, newValues: [
+            'name' => $name,
+            'event_configuration_id' => $config->id,
+        ]);
 
         return ['agent' => $agent, 'code' => $code];
     }
@@ -64,6 +67,8 @@ class AgentEnrollmentService
             ->first();
 
         if ($agent === null) {
+            AuditLog::log('agent.enrollment_failed');
+
             return null;
         }
 
@@ -84,10 +89,21 @@ class AgentEnrollmentService
             ]);
 
         if ($claimed !== 1) {
+            AuditLog::log('agent.enrollment_failed', auditable: $agent);
+
             return null;
         }
 
-        AuditLog::log('agent.enrolled', auditable: $agent, newValues: ['agent_version' => $agentVersion]);
+        AuditLog::log(
+            'agent.enrolled',
+            userId: $agent->created_by_user_id,
+            auditable: $agent,
+            newValues: [
+                'name' => $agent->name,
+                'event_configuration_id' => $agent->event_configuration_id,
+                'agent_version' => $agentVersion,
+            ],
+        );
 
         return ['agent' => $agent->refresh(), 'token' => $token];
     }
@@ -103,7 +119,7 @@ class AgentEnrollmentService
             'enrollment_expires_at' => null,
         ]);
 
-        AuditLog::log('agent.revoked', userId: $revokedByUserId, auditable: $agent, isCritical: true);
+        AuditLog::log('agent.revoked', userId: $revokedByUserId, auditable: $agent, newValues: ['name' => $agent->name], isCritical: true);
     }
 
     private function generateCode(): string

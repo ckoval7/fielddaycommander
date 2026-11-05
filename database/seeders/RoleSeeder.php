@@ -61,6 +61,7 @@ class RoleSeeder extends Seeder
             'manage-event-equipment',
             'edit-any-equipment',
             'import-contacts',
+            'enroll-agents',
             'manage-weather',
         ]);
 
@@ -68,6 +69,7 @@ class RoleSeeder extends Seeder
         $operator = $this->ensureRole('Operator');
         $operator->givePermissionTo([
             'log-contacts',
+            'enroll-agents',
             'sign-up-shifts',
             'view-stations',
             'manage-own-equipment',
@@ -77,6 +79,7 @@ class RoleSeeder extends Seeder
         $stationCaptain = $this->ensureRole('Station Captain');
         $stationCaptain->givePermissionTo([
             'log-contacts',
+            'enroll-agents',
             'edit-contacts',
             'sign-up-shifts',
             'view-stations',

@@ -32,7 +32,7 @@ class AuthenticateAgent
             ->first();
 
         if ($agent?->eventConfiguration === null) {
-            return response()->json(['code' => 'unauthenticated', 'message' => 'The agent token is not valid.'], 401);
+            return response()->json(['code' => 'unauthenticated', 'message' => 'The agent token is missing or invalid.'], 401);
         }
 
         $this->recordActivity($agent, $request);

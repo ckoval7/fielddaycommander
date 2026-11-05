@@ -300,6 +300,12 @@ class AuditLogViewer extends Component
                 'adif.import.completed' => 'ADIF import completed',
                 'adif.import.failed' => 'ADIF import failed',
             ],
+            'Agents' => [
+                'agent.code_issued' => 'Agent enrollment code created',
+                'agent.enrolled' => 'Agent enrolled',
+                'agent.enrollment_failed' => 'Agent enrollment failed',
+                'agent.revoked' => 'Agent revoked',
+            ],
             'External Logger' => [
                 'external_logger.enabled' => 'External logger enabled',
                 'external_logger.disabled' => 'External logger disabled',

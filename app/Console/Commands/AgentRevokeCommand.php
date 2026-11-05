@@ -13,7 +13,7 @@ class AgentRevokeCommand extends Command
 {
     protected $signature = 'agent:revoke {agent? : Agent ID (leave out to list agents)}';
 
-    protected $description = 'Stop a Field Day Commander Agent from sending contacts';
+    protected $description = 'Revoke a Field Day Commander Agent or list agents';
 
     public function handle(AgentEnrollmentService $enrollment): int
     {
@@ -36,7 +36,7 @@ class AgentRevokeCommand extends Command
         $agent = Agent::active()->find($this->argument('agent'));
 
         if ($agent === null) {
-            $this->error('No active agent with that ID.');
+            $this->error('No agent with that ID is available to revoke.');
 
             return self::FAILURE;
         }

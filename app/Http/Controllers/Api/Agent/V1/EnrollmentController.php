@@ -19,7 +19,7 @@ class EnrollmentController extends Controller
         if ($enrolled === null) {
             return response()->json([
                 'code' => 'invalid_code',
-                'message' => 'This code is not valid. It may have expired or already been used.',
+                'message' => 'This enrollment code is invalid, expired, used, or revoked.',
             ], 422);
         }
 

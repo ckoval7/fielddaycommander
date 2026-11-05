@@ -292,6 +292,10 @@
                             <x-menu-item title="External Loggers" icon="phosphor-broadcast" link="{{ route('admin.external-loggers') }}" exact :active="request()->routeIs('admin.external-loggers') || request()->routeIs('admin.import-adif')" />
                         @endcan
 
+                        @can('enroll-agents')
+                            <x-menu-item title="Agents" icon="phosphor-desktop-tower" link="{{ route('agents.index') }}" route="agents.index" />
+                        @endcan
+
                         <x-menu-separator title="EVENT MANAGEMENT" />
 
                         <x-menu-item title="Scoring" icon="phosphor-trophy" link="/scoring" />

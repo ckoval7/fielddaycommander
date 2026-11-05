@@ -154,6 +154,10 @@ class AuditLog extends Model
         'adif.import.failed' => 'ADIF import failed',
 
         // External Logger
+        'agent.code_issued' => 'Agent enrollment code created',
+        'agent.enrolled' => 'Agent enrolled',
+        'agent.enrollment_failed' => 'Agent enrollment failed',
+        'agent.revoked' => 'Agent revoked',
         'external_logger.enabled' => 'External logger enabled',
         'external_logger.disabled' => 'External logger disabled',
         'external_logger.port.updated' => 'External logger port updated',

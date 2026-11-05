@@ -14,9 +14,9 @@ class AgentIssueCodeCommand extends Command
 {
     protected $signature = 'agent:issue-code
         {name : A name for this agent, such as the computer it runs on}
-        {--event= : Event configuration ID (defaults to the active event)}';
+        {--event= : Event configuration ID (defaults to the current event)}';
 
-    protected $description = 'Issue a one-time code that enrolls a Field Day Commander Agent';
+    protected $description = 'Create a one-time enrollment code for Field Day Commander Agent';
 
     public function handle(AgentEnrollmentService $enrollment, EventContextService $events): int
     {
@@ -32,7 +32,7 @@ class AgentIssueCodeCommand extends Command
 
         ['agent' => $agent, 'code' => $code] = $enrollment->issue($config, $this->argument('name'));
 
-        $this->info("Agent {$agent->id} created. Enter this code in the agent within ".AgentEnrollmentService::CODE_LIFETIME_MINUTES.' minutes:');
+        $this->info("Agent {$agent->id} created for event configuration {$config->id}. This code works once. Enter it in the agent within ".AgentEnrollmentService::CODE_LIFETIME_MINUTES.' minutes:');
         $this->line($code);
 
         return self::SUCCESS;

@@ -6,6 +6,7 @@
 use App\Models\StationDevice;
 use App\Support\StationMode;
 use Illuminate\Cookie\CookieValuePrefix;
+use Illuminate\Support\Facades\URL;
 use Tests\Browser\Support\FieldDayScene;
 use Tests\Browser\Support\LayoutAudit;
 
@@ -24,6 +25,7 @@ dataset('screens', [
     'transcribe station picker' => '/logging/transcribe',
     'transcribe' => '/logging/transcribe/{station}',
     'logbook' => '/logbook',
+    'agents' => '/agents',
     'events' => '/events',
     'event' => '/events/{event}',
     'create event' => '/events/create',
@@ -88,6 +90,25 @@ it('lays out signed-in screens cleanly', function (string $path, int $width, int
 
     LayoutAudit::assertClean(visitAt($scene->path($path), $width, $height, $touch));
 })->with('screens')->with('viewports');
+
+it('lays out the agents screen over HTTPS, with the form and a new code', function (int $width, int $height, bool $touch) {
+    $scene = FieldDayScene::create();
+    $this->actingAs($scene->admin);
+
+    // The test server is plain HTTP, so stand in for a TLS proxy. Assets stay
+    // relative, since the browser can't reach them at an https:// address.
+    URL::useAssetOrigin('/');
+    $page = visit('/agents', ['extraHTTPHeaders' => [['name' => 'X-Forwarded-Proto', 'value' => 'https']]]);
+    $page = ($touch ? $page->on()->mobile() : $page->on()->desktop())->resize($width, $height);
+
+    $page->assertSee('Enroll an agent');
+    LayoutAudit::assertClean($page);
+
+    $page->type('input[maxlength="50"]', 'Phone Tent Laptop')
+        ->press('Create Code')
+        ->assertSee('Enter this code in the agent');
+    LayoutAudit::assertClean($page);
+})->with('viewports');
 
 it('lays out the station picker cleanly', function (int $width, int $height, bool $touch) {
     $scene = FieldDayScene::create();

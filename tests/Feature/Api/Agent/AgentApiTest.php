@@ -4,12 +4,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Models\Agent;
+use App\Models\AuditLog;
 use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
 use App\Models\Section;
+use App\Models\User;
 use App\Services\AgentEnrollmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as LaravelRoute;
@@ -53,22 +55,52 @@ function agentContact(array $overrides = []): array
     ];
 }
 
+describe('https', function () {
+    test('every agent route refuses plain HTTP', function (string $method, string $path) {
+        $this->withToken(AGENT_TOKEN)
+            ->json($method, 'http://localhost/api/agent/v1/'.$path, ['code' => 'WRONG', 'contacts' => [agentContact()]])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'https_required');
+
+        expect(Contact::count())->toBe(0);
+    })->with([
+        ['POST', 'enroll'],
+        ['GET', 'handshake'],
+        ['POST', 'contacts'],
+    ]);
+
+    test('a client outside the trusted proxies can\'t claim to be on HTTPS', function () {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
+            ->withHeader('X-Forwarded-Proto', 'https')
+            ->withToken(AGENT_TOKEN)
+            ->getJson('http://localhost/api/agent/v1/handshake')
+            ->assertForbidden();
+    });
+
+    test('a trusted TLS proxy counts as HTTPS', function () {
+        $this->withHeader('X-Forwarded-Proto', 'https')
+            ->withToken(AGENT_TOKEN)
+            ->getJson('http://localhost/api/agent/v1/handshake')
+            ->assertOk();
+    });
+});
+
 describe('enrollment', function () {
     test('a code is traded once for a working token', function () {
         ['code' => $code] = app(AgentEnrollmentService::class)->issue($this->config, 'Logging PC');
 
-        $response = $this->postJson('/api/agent/v1/enroll', ['code' => strtolower(str_replace('-', ' ', $code)), 'agent_version' => '26.11.1'])
+        $response = $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => strtolower(str_replace('-', ' ', $code)), 'agent_version' => '26.11.1'])
             ->assertCreated()
             ->assertJsonPath('agent.name', 'Logging PC');
 
-        $this->withToken($response->json('token'))->getJson('/api/agent/v1/handshake')->assertOk();
+        $this->withToken($response->json('token'))->getJson('https://localhost/api/agent/v1/handshake')->assertOk();
 
         expect(Agent::where('name', 'Logging PC')->sole())
             ->agent_version->toBe('26.11.1')
             ->enrollment_code_hash->toBeNull()
             ->token_hash->toBe(Agent::hashSecret($response->json('token')));
 
-        $this->postJson('/api/agent/v1/enroll', ['code' => $code])
+        $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => $code])
             ->assertUnprocessable()
             ->assertJsonPath('code', 'invalid_code');
     });
@@ -78,7 +110,7 @@ describe('enrollment', function () {
 
         $this->travel(AgentEnrollmentService::CODE_LIFETIME_MINUTES + 1)->minutes();
 
-        $this->postJson('/api/agent/v1/enroll', ['code' => $code])->assertUnprocessable();
+        $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => $code])->assertUnprocessable();
     });
 
     test('a revoked code does not work', function () {
@@ -87,15 +119,37 @@ describe('enrollment', function () {
 
         $service->revoke($agent);
 
-        $this->postJson('/api/agent/v1/enroll', ['code' => $code])->assertUnprocessable();
+        $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => $code])->assertUnprocessable();
     });
 
     test('enrollment attempts are rate limited', function () {
         foreach (range(1, 10) as $attempt) {
-            $this->postJson('/api/agent/v1/enroll', ['code' => 'WRONG'])->assertUnprocessable();
+            $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => 'WRONG'])->assertUnprocessable();
         }
 
-        $this->postJson('/api/agent/v1/enroll', ['code' => 'WRONG'])->assertTooManyRequests();
+        $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => 'WRONG'])->assertTooManyRequests();
+    });
+
+    test('enrollment is audited under the person who created the code, without the secrets', function () {
+        $user = User::factory()->create();
+        ['agent' => $agent, 'code' => $code] = app(AgentEnrollmentService::class)->issue($this->config, 'Logging PC', $user->id);
+
+        $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => 'WRONG'])->assertUnprocessable();
+        $token = $this->postJson('https://localhost/api/agent/v1/enroll', ['code' => $code, 'agent_version' => '26.11.1'])->json('token');
+
+        $issued = AuditLog::where('action', 'agent.code_issued')->sole();
+        $enrolled = AuditLog::where('action', 'agent.enrolled')->sole();
+
+        expect($issued->user_id)->toBe($user->id)
+            ->and($issued->auditable_id)->toBe($agent->id)
+            ->and($enrolled->user_id)->toBe($user->id)
+            ->and($enrolled->auditable_id)->toBe($agent->id)
+            ->and($enrolled->new_values)->toMatchArray(['name' => 'Logging PC', 'agent_version' => '26.11.1'])
+            ->and(AuditLog::where('action', 'agent.enrollment_failed')->count())->toBe(1);
+
+        $logged = AuditLog::where('action', 'like', 'agent.%')->get()->toJson();
+
+        expect($logged)->not->toContain($code)->not->toContain($token);
     });
 });
 
@@ -103,7 +157,7 @@ describe('authentication', function () {
     test('requests without a valid token get JSON 401s', function (?string $token) {
         $request = $token === null ? $this : $this->withToken($token);
 
-        $request->get('/api/agent/v1/handshake')
+        $request->get('https://localhost/api/agent/v1/handshake')
             ->assertUnauthorized()
             ->assertJsonPath('code', 'unauthenticated');
     })->with([null, 'fdca_wrong']);
@@ -111,28 +165,28 @@ describe('authentication', function () {
     test('a revoked agent is refused', function () {
         app(AgentEnrollmentService::class)->revoke($this->agent);
 
-        $this->withToken(AGENT_TOKEN)->getJson('/api/agent/v1/handshake')->assertUnauthorized();
+        $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake')->assertUnauthorized();
     });
 
     test('an agent whose event was deleted is refused', function () {
         $this->config->delete();
 
-        $this->withToken(AGENT_TOKEN)->getJson('/api/agent/v1/handshake')->assertUnauthorized();
+        $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake')->assertUnauthorized();
     });
 
     test('an unknown route under the API returns JSON, not a page', function () {
-        $this->get('/api/agent/v1/nope')->assertNotFound()->assertHeader('content-type', 'application/json');
+        $this->get('https://localhost/api/agent/v1/nope')->assertNotFound()->assertHeader('content-type', 'application/json');
     });
 
     test('contact requests are rate limited per agent', function () {
         foreach (range(1, 120) as $attempt) {
-            $this->withToken(AGENT_TOKEN)->getJson('/api/agent/v1/handshake')->assertOk();
+            $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake')->assertOk();
         }
 
-        $this->withToken(AGENT_TOKEN)->getJson('/api/agent/v1/handshake')->assertTooManyRequests();
+        $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake')->assertTooManyRequests();
 
         $other = Agent::factory()->withToken('fdca_other-token')->create(['event_configuration_id' => $this->config->id]);
-        $this->withToken('fdca_other-token')->getJson('/api/agent/v1/handshake')->assertOk()->assertJsonPath('agent.id', $other->id);
+        $this->withToken('fdca_other-token')->getJson('https://localhost/api/agent/v1/handshake')->assertOk()->assertJsonPath('agent.id', $other->id);
     });
 });
 
@@ -140,7 +194,7 @@ describe('handshake', function () {
     test('reports versions and the agent\'s event, and records the agent\'s version', function () {
         $this->withToken(AGENT_TOKEN)
             ->withHeader('X-Agent-Version', '26.11.2')
-            ->getJson('/api/agent/v1/handshake')
+            ->getJson('https://localhost/api/agent/v1/handshake')
             ->assertOk()
             ->assertJsonPath('server_version', config('app.version'))
             ->assertJsonPath('supported_api_versions', [1])
@@ -157,7 +211,7 @@ describe('handshake', function () {
 describe('contacts', function () {
     test('stores a contact against the agent\'s event and station', function () {
         $response = $this->withToken(AGENT_TOKEN)
-            ->postJson('/api/agent/v1/contacts', ['contacts' => [agentContact(['power_watts' => 5, 'frequency_hz' => 14_250_000, 'rst_sent' => '59'])]])
+            ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['power_watts' => 5, 'frequency_hz' => 14_250_000, 'rst_sent' => '59'])]])
             ->assertOk()
             ->assertJsonPath('results.0.status', 'accepted');
 
@@ -179,7 +233,7 @@ describe('contacts', function () {
         $qsoTime = now()->setTimezone('-05:00')->startOfSecond();
 
         $this->withToken(AGENT_TOKEN)
-            ->postJson('/api/agent/v1/contacts', ['contacts' => [agentContact(['qso_time' => $qsoTime->format('Y-m-d\TH:i:sP')])]])
+            ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact(['qso_time' => $qsoTime->format('Y-m-d\TH:i:sP')])]])
             ->assertJsonPath('results.0.status', 'accepted');
 
         expect(Contact::sole()->qso_time->getTimestamp())->toBe($qsoTime->getTimestamp());
@@ -187,7 +241,7 @@ describe('contacts', function () {
 
     test('sending the same key again stores one contact', function () {
         $send = fn (array $overrides = []) => $this->withToken(AGENT_TOKEN)
-            ->postJson('/api/agent/v1/contacts', ['contacts' => [agentContact($overrides)]])
+            ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact($overrides)]])
             ->assertJsonPath('results.0.status', 'accepted');
 
         $uuid = $send()->json('results.0.contact_uuid');
@@ -199,7 +253,7 @@ describe('contacts', function () {
 
     test('a contact deleted on the server stays deleted when sent again', function () {
         $send = fn () => $this->withToken(AGENT_TOKEN)
-            ->postJson('/api/agent/v1/contacts', ['contacts' => [agentContact()]])
+            ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [agentContact()]])
             ->assertJsonPath('results.0.status', 'accepted');
 
         $send();
@@ -210,7 +264,7 @@ describe('contacts', function () {
     });
 
     test('one bad contact does not stop the rest of the batch', function () {
-        $this->withToken(AGENT_TOKEN)->postJson('/api/agent/v1/contacts', ['contacts' => [
+        $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [
             agentContact(['idempotency_key' => 'short']),
             agentContact(['idempotency_key' => 'contact-key-00000002', 'qso_time' => '2026-06-27 18:05']),
             agentContact(['idempotency_key' => 'contact-key-00000003', 'callsign' => 'W1 AW!']),
@@ -233,7 +287,7 @@ describe('contacts', function () {
         $lock = Cache::lock("agent-contact:{$this->config->id}:agent:{$contact['idempotency_key']}", 30);
         $lock->get();
 
-        $this->withToken(AGENT_TOKEN)->postJson('/api/agent/v1/contacts', ['contacts' => [$contact]])
+        $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => [$contact]])
             ->assertJsonPath('results.0.status', 'retry')
             ->assertJsonPath('results.0.code', 'busy');
 
@@ -242,7 +296,7 @@ describe('contacts', function () {
     });
 
     test('a malformed batch is refused', function (mixed $contacts) {
-        $this->withToken(AGENT_TOKEN)->postJson('/api/agent/v1/contacts', ['contacts' => $contacts])->assertUnprocessable();
+        $this->withToken(AGENT_TOKEN)->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => $contacts])->assertUnprocessable();
     })->with([
         'missing' => [null],
         'empty' => [[]],
@@ -252,7 +306,7 @@ describe('contacts', function () {
 
     test('a batch over the limit is refused', function () {
         $this->withToken(AGENT_TOKEN)
-            ->postJson('/api/agent/v1/contacts', ['contacts' => array_fill(0, 101, ['callsign' => 'W1AW'])])
+            ->postJson('https://localhost/api/agent/v1/contacts', ['contacts' => array_fill(0, 101, ['callsign' => 'W1AW'])])
             ->assertUnprocessable();
     });
 });
@@ -260,7 +314,7 @@ describe('contacts', function () {
 describe('commands', function () {
     test('issue-code creates an agent for the given event, with a code that enrolls it', function () {
         $this->artisan('agent:issue-code', ['name' => 'Logging PC', '--event' => $this->config->id])
-            ->expectsOutputToContain('Enter this code')
+            ->expectsOutputToContain('Enter it in the agent')
             ->assertSuccessful();
 
         expect(Agent::where('name', 'Logging PC')->sole())
@@ -276,7 +330,7 @@ describe('commands', function () {
     test('revoke stops the agent\'s token from working', function () {
         $this->artisan('agent:revoke', ['agent' => $this->agent->id])->assertSuccessful();
 
-        $this->withToken(AGENT_TOKEN)->getJson('/api/agent/v1/handshake')->assertUnauthorized();
+        $this->withToken(AGENT_TOKEN)->getJson('https://localhost/api/agent/v1/handshake')->assertUnauthorized();
     });
 
     test('revoke without an ID lists agents and changes nothing', function () {

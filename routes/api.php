@@ -7,13 +7,14 @@ use App\Http\Controllers\Api\Agent\V1\ContactController;
 use App\Http\Controllers\Api\Agent\V1\EnrollmentController;
 use App\Http\Controllers\Api\Agent\V1\HandshakeController;
 use App\Http\Middleware\AuthenticateAgent;
+use App\Http\Middleware\RequireAgentHttps;
 use Illuminate\Support\Facades\Route;
 
 /*
  * The contract is resources/api/agent-v1.openapi.yaml. Agents already in the
  * field depend on v1, so only add to it. A breaking change needs a v2.
  */
-Route::prefix('agent/v1')->name('api.agent.v1.')->group(function () {
+Route::prefix('agent/v1')->name('api.agent.v1.')->middleware(RequireAgentHttps::class)->group(function () {
     Route::post('enroll', EnrollmentController::class)
         ->middleware('throttle:agent-enroll')
         ->name('enroll');

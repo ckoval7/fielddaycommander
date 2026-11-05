@@ -23,6 +23,11 @@ components:
       description: The agent's version, recorded by the server.
       schema: { type: string, pattern: '^[0-9A-Za-z.+_-]{1,32}$' }
   responses:
+    httpsRequired:
+      description: The request came over plain HTTP (code https_required). Agents must use HTTPS.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     unauthenticated:
       description: The token is missing, unknown or revoked, or its event was deleted. Enroll again.
       content:
@@ -125,6 +130,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+        '403': { $ref: '#/components/responses/httpsRequired' }
         '429': { $ref: '#/components/responses/tooManyRequests' }
   /handshake:
     get:
@@ -153,6 +159,7 @@ paths:
                       starts_at: { type: string, format: date-time }
                       ends_at: { type: string, format: date-time, description: When operating ends. }
         '401': { $ref: '#/components/responses/unauthenticated' }
+        '403': { $ref: '#/components/responses/httpsRequired' }
         '429': { $ref: '#/components/responses/tooManyRequests' }
   /contacts:
     post:
@@ -187,4 +194,5 @@ paths:
                   results: { type: array, items: { $ref: '#/components/schemas/ContactResult' } }
         '401': { $ref: '#/components/responses/unauthenticated' }
         '422': { $ref: '#/components/responses/validationFailed' }
+        '403': { $ref: '#/components/responses/httpsRequired' }
         '429': { $ref: '#/components/responses/tooManyRequests' }
