@@ -80,6 +80,7 @@ describe('https', function () {
         ['POST', 'enroll'],
         ['GET', 'handshake'],
         ['POST', 'contacts'],
+        ['GET', 'contacts'],
     ]);
 
     test('plain HTTP works from the server itself over localhost', function (string $host, string $address) {

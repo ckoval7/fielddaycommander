@@ -21,6 +21,7 @@ Route::prefix('relay/v1')->name('api.relay.v1.')->middleware(RequireRelayHttps::
 
     Route::middleware([AuthenticateRelay::class, 'throttle:relay'])->group(function () {
         Route::get('handshake', HandshakeController::class)->name('handshake');
+        Route::get('contacts', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
     });
 });
