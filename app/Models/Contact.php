@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Contact extends Model
 {
@@ -89,6 +90,11 @@ class Contact extends Model
      */
     public function save(array $options = []): bool
     {
+        // Every logging path gets a uuid here, since relays identify contacts by it.
+        if (! $this->exists && blank($this->uuid)) {
+            $this->uuid = Str::uuid()->toString();
+        }
+
         if (! $this->exists || $this->isDirty(['band_id', 'operating_session_id'])) {
             $explicitlyFlagged = $this->is_satellite && (! $this->exists || $this->isDirty('is_satellite'));
 

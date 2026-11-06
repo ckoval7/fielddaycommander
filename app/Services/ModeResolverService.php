@@ -19,12 +19,13 @@ class ModeResolverService
 {
     /**
      * Mode names that carry voice: analog phone, plus digital voice, which
-     * the rules score as Phone ("DIGITALVOICE" is the ADIF parent mode).
+     * the rules score as Phone ("DIGITALVOICE" is the ADIF parent mode). PH is
+     * the group name loggers such as N3FJP use when a rig reports no mode.
      *
      * @var array<int, string>
      */
     public const PHONE_MODES = [
-        'SSB', 'USB', 'LSB', 'FM', 'AM', 'PM', 'NFM', 'WFM',
+        'PH', 'SSB', 'USB', 'LSB', 'FM', 'AM', 'PM', 'NFM', 'WFM',
         'DIGITALVOICE', 'FREEDV', 'DSTAR', 'DMR', 'C4FM', 'M17',
     ];
 

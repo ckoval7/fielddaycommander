@@ -215,5 +215,14 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('guestbook', function (Request $request) {
             return Limit::perHour(5)->by($request->ip());
         });
+
+        RateLimiter::for('relay-enroll', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
+        // Keyed on the token, because the throttle runs before AuthenticateRelay.
+        RateLimiter::for('relay', function (Request $request) {
+            return Limit::perMinute(120)->by(hash('sha256', $request->bearerToken() ?? (string) $request->ip()));
+        });
     }
 }

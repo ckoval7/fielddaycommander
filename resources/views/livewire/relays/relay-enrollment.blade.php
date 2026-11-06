@@ -1,0 +1,98 @@
+{{--
+    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-License-Identifier: GPL-3.0-or-later
+--}}
+<div class="space-y-6">
+    <x-slot:title>Relays</x-slot:title>
+
+    <x-header use-h1 title="Relays" subtitle="Field Day Commander Relay sends contacts from logging software on another computer to this server." separator progress-indicator />
+
+    @unless ($isSecure)
+        <x-alert icon="phosphor-lock-open" class="alert-warning" title="HTTPS required for relays">
+            Open this page over HTTPS to create a code. Ask your administrator to set up HTTPS if needed. Behind a TLS proxy, the proxy must be in TRUSTED_PROXIES.
+        </x-alert>
+    @endunless
+
+    @if ($issuedCode)
+        <x-card title="Enter this code in the relay" wire:poll.5s="checkIssuedCode">
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm text-base-content/70">Server address</dt>
+                    <dd class="font-mono break-all select-all">{{ $serverUrl }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm text-base-content/70">Enrollment code</dt>
+                    <dd class="font-mono text-2xl font-bold break-all select-all" data-test="enrollment-code">{{ $issuedCode }}</dd>
+                </div>
+            </dl>
+            <p class="mt-4 text-sm text-base-content/70">The code works once and expires in {{ \App\Services\RelayEnrollmentService::CODE_LIFETIME_MINUTES }} minutes. It is for the current event and won't be shown again.</p>
+            <x-slot:actions>
+                <x-button label="Done" class="max-sm:w-full" wire:click="dismissCode" />
+            </x-slot:actions>
+        </x-card>
+    @elseif ($isSecure)
+        <x-card title="Enroll a relay" subtitle="{{ $eventName ? 'Contacts will go to '.$eventName.'.' : '' }}">
+            <form wire:submit="issue" class="space-y-4">
+                <x-input
+                    label="Relay name"
+                    wire:model="name"
+                    maxlength="50"
+                    placeholder="Phone tent laptop"
+                    :hint="$canCreateStations
+                        ? 'Used as the station name when a contact does not name one.'
+                        : 'Used when a contact does not name a station. The station must already exist.'"
+                    autocomplete="off"
+                    enterkeyhint="done"
+                />
+                <x-button type="submit" label="Create Code" icon="phosphor-key" class="btn-primary max-sm:w-full" spinner="issue" />
+            </form>
+        </x-card>
+    @endif
+
+    <x-card title="Enrolled relays">
+        @forelse ($relays as $relay)
+            <div wire:key="relay-{{ $relay->id }}" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 border-b border-base-300 last:border-b-0">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span class="font-medium break-words">{{ $relay->name }}</span>
+                        @switch ($relay->status())
+                            @case (\App\Models\Relay::STATUS_ENROLLED)
+                                <x-badge value="Enrolled" icon="phosphor-check-circle" class="badge-success" />
+                                @break
+                            @case (\App\Models\Relay::STATUS_WAITING)
+                                <x-badge value="Waiting to enroll" icon="phosphor-hourglass" class="badge-warning" />
+                                @break
+                            @default
+                                <x-badge value="Revoked" icon="phosphor-prohibit" class="badge-neutral" />
+                        @endswitch
+                    </div>
+                    <p class="mt-1 text-sm text-base-content/70">
+                        @if ($relay->last_seen_at)
+                            Last seen {{ $relay->last_seen_at->diffForHumans() }}
+                            @if ($relay->relay_version)
+                                · version {{ $relay->relay_version }}
+                            @endif
+                        @endif
+                        @if ($relay->createdBy)
+                            <span class="block">Added by {{ $relay->createdBy->call_sign }}</span>
+                        @endif
+                    </p>
+                </div>
+                @if ($relay->revoked_at === null)
+                    @can('revoke', $relay)
+                        <x-button
+                            label="Revoke"
+                            icon="phosphor-prohibit"
+                            class="btn-outline btn-error btn-sm max-sm:w-full"
+                            wire:click="revoke({{ $relay->id }})"
+                            wire:confirm="Revoke {{ $relay->name }}? This server will stop accepting its contacts and any unused code will stop working."
+                            spinner="revoke({{ $relay->id }})"
+                        />
+                    @endcan
+                @endif
+            </div>
+        @empty
+            <p class="text-base-content/70">No relays to show for this event.</p>
+        @endforelse
+    </x-card>
+</div>

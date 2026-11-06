@@ -56,6 +56,7 @@ class PermissionSeeder extends Seeder
 
             // Import
             ['name' => 'import-contacts', 'description' => 'Import ADIF contacts and manage external loggers'],
+            ['name' => 'enroll-relays', 'description' => 'Create Field Day Commander Relay enrollment codes and revoke your relays'],
 
             // Weather
             ['name' => 'manage-weather', 'description' => 'Enter weather manually, post local alerts, and configure weather sources and units'],
