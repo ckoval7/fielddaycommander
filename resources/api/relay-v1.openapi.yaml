@@ -4,7 +4,7 @@
 openapi: 3.1.0
 info:
   title: Field Day Commander Relay API
-  version: 1.1.0
+  version: 1.2.0
   description: >-
     How Field Day Commander Relay talks to a Field Day Commander server. The relay
     depends on v1, so only add to it. A breaking change needs a v2.
@@ -77,6 +77,16 @@ components:
             it. Send it after the contact it deletes. Sending it again is safe.
             Without a contact to delete, the key is remembered for ten minutes
             in case the contact arrives late.
+        uuid:
+          type: [string, 'null']
+          format: uuid
+          description: >-
+            The contact this upload changes, from the contact feed or an earlier
+            accepted result. It reaches contacts logged elsewhere, which have no
+            idempotency key, and gives them this one unless another contact
+            holds it. It takes priority over replaces_key. If no contact has
+            this uuid, it's ignored. A contact deleted on the server stays
+            deleted. Only sent when capabilities.upload_uuid is true.
         callsign: { type: string, maxLength: 20, pattern: '^[A-Za-z0-9/]+$' }
         qso_time:
           type: string
@@ -227,6 +237,7 @@ paths:
                       or a missing capabilities object as false.
                     properties:
                       contact_feed: { type: boolean, description: 'GET /contacts is available.' }
+                      upload_uuid: { type: boolean, description: 'Uploads can name a contact by uuid.' }
                   permissions:
                     type: object
                     required: [create_stations]

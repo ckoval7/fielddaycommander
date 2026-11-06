@@ -113,6 +113,39 @@ class ExternalContactHandler
     }
 
     /**
+     * Apply a logger's copy of a contact it knows by uuid, including one logged
+     * somewhere else that has no external id yet. The contact takes the new
+     * external id unless another contact already holds it. A contact deleted
+     * here stays deleted.
+     *
+     * @throws InvalidExternalContactException
+     * @throws OutOfPeriodContactException
+     */
+    public function handleContactKnownAs(Contact $contact, ExternalContactDto $dto, EventConfiguration $config): Contact
+    {
+        return $this->retryingOnLockContention(fn () => DB::transaction(function () use ($contact, $dto, $config) {
+            $this->assertValidCallsign($dto);
+
+            if ($contact->trashed()) {
+                return $contact;
+            }
+
+            $event = $config->event;
+            if ($event !== null && ! $event->isWithinOperatingPeriod($dto->timestamp)) {
+                throw new OutOfPeriodContactException("Edited QSO time {$dto->timestamp->toIso8601String()} is outside the event window");
+            }
+
+            if ($dto->externalId !== null && $this->findByExternalId($dto->externalId, $config) === null) {
+                $contact->forceFill(['external_id' => $this->storableExternalId($dto->externalId, $config->id, $dto->source)])->saveQuietly();
+            }
+
+            $this->updateContact($contact, $dto, $config);
+
+            return $contact;
+        }));
+    }
+
+    /**
      * @throws OutOfPeriodContactException When the edit moves the contact outside the event
      */
     private function moveExternalId(ExternalContactDto $dto, EventConfiguration $config, string $previousExternalId): void

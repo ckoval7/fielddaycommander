@@ -9,6 +9,7 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\Mode;
+use App\Models\OperatingSession;
 use App\Models\Relay;
 use App\Models\Section;
 use App\Models\Station;
@@ -461,6 +462,88 @@ describe('contacts', function () {
         'cw' => ['CW', 'CW'],
         'digital' => ['DIG', 'Digital'],
     ]);
+
+    describe('uploads that name a uuid', function () {
+        beforeEach(function () {
+            $this->webContact = Contact::factory()->create([
+                'event_configuration_id' => $this->config->id,
+                'operating_session_id' => OperatingSession::factory()->create([
+                    'station_id' => Station::where('name', 'Phone Tent')->value('id'),
+                ])->id,
+                'callsign' => 'W1AW',
+                'qso_time' => now(),
+                'external_id' => null,
+                'external_source' => null,
+            ]);
+            $this->send = fn (array $overrides = []) => $this->withToken(RELAY_TOKEN)
+                ->postJson('https://localhost/api/relay/v1/contacts', ['contacts' => [relayContact(['uuid' => $this->webContact->uuid, ...$overrides])]]);
+        });
+
+        test('an edit reaches a contact logged elsewhere and gives it the key', function () {
+            ($this->send)(['callsign' => 'k1abc'])
+                ->assertJsonPath('results.0.status', 'accepted')
+                ->assertJsonPath('results.0.contact_uuid', $this->webContact->uuid);
+
+            expect(Contact::sole())
+                ->id->toBe($this->webContact->id)
+                ->callsign->toBe('K1ABC')
+                ->external_id->toBe('relay:contact-key-00000001');
+        });
+
+        test('a retry leaves one contact', function () {
+            ($this->send)(['callsign' => 'k1abc']);
+            ($this->send)(['callsign' => 'k1abc'])->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::sole()->callsign)->toBe('K1ABC');
+        });
+
+        test('a delete reaches a contact logged elsewhere and is audited', function () {
+            ($this->send)(['deleted' => true])->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::count())->toBe(0)
+                ->and(AuditLog::where('action', 'contact.deleted')->count())->toBe(1);
+        });
+
+        test('a contact deleted here stays deleted', function () {
+            $this->webContact->delete();
+
+            ($this->send)(['callsign' => 'k1abc'])->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::count())->toBe(0)
+                ->and(Contact::withTrashed()->sole()->callsign)->toBe('W1AW');
+        });
+
+        test('a key another contact holds stays with that contact', function () {
+            $this->withToken(RELAY_TOKEN)->postJson('https://localhost/api/relay/v1/contacts', ['contacts' => [relayContact(['callsign' => 'n1mm'])]]);
+
+            ($this->send)(['callsign' => 'k1abc'])->assertJsonPath('results.0.status', 'accepted');
+
+            expect($this->webContact->refresh())
+                ->callsign->toBe('K1ABC')
+                ->external_id->toBeNull();
+        });
+
+        test('an edit that moves the contact outside the event is refused and changes nothing', function () {
+            ($this->send)(['callsign' => 'k1abc', 'qso_time' => now()->addYear()->utc()->format('Y-m-d\TH:i:s\Z')])
+                ->assertJsonPath('results.0.code', 'out_of_period');
+
+            expect(Contact::sole())->callsign->toBe('W1AW')->external_id->toBeNull();
+        });
+
+        test('a uuid from another event is ignored', function () {
+            $other = EventConfiguration::factory()->create();
+            $foreign = Contact::factory()->create(['event_configuration_id' => $other->id, 'callsign' => 'N1MM']);
+
+            ($this->send)(['uuid' => $foreign->uuid, 'callsign' => 'k1abc'])->assertJsonPath('results.0.status', 'accepted');
+
+            expect($foreign->refresh()->callsign)->toBe('N1MM')
+                ->and(Contact::where('event_configuration_id', $this->config->id)->pluck('callsign')->sort()->values()->all())->toBe(['K1ABC', 'W1AW']);
+        });
+
+        test('a malformed uuid is rejected', function () {
+            ($this->send)(['uuid' => 'nope'])->assertJsonPath('results.0.code', 'invalid');
+        });
+    });
 
     describe('edits and deletes', function () {
         beforeEach(function () {
