@@ -96,10 +96,22 @@ class RelayContactIngestService
      */
     private function apply(ExternalContactDto $dto, EventConfiguration $config, array $contact): ?Contact
     {
+        $known = isset($contact['uuid'])
+            ? Contact::withTrashed()->where('event_configuration_id', $config->id)->where('uuid', $contact['uuid'])->first()
+            : null;
+
         if ($contact['deleted'] ?? false) {
-            $this->handler->handleDelete($dto, $config);
+            if ($known !== null) {
+                $this->handler->handleDeleteOf($known, $config, self::SOURCE, $dto->stationIdentifier);
+            } else {
+                $this->handler->handleDelete($dto, $config);
+            }
 
             return null;
+        }
+
+        if ($known !== null) {
+            return $this->handler->handleContactKnownAs($known, $dto, $config);
         }
 
         return isset($contact['replaces_key'])
@@ -149,6 +161,7 @@ class RelayContactIngestService
             'idempotency_key' => ['required', 'string', 'regex:'.self::KEY_PATTERN],
             'replaces_key' => ['nullable', 'string', 'regex:'.self::KEY_PATTERN],
             'deleted' => ['nullable', 'boolean'],
+            'uuid' => ['nullable', 'string', 'uuid'],
             'callsign' => ['required', 'string', 'max:20'],
             'qso_time' => ['required', 'string', 'date_format:Y-m-d\TH:i:sP,Y-m-d\TH:i:s\Z'],
             'band' => ['nullable', 'string', 'max:10'],
