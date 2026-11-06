@@ -46,6 +46,7 @@ class HandshakeController extends Controller
                 'starts_at' => $event->start_time->utc()->toIso8601ZuluString(),
                 'ends_at' => $event->operatingEndsAt()->utc()->toIso8601ZuluString(),
             ],
+            'capabilities' => ['contact_feed' => true],
             'permissions' => ['create_stations' => $relay->canCreateStations()],
             'stations' => Station::query()
                 ->where('event_configuration_id', $relay->event_configuration_id)

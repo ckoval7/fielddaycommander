@@ -80,6 +80,7 @@ describe('https', function () {
         ['POST', 'enroll'],
         ['GET', 'handshake'],
         ['POST', 'contacts'],
+        ['GET', 'contacts'],
     ]);
 
     test('plain HTTP works from the server itself over localhost', function (string $host, string $address) {
@@ -444,6 +445,109 @@ describe('contacts', function () {
             ->assertJsonPath('results.4.index', 4);
 
         expect(Contact::count())->toBe(1);
+    });
+
+    test('a contact logged with only a mode group counts in that group', function (string $mode, string $group) {
+        Mode::firstOrCreate(['name' => $group], ['category' => $group, 'points_fd' => 1, 'points_wfd' => 1]);
+
+        $this->withToken(RELAY_TOKEN)
+            ->postJson('https://localhost/api/relay/v1/contacts', ['contacts' => [relayContact(['mode' => $mode])]])
+            ->assertJsonPath('results.0.status', 'accepted');
+
+        expect(Contact::sole()->mode->name)->toBe($group);
+    })->with([
+        'phone' => ['PH', 'Phone'],
+        'lower case phone' => ['ph', 'Phone'],
+        'cw' => ['CW', 'CW'],
+        'digital' => ['DIG', 'Digital'],
+    ]);
+
+    describe('edits and deletes', function () {
+        beforeEach(function () {
+            $this->postContact = fn (array $overrides = []) => $this->withToken(RELAY_TOKEN)
+                ->postJson('https://localhost/api/relay/v1/contacts', ['contacts' => [relayContact($overrides)]]);
+            ($this->postContact)()->assertJsonPath('results.0.status', 'accepted');
+        });
+
+        test('an edit that changes the key updates the same contact', function () {
+            $original = Contact::sole();
+
+            ($this->postContact)(['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'contact-key-00000001', 'callsign' => 'k1abc'])
+                ->assertJsonPath('results.0.status', 'accepted')
+                ->assertJsonPath('results.0.contact_uuid', $original->uuid);
+
+            expect(Contact::sole())
+                ->id->toBe($original->id)
+                ->callsign->toBe('K1ABC')
+                ->external_id->toBe('relay:contact-key-00000002');
+        });
+
+        test('retrying an edit does not store it twice', function () {
+            $edit = ['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'contact-key-00000001', 'callsign' => 'k1abc'];
+
+            ($this->postContact)($edit)->assertJsonPath('results.0.status', 'accepted');
+            ($this->postContact)($edit)->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::sole()->callsign)->toBe('K1ABC');
+        });
+
+        test('an edit of an unknown contact stores it as new', function () {
+            ($this->postContact)(['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'contact-key-99999999', 'callsign' => 'k1abc'])
+                ->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::count())->toBe(2);
+        });
+
+        test('an edit that moves a contact outside the event is refused', function () {
+            ($this->postContact)([
+                'idempotency_key' => 'contact-key-00000002',
+                'replaces_key' => 'contact-key-00000001',
+                'qso_time' => now()->addYear()->utc()->format('Y-m-d\TH:i:s\Z'),
+            ])->assertJsonPath('results.0.code', 'out_of_period');
+
+            expect(Contact::sole()->external_id)->toBe('relay:contact-key-00000001');
+        });
+
+        test('an edit with an invalid callsign leaves the contact under its old key', function () {
+            ($this->postContact)(['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'contact-key-00000001', 'callsign' => 'not a call'])
+                ->assertJsonPath('results.0.code', 'invalid_contact');
+
+            expect(Contact::sole())
+                ->callsign->toBe('W1AW')
+                ->external_id->toBe('relay:contact-key-00000001');
+        });
+
+        test('a badly formed previous key is rejected', function () {
+            ($this->postContact)(['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'short'])
+                ->assertJsonPath('results.0.status', 'rejected')
+                ->assertJsonPath('results.0.code', 'invalid');
+        });
+
+        test('a delete removes the contact and can be retried', function () {
+            ($this->postContact)(['deleted' => true])
+                ->assertJsonPath('results.0.status', 'accepted')
+                ->assertJsonMissingPath('results.0.contact_uuid');
+            ($this->postContact)(['deleted' => true])->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::count())->toBe(0)
+                ->and(AuditLog::where('action', 'contact.deleted')->count())->toBe(1);
+        });
+
+        test('a deleted contact stays deleted when it is sent again', function () {
+            ($this->postContact)(['deleted' => true]);
+            ($this->postContact)()->assertJsonPath('results.0.status', 'accepted');
+
+            expect(Contact::count())->toBe(0);
+        });
+
+        test('a delete and an edit in one batch run in order', function () {
+            $this->withToken(RELAY_TOKEN)->postJson('https://localhost/api/relay/v1/contacts', ['contacts' => [
+                relayContact(['idempotency_key' => 'contact-key-00000002', 'replaces_key' => 'contact-key-00000001', 'callsign' => 'k1abc']),
+                relayContact(['idempotency_key' => 'contact-key-00000002', 'callsign' => 'k1abc', 'deleted' => true]),
+            ]])->assertOk();
+
+            expect(Contact::count())->toBe(0);
+        });
     });
 
     test('a contact being stored by another request is sent back for a retry', function () {

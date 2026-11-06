@@ -9,6 +9,8 @@ use App\DTOs\ExternalContactDto;
 use App\Exceptions\InvalidExternalContactException;
 use App\Exceptions\OutOfPeriodContactException;
 use App\Exceptions\UnknownStationException;
+use App\Models\Contact;
+use App\Models\EventConfiguration;
 use App\Models\Relay;
 use App\Support\AdvancedContactFields;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -34,6 +36,8 @@ class RelayContactIngestService
 
     /** Not stored this time. The relay should send it again later. */
     public const STATUS_RETRY = 'retry';
+
+    private const KEY_PATTERN = '/^[A-Za-z0-9_-]{16,64}$/';
 
     private const LOCK_SECONDS = 30;
 
@@ -68,19 +72,39 @@ class RelayContactIngestService
             return $this->rejected('invalid', $validator->errors()->first());
         }
 
-        $dto = $this->toDto($validator->validated(), $relay);
+        $validated = $validator->validated();
+        $dto = $this->toDto($validated, $relay);
         $config = $relay->eventConfiguration;
 
         try {
             // A retry can arrive while its timed-out original is still being
             // stored, and the handler's repeat check doesn't hold a lock.
             $stored = Cache::lock("relay-contact:{$config->id}:{$dto->externalId}", self::LOCK_SECONDS)
-                ->block(self::LOCK_WAIT_SECONDS, fn () => $this->handler->handleContact($dto, $config));
+                ->block(self::LOCK_WAIT_SECONDS, fn () => $this->apply($dto, $config, $validated));
         } catch (Throwable $exception) {
             return $this->failureResult($exception);
         }
 
-        return ['status' => self::STATUS_ACCEPTED, 'contact_uuid' => $stored->uuid];
+        return $stored === null
+            ? ['status' => self::STATUS_ACCEPTED]
+            : ['status' => self::STATUS_ACCEPTED, 'contact_uuid' => $stored->uuid];
+    }
+
+    /**
+     * @param  array<string, mixed>  $contact  Validated contact
+     * @return Contact|null The stored contact, or null after a delete
+     */
+    private function apply(ExternalContactDto $dto, EventConfiguration $config, array $contact): ?Contact
+    {
+        if ($contact['deleted'] ?? false) {
+            $this->handler->handleDelete($dto, $config);
+
+            return null;
+        }
+
+        return isset($contact['replaces_key'])
+            ? $this->handler->handleContactReplacing($dto, $config, self::SOURCE.':'.$contact['replaces_key'])
+            : $this->handler->handleContact($dto, $config);
     }
 
     /**
@@ -122,7 +146,9 @@ class RelayContactIngestService
     private function rules(): array
     {
         return [
-            'idempotency_key' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{16,64}$/'],
+            'idempotency_key' => ['required', 'string', 'regex:'.self::KEY_PATTERN],
+            'replaces_key' => ['nullable', 'string', 'regex:'.self::KEY_PATTERN],
+            'deleted' => ['nullable', 'boolean'],
             'callsign' => ['required', 'string', 'max:20'],
             'qso_time' => ['required', 'string', 'date_format:Y-m-d\TH:i:sP,Y-m-d\TH:i:s\Z'],
             'band' => ['nullable', 'string', 'max:10'],
