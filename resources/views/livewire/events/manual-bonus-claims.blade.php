@@ -4,7 +4,7 @@
 --}}
 <div>
 @can('verify-bonuses')
-    @if($this->event->eventConfiguration && $this->eligibleBonusTypes->isNotEmpty())
+    @if($this->event->eventConfiguration && $this->classEligibleBonusTypes->isNotEmpty())
         <x-card :title="$this->terms->claimsTitle" shadow>
             <div class="divide-y divide-base-200">
                 @foreach($this->eligibleBonusTypes as $bonusType)
@@ -86,6 +86,50 @@
                     </div>
                 @endforeach
             </div>
+
+            @if($this->automaticBonusTypes->isNotEmpty())
+                {{-- Awards the app earns on its own, listed so the card shows the full set --}}
+                <div @class(['mt-4 pt-4 border-t border-base-300' => $this->eligibleBonusTypes->isNotEmpty()])>
+                    <h3 class="text-sm font-semibold">Earned automatically</h3>
+                    <p class="text-xs text-base-content/70">These are tracked for you. There's nothing to claim here.</p>
+                    <div class="divide-y divide-base-200">
+                        @foreach($this->automaticBonusTypes as $bonusType)
+                            @php $earnedPoints = $this->automaticEarnings[$bonusType->id] ?? null; @endphp
+                            <div class="py-3" wire:key="auto-bonus-{{ $bonusType->id }}" data-automatic-bonus="{{ $bonusType->code }}">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                                        @if($earnedPoints !== null)
+                                            <x-icon name="phosphor-check-circle" class="w-5 h-5 pointer-coarse:w-6 pointer-coarse:h-6 shrink-0 mt-0.5 text-success" />
+                                        @else
+                                            <x-icon name="phosphor-circle" class="w-5 h-5 pointer-coarse:w-6 pointer-coarse:h-6 shrink-0 mt-0.5 text-base-content/40" />
+                                        @endif
+                                        <div class="min-w-0 flex-1">
+                                            <x-bonus-rule-help :rulebook="$this->terms->rulebookName" :rule="$this->bonusRule($bonusType->code)">
+                                                <span class="text-sm font-medium text-base-content/70">{{ spoken($bonusType->name, spokenAbbreviations($bonusType->name)) }}</span>
+                                            </x-bonus-rule-help>
+                                            <p class="text-xs text-base-content/70">{{ $this->automaticHelp($bonusType->code) }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <span class="block text-sm tabular-nums font-semibold {{ $earnedPoints !== null ? 'text-success' : 'text-base-content/60' }}">
+                                            @if($bonusType->objective_multiplier !== null)
+                                                OM ×{{ $bonusType->objective_multiplier }}
+                                            @elseif($earnedPoints !== null)
+                                                +{{ $earnedPoints }} <x-points-unit />
+                                            @elseif($bonusType->is_per_occurrence && $bonusType->max_occurrences)
+                                                {{ $bonusType->base_points }}-{{ $bonusType->max_points }} <x-points-unit />
+                                            @else
+                                                {{ $bonusType->base_points }} <x-points-unit />
+                                            @endif
+                                        </span>
+                                        <span class="block text-xs text-base-content/70">{{ $earnedPoints !== null ? 'Earned' : 'Not yet' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </x-card>
 
         {{-- Youth Participation (auto-synced + manual additional) --}}

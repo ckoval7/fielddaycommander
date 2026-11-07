@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The **Manual Bonus Claims** card on an event's page (**Manual Objective Claims** for Winter Field Day) now lists every bonus or objective your class can earn. The ones Field Day Commander earns for you, such as the Section Manager message, Emergency Power, or Three Contacts on Six Bands, are grayed out under **Earned automatically**, with a note on how each is earned and whether you've earned it yet. Previously, the card showed only the manual claims, so the automatic ones seemed to be missing.
+
 ## 26.11.1 - 2026-11-03
 
 ### Added

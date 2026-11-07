@@ -230,11 +230,14 @@ test('youth section shows auto-detected youth count', function () {
         ->assertSeeHtml('20 <span aria-hidden="true">pts</span><span class="sr-only">points</span>');
 });
 
-test('elected_official_visit and agency_visit are derived and not shown as manual claims', function () {
+test('elected_official_visit and agency_visit are listed as automatic, not as manual claims', function () {
     Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
-        ->assertDontSee('Elected Official Visit')
-        ->assertDontSee('Served Agency Visit');
+        ->assertSeeHtml('data-automatic-bonus="elected_official_visit"')
+        ->assertSeeHtml('data-automatic-bonus="agency_visit"')
+        ->assertDontSeeHtml('aria-label="Claim bonus: Elected Official Visit"')
+        ->assertDontSeeHtml('aria-label="Claim bonus: Served Agency Visit"')
+        ->assertSee('Earned when a guestbook entry in the Elected Official category is verified.');
 });
 
 test('shows public_info_booth bonus for class A', function () {
@@ -375,13 +378,131 @@ test('lists only bonuses with no other way to be earned', function (string $rule
     ]);
 })->with(['2025', '2026']);
 
-test('computed and checklist bonuses are not shown as manual claims', function () {
+test('computed and checklist bonuses are listed as automatic, not as manual claims', function () {
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event]);
+
+    foreach (['emergency_power', 'satellite_qso', 'safety_officer'] as $code) {
+        $component->assertSeeHtml('data-automatic-bonus="'.$code.'"');
+    }
+
+    $component
+        ->assertSee('Earned automatically')
+        ->assertDontSeeHtml('aria-label="Claim bonus: Emergency Power"')
+        ->assertDontSeeHtml('aria-label="Claim bonus: Safety Officer"')
+        ->assertSee('Earned when every item on the Safety Officer checklist in Site Safety is checked off.');
+});
+
+test('site responsibilities is listed as automatic for classes that can earn it', function () {
+    $classB = OperatingClass::where('code', 'B')->where('event_type_id', $this->eventType->id)->first();
+    $this->eventConfig->update(['operating_class_id' => $classB->id]);
+
     Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event->fresh()])
+        ->assertSeeHtml('data-automatic-bonus="site_responsibilities"')
+        ->assertDontSeeHtml('aria-label="Claim bonus: Site Responsibilities"');
+});
+
+test('lists every automatic bonus the operating class can earn', function () {
+    $codes = Livewire::actingAs($this->user)
         ->test(ManualBonusClaims::class, ['event' => $this->event])
-        ->assertDontSee('Emergency Power')
-        ->assertDontSee('Satellite QSO')
-        ->assertDontSee('Safety Officer')
-        ->assertDontSee('Site Responsibilities');
+        ->instance()
+        ->automaticBonusTypes
+        ->pluck('code')
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($codes)->toBe([
+        'agency_visit',
+        'elected_official_visit',
+        'emergency_power',
+        'nts_message',
+        'safety_officer',
+        'satellite_qso',
+        'sm_sec_message',
+        'w1aw_bulletin',
+        'youth_participation',
+    ]);
+});
+
+test('an automatic bonus shows as earned once the app awards it', function () {
+    $smMessage = BonusType::where('code', 'sm_sec_message')
+        ->where('event_type_id', $this->eventType->id)
+        ->where('rules_version', '2025')
+        ->first();
+
+    EventBonus::create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'bonus_type_id' => $smMessage->id,
+        'quantity' => 1,
+        'calculated_points' => $smMessage->base_points,
+        'is_verified' => true,
+        'verified_at' => now(),
+    ]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event]);
+
+    expect($component->instance()->automaticEarnings[$smMessage->id])->toBe($smMessage->base_points);
+
+    $nts = BonusType::where('code', 'nts_message')
+        ->where('event_type_id', $this->eventType->id)
+        ->where('rules_version', '2025')
+        ->first();
+
+    expect($component->instance()->automaticEarnings[$nts->id])->toBeNull();
+
+    $html = $component->html();
+    $row = fn (string $code): string => str($html)->after('data-automatic-bonus="'.$code.'"')->before('data-automatic-bonus=')->toString();
+
+    expect($row('sm_sec_message'))->toContain('>Earned</span>')
+        ->and($row('nts_message'))->toContain('>Not yet</span>');
+});
+
+test('a satellite contact earns the Satellite QSO bonus on the card', function () {
+    $satellite = BonusType::where('code', 'satellite_qso')
+        ->where('event_type_id', $this->eventType->id)
+        ->where('rules_version', '2025')
+        ->first();
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event]);
+
+    expect($component->instance()->automaticEarnings[$satellite->id])->toBeNull();
+
+    Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'is_duplicate' => false,
+        'is_satellite' => true,
+    ]);
+
+    $fresh = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $this->event]);
+
+    expect($fresh->instance()->automaticEarnings[$satellite->id])->toBe($satellite->base_points);
+});
+
+test('winter field day objectives earned from the log are listed as automatic', function () {
+    $wfdType = EventType::where('code', 'WFD')->first();
+    $wfdClass = OperatingClass::where('event_type_id', $wfdType->id)->first();
+    $wfdEvent = Event::factory()->create(['event_type_id' => $wfdType->id, 'rules_version' => '2027']);
+    EventConfiguration::factory()->create([
+        'event_id' => $wfdEvent->id,
+        'operating_class_id' => $wfdClass->id,
+    ]);
+
+    $component = Livewire::actingAs($this->user)
+        ->test(ManualBonusClaims::class, ['event' => $wfdEvent->fresh()]);
+
+    expect($component->instance()->automaticBonusTypes->pluck('code')->sort()->values()->all())
+        ->toBe(['bulletin', 'multiple_modes', 'qrp', 'six_bands', 'twelve_bands'])
+        ->and($component->instance()->eligibleBonusTypes->pluck('code'))->not->toContain('six_bands');
+
+    $component
+        ->assertSee('Manual Objective Claims')
+        ->assertSee('Earned once six bands each have at least three contacts that aren')
+        ->assertSeeHtml('data-automatic-bonus="qrp"');
 });
 
 test('youth card lists operators who logged this event with their youth flag', function () {

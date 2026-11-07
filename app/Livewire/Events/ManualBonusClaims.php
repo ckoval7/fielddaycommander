@@ -12,6 +12,7 @@ use App\Models\Event;
 use App\Models\EventBonus;
 use App\Models\User;
 use App\Scoring\Dto\Nomenclature;
+use App\Support\AutomaticBonusHelp;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -45,8 +46,30 @@ class ManualBonusClaims extends Component
         return $this->event->eventConfiguration?->nomenclature() ?? new Nomenclature;
     }
 
+    /**
+     * Bonus types a manager claims by hand on this card.
+     */
     #[Computed]
     public function eligibleBonusTypes(): Collection
+    {
+        return $this->classEligibleBonusTypes->where('trigger_type', 'manual')->values();
+    }
+
+    /**
+     * Bonus types the app earns on its own, listed so the card shows the
+     * event's full set of awards.
+     */
+    #[Computed]
+    public function automaticBonusTypes(): Collection
+    {
+        return $this->classEligibleBonusTypes->where('trigger_type', '!=', 'manual')->values();
+    }
+
+    /**
+     * Every active bonus type for this event's rules that its operating class can earn.
+     */
+    #[Computed]
+    public function classEligibleBonusTypes(): Collection
     {
         $config = $this->event->eventConfiguration;
 
@@ -54,27 +77,62 @@ class ManualBonusClaims extends Component
             return collect();
         }
 
-        $classCode = $config->operatingClass?->code;
-
         return BonusType::query()
             ->where('is_active', true)
             ->where('event_type_id', $this->event->event_type_id)
             ->where('rules_version', $this->event->resolved_rules_version)
-            ->where('trigger_type', 'manual')
+            ->orderBy('id')
             ->get()
-            ->filter(function (BonusType $bonusType) use ($classCode) {
-                $classes = $bonusType->eligible_classes;
+            ->filter(fn (BonusType $bonusType): bool => $config->isClassEligibleForBonus($bonusType))
+            ->values();
+    }
 
-                if ($classes === null) {
-                    return true;
-                }
+    /**
+     * What each automatic bonus has earned so far, keyed by bonus type id.
+     *
+     * Emergency Power, Satellite QSO and Youth Participation are computed on
+     * demand rather than stored as a plain claim, so they are read the same
+     * way the score reads them.
+     *
+     * @return array<int, int|null> Points earned, or null when not earned yet.
+     */
+    #[Computed]
+    public function automaticEarnings(): array
+    {
+        $config = $this->event->eventConfiguration;
 
-                if (is_string($classes)) {
-                    $classes = json_decode($classes, true) ?? [];
-                }
+        if (! $config || $this->automaticBonusTypes->isEmpty()) {
+            return [];
+        }
 
-                return in_array($classCode, $classes);
-            });
+        $stored = EventBonus::where('event_configuration_id', $config->id)
+            ->whereIn('bonus_type_id', $this->automaticBonusTypes->pluck('id'))
+            ->where('is_verified', true)
+            ->get()
+            ->keyBy('bonus_type_id');
+
+        $earnings = [];
+
+        foreach ($this->automaticBonusTypes as $bonusType) {
+            $points = match ($bonusType->code) {
+                'emergency_power' => $config->calculateEmergencyPowerBonus() ?: null,
+                'satellite_qso' => $config->calculateSatelliteBonus() ?: null,
+                'youth_participation' => ($this->youthStatus['total'] ?? 0) > 0 ? $this->youthStatus['points'] : null,
+                default => $stored->has($bonusType->id) ? (int) $stored->get($bonusType->id)->calculated_points : null,
+            };
+
+            $earnings[$bonusType->id] = $points;
+        }
+
+        return $earnings;
+    }
+
+    /**
+     * How the app earns an automatic bonus, for the note under its name.
+     */
+    public function automaticHelp(string $code): string
+    {
+        return AutomaticBonusHelp::for($code, $this->terms);
     }
 
     #[Computed]
