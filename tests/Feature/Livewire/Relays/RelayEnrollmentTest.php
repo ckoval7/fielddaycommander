@@ -15,6 +15,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Js;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
@@ -98,6 +99,14 @@ test('an operator creates a code, and only its hash is stored', function () {
     $screen->assertSee($code);
 
     expect(AuditLog::where('action', 'relay.code_issued')->sole()->user_id)->toBe($this->operator->id);
+});
+
+test('a new code has a button that copies it', function () {
+    $screen = relayScreen($this->operator)->set('name', 'Phone Tent')->call('issue');
+
+    $screen->assertSeeHtml('data-test="copy-enrollment-code"')
+        ->assertSeeHtml('aria-label="Copy enrollment code"')
+        ->assertSeeHtml('$copy('.Js::from($screen->get('issuedCode')));
 });
 
 test('no code is created over plain HTTP from another computer', function () {
@@ -188,7 +197,7 @@ test('an unused, expired code is cleared when the same person creates another', 
 });
 
 test('tells people without manage-stations that the station must already exist', function () {
-    relayScreen($this->operator)->assertSee('must already exist');
+    relayScreen($this->operator)->assertSee('Match a station name or hostname');
 
-    relayScreen(User::factory()->create()->assignRole('Station Captain'))->assertDontSee('must already exist');
+    relayScreen(User::factory()->create()->assignRole('Station Captain'))->assertDontSee('Match a station name or hostname');
 });

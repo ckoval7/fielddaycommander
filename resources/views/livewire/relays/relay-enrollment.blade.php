@@ -22,7 +22,24 @@
                 </div>
                 <div>
                     <dt class="text-sm text-base-content/70">Enrollment code</dt>
-                    <dd class="font-mono text-2xl font-bold break-all select-all" data-test="enrollment-code">{{ $issuedCode }}</dd>
+                    <dd x-data="{ copied: false, failed: false }">
+                        <div class="flex items-center gap-2">
+                            <span class="min-w-0 font-mono text-2xl font-bold break-all select-all" data-test="enrollment-code">{{ $issuedCode }}</span>
+                            <button
+                                type="button"
+                                class="btn btn-ghost btn-square shrink-0 touch-manipulation"
+                                @click="if (await $copy(@js($issuedCode))) { copied = true; failed = false; setTimeout(() => copied = false, 2000) } else { failed = true; setTimeout(() => failed = false, 4000) }"
+                                aria-label="Copy enrollment code"
+                                :title="copied ? 'Copied' : (failed ? 'Could not copy' : 'Copy code')"
+                                data-test="copy-enrollment-code"
+                            >
+                                <x-icon x-show="!copied" name="phosphor-clipboard" class="w-5 h-5" />
+                                <x-icon x-show="copied" x-cloak name="phosphor-check" class="w-5 h-5 text-success" />
+                            </button>
+                        </div>
+                        <output x-show="copied" x-cloak class="block text-sm text-success">Copied.</output>
+                        <output x-show="failed" x-cloak class="block text-sm text-error">Could not copy automatically. Select the code above and copy it.</output>
+                    </dd>
                 </div>
             </dl>
             <p class="mt-4 text-sm text-base-content/70">The code works once and expires in {{ \App\Services\RelayEnrollmentService::CODE_LIFETIME_MINUTES }} minutes. It is for the current event and won't be shown again.</p>
@@ -39,8 +56,8 @@
                     maxlength="50"
                     placeholder="Phone tent laptop"
                     :hint="$canCreateStations
-                        ? 'Used as the station name when a contact does not name one.'
-                        : 'Used when a contact does not name a station. The station must already exist.'"
+                        ? 'Contacts without a station use this name. If no station matches, one is created.'
+                        : 'Contacts without a station use this name. Match a station name or hostname, or contacts wait in the queue until someone creates it.'"
                     autocomplete="off"
                     enterkeyhint="done"
                 />
