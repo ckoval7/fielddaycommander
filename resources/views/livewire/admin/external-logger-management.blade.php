@@ -20,6 +20,7 @@
                     <p class="text-amber-800 dark:text-amber-200"><strong>Demo Mode:</strong> UDP listeners and the N3FJP server are disabled in demo mode. Controls below are read-only.</p>
                 </div>
             @endif
+            <x-demo-relay-download link-relays />
 
             @if (! $hasActiveEvent)
                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">

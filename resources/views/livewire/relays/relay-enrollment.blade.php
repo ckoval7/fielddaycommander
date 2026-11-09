@@ -7,6 +7,8 @@
 
     <x-header use-h1 title="Relays" subtitle="Field Day Commander Relay sends contacts from logging software on another computer to this server." separator progress-indicator />
 
+    <x-demo-relay-download />
+
     @unless ($isSecure)
         <x-alert icon="phosphor-lock-open" class="alert-warning" title="HTTPS required for relays">
             Open this page over HTTPS to create a code. Ask your administrator to set up HTTPS if needed. Behind a TLS proxy, the proxy must be in TRUSTED_PROXIES.
