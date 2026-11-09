@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Day Commander Relay - Field Day Commander</title>
+<meta name="description" content="Connect your logging software to Field Day Commander when the server is away from the operating site.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/relay.html">
+<meta property="og:site_name" content="Field Day Commander">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Field Day Commander Relay - Field Day Commander">
+<meta property="og:description" content="Connect your logging software to Field Day Commander when the server is away from the operating site.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/relay.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Field Day Commander Relay - Field Day Commander">
+<meta name="twitter:description" content="Connect your logging software to Field Day Commander when the server is away from the operating site.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Set Up <span class="gradient">Field Day Commander Relay</span></h1>
+    <p>Send contacts from your logging PCs to a server on another network.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Field Day Commander Relay
+      </div>
+
+      <div class="badge-advanced">Logging &middot; Optional</div>
+
+      <p>Use Field Day Commander Relay to send contacts from your logging software to Field Day Commander, even when the server is at a member's house or hosted on the internet. It's a Windows desktop program that runs on a logging computer and collects contacts from that PC or other PCs on your club LAN. It connects out to the server over HTTPS, so you don't need to forward ports.</p>
+
+      <h2 id="do-you-need-it">Do You Need the Relay?</h2>
+
+      <p>If you answer yes to any of these questions, you need the relay:</p>
+
+      <ul>
+        <li>Is your server on a different network from your logging PCs, such as at a member's house or hosted online?</li>
+        <li>Does your logger only write an ADIF log file?</li>
+        <li>Do you want N3FJP PCs to keep logging if the link to the server drops?</li>
+        <li>Does your club already run an N3FJP network server PC you want to keep?</li>
+      </ul>
+
+      <p>The relay saves every contact on disk on the logging computer before sending. It keeps collecting while the internet or server is down, then sends the waiting contacts when the connection returns without creating duplicates. It sends over HTTPS and checks the server's certificate. A self-signed club certificate works once you confirm the server's key matches with whoever runs it. All connections to the server are outbound, so you don't need port forwarding. You connect with a one-time enrollment code, which gives the relay its own token. You can revoke that token on the server's <strong>Relays</strong> page.</p>
+
+      <p>You don't need the relay if your server and logging PCs share the club LAN and <strong>Logging &gt; External Loggers</strong> covers your logger. You also don't need it if everyone logs in the browser.</p>
+
+      <h2 id="what-you-need">What You Need</h2>
+
+      <ul>
+        <li>A logging PC running 64-bit Windows 10 or later.</li>
+        <li>A Field Day Commander server with the <strong>Relays</strong> page, reachable over HTTPS from that PC. For a public server, see <a href="dns-tls.html">DNS &amp; TLS</a>.</li>
+        <li>A current event with the right dates. For testing, use a practice event whose dates cover the test.</li>
+        <li>A server account with <code>enroll-relays</code> permission. All four default roles have it.</li>
+      </ul>
+
+      <h2 id="install-relay">Step 1: Install the Relay</h2>
+
+      <ol>
+        <li>Download <code>relay-setup.exe</code> from the <a href="https://github.com/ckoval7/fielddaycommander-relay/releases">releases page</a>. Choose <code>relay-portable.exe</code> for a borrowed PC. Checksums are in <code>SHA256SUMS</code>.</li>
+        <li>Run the download. For the portable version, put it in a folder you can write to first.</li>
+      </ol>
+
+      <p>The downloads aren't code signed yet. If SmartScreen warns, click <strong>More info</strong>, then <strong>Run anyway</strong>, only for a file from that releases page.</p>
+
+      <p>The installer runs for your Windows account without admin rights or a folder choice. On its last page, <strong>Start the relay now</strong> is checked. <strong>Start the relay when I sign in to Windows</strong> is unchecked unless already configured. Only one relay can run per computer.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Keeping or removing the relay</div>
+        <p>To update, run the new installer. It keeps saved contacts and your connection. N1MM broadcasts sent while the relay is closed are lost. Recover them with <strong>Tools &gt; Rebroadcast all Contest QSO's to other Apps</strong> in N1MM Logger+.</p>
+        <p>Uninstall through Windows' Apps list. Data stays behind. Click <strong>Disconnect</strong> first if you also want to remove the token. For the portable version, wait until <strong>Waiting</strong> is zero before deleting the program and its <code>relay-data</code> folder.</p>
+      </div>
+
+      <h2 id="create-code">Step 2: Create an Enrollment Code</h2>
+
+      <ol>
+        <li>Open <strong>Logging &gt; Relays</strong> on the server.</li>
+        <li>Enter a <strong>Relay name</strong>, such as "Phone tent laptop".</li>
+        <li>Click <strong>Create Code</strong>.</li>
+      </ol>
+
+      <p>The page shows <strong>Server address</strong> and <strong>Enrollment code</strong>, with a copy button for the code. It works once, expires in 15 minutes, and belongs to the current event. The relay shows as <strong>Waiting to enroll</strong>.</p>
+
+      <h2 id="connect-server">Step 3: Connect to the Server</h2>
+
+      <ol>
+        <li>Enter the server's <strong>Server address</strong> in the relay's <strong>Connect to your server</strong> card.</li>
+        <li>Paste the <strong>Enrollment code</strong>.</li>
+        <li>Click <strong>Connect</strong>.</li>
+      </ol>
+
+      <p>If the relay shows <strong>Server's key</strong> instead of connecting, your server uses a self-signed certificate. Ask whoever runs the server to confirm the key before you click <strong>The keys match, connect</strong>, using <a href="#self-signed">Self-Signed Certificates</a> below.</p>
+
+      <p>Look for <strong>Connected</strong> in the relay. The server's <strong>Relays</strong> page changes to <strong>Enrolled</strong> and shows when it was last seen and its version. Use <strong>Revoke</strong> there to stop accepting contacts from it.</p>
+
+      <p>The portable version keeps data in <code>relay-data</code> beside the program, but its token stays in this PC's Windows keychain. Moving it to another PC requires a new code. To change events, click <strong>Disconnect</strong> and connect with a code for the new event.</p>
+
+      <h2 id="pick-station">Step 4: Pick a Station</h2>
+
+      <p>Choose your station from <strong>Station</strong> in the <strong>Server connection</strong> card. If offered, use <strong>New station</strong> to enter a <strong>New station name</strong>, then click <strong>Use new station</strong>.</p>
+
+      <p>Each contact gets its station in this order:</p>
+
+      <ol>
+        <li>If <strong>Use this station for all contacts</strong> is on, every contact uses the picked <strong>Station</strong>. Turn this on only when every PC sending through the relay belongs to that station.</li>
+        <li>Otherwise, it keeps the name from its logger. N3FJP uses <strong>This Station's Name</strong> or the PC's computer name. N1MM Logger+ uses the logging PC's computer name. WSJT-X/JTDX uses its <code>--rig-name</code> if set. Without that, another PC gets <code>WSJT-X @ IP</code> or <code>JTDX @ IP</code>. ADIF over UDP from another PC gets <code>STATION_CALLSIGN @ IP</code>, using the callsign in that field and the PC's IP address.</li>
+        <li>Contacts without a name use the picked <strong>Station</strong>. These include ADIF log files, ADIF over UDP from the relay's own PC, and WSJT-X/JTDX from that PC without <code>--rig-name</code>.</li>
+        <li>With no station picked, unnamed contacts use the relay's name from the server's <strong>Relays</strong> page.</li>
+      </ol>
+
+      <p>The server looks for a matching station name first, then a hostname, ignoring case. If neither matches, it creates a station if the person who enrolled the relay has <code>manage-stations</code> permission, or leaves the contact in the queue if they don't.</p>
+
+      <h2 id="connect-logger">Step 5: Connect Your Logger</h2>
+
+      <p>Use the subsection for your logger. Keep the relay running while you log.</p>
+
+      <div class="callout warning">
+        <div class="callout-title">Keep logger ports on the club network</div>
+        <p><strong>Let other PCs connect</strong> and <strong>Let other PCs send contacts</strong> open listeners without passwords. Use them only on your club network. Never forward those ports from the internet.</p>
+      </div>
+
+      <h3>N3FJP</h3>
+
+      <p>Under <strong>N3FJP setup</strong>, click <strong>Turn on N3FJP</strong> if shown. For <strong>How should the relay connect to N3FJP?</strong>, choose the arrangement you use:</p>
+
+      <ul>
+        <li><strong>Join an N3FJP network server</strong>: enter <strong>N3FJP address</strong>, such as <code>192.168.1.5:1000</code>, then click <strong>Save</strong>. Use <code>127.0.0.1:1000</code> if N3FJP's server runs on this PC.</li>
+        <li><strong>Have N3FJP PCs connect here</strong>: turn on <strong>Let other PCs connect</strong> if N3FJP runs on other PCs. Set each N3FJP PC to TCP networking with the relay's computer as its server.</li>
+      </ul>
+
+      <p>Use the <a href="n3fjp.html#set-up-each-pc">N3FJP Network Status Display settings</a>, substituting the relay's computer for the server in that guide. File Share mode won't work. N3FJP syncs contacts, edits, and deletes both ways.</p>
+
+      <p>When the relay acts as the N3FJP server, keep it running. Those N3FJP PCs don't keep their own log, and closing the relay stops logging.</p>
+
+      <h3>N1MM Logger+</h3>
+
+      <ol>
+        <li>Turn on <strong>Receive N1MM contacts</strong> in the relay.</li>
+        <li>In N1MM's Entry Window, open <strong>Config &gt; Configure Ports</strong>.</li>
+        <li>Select the <strong>Broadcast Data</strong> tab.</li>
+        <li>Check <strong>Contacts</strong>.</li>
+        <li>Set the address to <code>127.0.0.1:12060</code>.</li>
+      </ol>
+
+      <p>For N1MM on other PCs, turn on <strong>Let other PCs send contacts</strong> and use the relay PC's address on port <code>12060</code>. Contacts, edits, and deletes go to Field Day Commander. Nothing goes back to N1MM.</p>
+
+      <h3>WSJT-X and JTDX</h3>
+
+      <ol>
+        <li>Turn on <strong>Receive WSJT-X and JTDX contacts</strong>.</li>
+        <li>Set your logger to send contacts by UDP to <code>127.0.0.1</code>, port <code>2237</code>.</li>
+      </ol>
+
+      <p>If another program uses that port, change <strong>Port</strong> in the relay and click <strong>Save</strong>. Set the logger to the same port. GridTracker or JTAlert may already use <code>2237</code>.</p>
+
+      <h3>ADIF over UDP</h3>
+
+      <ol>
+        <li>Turn on <strong>Receive ADIF contacts over UDP</strong>.</li>
+        <li>Set your logger to send ADIF contacts by UDP to <code>127.0.0.1</code>, port <code>2238</code>.</li>
+      </ol>
+
+      <p>For either UDP source on other PCs, turn on <strong>Let other PCs send contacts</strong> and send to the relay PC's address instead. WSJT-X/JTDX and ADIF over UDP send contacts one way, without edits or deletes.</p>
+
+      <h3>ADIF Log Files</h3>
+
+      <ol>
+        <li>Click <strong>Add log file</strong>.</li>
+        <li>Choose the ADIF file your logger writes, such as <code>wsjtx_log.adi</code>.</li>
+      </ol>
+
+      <p>You can watch up to 16 files. The relay only reads them. Deleting a contact from a file doesn't delete it from Field Day Commander. File reading needs a server connection first to learn the event's dates, then it can continue offline.</p>
+
+      <h2 id="test-contact">Step 6: Test a Contact</h2>
+
+      <ol>
+        <li>Log a test contact in your logger.</li>
+        <li>Check that <strong>Sent</strong> goes up in the relay.</li>
+        <li>Find the contact in Field Day Commander's logbook.</li>
+      </ol>
+
+      <p><strong>Waiting</strong> counts contacts still queued. <strong>Rejected</strong> counts contacts the server refused. Read <strong>Contacts to check</strong> for the reason. Contacts outside the event's dates are refused, so check the practice event's dates before testing.</p>
+
+      <h2 id="self-signed">Self-Signed Certificates</h2>
+
+      <p>This section is for whoever runs the server. The relay can't check a self-signed certificate automatically, so you need to compare its key with the server's. This confirms it's your club's server, not something pretending to be it.</p>
+
+      <p>Run this command on the server itself. See <a href="ssh-basics.html">SSH Basics</a> for opening a terminal. Replace both instances of <code>fd.local</code> with the name in the relay's <strong>Server address</strong>. Use port <code>443</code> unless that address specifies another port.</p>
+
+      <div class="code-block">
+        <div class="command-header"><strong>On the server</strong><span>Terminal or SSH session</span></div>
+        <pre class="command-body">echo | openssl s_client -connect fd.local:443 -servername fd.local 2&gt;/dev/null | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256</pre>
+      </div>
+
+      <p>Compare the string after <code>SHA2-256(stdin)=</code> with <strong>Server's key</strong> in the relay. The command prints it without spaces. The relay splits it into groups of four characters. Check every group. If they match, click <strong>The keys match, connect</strong>. If they don't, don't connect until you've found the reason.</p>
+
+      <h2 id="troubleshooting">Troubleshooting</h2>
+
+      <h3>Needs https</h3>
+      <p>Click <strong>Disconnect</strong>, then connect with the server's HTTPS address and a new code. If the server's <strong>Relays</strong> page says <strong>HTTPS required for relays</strong> behind a TLS proxy, ask the administrator to check <code>TRUSTED_PROXIES</code>.</p>
+
+      <h3>That code didn't work</h3>
+      <p>Create a new code on <strong>Relays</strong>. Codes work once and expire after 15 minutes.</p>
+
+      <h3>Port busy</h3>
+      <p>Another program is using the listener's port. For N1MM, close the program using UDP <code>12060</code>. For WSJT-X/JTDX or ADIF, free the port or choose a different <strong>Port</strong> in the relay and match it in your logger.</p>
+
+      <h3>Looking for N3FJP or Waiting for log</h3>
+      <p>Check that N3FJP's network server is running and <strong>N3FJP address</strong> is correct. Select TCP networking in N3FJP's <strong>Settings &gt; Network</strong>. File Share mode won't work.</p>
+
+      <h3>Port blocked</h3>
+      <p>In the relay's N3FJP server role, turn off N3FJP's own network server on that PC to free TCP <code>1000</code>. The relay keeps trying.</p>
+
+      <h3>This computer's clock differs from the server's</h3>
+      <p>Check the clocks on the logging PC and server. A wrong PC clock can put contacts outside the event's operating period. Check the contact's date and time in your logger too.</p>
+
+      <h3>This station isn't on the server</h3>
+      <p>Pick a listed <strong>Station</strong>, or ask someone with <code>manage-stations</code> permission to create one matching the name or hostname in <strong>Contacts to check</strong>. Contacts stay queued until the station can be matched.</p>
+
+      <h2 id="quick-reference">Quick Reference</h2>
+
+      <table class="port-table">
+        <thead><tr><th>Logger</th><th>Default Port</th></tr></thead>
+        <tbody>
+          <tr><td>N3FJP</td><td>TCP 1000</td></tr>
+          <tr><td>N1MM Logger+</td><td>UDP 12060</td></tr>
+          <tr><td>WSJT-X / JTDX</td><td>UDP 2237</td></tr>
+          <tr><td>ADIF over UDP</td><td>UDP 2238</td></tr>
+        </tbody>
+      </table>
+
+      <p>Enrollment codes work once and expire in 15 minutes. Find <code>relay.log</code> in the data folder: <code>%APPDATA%\Field Day Commander Relay</code> for an installed copy, or <code>relay-data</code> beside the portable program.</p>
+
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
+<script src="../lightbox.js"></script>
+
+</body>
+</html>
