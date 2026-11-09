@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withEvents(discover: false)
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
@@ -75,6 +76,8 @@ return Application::configure(basePath: dirname(__DIR__))
         PusherServer::class => LocalNetworkPusherServer::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->shouldRenderJsonWhen(fn (Request $request): bool => $request->is('api/*') || $request->expectsJson());
+
         // A Host outside TRUSTED_HOSTS surfaces as a bare 400. Explain how to fix it,
         // without url() helpers, which would read the rejected Host again.
         $exceptions->render(function (BadRequestHttpException $e, Request $request) {

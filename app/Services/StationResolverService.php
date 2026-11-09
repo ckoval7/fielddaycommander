@@ -21,36 +21,37 @@ class StationResolverService
      */
     public function resolve(string $identifier, int $eventConfigurationId): Station
     {
-        // Station names and hostnames are 50 wide; a longer name from a
-        // logger is matched and stored by its first 50 characters.
-        $identifier = mb_substr(trim($identifier), 0, self::NAME_MAX_LENGTH);
+        $identifier = $this->normalize($identifier);
 
-        // Try name match first
-        $station = Station::query()
-            ->where('event_configuration_id', $eventConfigurationId)
-            ->whereRaw('LOWER(name) = ?', [strtolower($identifier)])
-            ->first();
-
-        if ($station !== null) {
-            return $station;
-        }
-
-        // Try hostname match
-        $station = Station::query()
-            ->where('event_configuration_id', $eventConfigurationId)
-            ->whereNotNull('hostname')
-            ->whereRaw('LOWER(hostname) = ?', [strtolower($identifier)])
-            ->first();
-
-        if ($station !== null) {
-            return $station;
-        }
-
-        // Auto-create
-        return Station::create([
+        return $this->find($identifier, $eventConfigurationId) ?? Station::create([
             'event_configuration_id' => $eventConfigurationId,
             'name' => $identifier,
             'hostname' => $identifier,
         ]);
+    }
+
+    /**
+     * Find an existing station by name, then hostname (exact, case-insensitive).
+     */
+    public function find(string $identifier, int $eventConfigurationId): ?Station
+    {
+        $identifier = $this->normalize($identifier);
+
+        return Station::query()
+            ->where('event_configuration_id', $eventConfigurationId)
+            ->whereRaw('LOWER(name) = ?', [strtolower($identifier)])
+            ->first()
+            ?? Station::query()
+                ->where('event_configuration_id', $eventConfigurationId)
+                ->whereNotNull('hostname')
+                ->whereRaw('LOWER(hostname) = ?', [strtolower($identifier)])
+                ->first();
+    }
+
+    private function normalize(string $identifier): string
+    {
+        // Station names and hostnames are 50 wide; a longer name from a
+        // logger is matched and stored by its first 50 characters.
+        return mb_substr(trim($identifier), 0, self::NAME_MAX_LENGTH);
     }
 }

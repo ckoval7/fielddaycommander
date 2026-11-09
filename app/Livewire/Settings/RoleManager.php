@@ -38,7 +38,7 @@ class RoleManager extends Component
     public array $initialPermissions = [];
 
     protected array $categories = [
-        'Contact Logging' => ['log-contacts', 'edit-contacts', 'import-contacts'],
+        'Contact Logging' => ['log-contacts', 'edit-contacts', 'import-contacts', 'enroll-relays'],
         'Event Management' => ['view-events', 'create-events', 'edit-events', 'delete-events', 'manage-bulletins', 'verify-bonuses'],
         'Station & Equipment' => ['view-stations', 'manage-stations', 'manage-own-equipment', 'view-all-equipment', 'manage-event-equipment', 'edit-any-equipment'],
         'User Administration' => ['manage-users', 'manage-roles', 'manage-settings'],
@@ -294,6 +294,7 @@ class RoleManager extends Component
                 'view-reports' => 'View Reports',
                 'view-security-logs' => 'View Audit Logs',
                 'import-contacts' => 'Import Contacts',
+                'enroll-relays' => 'Enroll Relays',
                 'manage-weather' => 'Manage Weather',
             ],
             'selectedRole' => $this->selectedRoleId ? Role::findById($this->selectedRoleId) : null,
