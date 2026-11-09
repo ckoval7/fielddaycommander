@@ -5,6 +5,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\DemoRelayRoute;
 use App\Models\DemoSession;
 use App\Services\DemoDatabasePool;
 use App\Support\DemoCache;
@@ -98,8 +99,18 @@ class DemoCleanup extends Command
         }
 
         $this->pruneAnalytics();
+        $this->pruneRelayRoutes();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A sandbox exists before any of its relay codes, so a route older than
+     * the TTL always points at a sandbox that has expired.
+     */
+    private function pruneRelayRoutes(): void
+    {
+        DemoRelayRoute::where('created_at', '<', Carbon::now()->subHours(config('demo.ttl_hours', 24)))->delete();
     }
 
     /**

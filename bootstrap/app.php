@@ -8,6 +8,7 @@ use App\Http\Middleware\AuditLogger;
 use App\Http\Middleware\CheckSystemSetupComplete;
 use App\Http\Middleware\DemoAnalyticsMiddleware;
 use App\Http\Middleware\DemoMiddleware;
+use App\Http\Middleware\DemoRelayMiddleware;
 use App\Http\Middleware\DevRoleOverride;
 use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\EnforceStationMode;
@@ -62,6 +63,10 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsurePasswordChanged::class,
             Ensure2FAEnabled::class,
             AuditLogger::class,
+        ]);
+        // Relay API requests find their sandbox by token, not the demo cookie.
+        $middleware->api(prepend: [
+            DemoRelayMiddleware::class,
         ]);
 
         // Ensure DemoMiddleware swaps the DB connection before Laravel's

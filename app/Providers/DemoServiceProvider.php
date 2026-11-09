@@ -5,6 +5,8 @@
 
 namespace App\Providers;
 
+use App\Models\DemoRelayRoute;
+use App\Models\Relay;
 use App\Support\DemoDatabase;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
@@ -27,6 +29,9 @@ class DemoServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Does nothing outside demo mode, since DemoDatabase::current() is then null.
+        Relay::created(self::rememberEnrollmentCode(...));
+
         if (! config('demo.enabled')) {
             return;
         }
@@ -44,5 +49,18 @@ class DemoServiceProvider extends ServiceProvider
                 DemoDatabase::activate($dbName);
             }
         });
+    }
+
+    /**
+     * Relay API requests don't carry the demo_session cookie, so record which
+     * sandbox a new enrollment code belongs to (see DemoRelayMiddleware).
+     */
+    public static function rememberEnrollmentCode(Relay $relay): void
+    {
+        $dbName = DemoDatabase::current();
+
+        if ($dbName !== null && $relay->enrollment_code_hash !== null) {
+            DemoRelayRoute::remember($relay->enrollment_code_hash, $dbName);
+        }
     }
 }
