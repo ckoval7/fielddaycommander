@@ -232,6 +232,14 @@
         "@type": "Answer",
         "text": "Yes. N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log can connect to Field Day Commander as TCP network clients. Each PC downloads the whole event log when it connects. New contacts, edits, and deletes go both ways, so contacts logged in Field Day Commander or on another N3FJP PC reach every connected N3FJP log within about a second for dupe checking. N3FJP networking doesn't have a password. Anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet. See Connect N3FJP Contest Logs for setup."
       }
+    },
+    {
+      "@type": "Question",
+      "name": "Can logging PCs send contacts to a server that isn't at the site?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Field Day Commander Relay is a Windows program on the logging PC that collects contacts from N3FJP, N1MM Logger+, WSJT-X/JTDX, ADIF over UDP, or ADIF log files. It sends them over HTTPS with no port forwarding and keeps them on the PC through internet outages until the connection returns."
+      }
     }
   ]
 }
@@ -331,7 +339,7 @@
         <div class="faq-item">
           <div class="faq-question">Can I put it on the internet so remote operators can log in?</div>
           <div class="faq-answer">
-            Yes. Field Day Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL.
+            Yes. Field Day Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL. For external loggers sending contacts to a remote server, use <a href="how-to/relay.html">Field Day Commander Relay</a>.
             <br><br>
             <strong>If you do this, use TLS.</strong> Running over plain HTTP on a LAN is one thing. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, which anyone on the path can read. Set up a TLS certificate (Let's Encrypt is free) and make sure all traffic goes through HTTPS. The deploy script supports this. There is no good reason to skip it.
           </div>
@@ -384,6 +392,13 @@
           <div class="faq-question">Can I use N3FJP with Field Day Commander?</div>
           <div class="faq-answer">
             Yes. N3FJP's ARRL Field Day Contest Log and Winter Field Day Contest Log can connect to Field Day Commander as TCP network clients. Each PC downloads the whole event log when it connects. New contacts, edits, and deletes go both ways, so contacts logged in Field Day Commander or on another N3FJP PC reach every connected N3FJP log within about a second for dupe checking. N3FJP networking doesn't have a password. Anyone who can reach the port can add, edit, and delete contacts, so keep it on your club LAN and never forward it from the internet. See <a href="how-to/n3fjp.html">Connect N3FJP Contest Logs</a> for setup.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">Can logging PCs send contacts to a server that isn't at the site?</div>
+          <div class="faq-answer">
+            Yes. <a href="how-to/relay.html">Field Day Commander Relay</a> is a Windows program on the logging PC that collects contacts from N3FJP, N1MM Logger+, WSJT-X/JTDX, ADIF over UDP, or ADIF log files. It sends them over HTTPS with no port forwarding and keeps them on the PC through internet outages until the connection returns.
           </div>
         </div>
 

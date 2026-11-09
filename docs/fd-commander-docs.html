@@ -1483,6 +1483,8 @@
     <h2 id="offline">Offline Resilience</h2>
     <p>Field Day Commander has two layers of resilience. First, the entire platform runs on your LAN and doesn't need the internet. Weather is the only feature that uses it, and only if you turn it on. Second, if a browser temporarily loses its connection to the server (someone trips over the ethernet cable, Wi-Fi drops out), contacts will queue locally on the device. When the connection comes back, they'll sync automatically. A status indicator shows how many contacts are queued and when they've been synced.</p>
 
+    <p><a href="#relay">Field Day Commander Relay</a> keeps contacts from external loggers on the logging PC while the server or internet is unreachable. It sends them when the connection returns.</p>
+
     <!-- ═══════════════════════════════════════════ -->
     <!--  PAPER LOG TRANSCRIPTION                   -->
     <!-- ═══════════════════════════════════════════ -->
@@ -1522,6 +1524,8 @@
         </div>
       </div>
     </div>
+
+    <p><a href="#relay">Field Day Commander Relay</a> lets logging PCs on another network reach the server through outbound HTTPS connections to its web port (443), without extra server firewall ports.</p>
 
     <div class="callout info">
       <div class="callout-title">Firewall Ports</div>
