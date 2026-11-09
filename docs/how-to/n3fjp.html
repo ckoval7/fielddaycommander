@@ -56,6 +56,8 @@
 
       <p>Put every logging PC on the same <a href="lan-setup.html">club LAN</a> as the server. N3FJP networking doesn't have a password. Anyone who can reach its port can add, edit, and delete contacts, so keep it on the LAN and never forward the port from the internet.</p>
 
+      <p>If the server is on another network, use <a href="relay.html">Field Day Commander Relay</a> instead.</p>
+
       <p>Open TCP port 1000 on the server's firewall. With UFW, use <code>sudo ufw allow 1000/tcp</code>. The deploy script doesn't open external logger ports. If you choose a different port, use that number in the firewall rule too.</p>
 
       <p>Docker publishes the port through <code>N3FJP_PORT</code>, which defaults to <code>1000</code>. Helm uses a <code>hostPort</code>, so give the PCs the node's IP address.</p>

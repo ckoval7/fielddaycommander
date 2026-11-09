@@ -379,6 +379,7 @@
       <div class="sidebar-section-title">Operations</div>
       <a class="sidebar-link" href="#logging">Contact Logging</a>
       <a class="sidebar-link" href="#external-loggers">External Logger Integration</a>
+      <a class="sidebar-link" href="#relay">Field Day Commander Relay</a>
       <a class="sidebar-link" href="#scoring">Scoring</a>
       <a class="sidebar-link" href="#winter-field-day">Winter Field Day</a>
       <a class="sidebar-link" href="#section-map">Section Map</a>
@@ -651,17 +652,17 @@
       <table class="req-table">
         <thead><tr><th>Role</th><th>What They Can Do</th></tr></thead>
         <tbody>
-          <tr><td>System Administrator</td><td>26 permissions. Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>Protected Role</em>, so this role always exists and can't be deleted.</td></tr>
-          <tr><td>Event Manager</td><td>23 permissions. Manages the full operational side of Field Day: logging and importing contacts, managing events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and weather. Cannot administer users, roles, or system settings.</td></tr>
-          <tr><td>Station Captain</td><td>10 permissions. Logs and edits contacts, manages stations and equipment inventory, marks stations unavailable or ready, sets up station-mode browsers, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
-          <tr><td>Operator</td><td>4 permissions. Logs contacts, views stations, manages personal equipment, and signs up for shifts. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
+          <tr><td>System Administrator</td><td>Full access to everything: contact logging, all event management, all station and equipment functions, user administration, scheduling, content management, reporting, security logs, contact import, and weather management. Marked as <em>Protected Role</em>, so this role always exists and can't be deleted.</td></tr>
+          <tr><td>Event Manager</td><td>Manages the full operational side of Field Day: logging and importing contacts, managing events, stations, equipment, schedules, bonuses, guestbook, photos, security logs, and weather. Cannot administer users, roles, or system settings.</td></tr>
+          <tr><td>Station Captain</td><td>Logs and edits contacts, manages stations and equipment inventory, marks stations unavailable or ready, sets up station-mode browsers, handles equipment assignments, manages the W1AW bulletin schedule, views all equipment, and signs up for shifts. Runs an operating position and keeps operators on task.</td></tr>
+          <tr><td>Operator</td><td>Logs contacts, views stations, manages personal equipment, and signs up for shifts. The default role for new registrations. Intentionally minimal so new hams can get on the air without seeing admin clutter.</td></tr>
           <tr><td>Config Only</td><td>8 permissions. A restricted bootstrap role: can manage users, roles, and settings, and has read-only access to events, stations, equipment, reports, and security logs. Cannot log contacts, manage events operationally, or participate in operations. Assigned exclusively to the built-in SYSTEM account. Marked as <em>Protected Role</em>.</td></tr>
         </tbody>
       </table>
     </div>
 
     <h3>Permissions Reference</h3>
-    <p>The permission system is organized into eight categories with 26 individual permissions. Each permission controls access to a specific area of Field Day Commander. The table below shows what each operational role gets out of the box. Config Only (the SYSTEM account role) is not shown here since it is not used for normal operations.</p>
+    <p>The permission system is organized into eight categories. Each permission controls access to a specific area of Field Day Commander. The table below shows what each operational role gets out of the box. Config Only (the SYSTEM account role) is not shown here since it is not used for normal operations.</p>
 
     <div class="req-table-wrapper">
       <table class="req-table permissions-table">
@@ -677,9 +678,9 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Contact Logging (3) -->
+          <!-- Contact Logging (4) -->
           <tr>
-            <td rowspan="3"><strong>Contact Logging</strong></td>
+            <td rowspan="4"><strong>Contact Logging</strong></td>
             <td><code>log-contacts</code></td>
             <td>Create new QSO entries</td>
             <td style="text-align:center">&check;</td>
@@ -700,6 +701,14 @@
             <td>Import contacts from ADIF files</td>
             <td style="text-align:center">-</td>
             <td style="text-align:center">-</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
+          </tr>
+          <tr>
+            <td><code>enroll-relays</code></td>
+            <td>Create Field Day Commander Relay enrollment codes and revoke your relays.</td>
+            <td style="text-align:center">&check;</td>
+            <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
             <td style="text-align:center">&check;</td>
           </tr>
@@ -1098,6 +1107,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="external-loggers">External Logger Integration</h2>
+    <p>For logging PCs on a different network from the server, use <a href="#relay">Field Day Commander Relay</a>.</p>
     <p>Field Day Commander can share the event log with N3FJP contest logs over TCP, receive contacts from external software over UDP, and import ADIF files after the fact. Operators running N3FJP, N1MM Logger+, digital-mode programs like WSJT-X and fldigi, or any other program that outputs ADIF don't need to double-log their contacts. That software handles the radio side and Field Day Commander handles scoring, deduplication, and Cabrillo export. All of this is optional: stations without external software log directly in Field Day Commander.</p>
 
     <p>Contacts from external loggers keep frequency, sent and received reports, grid, name, and comment when supplied. Frequency, reports, grid, and name appear in <strong>Details</strong>, or on the card line on phones. These fields are exported like browser-logged fields. ADIF-based loggers also preserve other record fields for ADIF export. All listener settings are found under <strong>Logging &gt; External Loggers</strong>. Each listener can be enabled or disabled independently, and its port is configurable.</p>
@@ -1168,6 +1178,33 @@
     <p>ADIF import keeps frequency, reports, grid, name, and comment, plus other record fields for ADIF export, including <code>MY_GRIDSQUARE</code>, <code>TX_PWR</code>, <code>QSO_DATE_OFF</code>, <code>TIME_OFF</code>, and <code>APP_</code> fields. Merging into an existing contact fills only empty fields. The import is non-destructive. You review everything before any contacts are written to the database, and invalid records must be resolved (skipped or fixed) before the import can proceed.</p>
 
     <p>Every listener and the import record the ADIF sub-mode (FT8, USB, and so on) along with the mode, and they apply the event's rulebook the same way live logging does. On a Winter Field Day 2027 event that means WSJT-mode and satellite contacts come in with no credit.</p>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--  FIELD DAY COMMANDER RELAY                  -->
+    <!-- ═══════════════════════════════════════════ -->
+
+    <h2 id="relay">Field Day Commander Relay</h2>
+    <p>Field Day Commander Relay is a Windows desktop program that collects contacts from logging software and sends them to Field Day Commander on another network. See <a href="how-to/relay.html#do-you-need-it">Do You Need the Relay?</a> for when to use it, and <a href="how-to/relay.html">Set Up Field Day Commander Relay</a> for setup steps. It requires 64-bit Windows 10 or later and comes as an installer or a portable program.</p>
+
+    <h3>Supported Sources</h3>
+    <ul>
+      <li>N3FJP: two-way sync of contacts, edits, and deletes. The relay can join an existing N3FJP network server or act as the server for N3FJP PCs.</li>
+      <li>N1MM Logger+: one-way contact broadcasts to Field Day Commander, including edits and deletes.</li>
+      <li>WSJT-X/JTDX and ADIF over UDP: one-way contacts, without edits or deletes.</li>
+      <li>ADIF log files: up to 16 watched files, read-only and one-way. Deleting a contact from a file doesn't delete it from Field Day Commander.</li>
+    </ul>
+
+    <p>The relay saves contacts on disk before sending. While running, it keeps collecting through internet or server outages and sends waiting contacts when the connection returns, without duplicates. It connects out over HTTPS with the server's certificate checked, so no port forwarding is needed.</p>
+
+    <h3>Enrollment and Access</h3>
+    <p>On <strong>Logging &gt; Relays</strong>, <strong>Relay name</strong> identifies the logging computer and <strong>Create Code</strong> issues an enrollment code for the current event. The code works once and expires in 15 minutes. Enrollment gives the relay its own token. The page shows <strong>Waiting to enroll</strong>, <strong>Enrolled</strong>, or <strong>Revoked</strong>. <strong>Revoke</strong> stops the relay's token and any unused code from working.</p>
+
+    <p>The page requires <code>enroll-relays</code> permission, granted to System Administrator, Event Manager, Station Captain, and Operator by default.</p>
+
+    <h3>Station Assignment</h3>
+    <p><strong>Use this station for all contacts</strong> overrides logger names with the picked <strong>Station</strong>. Otherwise, the logger's station name takes priority, then the picked <strong>Station</strong> for unnamed contacts, then the relay's name if no station is picked.</p>
+
+    <p>The server matches the name to a station name first, then its hostname, ignoring case. If neither matches, it creates a station only when the person who enrolled the relay has <code>manage-stations</code> permission. Otherwise, the contact waits in the relay's queue.</p>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--  SCORING                                   -->
