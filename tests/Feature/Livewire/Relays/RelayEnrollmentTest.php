@@ -112,6 +112,7 @@ test('a new code has a button that copies it', function () {
 test('no code is created over plain HTTP from another computer', function () {
     relayScreenOverLan($this->operator)
         ->assertSee('HTTPS required for relays')
+        ->assertSee('Open this page over HTTPS to create a code.')
         ->assertDontSee('Create Code')
         ->set('name', 'Phone Tent')
         ->call('issue')

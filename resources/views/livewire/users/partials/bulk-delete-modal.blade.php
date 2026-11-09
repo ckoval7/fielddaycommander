@@ -3,7 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <x-modal wire:model="showBulkDeleteModal" title="Delete Users">
-    <x-alert icon="phosphor-warning" title="Delete {{ count($selectedUsers) }} {{ str('user')->plural(count($selectedUsers)) }}?" class="alert-error">
+    <x-alert icon="phosphor-warning" class="alert-error">
+        <strong class="block">Delete {{ count($selectedUsers) }} {{ str('user')->plural(count($selectedUsers)) }}?</strong>
         This removes the selected accounts from the users list. These users won’t be able to sign in.
     </x-alert>
 

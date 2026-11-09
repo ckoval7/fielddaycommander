@@ -10,7 +10,8 @@
     <x-demo-relay-download />
 
     @unless ($isSecure)
-        <x-alert icon="phosphor-lock-open" class="alert-warning" title="HTTPS required for relays">
+        <x-alert icon="phosphor-lock-open" class="alert-warning">
+            <strong class="block">HTTPS required for relays</strong>
             Open this page over HTTPS to create a code. Ask your administrator to set up HTTPS if needed. Behind a TLS proxy, the proxy must be in TRUSTED_PROXIES.
         </x-alert>
     @endunless

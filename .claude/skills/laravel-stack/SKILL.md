@@ -70,6 +70,7 @@ The app runs under Octane, so the application boots once and is reused across re
 - Components are class-based: `app/Livewire/<Area>/Name.php` with its view at `resources/views/livewire/<area>/name.blade.php`. Shared component logic lives in traits under `app/Livewire/Concerns` or an area's `Concerns` folder.
 - Keep state server-side. Validate and authorize inside actions as you would in a controller, since any public method can be called from the browser.
 - Use Mary UI components (`<x-button>`, `<x-card>`, `<x-input>`, `<x-modal>`, no prefix) and Phosphor icons (`icon="phosphor-trash"`) before writing custom markup. Check `resources/views/components` for an existing app component first.
+- `<x-alert>` with a `title` drops its body text without an error: it renders only `title` and `description`, and `description` is `text-xs`, too small for phones. For a title plus a body, leave `title` off and start the body with `<strong class="block">Title</strong>`. Named slots like `<x-slot:actions>` still render. `tests/Unit/MaryAlertUsageTest.php` fails if a view gives an alert both a `title` and body text.
 - Alpine for client-only behavior; no other JS frameworks.
 - Live updates go through Reverb and Echo. Broadcast event names live in `App\Support\BroadcastChannels`.
 - Every screen is used on phones: activate the `mobile-ui` skill for any view change.

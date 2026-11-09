@@ -12,6 +12,7 @@
 ### Fixed
 
 - Phone contacts counted as Digital when a logger sent the mode as `PH`. They now count as Phone. N3FJP contacts received directly by the server weren't affected.
+- Since v26.10.12, deleting a user or several selected users on **Users** showed only a red confirmation heading. The explanation below it now appears again, warning that the accounts will be removed from the users list and those users won't be able to sign in.
 
 ## 26.11.1 - 2026-11-03
 

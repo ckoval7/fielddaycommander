@@ -3,7 +3,8 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <x-modal wire:model="showDeleteModal" title="Delete User">
-    <x-alert icon="phosphor-warning" title="Delete this user?" class="alert-error">
+    <x-alert icon="phosphor-warning" class="alert-error">
+        <strong class="block">Delete this user?</strong>
         This removes the account from the users list. The user won’t be able to sign in.
     </x-alert>
 
