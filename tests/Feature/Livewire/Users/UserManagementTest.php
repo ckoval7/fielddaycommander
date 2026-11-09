@@ -841,7 +841,18 @@ test('shows confirmation before delete', function () {
     Livewire::test(UserManagement::class)
         ->call('openDeleteModal', $user->id)
         ->assertSet('showDeleteModal', true)
-        ->assertSet('deletingUserId', $user->id);
+        ->assertSet('deletingUserId', $user->id)
+        ->assertSee('Delete this user?')
+        ->assertSee('This removes the account from the users list.');
+});
+
+test('shows confirmation before bulk delete', function () {
+    $this->actingAs($this->admin);
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', User::factory()->count(2)->create()->pluck('id')->all())
+        ->assertSee('Delete 2 users?')
+        ->assertSee('This removes the selected accounts from the users list.');
 });
 
 // =============================================================================
