@@ -1,0 +1,114 @@
+<?php
+
+// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+namespace App\Models;
+
+use Database\Factories\RelayFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * A Field Day Commander Relay install, allowed to send contacts to one event.
+ * It starts with a one-time enrollment code, which it trades for a token.
+ */
+class Relay extends Model
+{
+    /** @use HasFactory<RelayFactory> */
+    use HasFactory;
+
+    public const STATUS_WAITING = 'waiting';
+
+    public const STATUS_EXPIRED = 'expired';
+
+    public const STATUS_ENROLLED = 'enrolled';
+
+    public const STATUS_REVOKED = 'revoked';
+
+    protected $fillable = [
+        'event_configuration_id',
+        'name',
+        'enrollment_code_hash',
+        'enrollment_expires_at',
+        'token_hash',
+        'relay_version',
+        'created_by_user_id',
+        'enrolled_at',
+        'last_seen_at',
+        'revoked_at',
+    ];
+
+    protected $hidden = [
+        'enrollment_code_hash',
+        'token_hash',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'enrollment_expires_at' => 'datetime',
+            'enrolled_at' => 'datetime',
+            'last_seen_at' => 'datetime',
+            'revoked_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * Get the event configuration this relay sends contacts to.
+     */
+    public function eventConfiguration(): BelongsTo
+    {
+        return $this->belongsTo(EventConfiguration::class);
+    }
+
+    /**
+     * Get the user who issued this relay's enrollment code.
+     */
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
+    }
+
+    /**
+     * Whether contacts from this relay can create stations. Follows the
+     * current permissions of the person who enrolled it, so a relay with no
+     * such person, such as one enrolled from the command line, can't.
+     */
+    public function canCreateStations(): bool
+    {
+        return $this->createdBy?->can('manage-stations') === true;
+    }
+
+    /**
+     * Scope to relays that have not been revoked.
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('revoked_at');
+    }
+
+    /**
+     * Where this relay is in its life: waiting for its code to be used, code
+     * expired unused, enrolled, or revoked.
+     */
+    public function status(): string
+    {
+        return match (true) {
+            $this->revoked_at !== null => self::STATUS_REVOKED,
+            $this->token_hash !== null => self::STATUS_ENROLLED,
+            $this->enrollment_expires_at?->isFuture() === true => self::STATUS_WAITING,
+            default => self::STATUS_EXPIRED,
+        };
+    }
+
+    /**
+     * Hash a raw token or enrollment code for storage and lookup.
+     */
+    public static function hashSecret(string $secret): string
+    {
+        return hash('sha256', $secret);
+    }
+}

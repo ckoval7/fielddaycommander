@@ -36,5 +36,6 @@ readonly class ExternalContactDto
         public ?string $parentModeName = null,
         public array $advancedFields = [],
         public ?array $adifFields = null,
+        public bool $mayCreateStation = true,
     ) {}
 }
