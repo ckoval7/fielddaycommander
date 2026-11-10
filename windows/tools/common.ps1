@@ -47,12 +47,28 @@ function Assert-Administrator([string] $ScriptPath) {
         return
     }
 
+    # Through .NET rather than Start-Process, whose error on Windows
+    # PowerShell no longer carries the Windows error code.
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo 'powershell.exe'
+    $startInfo.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$ScriptPath`""
+    $startInfo.Verb = 'runas'
+    $startInfo.UseShellExecute = $true
+
     try {
-        Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @(
-            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$ScriptPath`""
-        )
+        [Diagnostics.Process]::Start($startInfo) | Out-Null
     } catch {
-        # The person said No to the Windows prompt. Nothing to do.
+        # Saying No to the Windows prompt fails with ERROR_CANCELLED (1223).
+        # That needs no message; anything else does.
+        $cancelled = $false
+        for ($inner = $_.Exception; $null -ne $inner; $inner = $inner.InnerException) {
+            if ($inner -is [ComponentModel.Win32Exception] -and $inner.NativeErrorCode -eq 1223) {
+                $cancelled = $true
+            }
+        }
+
+        if (-not $cancelled) {
+            Show-Message "Windows couldn't restart this tool with administrator permissions.`n`n$($_.Exception.Message)" 'Error' | Out-Null
+        }
     }
 
     exit
