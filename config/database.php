@@ -7,7 +7,13 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
-$mysqlSslCaAttr = PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA;
+// Only read when pdo_mysql is loaded: the constant doesn't exist without it,
+// and the Windows server runs on SQLite with no MySQL driver.
+$mysqlSslCaAttr = match (true) {
+    ! extension_loaded('pdo_mysql') => null,
+    PHP_VERSION_ID >= 80500 => Mysql::ATTR_SSL_CA,
+    default => PDO::MYSQL_ATTR_SSL_CA,
+};
 
 return [
 

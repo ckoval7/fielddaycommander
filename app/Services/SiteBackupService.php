@@ -292,7 +292,7 @@ class SiteBackupService
      */
     private function uniquePath(string $directory, BackupKind $kind, Carbon $time): string
     {
-        $base = "{$directory}/Field Day Commander {$kind->fileLabel()} ".$time->copy()->utc()->format('Y-m-d Hi').'Z';
+        $base = $directory.DIRECTORY_SEPARATOR."Field Day Commander {$kind->fileLabel()} ".$time->copy()->utc()->format('Y-m-d Hi').'Z';
         $path = "{$base}.zip";
 
         for ($copy = 2; File::exists($path); $copy++) {

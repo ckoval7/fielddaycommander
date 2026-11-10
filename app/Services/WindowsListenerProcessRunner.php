@@ -38,8 +38,11 @@ class WindowsListenerProcessRunner extends ListenerProcessRunner
     public function terminate(int $pid): void
     {
         $waited = 0;
+        $deadline = hrtime(true) + self::STOP_GRACE_MILLISECONDS * 1_000_000;
 
-        while ($waited < self::STOP_GRACE_MILLISECONDS && $this->isAlive($pid)) {
+        // Each tasklist call takes a few hundred milliseconds, so the real
+        // clock caps the wait as well as the sleeps.
+        while ($waited < self::STOP_GRACE_MILLISECONDS && hrtime(true) < $deadline && $this->isAlive($pid)) {
             Sleep::for(self::STOP_POLL_MILLISECONDS)->milliseconds();
             $waited += self::STOP_POLL_MILLISECONDS;
         }

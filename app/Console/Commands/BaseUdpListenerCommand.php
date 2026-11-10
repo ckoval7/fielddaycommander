@@ -383,7 +383,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
             $this->hold($packet);
         }
 
-        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receive(MSG_DONTWAIT)) !== null) {
+        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receiveIfWaiting()) !== null) {
             $this->hold($packet);
         }
 
@@ -405,6 +405,26 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     /**
      * @return array{string, string}|null
      */
+    /**
+     * A datagram already waiting on the socket, without blocking. Checked
+     * with socket_select() because Windows' sockets extension has no
+     * non-blocking receive flag.
+     *
+     * @return array{string, string}|null [datagram, sender address]
+     */
+    private function receiveIfWaiting(): ?array
+    {
+        $read = [$this->socket];
+        $write = null;
+        $except = null;
+
+        if ((int) @socket_select($read, $write, $except, 0) < 1) {
+            return null;
+        }
+
+        return $this->receive(0);
+    }
+
     private function receive(int $flags): ?array
     {
         $buffer = '';

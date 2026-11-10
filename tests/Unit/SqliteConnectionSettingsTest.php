@@ -5,6 +5,7 @@
 
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 it('opens SQLite database files ready for several processes writing at once', function () {
@@ -29,4 +30,16 @@ it('opens SQLite database files ready for several processes writing at once', fu
             @unlink($path.$suffix);
         }
     }
+});
+
+it('loads the database config on a PHP build without the MySQL driver', function () {
+    // php -n loads no shared extensions, like a Windows PHP with only pdo_sqlite enabled.
+    $script = 'function database_path($path = "") { return $path; } '
+        .'require '.var_export(base_path('vendor/autoload.php'), true).'; '
+        .'echo extension_loaded("pdo_mysql") ? "mysql loaded" : (require '.var_export(base_path('config/database.php'), true).')["default"];';
+
+    $result = Process::env(['DB_CONNECTION' => 'sqlite'])->run([PHP_BINARY, '-n', '-r', $script]);
+
+    expect($result->errorOutput())->toBe('')
+        ->and($result->output())->toBe('sqlite');
 });
