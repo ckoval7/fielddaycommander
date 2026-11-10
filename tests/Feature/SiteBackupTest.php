@@ -256,3 +256,19 @@ test('automatic backups are off unless the install turns them on', function () {
 
     expect($commands)->not->toContain('backup:create');
 });
+
+test('when turned on, automatic backups run hourly during an event and daily otherwise', function () {
+    Config::set('backup.automatic', true);
+    require base_path('routes/console.php');
+
+    $backups = collect(app(Schedule::class)->events())
+        ->filter(fn ($event) => str_contains((string) $event->command, 'backup:create --automatic'));
+
+    expect($backups->map->expression->sort()->values()->all())->toBe(['0 * * * *', '0 3 * * *']);
+
+    Event::factory()->create(['start_time' => now()->subHour(), 'end_time' => now()->addHour()]);
+
+    $due = $backups->filter(fn ($event) => $event->filtersPass($this->app))->map->expression->values()->all();
+
+    expect($due)->toBe(['0 * * * *']);
+});

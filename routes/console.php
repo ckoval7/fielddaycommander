@@ -47,6 +47,6 @@ if (config('backup.automatic')) {
         ->withoutOverlapping();
 
     Schedule::command('backup:create --automatic')->dailyAt('03:00')
-        ->unless(fn (): bool => Event::query()->active()->exists())
+        ->skip(fn (): bool => Event::query()->active()->exists())
         ->withoutOverlapping();
 }
