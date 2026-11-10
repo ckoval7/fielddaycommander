@@ -52,11 +52,11 @@ Var ServerAddress
 !define MUI_UNICON "windows\installer\server.ico"
 !define MUI_ABORTWARNING
 
-!define MUI_WELCOMEPAGE_TEXT "Install the ${PRODUCT} ${VERSION} server on this computer. Operators on the same network can use it in a web browser on phones, tablets, and laptops.$\r$\n$\r$\nTo update an existing server, run the newer installer. Your log, settings, and photos are kept.$\r$\n$\r$\nThe Start menu has shortcuts to back up, restore, and open the backups folder in Public Documents. Automatic backups run hourly during an event and daily otherwise."
+!define MUI_WELCOMEPAGE_TEXT "This sets up the ${PRODUCT} ${VERSION}$\r$\nserver on this computer.$\r$\n$\r$\nYour operators can use a web browser$\r$\non their own phones, tablets, or laptops.$\r$\nThey need to be on the same network.$\r$\n$\r$\nThere's nothing to install on their devices."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${STAGE}\LICENSES\GPL-3.0-or-later.txt"
 !insertmacro MUI_PAGE_INSTFILES
-!define MUI_FINISHPAGE_TEXT "${PRODUCT} is running and will start whenever this computer starts.$\r$\n$\r$\nOn first use, set the administrator password in the setup wizard.$\r$\n$\r$\nOperators on the same network open:$\r$\n$ServerAddress$\r$\nor the same address with this computer's IP address in place of its name.$\r$\n$\r$\nTo open it here later, use ${PRODUCT} in the Start menu."
+!define MUI_FINISHPAGE_TEXT "${PRODUCT} is running.$\r$\nIt will start whenever this computer starts.$\r$\n$\r$\nThe first time you open it, you'll set$\r$\nthe administrator password.$\r$\n$\r$\nOperators on the same network can open:$\r$\n$ServerAddress"
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_TEXT "Open ${PRODUCT} on this computer"
 !define MUI_FINISHPAGE_RUN_FUNCTION OpenInBrowser
