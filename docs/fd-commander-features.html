@@ -351,8 +351,10 @@
       <div class="feature-deep-text">
         <span class="feature-tag teal">Integration</span>
         <h3>Bring contacts in from the software you already run</h3>
-        <p>Already running WSJT-X for FT8, N1MM Logger+ for CW, or fldigi for RTTY? Field Day Commander receives contacts directly from those programs over UDP, so operators don't have to double-log. You can also import an ADIF file after the fact with a guided wizard that parses the file, maps stations, validates records, and lets you review everything before it hits your log.</p>
+        <p>Keep logging in N3FJP, WSJT-X, N1MM Logger+, or fldigi while Field Day Commander collects the contacts. N3FJP shares contacts both ways over TCP, while the other programs send contacts over UDP. You can also import an ADIF file after the fact with a guided wizard that parses the file, maps stations, validates records, and lets you review everything before it hits your log.</p>
+        <p><a href="how-to/n3fjp.html">Set up N3FJP with Field Day Commander &rarr;</a></p>
         <ul class="feature-bullets">
+          <li><span class="check">&#10003;</span> N3FJP TCP server with two-way contact sharing between Field Day Commander and every connected N3FJP PC</li>
           <li><span class="check">&#10003;</span> N1MM Logger+ UDP broadcast listener with live packet and error stats</li>
           <li><span class="check">&#10003;</span> WSJT-X / JTDX UDP ADIF listener for FT8, FT4, and other digital modes</li>
           <li><span class="check">&#10003;</span> Generic ADIF UDP endpoint for fldigi and any program that can send ADIF over UDP</li>
@@ -370,6 +372,12 @@
           External Logger Integration
         </div>
         <div class="mock-body">
+          <div class="mock-schedule-row">
+            <span style="font-weight:600;color:var(--text-primary);min-width:140px;">N3FJP</span>
+            <span style="background:rgba(76,175,80,0.15);color:var(--accent-green);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;">&#9679; Listening</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">port 1000</span>
+            <span style="color:var(--text-secondary);font-size:0.8rem;margin-left:auto;">4 PCs connected</span>
+          </div>
           <div class="mock-schedule-row">
             <span style="font-weight:600;color:var(--text-primary);min-width:140px;">N1MM Logger+</span>
             <span style="background:rgba(76,175,80,0.15);color:var(--accent-green);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;">&#9679; Listening</span>
