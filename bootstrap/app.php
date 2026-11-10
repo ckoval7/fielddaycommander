@@ -14,6 +14,7 @@ use App\Http\Middleware\EnsureAccountNotLocked;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\LeanHtmlResponse;
 use App\Http\Middleware\SecurityHeaders;
+use App\Support\DataDirectory;
 use App\Support\LocalNetworkPusherServer;
 use App\Support\TrustedHosts;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
@@ -26,7 +27,7 @@ use Symfony\Component\HttpFoundation\Exception\SuspiciousOperationException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -102,3 +103,8 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect('/?session_expired=1');
         });
     })->create();
+
+// The Windows server keeps .env, storage and caches in a separate data folder.
+DataDirectory::apply($app);
+
+return $app;
