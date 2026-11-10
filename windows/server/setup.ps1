@@ -100,7 +100,7 @@ function Set-PrivateAcl([string] $Path, [string[]] $ExtraGrants = @()) {
 }
 
 function Initialize-DataFolders {
-    Write-Step "Preparing the data folder $DataDir"
+    Write-Step "Preparing the folder for your log, settings, and photos: $DataDir"
 
     foreach ($folder in @(
         $DataDir,
@@ -178,7 +178,7 @@ function Select-HttpPort {
             return $candidate
         }
     }
-    throw 'Ports 80, 8000 and 8001 are all in use. Run the installer again after closing the program using one of them.'
+    throw 'Ports 80, 8000, and 8001 are all in use. Close a program using one of these ports, then run the installer again.'
 }
 
 # Reverb only listens on 127.0.0.1, but that still clashes with anything
@@ -193,7 +193,7 @@ function Select-ReverbPort {
             return $candidate
         }
     }
-    throw 'Ports 8080 to 8099 are all in use, so live updates have nowhere to run.'
+    throw 'Live updates could not start because ports 8080 to 8099 are all in use.'
 }
 
 # Writes settings a new install needs and adds any a newer version needs,
@@ -244,7 +244,7 @@ function Initialize-Env([int] $Port) {
     }
 
     if ($added.Count -gt 0) {
-        Write-Step "Writing settings to .env: $($added -join ', ')"
+        Write-Step "Saving new settings: $($added -join ', ')"
         [IO.File]::WriteAllLines($EnvFile, $lines)
     }
 }
@@ -255,12 +255,12 @@ function Initialize-Database {
         New-Item -ItemType File -Path $Database | Out-Null
     }
 
-    Write-Step 'Updating the database'
+    Write-Step 'Updating the server database'
     Invoke-Artisan @('optimize:clear')
     Invoke-Artisan @('migrate', '--force')
 
     if ($firstInstall) {
-        Write-Step 'Adding the bands, modes, sections and starting accounts'
+        Write-Step 'Adding bands, modes, sections, and initial accounts'
         # The same seeders deploy.sh runs on a new server.
         foreach ($seeder in @('EventTypeSeeder', 'BandSeeder', 'ModeSeeder', 'SectionSeeder', 'OperatingClassSeeder', 'BonusTypeSeeder', 'PermissionSeeder', 'RoleSeeder', 'SystemAdminSeeder')) {
             Invoke-Artisan @('db:seed', "--class=$seeder", '--force')
@@ -375,13 +375,13 @@ function Install-Services([int] $Port) {
             StartPassword = ''
         }
         if ($result.ReturnValue -ne 0) {
-            throw "Couldn't set $id to run as LocalService (error $($result.ReturnValue))."
+            throw "Could not set up the Windows service $id to run as LocalService (error $($result.ReturnValue))."
         }
     }
 }
 
 function Set-FirewallRules([int] $Port) {
-    Write-Step 'Opening the firewall to the local network'
+    Write-Step 'Allowing web access and logger connections through the firewall from this local network only'
 
     Get-NetFirewallRule -Group $FirewallGroup -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 
@@ -440,7 +440,7 @@ function Wait-ForWebServer([int] $Port) {
             Start-Sleep -Seconds 1
         }
     }
-    throw "The web server didn't answer on port $Port. Its log is in $LogDir."
+    throw "The web server did not respond on port $Port. Check its log in $LogDir."
 }
 
 # A shortcut the installer puts in the Start menu and opens when it finishes.
@@ -448,6 +448,10 @@ function Write-BrowserShortcut([int] $Port) {
     $portSuffix = if ($Port -eq 80) { '' } else { ":$Port" }
     $shortcut = "[InternetShortcut]`r`nURL=http://localhost$portSuffix/`r`n"
     [IO.File]::WriteAllText((Join-Path $InstallDir 'Field Day Commander.url'), $shortcut)
+
+    # The address operators use, shown on the installer's last page.
+    $address = "http://$($env:COMPUTERNAME.ToLowerInvariant()).local$portSuffix"
+    [IO.File]::WriteAllText((Join-Path $InstallDir 'server\address.txt'), $address)
 }
 
 function Uninstall-Services {
@@ -488,7 +492,7 @@ try {
             Start-Services
             Wait-ForWebServer $port
             Write-BrowserShortcut $port
-            Write-Step "Field Day Commander is running on port $port"
+            Write-Step "Field Day Commander is running on web port $port"
         }
         'Uninstall' {
             Stop-Services
@@ -496,7 +500,7 @@ try {
             Get-NetFirewallRule -Group $FirewallGroup -ErrorAction SilentlyContinue | Remove-NetFirewallRule
             Remove-StorageJunction
             if ($RemoveData) {
-                Write-Step "Removing $DataDir"
+                Write-Step "Deleting your log, settings, and photos from $DataDir"
                 Stop-Transcript | Out-Null
                 Remove-Item -Recurse -Force $DataDir
                 exit 0

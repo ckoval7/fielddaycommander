@@ -44,32 +44,35 @@ VIAddVersionKey "FileVersion" "${NUMERIC_VERSION}"
 VIAddVersionKey "FileDescription" "${PRODUCT} server installer"
 VIAddVersionKey "LegalCopyright" "2026 ${PUBLISHER}. GPL-3.0-or-later."
 
+Var SetupLog
+; Read from server\address.txt after setup; shown on the finish page.
+Var ServerAddress
+
 !define MUI_ICON "windows\installer\server.ico"
 !define MUI_UNICON "windows\installer\server.ico"
 !define MUI_ABORTWARNING
 
-!define MUI_WELCOMEPAGE_TEXT "This installs the ${PRODUCT} ${VERSION} server on this computer. Operators on the same network open it in a web browser on their phones, tablets and laptops.$\r$\n$\r$\nTo update, run the new installer. The log, settings and photos are kept."
+!define MUI_WELCOMEPAGE_TEXT "Install the ${PRODUCT} ${VERSION} server on this computer. Operators on the same network can use it in a web browser on phones, tablets, and laptops.$\r$\n$\r$\nTo update an existing server, run the newer installer. Your log, settings, and photos are kept.$\r$\n$\r$\nThe Start menu has shortcuts to back up, restore, and open the backups folder in Public Documents. Automatic backups run hourly during an event and daily otherwise."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${STAGE}\LICENSES\GPL-3.0-or-later.txt"
 !insertmacro MUI_PAGE_INSTFILES
-!define MUI_FINISHPAGE_TEXT "${PRODUCT} is running. It starts on its own whenever this computer starts.$\r$\n$\r$\nOpen it now to set the administrator password."
+!define MUI_FINISHPAGE_TEXT "${PRODUCT} is running and will start whenever this computer starts.$\r$\n$\r$\nOn first use, set the administrator password in the setup wizard.$\r$\n$\r$\nOperators on the same network open:$\r$\n$ServerAddress$\r$\nor the same address with this computer's IP address in place of its name.$\r$\n$\r$\nTo open it here later, use ${PRODUCT} in the Start menu."
 !define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_TEXT "Open ${PRODUCT}"
+!define MUI_FINISHPAGE_RUN_TEXT "Open ${PRODUCT} on this computer"
 !define MUI_FINISHPAGE_RUN_FUNCTION OpenInBrowser
 !insertmacro MUI_PAGE_FINISH
 
-!define MUI_UNCONFIRMPAGE_TEXT_TOP "This stops and removes the ${PRODUCT} server.$\r$\n$\r$\nYou'll be asked whether to keep the log, settings and photos. Backups in the Public Documents folder are always kept."
+!define MUI_UNCONFIRMPAGE_TEXT_TOP "Uninstalling stops and removes the ${PRODUCT} server.$\r$\n$\r$\nYou'll be asked whether to also delete your log, settings, and photos. No is selected by default. Backups in Public Documents are always kept."
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
 !insertmacro MUI_LANGUAGE "English"
 
-Var SetupLog
 
 Function .onInit
   ${IfNot} ${AtLeastWin10}
   ${OrIfNot} ${RunningX64}
-    MessageBox MB_OK|MB_ICONSTOP "${PRODUCT} needs 64-bit Windows 10 or later." /SD IDOK
+    MessageBox MB_OK|MB_ICONSTOP "${PRODUCT} needs 64-bit Windows 10 or 11." /SD IDOK
     Abort
   ${EndIf}
   SetRegView 64
@@ -98,7 +101,7 @@ Section
   ; Stop a running copy before replacing its files. The new setup.ps1 does it,
   ; so a fix to stopping reaches older installs too.
   ${If} ${FileExists} "$INSTDIR\app\artisan"
-    DetailPrint "Stopping the running ${PRODUCT}..."
+    DetailPrint "Stopping the ${PRODUCT} server..."
     InitPluginsDir
     File "/oname=$PLUGINSDIR\setup.ps1" "${STAGE}\server\setup.ps1"
     nsExec::ExecToLog '${POWERSHELL} -File "$PLUGINSDIR\setup.ps1" -Action Stop -InstallDir "$INSTDIR"'
@@ -108,7 +111,7 @@ Section
     RMDir /r "$INSTDIR\app"
   ${EndIf}
 
-  DetailPrint "Copying files..."
+  DetailPrint "Copying server files..."
   SetDetailsPrint listonly
   SetOutPath "$INSTDIR"
   File /r "${STAGE}\app"
@@ -132,12 +135,20 @@ Section
   SectionGetSize 0 $0
   WriteRegDWORD HKLM "${UNINSTALL_KEY}" "EstimatedSize" $0
 
-  DetailPrint "Setting up the database, services and firewall. This takes a minute or two..."
+  DetailPrint "Setting up the server and Windows services. This takes a minute or two..."
   nsExec::ExecToLog '${POWERSHELL} -File "$INSTDIR\server\setup.ps1" -Action Install -InstallDir "$INSTDIR"'
   Pop $0
   ${If} $0 != 0
-    MessageBox MB_OK|MB_ICONEXCLAMATION "${PRODUCT} was copied but couldn't be started. The details are in:$\r$\n$\r$\n$SetupLog$\r$\n$\r$\nRun this installer again after fixing the problem." /SD IDOK
+    MessageBox MB_OK|MB_ICONEXCLAMATION "${PRODUCT} setup could not finish. Check the details in:$\r$\n$\r$\n$SetupLog$\r$\n$\r$\nRun this installer again after fixing the problem." /SD IDOK
     SetErrorLevel 2
+  ${EndIf}
+
+  StrCpy $ServerAddress "http://<this computer's name>.local"
+  ClearErrors
+  FileOpen $2 "$INSTDIR\server\address.txt" r
+  ${IfNot} ${Errors}
+    FileRead $2 $ServerAddress
+    FileClose $2
   ${EndIf}
 
   CreateDirectory "$SMPROGRAMS\${PRODUCT}"
@@ -156,7 +167,7 @@ SectionEnd
 Section "Uninstall"
   SetShellVarContext all
 
-  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Also delete the log, settings and photos stored on this computer?$\r$\n$\r$\nChoose No to keep them for a later reinstall. Backups in the Public Documents folder are kept either way." /SD IDNO IDYES removeData
+  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON2 "Also delete your log, settings, and photos from this computer?$\r$\n$\r$\nChoose No to keep them for a later reinstall. Backups in Public Documents are always kept." /SD IDNO IDYES removeData
   StrCpy $1 ""
   Goto uninstall
   removeData:
