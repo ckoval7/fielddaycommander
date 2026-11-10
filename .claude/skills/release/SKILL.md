@@ -13,7 +13,7 @@ One flow takes `dev` from "finished work" to a tagged release on `main`. Run the
 4. Push `dev` and demo, open the `Release vYY.MM.N` PR
 5. SonarCloud on the PR, fixed until clean
 6. Version bump
-7. Ship: fast-forward `main`, SonarCloud on `main`, tag
+7. Ship: fast-forward `main`, SonarCloud on `main`, tag, check the Windows installer
 8. Demo and clean up
 
 **Where to stop:** "promote dev", "PR dev to main" and similar requests stop after step 6, with the PR green and carrying the new version. A request to release, tag or ship runs all the way through. If a promote run already happened (`VERSION` on `dev` is a number with no tag, and the PR is open), a release picks up at step 7, after checking that `dev` hasn't moved since: if it has, re-run steps 1–2 and 5 on the new commits.
@@ -178,7 +178,15 @@ Never merge the PR with GitHub's buttons. Squash, merge commit and rebase all le
 1. Fast-forward `main` to `dev`: `git switch main && git merge --ff-only dev`, then `git switch dev`. If it doesn't fast-forward, go back to step 0's check.
 2. Push `main` when the user asks for it. Otherwise tell them `main` is ready to push and stop.
 3. Wait for SonarCloud's analysis of the new `origin/main` HEAD. `$S cloud` prints the revision of the last analysis; it must match `origin/main` and show gate `OK` with 0 open issues. If it doesn't, fix on a branch off `dev` and go back to step 4.
-4. Create the annotated tag on `main`'s HEAD: `git tag -a vYY.MM.N -m vYY.MM.N`. Push it (`git push origin vYY.MM.N`) only when the user asks. The tag builds and publishes the Docker image.
+4. Create the annotated tag on `main`'s HEAD: `git tag -a vYY.MM.N -m vYY.MM.N`. Push it (`git push origin vYY.MM.N`) only when the user asks. The tag builds and publishes the Docker image and the Windows installer.
+5. Once the tag is pushed, check the Windows installer reached the release. The `Windows installer` workflow builds it (about 5 minutes) and attaches it to the tag's release, or creates a draft release with the tag's changelog notes if none exists yet:
+
+   ```bash
+   gh run watch --exit-status "$(gh run list --workflow windows-installer.yml --event push --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh release view vYY.MM.N --json isDraft,assets --jq '{isDraft, assets: [.assets[].name]}'
+   ```
+
+   The assets must include `field-day-commander-server-setup-YY.MM.N.exe` and `field-day-commander-server-setup.sha256`. If the run failed, read its log (`gh run view <id> --log-failed`), fix on a branch off `dev`, and tell the user: the installer is missing from this release until a rerun (`gh run rerun <id>`) or the next tag. If it made a draft, tell the user to title and publish that draft rather than creating a new release for the tag, which would leave two.
 
 ## 8. Demo and clean up
 
