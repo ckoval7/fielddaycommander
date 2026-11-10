@@ -40,6 +40,8 @@ use App\Services\EventContextService;
 use App\Services\ListenerProcessRunner;
 use App\Support\IconSprite;
 use App\Support\StationMode;
+use App\Support\WindowsCertificateStore;
+use App\Support\WindowsSafeFilesystem;
 use App\View\Components\Breadcrumbs;
 use App\View\Components\Button;
 use App\View\Components\Checkbox;
@@ -63,6 +65,7 @@ use App\View\Components\Tabs;
 use App\View\Components\Textarea;
 use App\View\Components\Toggle;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -112,6 +115,11 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleSetFactory::class);
 
+        // Windows can't rename over a compiled view another request has open.
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->app->singleton('files', fn (): WindowsSafeFilesystem => new WindowsSafeFilesystem);
+        }
+
         // Linux/macOS or Windows process handling for the external logger listeners.
         $this->app->singleton(ListenerProcessRunner::class, fn (): ListenerProcessRunner => ListenerProcessRunner::forOperatingSystem());
 
@@ -134,6 +142,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Define rate limiters
         $this->configureRateLimiters();
+
+        WindowsCertificateStore::apply($this->app->make(HttpFactory::class));
 
         // Override Mary UI's <x-icon> component with a prefix-aware version
         // so names like `phosphor-house` resolve via Blade Icons' prefix
