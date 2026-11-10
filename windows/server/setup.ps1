@@ -46,6 +46,7 @@ $ServicesDir = Join-Path $InstallDir 'services'
 $EnvFile = Join-Path $DataDir '.env'
 $Database = Join-Path $DataDir 'database.sqlite'
 $LogDir = Join-Path $DataDir 'logs'
+# Set by Select-ReverbPort during Install.
 $ReverbPort = 8080
 $FirewallGroup = 'Field Day Commander'
 
@@ -178,6 +179,21 @@ function Select-HttpPort {
         }
     }
     throw 'Ports 80, 8000 and 8001 are all in use. Run the installer again after closing the program using one of them.'
+}
+
+# Reverb only listens on 127.0.0.1, but that still clashes with anything
+# else on this computer using the port, like WSL forwarding a container's.
+function Select-ReverbPort {
+    $existing = Read-EnvValue 'REVERB_SERVER_PORT'
+    if ($existing) {
+        return [int] $existing
+    }
+    foreach ($candidate in 8080..8099) {
+        if (Test-PortFree $candidate) {
+            return $candidate
+        }
+    }
+    throw 'Ports 8080 to 8099 are all in use, so live updates have nowhere to run.'
 }
 
 # Writes settings a new install needs and adds any a newer version needs,
@@ -453,6 +469,7 @@ try {
             Initialize-DataFolders
             Write-PhpIni
             $port = Select-HttpPort
+            $script:ReverbPort = Select-ReverbPort
             Initialize-Env $port
             Initialize-Database
             Set-StorageJunction
