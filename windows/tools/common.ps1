@@ -14,8 +14,9 @@ Add-Type -AssemblyName System.Drawing
 
 $ProductName = 'Field Day Commander'
 $InstallDir = Split-Path -Parent $PSScriptRoot
-$Php = Join-Path $InstallDir 'php\php.exe'
+$Php = Join-Path $InstallDir 'frankenphp\php.exe'
 $Artisan = Join-Path $InstallDir 'app\artisan'
+$DataDir = Join-Path $env:ProgramData 'Field Day Commander'
 $BackupDir = Join-Path $env:PUBLIC 'Documents\Field Day Commander Backups'
 
 # Every service that opens the database, in the order they start.
@@ -30,6 +31,11 @@ $installPaths = Join-Path $PSScriptRoot 'install-paths.ps1'
 if (Test-Path $installPaths) {
     . $installPaths
 }
+
+# php.exe reads php.ini from PHPRC, and the app finds .env and storage
+# through FDC_DATA_PATH, the same as the services.
+$env:PHPRC = Split-Path -Parent $Php
+$env:FDC_DATA_PATH = $DataDir
 
 # Relaunch the calling script as administrator. The database and services
 # belong to the system, so both tools need it. Exits the current copy.
