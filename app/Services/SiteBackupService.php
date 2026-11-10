@@ -58,11 +58,6 @@ class SiteBackupService
     private const array SKIPPED_PATHS = ['private/exports'];
 
     /**
-     * .env keys a backup carries to the server it is restored on.
-     */
-    private const string CARRIED_SETTINGS = '/^(APP_KEY|APP_PREVIOUS_KEYS|MAIL_[A-Z0-9_]+)$/';
-
-    /**
      * Already-compressed files are stored as they are, which saves time on
      * small hardware and loses nothing.
      *
@@ -78,6 +73,7 @@ class SiteBackupService
      */
     public function __construct(
         private readonly SqliteDatabaseCopier $copier,
+        private readonly SiteBackupSettings $settings,
         private readonly ?string $connectionName = null,
         ?string $filesRoot = null,
     ) {
@@ -117,7 +113,7 @@ class SiteBackupService
             }
 
             $zip->addFile($databaseCopy, self::DATABASE_ENTRY);
-            $zip->addFromString(self::SETTINGS_ENTRY, $this->currentSettings());
+            $zip->addFromString(self::SETTINGS_ENTRY, $this->settings->current());
 
             if ($kind->includesFiles()) {
                 $this->addFiles($zip);
@@ -200,12 +196,12 @@ class SiteBackupService
     public function restore(string $path): array
     {
         $this->ensureSupported();
-        $this->copier->databasePath($this->connection());
 
         $manifest = $this->inspect($path);
         $work = $this->workDirectory();
 
         try {
+            $this->copier->databasePath($this->connection());
             $this->extract($path, $work);
 
             $database = $work.'/'.self::DATABASE_ENTRY;
@@ -222,7 +218,7 @@ class SiteBackupService
                 $this->replaceFiles($work.'/files');
             }
 
-            $this->applySettings((string) @file_get_contents($work.'/'.self::SETTINGS_ENTRY));
+            $this->settings->apply((string) @file_get_contents($work.'/'.self::SETTINGS_ENTRY));
 
             Artisan::call('migrate', ['--force' => true, '--database' => $this->connection()->getName()]);
 
@@ -309,52 +305,6 @@ class SiteBackupService
         File::ensureDirectoryExists($work);
 
         return $work;
-    }
-
-    /**
-     * The carried .env lines from this server, so a new server can read the data.
-     */
-    private function currentSettings(): string
-    {
-        $lines = collect(preg_split('/\R/', (string) @file_get_contents(app()->environmentFilePath())))
-            ->filter(fn (string $line): bool => preg_match(self::CARRIED_SETTINGS, Str::before($line, '=')) === 1);
-
-        if (! $lines->contains(fn (string $line): bool => str_starts_with($line, 'APP_KEY='))) {
-            $lines->prepend('APP_KEY='.config('app.key'));
-        }
-
-        return $lines->implode("\n")."\n";
-    }
-
-    /**
-     * Write the backup's carried settings into this server's .env, replacing
-     * the lines already there and adding any that are missing.
-     */
-    private function applySettings(string $settings): void
-    {
-        $envPath = app()->environmentFilePath();
-
-        if ($settings === '' || ! File::exists($envPath)) {
-            return;
-        }
-
-        $env = File::get($envPath);
-
-        foreach (preg_split('/\R/', $settings) as $line) {
-            $key = Str::before($line, '=');
-
-            if ($line === '' || ! str_contains($line, '=') || preg_match(self::CARRIED_SETTINGS, $key) !== 1) {
-                continue;
-            }
-
-            $pattern = '/^'.preg_quote($key, '/').'=.*$/m';
-
-            $env = preg_match($pattern, $env) === 1
-                ? (string) preg_replace_callback($pattern, fn (): string => $line, $env, 1)
-                : rtrim($env, "\r\n")."\n{$line}\n";
-        }
-
-        File::put($envPath, $env);
     }
 
     /**

@@ -28,7 +28,10 @@ final class DataDirectory
         'APP_SERVICES_CACHE' => 'services.php',
     ];
 
-    private function __construct() {}
+    private function __construct()
+    {
+        // Static helpers only.
+    }
 
     /**
      * Point the app at the data folder, if one is configured.

@@ -8,6 +8,7 @@ use App\Exceptions\SiteBackupException;
 use App\Models\Contact;
 use App\Models\Event;
 use App\Services\SiteBackupService;
+use App\Services\SiteBackupSettings;
 use App\Services\SqliteDatabaseCopier;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Artisan;
@@ -60,7 +61,7 @@ beforeEach(function () {
     File::put("{$this->root}/.env", "APP_NAME=\"Field Day Commander\"\nAPP_KEY=base64:original\nMAIL_HOST=mail.example.org\nDB_DATABASE={$this->database}\n");
     app()->useEnvironmentPath($this->root);
 
-    $this->backups = new SiteBackupService(new SqliteDatabaseCopier, null, $this->files);
+    $this->backups = new SiteBackupService(new SqliteDatabaseCopier, new SiteBackupSettings, null, $this->files);
     app()->instance(SiteBackupService::class, $this->backups);
 });
 

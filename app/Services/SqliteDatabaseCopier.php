@@ -5,9 +5,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\SqliteCopyException;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 use SQLite3;
 
 /**
@@ -24,18 +24,18 @@ class SqliteDatabaseCopier
     /**
      * Path of the connection's database file.
      *
-     * @throws RuntimeException If the connection isn't SQLite or the database is in memory
+     * @throws SqliteCopyException If the connection isn't SQLite or the database is in memory
      */
     public function databasePath(Connection $connection): string
     {
         if ($connection->getDriverName() !== 'sqlite') {
-            throw new RuntimeException('This only works with a SQLite database.');
+            throw new SqliteCopyException('This only works with a SQLite database.');
         }
 
         $database = (string) $connection->getConfig('database');
 
         if ($database === '' || $database === ':memory:' || str_contains($database, 'mode=memory')) {
-            throw new RuntimeException('An in-memory database cannot be copied.');
+            throw new SqliteCopyException('An in-memory database cannot be copied.');
         }
 
         return $database;
@@ -58,7 +58,7 @@ class SqliteDatabaseCopier
      * API, which takes the database's own locks: other processes see either
      * the old database or the restored one, never a mix.
      *
-     * @throws RuntimeException If the copy fails
+     * @throws SqliteCopyException If the copy fails
      */
     public function restoreFrom(Connection $connection, string $source): void
     {
@@ -78,7 +78,7 @@ class SqliteDatabaseCopier
             $to->enableExceptions(true);
 
             if (! $from->backup($to)) {
-                throw new RuntimeException($to->lastErrorMsg());
+                throw new SqliteCopyException($to->lastErrorMsg());
             }
         } finally {
             $from?->close();

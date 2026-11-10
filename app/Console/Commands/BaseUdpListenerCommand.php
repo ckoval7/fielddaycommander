@@ -24,6 +24,11 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
 
     private bool $running = false;
 
+    /**
+     * When the listen loop last looked for a stop request (Unix time).
+     */
+    private int $lastStopCheck = 0;
+
     private ?Socket $socket = null;
 
     /**
@@ -284,6 +289,23 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     }
 
     /**
+     * Windows has no SIGTERM, so a stop also arrives as a request in the
+     * cache. Checked at most once a second.
+     */
+    private function checkForStopRequest(ExternalLoggerManager $manager, int $now): void
+    {
+        if (! $this->running || $now === $this->lastStopCheck) {
+            return;
+        }
+
+        $this->lastStopCheck = $now;
+
+        if ($manager->isStopRequested(getmypid())) {
+            $this->running = false;
+        }
+    }
+
+    /**
      * @return array{int, int} [processedCount, errorCount]
      */
     private function listenLoop(
@@ -299,20 +321,12 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         $startedAt = now()->toIso8601String();
         $lastPacketAt = null;
         $lastHeartbeatTime = 0;
-        $lastStopCheck = 0;
 
         // On a stop, datagrams already read off the socket are still handled.
         while ($this->running || $this->pending !== []) {
             $now = time();
 
-            // Windows has no SIGTERM, so a stop also arrives as a request in the cache.
-            if ($this->running && $now !== $lastStopCheck) {
-                $lastStopCheck = $now;
-
-                if ($manager->isStopRequested(getmypid())) {
-                    $this->running = false;
-                }
-            }
+            $this->checkForStopRequest($manager, $now);
             if ($now - $lastHeartbeatTime >= 5) {
                 $config->unsetRelation('event');
                 $config->refresh();
@@ -374,7 +388,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
                 return null;
             }
 
-            $packet = $this->receive(0);
+            $packet = $this->receive();
 
             if ($packet === null) {
                 return null;
@@ -383,7 +397,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
             $this->hold($packet);
         }
 
-        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receiveIfWaiting()) !== null) {
+        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receive(wait: false)) !== null) {
             $this->hold($packet);
         }
 
@@ -406,32 +420,27 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
      * @return array{string, string}|null
      */
     /**
-     * A datagram already waiting on the socket, without blocking. Checked
-     * with socket_select() because Windows' sockets extension has no
-     * non-blocking receive flag.
+     * The next datagram on the socket. Waits up to the socket's timeout, or
+     * not at all when $wait is false; that case checks with socket_select()
+     * because Windows' sockets extension has no non-blocking receive flag.
      *
      * @return array{string, string}|null [datagram, sender address]
      */
-    private function receiveIfWaiting(): ?array
+    private function receive(bool $wait = true): ?array
     {
         $read = [$this->socket];
         $write = null;
         $except = null;
 
-        if ((int) @socket_select($read, $write, $except, 0) < 1) {
+        if (! $wait && (int) @socket_select($read, $write, $except, 0) < 1) {
             return null;
         }
 
-        return $this->receive(0);
-    }
-
-    private function receive(int $flags): ?array
-    {
         $buffer = '';
         $from = '';
         $fromPort = 0;
 
-        if (@socket_recvfrom($this->socket, $buffer, 65535, $flags, $from, $fromPort) === false) {
+        if (@socket_recvfrom($this->socket, $buffer, 65535, 0, $from, $fromPort) === false) {
             return null;
         }
 

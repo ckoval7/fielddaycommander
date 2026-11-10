@@ -6,7 +6,6 @@
 namespace App\Services;
 
 use App\Exceptions\DatabaseSnapshotException;
-use Illuminate\Database\Connection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -287,17 +286,12 @@ class DatabaseSnapshotService
         return $path;
     }
 
-    private function connection(): Connection
-    {
-        return DB::connection($this->connectionName);
-    }
-
     /**
      * Whether the snapshotted database connection is SQLite.
      */
     private function usesSqlite(): bool
     {
-        return $this->connection()->getDriverName() === 'sqlite';
+        return DB::connection($this->connectionName)->getDriverName() === 'sqlite';
     }
 
     /**
@@ -336,7 +330,7 @@ class DatabaseSnapshotService
     private function createSqliteSnapshot(string $fullPath, string $filename): void
     {
         try {
-            $this->copier->copyTo($this->connection(), $fullPath);
+            $this->copier->copyTo(DB::connection($this->connectionName), $fullPath);
         } catch (Throwable $e) {
             Log::error('Database snapshot creation failed', [
                 'filename' => $filename,
@@ -375,7 +369,7 @@ class DatabaseSnapshotService
     private function restoreSqliteSnapshot(string $fullPath, string $filename): void
     {
         try {
-            $this->copier->restoreFrom($this->connection(), $fullPath);
+            $this->copier->restoreFrom(DB::connection($this->connectionName), $fullPath);
         } catch (Throwable $e) {
             Log::error('Database restore failed', [
                 'filename' => $filename,
@@ -393,7 +387,7 @@ class DatabaseSnapshotService
      */
     private function getMysqlCredentials(): array
     {
-        $config = $this->connection()->getConfig();
+        $config = DB::connection($this->connectionName)->getConfig();
 
         return [
             'host' => $config['host'] ?? '127.0.0.1',

@@ -23,34 +23,48 @@ class BackupRestoreCommand extends Command
 
     public function handle(SiteBackupService $backups): int
     {
-        $file = (string) $this->argument('file');
-
         try {
-            $manifest = $backups->inspect($file);
-
-            if ($this->option('inspect')) {
-                return $this->report(['ok' => true, 'backup' => $manifest], self::SUCCESS);
-            }
-
-            if (! $this->option('json')) {
-                $this->describe($manifest);
-            }
-
-            if (! $this->option('force') && ! $this->confirm('Replace all of this server\'s data with this backup?')) {
-                return self::FAILURE;
-            }
-
-            $result = $backups->restore($file);
+            $result = $this->inspectOrRestore($backups, (string) $this->argument('file'));
         } catch (SiteBackupException $e) {
-            return $this->report(['ok' => false, 'error' => $e->getMessage()], self::FAILURE);
+            $result = ['ok' => false, 'error' => $e->getMessage()];
         }
+
+        if ($result === null) {
+            return self::FAILURE;
+        }
+
+        return $this->report($result, $result['ok'] ? self::SUCCESS : self::FAILURE);
+    }
+
+    /**
+     * @return array<string, mixed>|null The result, or null when the person said no
+     *
+     * @throws SiteBackupException
+     */
+    private function inspectOrRestore(SiteBackupService $backups, string $file): ?array
+    {
+        $manifest = $backups->inspect($file);
+
+        if ($this->option('inspect')) {
+            return ['ok' => true, 'backup' => $manifest];
+        }
+
+        if (! $this->option('json')) {
+            $this->describe($manifest);
+        }
+
+        if (! $this->option('force') && ! $this->confirm('Replace all of this server\'s data with this backup?')) {
+            return null;
+        }
+
+        $result = $backups->restore($file);
 
         // A cached config still holds the old APP_KEY and mail settings.
         if (app()->configurationIsCached()) {
             Artisan::call('config:cache');
         }
 
-        return $this->report(['ok' => true, 'backup' => $result['manifest'], 'safety_backup' => $result['safety_backup']], self::SUCCESS);
+        return ['ok' => true, 'backup' => $result['manifest'], 'safety_backup' => $result['safety_backup']];
     }
 
     /**
