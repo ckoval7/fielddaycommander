@@ -367,7 +367,16 @@ function Install-Services([int] $Port) {
         }
 
         # Run as LocalService, not SYSTEM: it can only write the data folder.
-        Invoke-Native 'sc.exe' @('config', $id, 'obj=', 'NT AUTHORITY\LocalService', 'password=', '')
+        # Through WMI because Windows PowerShell drops the empty password
+        # argument that sc.exe config would need.
+        $service = Get-CimInstance Win32_Service -Filter "Name = '$id'"
+        $result = Invoke-CimMethod -InputObject $service -MethodName Change -Arguments @{
+            StartName = 'NT AUTHORITY\LocalService'
+            StartPassword = ''
+        }
+        if ($result.ReturnValue -ne 0) {
+            throw "Couldn't set $id to run as LocalService (error $($result.ReturnValue))."
+        }
     }
 }
 
