@@ -71,6 +71,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\Compilers\BladeCompiler;
 use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
@@ -118,6 +119,7 @@ class AppServiceProvider extends ServiceProvider
         // Windows can't rename over a compiled view another request has open.
         if (PHP_OS_FAMILY === 'Windows') {
             $this->app->singleton('files', fn (): WindowsSafeFilesystem => new WindowsSafeFilesystem);
+            $this->app->extend('blade.compiler', fn (BladeCompiler $compiler, $app): BladeCompiler => WindowsSafeFilesystem::useIn($compiler, $app['files']));
         }
 
         // Linux/macOS or Windows process handling for the external logger listeners.

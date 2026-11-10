@@ -5,9 +5,11 @@
 
 use App\Support\WindowsCertificateStore;
 use App\Support\WindowsSafeFilesystem;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\View\Compilers\BladeCompiler;
 
 describe('certificate store', function () {
     test('on Windows, HTTPS requests trust the Windows certificate store', function () {
@@ -59,6 +61,15 @@ describe('safe filesystem', function () {
 
         expect(File::get("{$this->dir}/view.php"))->toBe('compiled by the other request')
             ->and(File::files($this->dir))->toHaveCount(1);
+    });
+
+    test('the Blade compiler can be given the safe filesystem after it was built', function () {
+        $compiler = new BladeCompiler(new Filesystem, $this->dir);
+        $files = new WindowsSafeFilesystem;
+
+        WindowsSafeFilesystem::useIn($compiler, $files);
+
+        expect((fn () => $this->files)->call($compiler))->toBe($files);
     });
 
     test('a write that fails with nothing in place is still an error', function () {

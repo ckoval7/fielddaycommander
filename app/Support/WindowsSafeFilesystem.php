@@ -6,6 +6,7 @@
 namespace App\Support;
 
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\View\Compilers\Compiler;
 use RuntimeException;
 
 /**
@@ -18,6 +19,25 @@ use RuntimeException;
  */
 class WindowsSafeFilesystem extends Filesystem
 {
+    /**
+     * Give a view compiler this filesystem. Packages resolve the Blade
+     * compiler while their providers register, before the app can rebind
+     * 'files', so the compiler would otherwise keep Laravel's own.
+     *
+     * @template TCompiler of Compiler
+     *
+     * @param  TCompiler  $compiler
+     * @return TCompiler
+     */
+    public static function useIn(Compiler $compiler, self $files): Compiler
+    {
+        (function () use ($files): void {
+            $this->files = $files;
+        })->call($compiler);
+
+        return $compiler;
+    }
+
     public function replace($path, $content, $mode = null)
     {
         clearstatcache(true, $path);
