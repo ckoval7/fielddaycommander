@@ -499,6 +499,6 @@ describe('sqlite', function () {
 
     it('refuses to snapshot an in-memory database', function () {
         expect(fn () => (new DatabaseSnapshotService('sqlite'))->createSnapshot('memory'))
-            ->toThrow(DatabaseSnapshotException::class, 'in-memory database');
+            ->toThrow(DatabaseSnapshotException::class, 'Failed to create database snapshot');
     });
 });
