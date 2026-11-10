@@ -692,6 +692,39 @@ class LoggingInterface extends Component
             ->get();
     }
 
+    /**
+     * IDs of this session's contacts that were the event's first contact
+     * with their section, so the log can mark them "New Section!". Worked
+     * out on each render rather than stored, so the mark only shows in the
+     * session that logged it.
+     *
+     * @return array<int, true>
+     */
+    #[Computed]
+    public function newSectionContactIds(): array
+    {
+        $live = $this->recentContacts->filter(fn (Contact $contact): bool => ! $contact->trashed() && $contact->section_id !== null);
+
+        if ($live->isEmpty()) {
+            return [];
+        }
+
+        $firstTimes = Contact::query()
+            ->where('event_configuration_id', $live->first()->event_configuration_id)
+            ->whereIn('section_id', $live->pluck('section_id')->unique())
+            ->groupBy('section_id')
+            ->selectRaw('section_id, MIN(qso_time) as first_time')
+            ->pluck('first_time', 'section_id');
+
+        return $live
+            ->sortBy('id')
+            ->filter(fn (Contact $contact): bool => isset($firstTimes[$contact->section_id])
+                && $contact->qso_time->equalTo(Carbon::parse($firstTimes[$contact->section_id])))
+            ->unique('section_id')
+            ->mapWithKeys(fn (Contact $contact): array => [$contact->id => true])
+            ->all();
+    }
+
     protected function activeContactCount(): int
     {
         return $this->operatingSession->contacts()->count();
