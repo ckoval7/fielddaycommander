@@ -37,6 +37,7 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\Services\ListenerProcessRunner;
 use App\Support\IconSprite;
 use App\Support\StationMode;
 use App\View\Components\Breadcrumbs;
@@ -110,6 +111,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->alias(EventContextService::class, ActiveEventService::class);
 
         $this->app->singleton(RuleSetFactory::class);
+
+        // Linux/macOS or Windows process handling for the external logger listeners.
+        $this->app->singleton(ListenerProcessRunner::class, fn (): ListenerProcessRunner => ListenerProcessRunner::forOperatingSystem());
 
         // Per-request icon sprite frames (see App\Support\IconSprite).
         $this->app->scoped(IconSprite::class);

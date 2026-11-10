@@ -299,10 +299,20 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         $startedAt = now()->toIso8601String();
         $lastPacketAt = null;
         $lastHeartbeatTime = 0;
+        $lastStopCheck = 0;
 
         // On a stop, datagrams already read off the socket are still handled.
         while ($this->running || $this->pending !== []) {
             $now = time();
+
+            // Windows has no SIGTERM, so a stop also arrives as a request in the cache.
+            if ($this->running && $now !== $lastStopCheck) {
+                $lastStopCheck = $now;
+
+                if ($manager->isStopRequested(getmypid())) {
+                    $this->running = false;
+                }
+            }
             if ($now - $lastHeartbeatTime >= 5) {
                 $config->unsetRelation('event');
                 $config->refresh();

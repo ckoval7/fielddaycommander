@@ -38,9 +38,13 @@ beforeEach(function () {
 
         public ?int $nextPid = 424242;
 
-        public function spawnDetached(string $command): ?int
+        /** @var list<list<string>> */
+        public array $spawnedArguments = [];
+
+        public function spawnDetached(array $arguments): ?int
         {
-            $this->spawnedCommands[] = $command;
+            $this->spawnedArguments[] = $arguments;
+            $this->spawnedCommands[] = implode(' ', $arguments);
 
             return $this->nextPid;
         }
@@ -177,11 +181,26 @@ test('startProcess spawns detached listener command and stores pid', function ()
 
     expect($pid)->toBe(424242)
         ->and($setting->refresh()->pid)->toBe(424242)
-        ->and($this->processRunner->spawnedCommands)->toHaveCount(1)
-        ->and($this->processRunner->spawnedCommands[0])
-        ->toContain("external-logger:n1mm --event={$this->config->id}")
-        ->toContain('artisan')
-        ->toEndWith('& echo $!');
+        ->and($this->processRunner->spawnedArguments)->toHaveCount(1)
+        ->and(array_slice($this->processRunner->spawnedArguments[0], 1))
+        ->toBe([base_path('artisan'), 'external-logger:n1mm', "--event={$this->config->id}"]);
+});
+
+test('stopProcess asks the listener to stop before terminating it', function () {
+    ExternalLoggerSetting::create([
+        'event_configuration_id' => $this->config->id,
+        'listener_type' => 'n1mm',
+        'is_enabled' => true,
+        'port' => 12060,
+        'pid' => 31337,
+    ]);
+    $this->processRunner->alivePids = [31337];
+
+    $this->manager->stopProcess($this->config->id, 'n1mm');
+
+    expect($this->manager->isStopRequested(31337))->toBeTrue()
+        ->and($this->manager->isStopRequested(31338))->toBeFalse()
+        ->and($this->processRunner->terminatedPids)->toBe([31337]);
 });
 
 test('startProcess returns null and leaves pid unset when spawn reports no pid', function () {

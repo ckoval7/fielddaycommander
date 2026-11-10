@@ -160,11 +160,21 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
         $heartbeatKey = "external-logger:{$this->getType()}:{$config->id}:heartbeat";
         $lastPoll = 0;
         $lastHeartbeat = 0;
+        $lastStopCheck = 0;
 
         while ($this->running) {
             $this->waitForTraffic($server);
 
             $now = time();
+
+            // Windows has no SIGTERM, so a stop also arrives as a request in the cache.
+            if ($now !== $lastStopCheck) {
+                $lastStopCheck = $now;
+
+                if ($manager->isStopRequested(getmypid())) {
+                    break;
+                }
+            }
 
             if ($now - $lastPoll >= self::POLL_INTERVAL_SECONDS) {
                 $this->guard(fn () => $server->tick());

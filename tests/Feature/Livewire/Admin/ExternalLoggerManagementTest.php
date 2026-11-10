@@ -39,9 +39,13 @@ beforeEach(function () {
         /** @var list<int> */
         public array $terminatedPids = [];
 
-        public function spawnDetached(string $command): ?int
+        /** @var list<list<string>> */
+        public array $spawnedArguments = [];
+
+        public function spawnDetached(array $arguments): ?int
         {
-            $this->spawnedCommands[] = $command;
+            $this->spawnedArguments[] = $arguments;
+            $this->spawnedCommands[] = implode(' ', $arguments);
 
             return 424242;
         }
