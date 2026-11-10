@@ -8,8 +8,9 @@
 #
 #   windows/build-installer.sh
 #
-# Composer, Node and NSIS run in containers pinned to the same images as the
-# Dockerfile. FrankenPHP and WinSW are downloaded and checked against the
+# Composer and Node run in containers pinned to the same images as the
+# Dockerfile. NSIS runs from makensis if it's installed, or a container.
+# FrankenPHP and WinSW are downloaded and checked against the
 # SHA-256 sums below.
 set -euo pipefail
 
@@ -95,14 +96,19 @@ cp -r windows/tools "$stage/tools"
 cp -r LICENSES "$stage/LICENSES"
 
 log "Building the installer"
-docker run --rm -v "$repo":/src -w /src "$NSIS_IMAGE" sh -c '
-    set -e
-    apt-get update -qq >/dev/null
-    apt-get install -y -qq --no-install-recommends nsis >/dev/null
-    owner=$1; shift
-    makensis "$@"
-    chown "$owner" dist/field-day-commander-server-setup-*.exe
-' sh "$owner" -V2 -NOCD "-DVERSION=$version" "-DNUMERIC_VERSION=$numeric" \
-    "-DSTAGE=build/windows-installer" "-DOUT_FILE=dist/$(basename "$out")" windows/installer/server.nsi
+nsis_args=(-V2 -NOCD "-DVERSION=$version" "-DNUMERIC_VERSION=$numeric"
+    "-DSTAGE=build/windows-installer" "-DOUT_FILE=dist/$(basename "$out")" windows/installer/server.nsi)
+if command -v makensis >/dev/null 2>&1; then
+    makensis "${nsis_args[@]}"
+else
+    docker run --rm -v "$repo":/src -w /src "$NSIS_IMAGE" sh -c '
+        set -e
+        apt-get update -qq >/dev/null
+        apt-get install -y -qq --no-install-recommends nsis >/dev/null
+        owner=$1; shift
+        makensis "$@"
+        chown "$owner" dist/field-day-commander-server-setup-*.exe
+    ' sh "$owner" "${nsis_args[@]}"
+fi
 
 log "Built $out"
