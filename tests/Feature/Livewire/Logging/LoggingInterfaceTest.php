@@ -1402,3 +1402,66 @@ test('full-bleed logging layout matches the 12px phone gutter', function () {
         ->assertSeeHtml('class="max-sm:-mx-3"')
         ->assertDontSeeHtml('max-sm:-mx-5');
 });
+
+test('first contact with a section in the event is marked New Section', function () {
+    $this->actingAs($this->user);
+
+    $contact = fn (array $attributes) => Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'is_duplicate' => false,
+        ...$attributes,
+    ]);
+
+    $otherSession = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->cwMode->id,
+    ]);
+
+    // STX was first worked in another session, so it is not new here
+    $contact(['operating_session_id' => $otherSession->id, 'callsign' => 'W5OLD', 'section_id' => $this->stxSection->id, 'qso_time' => now()->subHours(2)]);
+    $stxAgain = $contact(['callsign' => 'W5NEW', 'section_id' => $this->stxSection->id, 'qso_time' => now()->subHour()]);
+
+    $firstCt = $contact(['callsign' => 'W1AAA', 'section_id' => $this->section->id, 'qso_time' => now()->subMinutes(30)]);
+    $secondCt = $contact(['callsign' => 'W1BBB', 'section_id' => $this->section->id, 'qso_time' => now()->subMinutes(10)]);
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    expect($component->instance()->newSectionContactIds)->toBe([$firstCt->id => true]);
+    $component->assertSee('New Section!');
+});
+
+test('a deleted new-section contact passes the mark to the next one', function () {
+    $this->actingAs($this->user);
+
+    $contact = fn (array $attributes) => Contact::factory()->create([
+        'event_configuration_id' => $this->config->id,
+        'operating_session_id' => $this->session->id,
+        'logger_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->phoneMode->id,
+        'section_id' => $this->section->id,
+        'is_duplicate' => false,
+        ...$attributes,
+    ]);
+
+    $deleted = $contact(['callsign' => 'W1AAA', 'qso_time' => now()->subMinutes(30)]);
+    $next = $contact(['callsign' => 'W1BBB', 'qso_time' => now()->subMinutes(10)]);
+    $deleted->delete();
+
+    $component = Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session]);
+
+    expect($component->instance()->newSectionContactIds)->toBe([$next->id => true]);
+});
+
+test('no contacts means no New Section marks', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(LoggingInterface::class, ['operatingSession' => $this->session])
+        ->assertDontSee('New Section!');
+});

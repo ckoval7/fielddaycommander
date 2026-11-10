@@ -276,7 +276,7 @@
                 @foreach($this->recentContacts->reverse() as $contact)
                     <x-logging.contact-card
                         :contact="$contact"
-                        :details="array_values(array_filter([$contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact)]))"
+                        :details="array_values(array_filter([$contact->exchange_class, $contact->section->code ?? '—', \App\Support\AdvancedContactFields::summary($contact), isset($this->newSectionContactIds[$contact->id]) ? 'New Section!' : null]))"
                     />
                 @endforeach
 
@@ -336,7 +336,12 @@
                         :number="$this->recentContactNumbers[$contact->id] ?? null"
                         :data-advanced="json_encode($contact->only(\App\Support\AdvancedContactFields::FIELDS))"
                     >
-                        <td class="font-mono text-xs text-base-content/70">{{ \App\Support\AdvancedContactFields::summary($contact) }}</td>
+                        <td class="font-mono text-xs text-base-content/70">
+                            {{ \App\Support\AdvancedContactFields::summary($contact) }}
+                            @if(isset($this->newSectionContactIds[$contact->id]))
+                                <span class="font-sans font-semibold text-success">New Section!</span>
+                            @endif
+                        </td>
                     </x-logging.contact-row>
                 @endforeach
 
