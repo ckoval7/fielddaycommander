@@ -44,35 +44,43 @@ final class WindowsViewRace
      */
     public static function isLostRace(int $level, string $message, string $compiledPath, string $file = ''): bool
     {
-        if ($level !== E_WARNING) {
-            return false;
-        }
+        return $level === E_WARNING
+            && (self::isCompilerTouch($message, $file) || self::isLostRename($message, $compiledPath));
+    }
 
-        // touch() names no path, so it's recognised by where it was called.
-        if (str_starts_with($message, 'touch(): Utime failed') && str_ends_with(self::normalize($file), 'illuminate/view/compilers/bladecompiler.php')) {
-            return true;
-        }
+    /**
+     * The compiler marking an unchanged view as fresh. touch() names no path,
+     * so it's recognised by where it was called.
+     */
+    private static function isCompilerTouch(string $message, string $file): bool
+    {
+        return str_starts_with($message, 'touch(): Utime failed')
+            && str_ends_with(self::normalize($file), 'illuminate/view/compilers/bladecompiler.php');
+    }
 
+    /**
+     * A rename into the compiled views folder whose target another request has
+     * already written. Removes the leftover temporary file.
+     */
+    private static function isLostRename(string $message, string $compiledPath): bool
+    {
         if (preg_match('/^rename\((.+),(.+)\): Access is denied/', $message, $match) !== 1) {
             return false;
         }
 
         [, $temporary, $target] = $match;
         $folder = self::normalize($compiledPath).'/';
-
-        if (! str_starts_with(self::normalize($target), $folder) || ! str_starts_with(self::normalize($temporary), $folder)) {
-            return false;
-        }
-
         clearstatcache(true, $target);
 
-        if (! is_file($target)) {
-            return false;
+        $lost = str_starts_with(self::normalize($target), $folder)
+            && str_starts_with(self::normalize($temporary), $folder)
+            && is_file($target);
+
+        if ($lost) {
+            @unlink($temporary);
         }
 
-        @unlink($temporary);
-
-        return true;
+        return $lost;
     }
 
     private static function normalize(string $path): string
