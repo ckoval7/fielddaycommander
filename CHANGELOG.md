@@ -15,6 +15,7 @@
 
 - Phone contacts counted as Digital when a logger sent the mode as `PH`. They now count as Phone. N3FJP contacts received directly by the server weren't affected.
 - Since v26.10.12, deleting a user or several selected users on **Users** showed only a red confirmation heading. The explanation below it now appears again, warning that the accounts will be removed from the users list and those users won't be able to sign in.
+- Since v26.11.1, when Field Day Commander became an N3FJP network server, an N3FJP PC connecting to a large event log, around 20,000 contacts or more depending on how much each contact held, was disconnected right after connecting without loading the log, and reconnecting failed the same way. This affected Linux, Docker, Helm, and Windows installs, with "N3FJP server dropped a client that stopped reading" in the server log. A PC now loads the whole log however large it is, as long as it keeps reading, and a PC that really stops responding is still disconnected.
 
 ## 26.11.1 - 2026-11-03
 

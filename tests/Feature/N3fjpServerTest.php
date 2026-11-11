@@ -62,18 +62,26 @@ function n3fjpAdd(string $call, string $extra = ''): string
 /**
  * The transactions in an outbox, as [target, TRANSACTION, FLDCALL or data].
  *
- * @param  list<array{?int, string}>  $outbox
+ * @param  list<array{?int, string|list<string>}>  $outbox
  * @return list<array{?int, string, string}>
  */
 function n3fjpTransactions(array $outbox): array
 {
+    $messages = [];
+
+    foreach ($outbox as [$target, $message]) {
+        foreach ((array) $message as $one) {
+            $messages[] = [$target, $one];
+        }
+    }
+
     return array_map(function (array $item) {
         [$target, $message] = $item;
         $data = N3fjpMessage::extract($message, 'XMLDATA');
         $call = N3fjpMessage::extract($data, 'FLDCALL');
 
         return [$target, N3fjpMessage::extract($message, 'TRANSACTION'), $call !== '' ? $call : $data];
-    }, $outbox);
+    }, $messages);
 }
 
 /**

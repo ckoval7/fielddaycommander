@@ -15,6 +15,7 @@ use App\Services\N3fjp\N3fjpContactMapper;
 use App\Services\N3fjp\N3fjpFrameDecoder;
 use App\Services\N3fjp\N3fjpLogSync;
 use App\Services\N3fjp\N3fjpProtocolException;
+use App\Services\N3fjp\N3fjpSendQueue;
 use App\Services\N3fjp\N3fjpServer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -27,8 +28,8 @@ use Throwable;
  *
  * This command only moves bytes: it accepts connections, splits their
  * traffic into messages for N3fjpServer and writes back what it queues.
- * Writes are buffered per client, so a full-log reload to one slow PC never
- * stalls the others.
+ * Writes are queued per client, so a full-log reload to one slow PC never
+ * stalls the others, and a full log goes out as the client reads it.
  */
 class N3fjpListenCommand extends Command implements ExternalLoggerListener
 {
@@ -43,8 +44,8 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
     private const MAX_CLIENTS = 64;
 
     /**
-     * Bytes waiting for one client before it is dropped as stalled. A full
-     * reload of a large Field Day log is a few megabytes.
+     * Bytes waiting for one client before it is dropped as stalled, not
+     * counting the full log it is being sent, which can be larger.
      */
     private const MAX_PENDING_BYTES = 16_777_216;
 
@@ -57,7 +58,7 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
     /** @var resource|null */
     private $listener = null;
 
-    /** @var array<int, array{stream: resource, decoder: N3fjpFrameDecoder, pending: string, peer: string}> */
+    /** @var array<int, array{stream: resource, decoder: N3fjpFrameDecoder, queue: N3fjpSendQueue, peer: string}> */
     private array $clients = [];
 
     private int $nextClientId = 1;
@@ -217,7 +218,7 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
         foreach ($this->clients as $client) {
             $read[] = $client['stream'];
 
-            if ($client['pending'] !== '') {
+            if (! $client['queue']->isEmpty()) {
                 $write[] = $client['stream'];
             }
         }
@@ -264,7 +265,7 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
         $this->clients[$clientId] = [
             'stream' => $stream,
             'decoder' => new N3fjpFrameDecoder,
-            'pending' => '',
+            'queue' => new N3fjpSendQueue(self::MAX_PENDING_BYTES),
             'peer' => (string) $peer,
         ];
         $server->connect($clientId, (string) $peer);
@@ -305,25 +306,15 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
     /**
      * Queue messages on the clients they're for.
      *
-     * @param  list<array{?int, string}>  $outbox
+     * @param  list<array{?int, string|list<string>}>  $outbox
      */
     private function route(array $outbox): void
     {
         foreach ($outbox as [$clientId, $message]) {
-            $bytes = N3fjpFrameDecoder::encode($message);
             $targets = $clientId === null ? array_keys($this->clients) : [$clientId];
 
             foreach ($targets as $target) {
-                if (! isset($this->clients[$target])) {
-                    continue;
-                }
-
-                $this->clients[$target]['pending'] .= $bytes;
-
-                if (strlen($this->clients[$target]['pending']) > self::MAX_PENDING_BYTES) {
-                    Log::warning('N3FJP server dropped a client that stopped reading', ['peer' => $this->clients[$target]['peer']]);
-                    $this->disconnect($target);
-                }
+                $this->queueOn($target, $message);
             }
         }
 
@@ -332,13 +323,40 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
         }
     }
 
-    private function flush(?int $clientId): void
+    /**
+     * Queue a message or full log on one client, dropping it if it has
+     * stopped reading.
+     *
+     * @param  string|list<string>  $message
+     */
+    private function queueOn(int $clientId, string|array $message): void
     {
-        if ($clientId === null || ! isset($this->clients[$clientId]) || $this->clients[$clientId]['pending'] === '') {
+        if (! isset($this->clients[$clientId])) {
             return;
         }
 
-        $written = @fwrite($this->clients[$clientId]['stream'], $this->clients[$clientId]['pending']);
+        $queue = $this->clients[$clientId]['queue'];
+
+        if (is_array($message)) {
+            $queue->pushFullLog($message);
+        } else {
+            $queue->push($message);
+        }
+
+        if ($queue->isOverLimit()) {
+            Log::warning('N3FJP server dropped a client that stopped reading', ['peer' => $this->clients[$clientId]['peer']]);
+            $this->disconnect($clientId);
+        }
+    }
+
+    private function flush(?int $clientId): void
+    {
+        if ($clientId === null || ! isset($this->clients[$clientId]) || $this->clients[$clientId]['queue']->isEmpty()) {
+            return;
+        }
+
+        $queue = $this->clients[$clientId]['queue'];
+        $written = @fwrite($this->clients[$clientId]['stream'], $queue->nextBytes());
 
         if ($written === false) {
             $this->disconnect($clientId);
@@ -346,7 +364,7 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
             return;
         }
 
-        $this->clients[$clientId]['pending'] = (string) substr($this->clients[$clientId]['pending'], $written);
+        $queue->sent($written);
     }
 
     /**
