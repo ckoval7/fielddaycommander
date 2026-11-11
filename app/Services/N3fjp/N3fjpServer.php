@@ -34,7 +34,13 @@ class N3fjpServer
     /** @var array<int, string> IP address of each connected client */
     private array $clientAddresses = [];
 
-    /** @var list<array{?int, string}> Messages to send: [client id or null for everyone, message] */
+    /**
+     * Messages to send: [client id or null for everyone, message]. A full
+     * log is one entry holding its messages, so it can go out as the client
+     * reads instead of all at once.
+     *
+     * @var list<array{?int, string|list<string>}>
+     */
     private array $outbox = [];
 
     public function __construct(
@@ -124,7 +130,7 @@ class N3fjpServer
     /**
      * Take the messages waiting to be sent.
      *
-     * @return list<array{?int, string}> [client id or null for everyone, message]
+     * @return list<array{?int, string|list<string>}> [client id or null for everyone, message or full log]
      */
     public function drainOutbox(): array
     {
@@ -236,13 +242,15 @@ class N3fjpServer
      */
     private function sendFullLog(?int $clientId): void
     {
-        $this->queue($clientId, N3fjpMessage::clear());
+        $messages = [N3fjpMessage::clear()];
 
         foreach ($this->sync->fullLog() as $record) {
-            $this->queue($clientId, N3fjpMessage::transaction('GET', $record));
+            $messages[] = N3fjpMessage::transaction('GET', $record);
         }
 
-        $this->queue($clientId, N3fjpMessage::listComplete());
+        $messages[] = N3fjpMessage::listComplete();
+
+        $this->outbox[] = [$clientId, $messages];
     }
 
     private function sendCheck(int $clientId): void
