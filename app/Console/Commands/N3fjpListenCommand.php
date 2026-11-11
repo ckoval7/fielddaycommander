@@ -314,27 +314,38 @@ class N3fjpListenCommand extends Command implements ExternalLoggerListener
             $targets = $clientId === null ? array_keys($this->clients) : [$clientId];
 
             foreach ($targets as $target) {
-                if (! isset($this->clients[$target])) {
-                    continue;
-                }
-
-                $queue = $this->clients[$target]['queue'];
-
-                if (is_array($message)) {
-                    $queue->pushFullLog($message);
-                } else {
-                    $queue->push($message);
-                }
-
-                if ($queue->isOverLimit()) {
-                    Log::warning('N3FJP server dropped a client that stopped reading', ['peer' => $this->clients[$target]['peer']]);
-                    $this->disconnect($target);
-                }
+                $this->queueOn($target, $message);
             }
         }
 
         foreach (array_keys($this->clients) as $clientId) {
             $this->flush($clientId);
+        }
+    }
+
+    /**
+     * Queue a message or full log on one client, dropping it if it has
+     * stopped reading.
+     *
+     * @param  string|list<string>  $message
+     */
+    private function queueOn(int $clientId, string|array $message): void
+    {
+        if (! isset($this->clients[$clientId])) {
+            return;
+        }
+
+        $queue = $this->clients[$clientId]['queue'];
+
+        if (is_array($message)) {
+            $queue->pushFullLog($message);
+        } else {
+            $queue->push($message);
+        }
+
+        if ($queue->isOverLimit()) {
+            Log::warning('N3FJP server dropped a client that stopped reading', ['peer' => $this->clients[$clientId]['peer']]);
+            $this->disconnect($clientId);
         }
     }
 
