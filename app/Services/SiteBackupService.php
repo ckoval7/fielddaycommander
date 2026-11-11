@@ -233,7 +233,12 @@ class SiteBackupService
         } catch (Throwable $e) {
             Log::error('Site restore failed', ['path' => $path, 'safety_backup' => $safetyBackup, 'error' => $e->getMessage()]);
 
-            throw new SiteBackupException($this->restoreFailureMessage($overwriteStarted, $safetyBackup, $e), previous: $e);
+            // What to say depends on whether this server's data had started to be replaced.
+            $message = $overwriteStarted && $safetyBackup !== null
+                ? 'The restore failed. The data may be partly restored. A safety backup was made just before the restore started. Restore "'.basename($safetyBackup).'" to put back the data from before this restore.'
+                : 'The restore failed. Nothing on this server was changed. Your current data is intact, and no recovery action is needed.';
+
+            throw new SiteBackupException($message.' Error: '.$e->getMessage(), previous: $e);
         } finally {
             File::deleteDirectory($work);
         }
@@ -241,19 +246,6 @@ class SiteBackupService
         Log::info('Site restored from backup', ['path' => $path, 'safety_backup' => $safetyBackup]);
 
         return ['manifest' => $manifest, 'safety_backup' => $safetyBackup];
-    }
-
-    /**
-     * What to tell the person after a restore fails, which depends on whether
-     * this server's data had started to be replaced.
-     */
-    private function restoreFailureMessage(bool $overwriteStarted, ?string $safetyBackup, Throwable $e): string
-    {
-        if (! $overwriteStarted || $safetyBackup === null) {
-            return 'The restore failed. Nothing on this server was changed. Your current data is intact, and no recovery action is needed. Error: '.$e->getMessage();
-        }
-
-        return 'The restore failed. The data may be partly restored. A safety backup was made just before the restore started. Restore "'.basename($safetyBackup).'" to put back the data from before this restore. Error: '.$e->getMessage();
     }
 
     /**
@@ -278,22 +270,15 @@ class SiteBackupService
         collect(File::files($this->directory()))
             ->filter(fn (SplFileInfo $file): bool => str_starts_with($file->getFilename(), $prefix) && $file->getExtension() === 'zip')
             // Names carry a sortable UTC time, which survives copies that reset file times.
-            ->sortByDesc(fn (SplFileInfo $file): string => $this->automaticSortKey($file->getFilename()))
+            // The copy number is padded so "1405Z (2).zip" sorts after "1405Z.zip".
+            ->sortByDesc(fn (SplFileInfo $file): string => preg_replace_callback(
+                '/(?: \((\d+)\))?\.zip$/',
+                fn (array $match): string => sprintf('#%06d', (int) ($match[1] ?? 1) ?: 1),
+                $file->getFilename(),
+            ))
             // Never delete the backup that was just made.
             ->slice(max(1, (int) config('backup.keep_automatic')))
             ->each(fn (SplFileInfo $file) => File::delete($file->getPathname()));
-    }
-
-    /**
-     * Sort key for a backup name: its time, then its copy number, so
-     * "1405Z (2).zip" sorts after "1405Z.zip" from the same minute.
-     */
-    private function automaticSortKey(string $filename): string
-    {
-        $copy = preg_match('/ \((\d+)\)\.zip$/', $filename, $match) === 1 ? (int) $match[1] : 1;
-        $stem = preg_replace('/( \(\d+\))?\.zip$/', '', $filename);
-
-        return $stem.sprintf('#%06d', $copy);
     }
 
     private function connection(): Connection
