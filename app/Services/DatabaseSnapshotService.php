@@ -7,22 +7,35 @@ namespace App\Services;
 
 use App\Exceptions\DatabaseSnapshotException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Throwable;
 
 /**
- * Service for managing database snapshots using mysqldump/mysql CLI.
+ * Service for managing database snapshots.
  *
  * Provides functionality to create, restore, list, and delete database snapshots.
- * Snapshots are stored as SQL files with JSON sidecar files containing metadata.
+ * MySQL snapshots are mysqldump SQL files; SQLite snapshots are copies of the
+ * database file. Each has a JSON sidecar file containing metadata.
  */
 class DatabaseSnapshotService
 {
     /**
-     * Pattern matching filenames produced by createSnapshot(): "{name}-{Y-m-d_His}.sql".
+     * Pattern matching filenames produced by createSnapshot(): "{name}-{Y-m-d_His}.sql" or ".sqlite".
      */
-    private const string FILENAME_PATTERN = '/^[A-Za-z0-9_-]+-\d{4}-\d{2}-\d{2}_\d{6}\.sql$/';
+    private const string FILENAME_PATTERN = '/^[A-Za-z0-9_-]+-\d{4}-\d{2}-\d{2}_\d{6}\.(sql|sqlite)$/';
+
+    private readonly SqliteDatabaseCopier $copier;
+
+    /**
+     * @param  string|null  $connectionName  The database connection to snapshot; null for the default
+     */
+    public function __construct(private readonly ?string $connectionName = null, ?SqliteDatabaseCopier $copier = null)
+    {
+        $this->copier = $copier ?? new SqliteDatabaseCopier;
+    }
 
     /**
      * Create a new database snapshot.
@@ -37,27 +50,19 @@ class DatabaseSnapshotService
     {
         $sanitizedName = $this->sanitizeName($name);
         $timestamp = now()->format('Y-m-d_His');
-        $filename = "{$sanitizedName}-{$timestamp}.sql";
+        $filename = "{$sanitizedName}-{$timestamp}.{$this->snapshotExtension()}";
         $snapshotPath = $this->getSnapshotPath();
         $fullPath = "{$snapshotPath}/{$filename}";
-
-        $command = $this->buildMysqldumpCommand($fullPath);
 
         Log::info('Creating database snapshot', [
             'name' => $sanitizedName,
             'filename' => $filename,
         ]);
 
-        $result = Process::run($command);
-
-        if (! $result->successful()) {
-            Log::error('Database snapshot creation failed', [
-                'filename' => $filename,
-                'error' => $result->errorOutput(),
-                'exit_code' => $result->exitCode(),
-            ]);
-
-            throw new DatabaseSnapshotException('Failed to create database snapshot.');
+        if ($this->usesSqlite()) {
+            $this->createSqliteSnapshot($fullPath, $filename);
+        } else {
+            $this->createMysqlSnapshot($fullPath, $filename);
         }
 
         // Verify the file was created and has content
@@ -110,22 +115,18 @@ class DatabaseSnapshotService
             throw new DatabaseSnapshotException('Snapshot file not found.');
         }
 
-        $command = $this->buildMysqlCommand($fullPath);
+        if (pathinfo($filename, PATHINFO_EXTENSION) !== $this->snapshotExtension()) {
+            throw new DatabaseSnapshotException('This snapshot was taken from a different type of database.');
+        }
 
         Log::info('Restoring database from snapshot', [
             'filename' => $filename,
         ]);
 
-        $result = Process::run($command);
-
-        if (! $result->successful()) {
-            Log::error('Database restore failed', [
-                'filename' => $filename,
-                'error' => $result->errorOutput(),
-                'exit_code' => $result->exitCode(),
-            ]);
-
-            throw new DatabaseSnapshotException('Failed to restore database snapshot.');
+        if ($this->usesSqlite()) {
+            $this->restoreSqliteSnapshot($fullPath, $filename);
+        } else {
+            $this->restoreMysqlSnapshot($fullPath, $filename);
         }
 
         Log::info('Database restored successfully', [
@@ -286,14 +287,107 @@ class DatabaseSnapshotService
     }
 
     /**
+     * Whether the snapshotted database connection is SQLite.
+     */
+    private function usesSqlite(): bool
+    {
+        return DB::connection($this->connectionName)->getDriverName() === 'sqlite';
+    }
+
+    /**
+     * The file extension for snapshots of the current database type.
+     */
+    private function snapshotExtension(): string
+    {
+        return $this->usesSqlite() ? 'sqlite' : 'sql';
+    }
+
+    /**
+     * Dump the MySQL database to a SQL file with mysqldump.
+     *
+     * @throws DatabaseSnapshotException If mysqldump fails
+     */
+    private function createMysqlSnapshot(string $fullPath, string $filename): void
+    {
+        $result = Process::run($this->buildMysqldumpCommand($fullPath));
+
+        if (! $result->successful()) {
+            Log::error('Database snapshot creation failed', [
+                'filename' => $filename,
+                'error' => $result->errorOutput(),
+                'exit_code' => $result->exitCode(),
+            ]);
+
+            throw new DatabaseSnapshotException('Failed to create database snapshot.');
+        }
+    }
+
+    /**
+     * Copy the SQLite database to a new file while other processes keep writing.
+     *
+     * @throws DatabaseSnapshotException If the copy fails
+     */
+    private function createSqliteSnapshot(string $fullPath, string $filename): void
+    {
+        try {
+            $this->copier->copyTo(DB::connection($this->connectionName), $fullPath);
+        } catch (Throwable $e) {
+            Log::error('Database snapshot creation failed', [
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new DatabaseSnapshotException('Failed to create database snapshot.');
+        }
+    }
+
+    /**
+     * Load a mysqldump SQL file into the MySQL database.
+     *
+     * @throws DatabaseSnapshotException If the mysql client fails
+     */
+    private function restoreMysqlSnapshot(string $fullPath, string $filename): void
+    {
+        $result = Process::run($this->buildMysqlCommand($fullPath));
+
+        if (! $result->successful()) {
+            Log::error('Database restore failed', [
+                'filename' => $filename,
+                'error' => $result->errorOutput(),
+                'exit_code' => $result->exitCode(),
+            ]);
+
+            throw new DatabaseSnapshotException('Failed to restore database snapshot.');
+        }
+    }
+
+    /**
+     * Copy a snapshot over the live SQLite database.
+     *
+     * @throws DatabaseSnapshotException If the copy fails
+     */
+    private function restoreSqliteSnapshot(string $fullPath, string $filename): void
+    {
+        try {
+            $this->copier->restoreFrom(DB::connection($this->connectionName), $fullPath);
+        } catch (Throwable $e) {
+            Log::error('Database restore failed', [
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new DatabaseSnapshotException('Failed to restore database snapshot.');
+        }
+    }
+
+    /**
      * Get MySQL connection credentials from config.
      *
      * @return array{host: string, port: string, database: string, username: string, password: string, socket: string}
      */
     private function getMysqlCredentials(): array
     {
-        $connection = config('database.default');
-        $config = config("database.connections.{$connection}");
+        $config = DB::connection($this->connectionName)->getConfig();
 
         return [
             'host' => $config['host'] ?? '127.0.0.1',

@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# The Windows server's web front end, run by frankenphp.exe as a service.
+# Same site as docker/Caddyfile: plain HTTP on the LAN, Reverb behind /app/*.
+# FDC_APP_PATH and FDC_HTTP_PORT come from the service's environment.
+
+{
+	# Nothing else on the laptop needs Caddy's admin API.
+	admin off
+	auto_https off
+}
+
+:{$FDC_HTTP_PORT:80} {
+	root * "{$FDC_APP_PATH}/public"
+	encode zstd gzip
+
+	request_body {
+		max_size 35MB
+	}
+
+	header {
+		?X-Content-Type-Options nosniff
+		?Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	route /app/* {
+		reverse_proxy 127.0.0.1:{$REVERB_SERVER_PORT:8080} {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	php_server
+}

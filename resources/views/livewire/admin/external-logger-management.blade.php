@@ -7,7 +7,7 @@
 
     <x-slot:title>External Loggers</x-slot:title>
 
-    <div class="py-6">
+    <div class="py-6" wire:poll.5s="pollStatus">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="flex items-center justify-end">
                 <a href="{{ route('admin.import-adif') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -24,7 +24,7 @@
                     <p class="text-red-800 dark:text-red-200"><strong>Security Notice:</strong> Keep UDP logging and the N3FJP TCP server on your private, firewalled club LAN. UDP logging is unauthenticated. N3FJP doesn't have a password, so anyone who can reach its port can add, edit, and delete contacts. Never forward these ports from the internet.</p>
                 </div>
                 {{-- N1MM Logger+ Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">N1MM Logger+</h2>
@@ -161,7 +161,7 @@
                 </div>
 
                 {{-- WSJTX / JTDX Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">WSJT-X / JTDX</h2>
@@ -305,7 +305,7 @@
                     </div>
                 </div>
                 {{-- UDP ADIF (fldigi, etc.) Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">UDP ADIF (fldigi, etc.)</h2>
@@ -441,7 +441,7 @@
                     </div>
                 </div>
                 {{-- N3FJP network server Section --}}
-                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6" wire:poll.5s="pollStatus">
+                <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-3 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">N3FJP</h2>

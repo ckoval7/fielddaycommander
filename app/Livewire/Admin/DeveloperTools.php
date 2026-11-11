@@ -22,6 +22,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Mary\Traits\Toast;
@@ -376,14 +377,11 @@ class DeveloperTools extends Component
 
             $tablesToTruncate = array_unique($tablesToTruncate);
 
-            // Disable foreign key checks temporarily
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-
-            foreach ($tablesToTruncate as $table) {
-                DB::table($table)->truncate();
-            }
-
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            Schema::withoutForeignKeyConstraints(function () use ($tablesToTruncate): void {
+                foreach ($tablesToTruncate as $table) {
+                    DB::table($table)->truncate();
+                }
+            });
 
             AuditLog::log(
                 action: 'developer.database.selective_reset',
@@ -403,7 +401,6 @@ class DeveloperTools extends Component
                 'Cleared: '.implode(', ', $tablesToTruncate)
             );
         } catch (\Exception $e) {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             $this->reportFailure('Selective reset failed', $e);
         }
     }

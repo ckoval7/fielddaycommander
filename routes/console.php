@@ -3,6 +3,7 @@
 // SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use App\Models\Event;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -37,3 +38,15 @@ Schedule::command('weather:fetch-forecast')->everyFifteenMinutes();
 
 // Check NWS storm alerts and broadcast changes
 Schedule::command('weather:check-alerts')->everyTwoMinutes();
+
+// Automatic backups on SQLite installs (the Windows server turns these on):
+// hourly while an event is in progress, daily otherwise.
+if (config('backup.automatic')) {
+    Schedule::command('backup:create --automatic')->hourly()
+        ->when(fn (): bool => Event::query()->active()->exists())
+        ->withoutOverlapping();
+
+    Schedule::command('backup:create --automatic')->dailyAt('03:00')
+        ->skip(fn (): bool => Event::query()->active()->exists())
+        ->withoutOverlapping();
+}

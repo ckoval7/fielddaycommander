@@ -37,8 +37,11 @@ use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
+use App\Services\ListenerProcessRunner;
 use App\Support\IconSprite;
 use App\Support\StationMode;
+use App\Support\WindowsCertificateStore;
+use App\Support\WindowsViewRace;
 use App\View\Components\Breadcrumbs;
 use App\View\Components\Button;
 use App\View\Components\Checkbox;
@@ -62,6 +65,7 @@ use App\View\Components\Tabs;
 use App\View\Components\Textarea;
 use App\View\Components\Toggle;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
@@ -111,6 +115,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(RuleSetFactory::class);
 
+        // Linux/macOS or Windows process handling for the external logger listeners.
+        $this->app->singleton(ListenerProcessRunner::class, fn (): ListenerProcessRunner => ListenerProcessRunner::forOperatingSystem());
+
         // Per-request icon sprite frames (see App\Support\IconSprite).
         $this->app->scoped(IconSprite::class);
 
@@ -130,6 +137,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // Define rate limiters
         $this->configureRateLimiters();
+
+        WindowsCertificateStore::apply($this->app->make(HttpFactory::class));
+
+        // Windows can't rename over a view file another request has open.
+        if (PHP_OS_FAMILY === 'Windows') {
+            WindowsViewRace::register((string) config('view.compiled'));
+        }
 
         // Override Mary UI's <x-icon> component with a prefix-aware version
         // so names like `phosphor-house` resolve via Blade Icons' prefix

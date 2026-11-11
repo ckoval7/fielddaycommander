@@ -35,3 +35,8 @@ boost.json
 coverage.xml
 # Added by code-review-graph
 .code-review-graph/
+
+# Windows installer build (windows/build-installer.sh)
+/build/windows-installer/
+/build/windows-downloads/
+/dist/

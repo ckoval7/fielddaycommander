@@ -320,34 +320,15 @@ test('selectiveReset truncates correct tables', function () {
 
     expect(Contact::count())->toBe(5);
 
-    // Mock DB::statement to avoid SQLite incompatibility with SET FOREIGN_KEY_CHECKS
-    DB::shouldReceive('statement')
-        ->with('SET FOREIGN_KEY_CHECKS=0')
-        ->once();
-    DB::shouldReceive('statement')
-        ->with('SET FOREIGN_KEY_CHECKS=1')
-        ->once();
-
-    // Mock DB::table for truncate operation
-    DB::shouldReceive('table')
-        ->with('contacts')
-        ->once()
-        ->andReturnSelf();
-    DB::shouldReceive('truncate')
-        ->once();
-    DB::shouldReceive('table')
-        ->with('operating_sessions')
-        ->once()
-        ->andReturnSelf();
-    DB::shouldReceive('truncate')
-        ->once();
-
     Livewire::test(DeveloperTools::class)
         ->set('selectedTables', ['contacts'])
         ->set('showSelectiveResetModal', true)
         ->call('selectiveReset')
         ->assertSet('selectedTables', [])
         ->assertSet('showSelectiveResetModal', false);
+
+    expect(Contact::count())->toBe(0)
+        ->and(OperatingSession::count())->toBe(0);
 
     // Verify critical audit log was created
     $auditLog = AuditLog::where('action', 'developer.database.selective_reset')->first();
@@ -654,18 +635,6 @@ test('fullReset logs critical audit entry', function () {
 
 test('selectiveReset logs critical audit entry with table details', function () {
     $this->actingAs($this->adminUser);
-
-    // Mock DB::statement to avoid SQLite incompatibility with SET FOREIGN_KEY_CHECKS
-    DB::shouldReceive('statement')
-        ->with('SET FOREIGN_KEY_CHECKS=0')
-        ->once();
-    DB::shouldReceive('statement')
-        ->with('SET FOREIGN_KEY_CHECKS=1')
-        ->once();
-
-    // Mock DB::table for truncate operations
-    DB::shouldReceive('table')->andReturnSelf();
-    DB::shouldReceive('truncate')->atLeast()->once();
 
     Livewire::test(DeveloperTools::class)
         ->set('selectedTables', ['contacts', 'guestbook'])
