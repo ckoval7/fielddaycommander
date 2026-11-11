@@ -7,6 +7,7 @@ use App\Exceptions\DatabaseSnapshotException;
 use App\Services\DatabaseSnapshotService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -23,7 +24,8 @@ beforeEach(function () {
     }
     File::makeDirectory($this->testPath, 0755, true);
 
-    $this->service = new DatabaseSnapshotService;
+    // These tests fake the mysqldump and mysql processes; the SQLite tests below use a real file
+    $this->service = new DatabaseSnapshotService('mysql');
 });
 
 afterEach(function () {
@@ -441,5 +443,62 @@ describe('restoreSnapshot', function () {
         $result = $this->service->restoreSnapshot($filename);
 
         expect($result)->toBeTrue();
+    });
+});
+
+describe('sqlite', function () {
+    beforeEach(function () {
+        $this->databaseFile = "{$this->testPath}/live.sqlite";
+        touch($this->databaseFile);
+
+        Config::set('database.connections.snapshot_file', [
+            ...config('database.connections.sqlite'),
+            'database' => $this->databaseFile,
+        ]);
+
+        DB::connection('snapshot_file')->statement('CREATE TABLE contacts (id INTEGER PRIMARY KEY, callsign TEXT)');
+        DB::connection('snapshot_file')->table('contacts')->insert(['callsign' => 'W1AW']);
+
+        $this->sqliteService = new DatabaseSnapshotService('snapshot_file');
+    });
+
+    afterEach(function () {
+        DB::purge('snapshot_file');
+    });
+
+    it('snapshots the database file without running any process', function () {
+        Process::fake();
+
+        $filename = $this->sqliteService->createSnapshot('before-event');
+
+        Process::assertNothingRan();
+        expect($filename)->toEndWith('.sqlite')
+            ->and($this->sqliteService->listSnapshots()->pluck('filename')->all())->toBe([$filename]);
+
+        $copy = new PDO("sqlite:{$this->testPath}/{$filename}");
+        expect($copy->query('SELECT callsign FROM contacts')->fetchColumn())->toBe('W1AW');
+    });
+
+    it('restores the database to the snapshot', function () {
+        $filename = $this->sqliteService->createSnapshot('before-event');
+
+        DB::connection('snapshot_file')->table('contacts')->insert(['callsign' => 'K1ABC']);
+        DB::connection('snapshot_file')->table('contacts')->where('callsign', 'W1AW')->delete();
+
+        expect($this->sqliteService->restoreSnapshot($filename))->toBeTrue()
+            ->and(DB::connection('snapshot_file')->table('contacts')->pluck('callsign')->all())->toBe(['W1AW']);
+    });
+
+    it('refuses to restore a MySQL snapshot into SQLite', function () {
+        $filename = 'old-2026-01-01_120000.sql';
+        File::put("{$this->testPath}/{$filename}", 'fake sql content');
+
+        expect(fn () => $this->sqliteService->restoreSnapshot($filename))
+            ->toThrow(DatabaseSnapshotException::class, 'different type of database');
+    });
+
+    it('refuses to snapshot an in-memory database', function () {
+        expect(fn () => (new DatabaseSnapshotService('sqlite'))->createSnapshot('memory'))
+            ->toThrow(DatabaseSnapshotException::class, 'Failed to create database snapshot');
     });
 });

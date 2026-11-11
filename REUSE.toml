@@ -10,6 +10,7 @@ SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
 [[annotations]]
 path = [
     "public/favicon.ico",
+    "windows/installer/server.ico",
     "public/favicon.png",
     "public/apple-touch-icon.png",
     "public/icons/**",

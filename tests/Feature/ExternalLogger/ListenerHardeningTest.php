@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 uses(RefreshDatabase::class);
@@ -178,4 +179,15 @@ test('an over-long mode name is cut to the submode column and logged', function 
     expect($contact->fresh()->submode)->toBe('SOME-VERY-LONG-DIGIT');
     Log::shouldHaveReceived('warning')
         ->withArgs(fn (string $message): bool => str_contains($message, 'over-long mode name'));
+});
+
+test('the listeners use no socket flags missing from the Windows sockets extension', function () {
+    // MSG_DONTWAIT, SO_REUSEPORT and friends are undefined on Windows, where
+    // using one crashes the listener the first time it runs that line.
+    $source = collect(File::files(app_path('Console/Commands')))
+        ->filter(fn ($file) => str_contains($file->getFilename(), 'Listen'))
+        ->map(fn ($file) => File::get($file->getPathname()))
+        ->implode("\n");
+
+    expect($source)->not->toMatch('/\b(MSG_DONTWAIT|MSG_WAITALL|SO_REUSEPORT|SOCK_NONBLOCK|MSG_NOSIGNAL)\b/');
 });

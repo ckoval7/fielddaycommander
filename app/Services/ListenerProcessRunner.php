@@ -8,44 +8,39 @@ namespace App\Services;
 /**
  * Thin wrapper around OS process primitives used to manage detached
  * external logger listener processes. Exists so the process layer can
- * be swapped out in tests without spawning real processes.
+ * be swapped out in tests without spawning real processes, and so each
+ * operating system gets its own implementation.
  */
-class ListenerProcessRunner
+abstract class ListenerProcessRunner
 {
     /**
-     * Run a shell command that backgrounds a process and echoes its PID.
-     *
-     * Uses exec() with & instead of Symfony Process because its __destruct()
-     * kills the child on GC.
-     *
-     * @return int|null The PID of the detached process, or null if none was reported
+     * The runner for the operating system PHP is running on.
      */
-    public function spawnDetached(string $command): ?int
+    public static function forOperatingSystem(string $family = PHP_OS_FAMILY): self
     {
-        $output = [];
-        exec($command, $output);
-        $pid = (int) ($output[0] ?? 0);
-
-        return $pid > 0 ? $pid : null;
+        return $family === 'Windows'
+            ? new WindowsListenerProcessRunner
+            : new PosixListenerProcessRunner;
     }
 
-    public function isAlive(int $pid): bool
-    {
-        return posix_kill($pid, 0);
-    }
+    /**
+     * Start a process that keeps running after this request ends.
+     *
+     * @param  list<string>  $arguments  The program followed by its arguments
+     * @return int|null The PID of the detached process, or null if it could not be started
+     */
+    abstract public function spawnDetached(array $arguments): ?int;
 
-    public function terminate(int $pid): void
-    {
-        posix_kill($pid, SIGTERM);
-    }
+    abstract public function isAlive(int $pid): bool;
+
+    /**
+     * Stop a process. Listeners asked to stop through ExternalLoggerManager
+     * get the chance to finish their queued contacts first.
+     */
+    abstract public function terminate(int $pid): void;
 
     /**
      * Read the raw command line of a process, or null if it does not exist.
      */
-    public function commandLine(int $pid): ?string
-    {
-        $cmdline = @file_get_contents("/proc/{$pid}/cmdline");
-
-        return $cmdline === false ? null : $cmdline;
-    }
+    abstract public function commandLine(int $pid): ?string;
 }

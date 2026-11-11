@@ -4,6 +4,7 @@
 
 ### Added
 
+- Install the Field Day Commander server on Windows with one installer, without Docker or Linux. It runs as Windows services and keeps your log, settings, and photos across updates. Start menu shortcuts let you back up and restore, with automatic backups hourly during an event and daily otherwise.
 - The **Relays** page in the sidebar (`/relays`) lets you create a one-time enrollment code for the current event and revoke relays. Field Day Commander Relay is a separate desktop program that sends contacts from logging software on another computer to this server. Codes work once and expire in 15 minutes. The page won't create codes for an event that has ended. You need **enroll-relays**, granted by default to System Administrator, Event Manager, Station Captain, and Operator, but not Config Only. You can see and revoke your own relays. With **import-contacts**, you can see and revoke all relays for the event.
 - The relay API requires HTTPS. Direct localhost connections (`localhost`, `127.0.0.1`, or `[::1]`) from the server's own machine are exempt on native installs only. Other plain HTTP connections to **Relays** show a notice instead of the enrollment form. Behind a TLS proxy, the proxy must be in `TRUSTED_PROXIES`. Code creation, enrollment, failed enrollment attempts, and revocation appear in the audit log. You can also revoke relays with `php artisan relay:revoke`.
 - Contacts sent by the relay use the station they name. If a contact does not name one, the relay's name is used. Contacts can create missing stations only while the person who enrolled the relay has **manage-stations** permission. Otherwise, the contact waits in the relay's queue until someone with **manage-stations** creates a station with that name or hostname. By default, Operators can enroll relays but cannot manage stations. Station Captains, Event Managers, and System Administrators have both permissions.
@@ -14,6 +15,7 @@
 
 - Phone contacts counted as Digital when a logger sent the mode as `PH`. They now count as Phone. N3FJP contacts received directly by the server weren't affected.
 - Since v26.10.12, deleting a user or several selected users on **Users** showed only a red confirmation heading. The explanation below it now appears again, warning that the accounts will be removed from the users list and those users won't be able to sign in.
+- Since v26.11.1, when Field Day Commander became an N3FJP network server, an N3FJP PC connecting to a large event log, around 20,000 contacts or more depending on how much each contact held, was disconnected right after connecting without loading the log, and reconnecting failed the same way. This affected Linux, Docker, Helm, and Windows installs, with "N3FJP server dropped a client that stopped reading" in the server log. A PC now loads the whole log however large it is, as long as it keeps reading, and a PC that really stops responding is still disconnected.
 
 ## 26.11.1 - 2026-11-03
 

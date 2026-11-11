@@ -14,7 +14,12 @@ use function Illuminate\Support\php_binary;
 
 class ExternalLoggerManager
 {
-    public function __construct(private ListenerProcessRunner $processRunner = new ListenerProcessRunner) {}
+    private ListenerProcessRunner $processRunner;
+
+    public function __construct(?ListenerProcessRunner $processRunner = null)
+    {
+        $this->processRunner = $processRunner ?? ListenerProcessRunner::forOperatingSystem();
+    }
 
     public function enable(int $eventConfigurationId, string $listenerType, int $port): ExternalLoggerSetting
     {
@@ -70,15 +75,12 @@ class ExternalLoggerManager
             return null;
         }
 
-        $command = sprintf(
-            '%s %s external-logger:%s --event=%d > /dev/null 2>&1 & echo $!',
-            escapeshellarg(php_binary()),
-            escapeshellarg(base_path('artisan')),
-            $listenerType,
-            $eventConfigurationId,
-        );
-
-        $pid = $this->processRunner->spawnDetached($command);
+        $pid = $this->processRunner->spawnDetached([
+            php_binary(),
+            base_path('artisan'),
+            "external-logger:{$listenerType}",
+            "--event={$eventConfigurationId}",
+        ]);
 
         if ($pid !== null) {
             $setting->update(['pid' => $pid]);
@@ -96,12 +98,46 @@ class ExternalLoggerManager
             return;
         }
 
-        if ($setting->pid !== null && $this->processRunner->isAlive($setting->pid)) {
+        // A PID that no longer runs our listener has been reused by another
+        // process, which must never be signalled or killed.
+        if ($setting->pid !== null && $this->isListenerProcess($setting->pid, $listenerType)) {
+            $this->requestStop($setting->pid);
             $this->processRunner->terminate($setting->pid);
         }
 
         $setting->update(['pid' => null]);
     }
+
+    /**
+     * Ask the listener running as $pid to finish its queued contacts and exit.
+     * This is how listeners are stopped on Windows, which has no SIGTERM.
+     */
+    public function requestStop(int $pid): void
+    {
+        Cache::put($this->stopRequestKey($pid), true, self::STOP_REQUEST_TTL_SECONDS);
+    }
+
+    /**
+     * Whether the listener running as $pid has been asked to stop.
+     */
+    public function isStopRequested(int $pid): bool
+    {
+        return Cache::has($this->stopRequestKey($pid));
+    }
+
+    /**
+     * Keyed by PID, so a request can't stop a listener started after it.
+     */
+    private function stopRequestKey(int $pid): string
+    {
+        return "external-logger:stop:{$pid}";
+    }
+
+    /**
+     * Long enough for the listener to notice, short enough that a recycled PID
+     * is very unlikely to inherit the request.
+     */
+    private const STOP_REQUEST_TTL_SECONDS = 60;
 
     public function getProcessStatus(int $eventConfigurationId, string $listenerType): string
     {
@@ -133,9 +169,15 @@ class ExternalLoggerManager
 
     /**
      * Check that a PID belongs to our artisan listener, not a recycled OS process.
+     * The liveness check goes first because it's cheap on every OS, while
+     * reading a command line on Windows starts PowerShell.
      */
     private function isListenerProcess(int $pid, string $listenerType): bool
     {
+        if (! $this->processRunner->isAlive($pid)) {
+            return false;
+        }
+
         $cmdline = $this->processRunner->commandLine($pid);
 
         if ($cmdline === null) {

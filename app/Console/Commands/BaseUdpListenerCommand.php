@@ -24,6 +24,11 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
 
     private bool $running = false;
 
+    /**
+     * When the listen loop last looked for a stop request (Unix time).
+     */
+    private int $lastStopCheck = 0;
+
     private ?Socket $socket = null;
 
     /**
@@ -284,6 +289,23 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     }
 
     /**
+     * Windows has no SIGTERM, so a stop also arrives as a request in the
+     * cache. Checked at most once a second.
+     */
+    private function checkForStopRequest(ExternalLoggerManager $manager, int $now): void
+    {
+        if (! $this->running || $now === $this->lastStopCheck) {
+            return;
+        }
+
+        $this->lastStopCheck = $now;
+
+        if ($manager->isStopRequested(getmypid())) {
+            $this->running = false;
+        }
+    }
+
+    /**
      * @return array{int, int} [processedCount, errorCount]
      */
     private function listenLoop(
@@ -303,6 +325,8 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
         // On a stop, datagrams already read off the socket are still handled.
         while ($this->running || $this->pending !== []) {
             $now = time();
+
+            $this->checkForStopRequest($manager, $now);
             if ($now - $lastHeartbeatTime >= 5) {
                 $config->unsetRelation('event');
                 $config->refresh();
@@ -364,7 +388,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
                 return null;
             }
 
-            $packet = $this->receive(0);
+            $packet = $this->receive();
 
             if ($packet === null) {
                 return null;
@@ -373,7 +397,7 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
             $this->hold($packet);
         }
 
-        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receive(MSG_DONTWAIT)) !== null) {
+        while ($this->running && $this->pendingBytes < self::MAX_PENDING_BYTES && ($packet = $this->receive(wait: false)) !== null) {
             $this->hold($packet);
         }
 
@@ -393,15 +417,27 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     }
 
     /**
-     * @return array{string, string}|null
+     * The next datagram on the socket. Waits up to the socket's timeout, or
+     * not at all when $wait is false; that case checks with socket_select()
+     * because Windows' sockets extension has no non-blocking receive flag.
+     *
+     * @return array{string, string}|null [datagram, sender address]
      */
-    private function receive(int $flags): ?array
+    private function receive(bool $wait = true): ?array
     {
+        $read = [$this->socket];
+        $write = null;
+        $except = null;
+
+        if (! $wait && (int) @socket_select($read, $write, $except, 0) < 1) {
+            return null;
+        }
+
         $buffer = '';
         $from = '';
         $fromPort = 0;
 
-        if (@socket_recvfrom($this->socket, $buffer, 65535, $flags, $from, $fromPort) === false) {
+        if (@socket_recvfrom($this->socket, $buffer, 65535, 0, $from, $fromPort) === false) {
             return null;
         }
 
