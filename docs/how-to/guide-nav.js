@@ -11,6 +11,7 @@
     { file: "pi-setup.html", title: "Prepare a Raspberry Pi" },
     { file: "ssh-basics.html", title: "SSH & Command-Line Basics" },
     { file: "install.html", title: "Install Field Day Commander" },
+    { file: "windows-server.html", title: "Install Field Day Commander on Windows" },
     { file: "lan-setup.html", title: "Set Up a LAN for Field Operations" },
     { file: "first-event.html", title: "First Event Setup" },
     { file: "bonuses-objectives.html", title: "Plan Your Bonuses and Objectives" },

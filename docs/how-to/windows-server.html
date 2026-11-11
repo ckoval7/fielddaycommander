@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Field Day Commander on Windows</title>
+<meta name="description" content="Install Field Day Commander on Windows 10 or 11, connect your operators, and use the backup tools.">
+<link rel="canonical" href="https://fielddaycommander.org/how-to/windows-server.html">
+<meta property="og:site_name" content="Field Day Commander">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Install Field Day Commander on Windows">
+<meta property="og:description" content="Install Field Day Commander on Windows 10 or 11, connect your operators, and use the backup tools.">
+<meta property="og:url" content="https://fielddaycommander.org/how-to/windows-server.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Install Field Day Commander on Windows">
+<meta name="twitter:description" content="Install Field Day Commander on Windows 10 or 11, connect your operators, and use the backup tools.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../fd-commander.css">
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="topo-bg"></div>
+
+<nav></nav>
+<script src="../nav.js"></script>
+
+<section class="page-hero" style="padding-bottom:2rem;">
+  <div class="container">
+    <h1>Install <span class="gradient">Field Day Commander on Windows</span></h1>
+    <p>Set up the Windows server, then connect from a phone on the same network.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="guide-layout">
+      <div class="guide-breadcrumb">
+        <a href="index.html">How-To Guides</a> &rsaquo; Install Field Day Commander on Windows
+      </div>
+
+      <p>Install Field Day Commander on a Windows computer, then let operators connect with a browser on the same network. They don't need to install anything on their phones, tablets, or laptops.</p>
+
+      <div class="callout info">
+        <div class="callout-title">Choosing a Server</div>
+        <p>The Linux and Docker installs are recommended, especially for bigger clubs with many stations logging at once. Windows uses a simpler built-in database and is a supported option for clubs that only have a Windows computer to run the server on.</p>
+      </div>
+      <p>For the recommended options, follow the <a href="install.html">Linux install guide</a> or the <a href="../fd-commander-docs.html#docker">Docker instructions</a>.</p>
+
+      <h2>What You Need</h2>
+      <ul>
+        <li>A computer running 64-bit Windows 10 or 11, with administrator access.</li>
+        <li>The Windows server installer from a GitHub release.</li>
+        <li>A phone, tablet, or laptop on the same network to check access.</li>
+      </ul>
+      <p>Everything the server needs comes in the installer, so you don't need Linux or Docker. Once you've downloaded it, you don't need internet access to install or run the server.</p>
+
+      <h2>Step 1: Download the Installer</h2>
+      <p>Open the <a href="https://github.com/ckoval7/fielddaycommander/releases/latest">GitHub releases page</a> and look for the Windows server assets. Download <code>field-day-commander-server-setup-&lt;version&gt;.exe</code>. The release also includes <code>field-day-commander-server-setup.sha256</code> with the installer's checksum.</p>
+      <p>The installer isn't code-signed, so Windows SmartScreen may show “Windows protected your PC”. Click <strong>More info</strong>, then <strong>Run anyway</strong> to continue.</p>
+
+      <h2>Step 2: Run the Installer</h2>
+      <p>On the Windows computer that will run the server, open the downloaded installer and approve the administrator prompt. Read the welcome and GPL license pages, then continue with the installation.</p>
+      <p>During setup, you'll see <strong>Setting up the server and Windows services. This takes a minute or two...</strong> Leave the installer open until it finishes.</p>
+
+      <h2>Step 3: Read the Finish Page</h2>
+      <p>The finish page says that Field Day Commander is running and will start whenever this computer starts. Write down the address shown for operators. It uses the computer's name, such as <code>http://shack-pc.local</code>.</p>
+      <p>The installer tries web port 80 first, then 8000, then 8001. If it uses a port other than 80, the address includes it, such as <code>http://shack-pc.local:8000</code>. Keep that port in the address you share.</p>
+      <p>Leave <strong>Open Field Day Commander on this computer</strong> checked to open the site through <code>http://localhost</code>, with the selected port if needed.</p>
+
+      <h2>Step 4: Set the Administrator Password</h2>
+      <p>The first visit opens the setup wizard. Fill in <strong>Set Admin Password</strong> and <strong>Confirm Password</strong>, then complete the site branding and preferences pages. Save the password somewhere safe. When setup finishes, sign in with <code>admin@localhost</code> and that password.</p>
+      <p><a href="first-event.html#initial-setup-wizard">First Event Setup</a> walks through the wizard and setting up your event.</p>
+
+      <h2>Step 5: Check From a Phone</h2>
+      <p>Connect your phone to the same network as the server and open the operator address from the finish page. You should see the site. Use that address for your operators, rather than <code>localhost</code>, which refers to the device opening it.</p>
+      <p>The <code>.local</code> address depends on name resolution on your network. If it doesn't work, use the server's local IP address with the same web port.</p>
+
+      <h2 id="backups">Back Up and Restore</h2>
+      <p>In the Start menu's <strong>Field Day Commander</strong> folder, open <strong>Back Up Field Day Commander</strong>. Approve the administrator prompt. The tool makes a zip containing the database, uploaded photos and files, and the app key and mail settings needed on a new server. When it finishes, it offers to show the file in Explorer. Copy it to another computer or a USB drive.</p>
+      <p>Open <strong>Field Day Commander Backups</strong> in the same Start menu folder to see saved backups. They're stored in <code>C:\Users\Public\Documents\Field Day Commander Backups</code>.</p>
+      <p>Automatic backups are enabled during installation. They run hourly while an event is in progress and daily at 03:00 otherwise. The newest 48 automatic backups are kept. Backups you make yourself aren't pruned.</p>
+      <div class="callout info">
+        <div class="callout-title">Automatic backups leave out uploaded files</div>
+        <p>Automatic backups contain the database and settings, without photos or other uploaded files. Use the Start menu backup tool when you want those files included.</p>
+      </div>
+      <p>To restore, open <strong>Restore Field Day Commander from a Backup</strong> and approve the administrator prompt. Choose a backup and review the contents shown before confirming. The tool stops the services, saves the current data as a “backup before restore,” restores your backup, and starts the services again. Operators can't log during the restore. To undo it, restore the “backup before restore” file.</p>
+      <p>Backups from a newer version and damaged databases are refused before your data changes. If a backup came from a newer release, upgrade the server before restoring it.</p>
+
+      <h2>Upgrade or Uninstall</h2>
+      <p>To upgrade, run the newer installer on the same computer. It stops the services and replaces the code while keeping your data, settings, and web port.</p>
+      <p>To uninstall, remove <strong>Field Day Commander Server</strong> from Windows' installed apps. The uninstaller asks whether to also delete your log, settings, and photos. <strong>No</strong> is selected by default. If you keep the data, reinstalling will use it again. Backups in Public Documents are always kept.</p>
+
+      <h2>Troubleshooting</h2>
+      <h3>Setup says it could not finish</h3>
+      <p>Read <code>C:\ProgramData\Field Day Commander\logs\setup.log</code> for the error. Fix the problem described there, then run the installer again.</p>
+      <h3>Ports 80, 8000, and 8001 are all in use</h3>
+      <p>Close a program using one of those ports, then run the installer again.</p>
+      <h3>The site opens on the server but not on a phone</h3>
+      <p>Check that both devices are on the same network and that you're using the address from the finish page, including its port. Try the server's local IP address if its <code>.local</code> name doesn't resolve.</p>
+      <p>The installer adds firewall rules in the <strong>Field Day Commander</strong> group for the web server and TCP and UDP logger listeners. They allow connections from the local subnet on every network profile, including Public. Live updates go through the web port, so you don't need to open a separate WebSocket port.</p>
+
+      <h2>Quick Reference</h2>
+      <div class="table-wrap">
+        <table class="port-table">
+          <thead><tr><th>Item</th><th>Location or Setting</th></tr></thead>
+          <tbody>
+            <tr><td>Server code</td><td><code>C:\Program Files\Field Day Commander</code></td></tr>
+            <tr><td>Database, settings, photos, and logs</td><td><code>C:\ProgramData\Field Day Commander</code>. Access is limited to SYSTEM, Administrators, and the service account.</td></tr>
+            <tr><td>Setup log</td><td><code>C:\ProgramData\Field Day Commander\logs\setup.log</code></td></tr>
+            <tr><td>Backups</td><td><code>C:\Users\Public\Documents\Field Day Commander Backups</code></td></tr>
+            <tr><td>Web port</td><td>80, otherwise 8000 or 8001. Plain HTTP only, with no built-in HTTPS.</td></tr>
+            <tr><td>Live updates</td><td>First free port from 8080–8099 internally, proxied through the web port.</td></tr>
+            <tr><td>Windows services</td><td><code>FieldDayCommanderWeb</code>, <code>FieldDayCommanderReverb</code>, <code>FieldDayCommanderQueue</code>, and <code>FieldDayCommanderScheduler</code>. They run as LocalService, start with Windows, and restart after a crash.</td></tr>
+            <tr><td>Open the site on the server</td><td>Start menu &gt; <strong>Field Day Commander</strong> &gt; <strong>Field Day Commander</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-nav" role="navigation" aria-label="Guide navigation">
+        <a href="index.html">All Guides</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer></footer>
+<script src="../footer.js"></script>
+<script src="../toc.js"></script>
+<script src="guide-nav.js"></script>
+
+</body>
+</html>

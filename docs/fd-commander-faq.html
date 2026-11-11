@@ -110,7 +110,7 @@
       "name": "What do I need to run Field Day Commander?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Operators can use it from any device with a web browser: Windows, Mac, Linux, a tablet, or a phone. The server runs on Linux (a Raspberry Pi, old PC, or any spare box). The deploy script supports Ubuntu, Debian, 64-bit Raspberry Pi OS, and RHEL-family distros such as Rocky and AlmaLinux, and setup takes about 5 minutes."
+        "text": "Operators can use it from any device with a web browser: Windows, Mac, Linux, a tablet, or a phone. The server runs on Linux (a Raspberry Pi, old PC, or any spare box). The deploy script supports Ubuntu, Debian, 64-bit Raspberry Pi OS, and RHEL-family distros such as Rocky and AlmaLinux, and setup takes about 5 minutes. If your club only has a Windows computer for the server, a Windows installer is also available. Linux or Docker is still recommended."
       }
     },
     {
@@ -126,7 +126,7 @@
       "name": "Does Field Day Commander need internet access?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "To deploy: yes, the install script downloads dependencies. To run: no. Once deployed, it runs entirely on your LAN with no cloud dependencies. The weather page is the only feature that uses the internet, and the rest of the app works without it. Many Field Day sites have no internet at all."
+        "text": "To deploy: yes, the Linux install script downloads dependencies. To run: no. Once deployed, it runs entirely on your LAN with no cloud dependencies. The weather page is the only feature that uses the internet, and the rest of the app works without it. Many Field Day sites have no internet at all. The Windows installer bundles everything, so it doesn't need internet to install."
       }
     },
     {
@@ -294,14 +294,14 @@
         <div class="faq-item">
           <div class="faq-question">What do I need to run it?</div>
           <div class="faq-answer">
-            Operators can use it from any device with a web browser: Windows, Mac, Linux, a tablet, a phone, whatever. It's just a website on your local network. The <em>server</em> runs on Linux, which is only one machine. That could be a Raspberry Pi, the old PC in the ham shack, or any spare box. Linux is free, runs on nearly anything, and most hams with any tech background have touched it. The deploy script supports Ubuntu, Debian, 64-bit Raspberry Pi OS, and RHEL-family distros such as Rocky and AlmaLinux, and setup takes about 5 minutes.
+            Operators can use it from any device with a web browser: Windows, Mac, Linux, a tablet, a phone, whatever. It's a website on your local network. The <em>server</em> runs on Linux, which is only one machine. That could be a Raspberry Pi, the old PC in the ham shack, or any spare box. Linux is free, runs on nearly anything, and most hams with any tech background have touched it. The deploy script supports Ubuntu, Debian, 64-bit Raspberry Pi OS, and RHEL-family distros such as Rocky and AlmaLinux, and setup takes about 5 minutes. If your club only has a Windows computer for the server, a <a href="how-to/windows-server.html">Windows installer</a> is also available. Linux or <a href="fd-commander-docs.html#docker">Docker</a> is still recommended.
           </div>
         </div>
 
         <div class="faq-item">
           <div class="faq-question">Do I need to know Linux to set it up?</div>
           <div class="faq-answer">
-            You need to be able to clone a git repo and run a shell script. The deploy command is <code>sudo ./deploy.sh --domain YOUR_SERVER_HOSTNAME</code>: replace <code>YOUR_SERVER_HOSTNAME</code> with a hostname your station devices can resolve. For example, <code>fd-commander.local</code> only applies to a device named <code>fd-commander</code> with working mDNS. The <a href="how-to/install.html#choose-hostname">installation guide explains how to choose the address</a>. The script handles everything: dependencies, database, web server. You don't need to configure Apache, edit PHP files, or touch a database. But if the phrase "SSH into the Pi" makes you uncomfortable, you'll want to recruit your club's tech person.
+            You need to be able to clone a git repo and run a shell script. The deploy command is <code>sudo ./deploy.sh --domain YOUR_SERVER_HOSTNAME</code>: replace <code>YOUR_SERVER_HOSTNAME</code> with a hostname your station devices can resolve. For example, <code>fd-commander.local</code> only applies to a device named <code>fd-commander</code> with working mDNS. The <a href="how-to/install.html#choose-hostname">installation guide explains how to choose the address</a>. The script handles everything: dependencies, database, web server. You don't need to configure Apache, edit PHP files, or touch a database. But if the phrase "SSH into the Pi" makes you uncomfortable, you'll want to recruit your club's tech person. The <a href="how-to/windows-server.html">Windows installer</a> is an option that doesn't require Linux knowledge if your club only has a Windows computer for the server.
           </div>
         </div>
 
@@ -322,7 +322,7 @@
         <div class="faq-item">
           <div class="faq-question">Does it need internet access?</div>
           <div class="faq-answer">
-            <strong>To deploy:</strong> yes. The install script downloads dependencies, so do this at home on your regular internet connection before the event.
+            <strong>To deploy:</strong> yes. The Linux install script downloads dependencies, so do this at home on your regular internet connection before the event. The <a href="how-to/windows-server.html">Windows installer</a> bundles everything, so it doesn't need internet to install.
             <br><br>
             <strong>To run:</strong> no. Once deployed, it runs entirely on your LAN with no cloud dependencies. The weather page is the only feature that uses the internet, and the rest of the app works without it. Many Field Day sites have no internet at all.
           </div>
@@ -333,7 +333,7 @@
           <div class="faq-answer">
             Yes. Field Day Commander is a full Laravel application with role-based authentication, CSRF protection, and input validation. It's built the same way any production web app is, so exposing it to the internet is fine if your setup calls for it. This is especially useful in the weeks before the event: club members can register their equipment, sign up for operating shifts, and review station assignments from home instead of waiting until setup day. During the event, people who can't make it to the site can follow the live score, and you can make the guestbook accessible from a public URL.
             <br><br>
-            <strong>If you do this, use TLS.</strong> Running over plain HTTP on a LAN is one thing. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, which anyone on the path can read. Set up a TLS certificate (Let's Encrypt is free) and make sure all traffic goes through HTTPS. The deploy script supports this. There is no good reason to skip it.
+            <strong>If you do this, use TLS.</strong> Running over plain HTTP on a LAN is one thing. Running over plain HTTP on the open internet means passwords and session tokens travel in cleartext, which anyone on the path can read. Set up a TLS certificate (Let's Encrypt is free) and make sure all traffic goes through HTTPS. The Linux deploy script supports TLS. The Windows installer serves plain HTTP only, so HTTPS on Windows needs a TLS proxy.
           </div>
         </div>
 

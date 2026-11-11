@@ -54,6 +54,11 @@
 
       <p>You only need to set up the backup schedule once, ideally a few weeks before Field Day. The rest of this guide covers copying backups off the server, restoring, and moving to new hardware.</p>
 
+      <div class="callout info">
+        <div class="callout-title">Windows server backups</div>
+        <p>On the Windows server, use <strong>Back Up Field Day Commander</strong> and <strong>Restore Field Day Commander from a Backup</strong> in the Start menu's <strong>Field Day Commander</strong> folder. These tools ask for administrator rights. Automatic backups run hourly during an event and daily at 03:00 otherwise, keeping the newest 48. They contain the database and settings. Use the Start menu tool to include uploaded photos and files. See <a href="windows-server.html#backups">Windows backups and restores</a> for the steps and backup folder.</p>
+      </div>
+
       <h2>What Gets Backed Up</h2>
 
       <p>Each backup writes three files that share a timestamp in the form <code>YYYYMMDD-HHMMSS</code>:</p>

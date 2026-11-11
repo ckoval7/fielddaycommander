@@ -412,9 +412,9 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h1 id="installation">Installation</h1>
-    <p class="subtitle">Get this open-source Field Day logging software running on your server in about 5 minutes. Works on any Linux machine with 2 GB of RAM, including a Raspberry Pi 4 running off a battery pack at your Field Day site.</p>
+    <p class="subtitle">Get this open-source Field Day logging software running on your server in about 5 minutes. Works on any Linux machine with 2 GB of RAM, including a Raspberry Pi 4 running off a battery pack at your Field Day site. A Windows installer is also available.</p>
 
-    <p>Installing for the first time? Follow <a href="how-to/install.html">Install Field Day Commander</a> for a guided walkthrough with hostname and connection checks. This reference covers supported systems, deployment flags, and advanced options.</p>
+    <p>Start with the recommended <a href="how-to/install.html">Linux install</a> or <a href="#docker">Docker</a>. If your club only has a Windows computer for the server, the <a href="how-to/windows-server.html">Windows installer</a> is also supported. It needs administrator rights and can install without internet access on 64-bit Windows 10 or 11. The requirements and deploy script steps below are for Linux.</p>
 
     <h2>System Requirements</h2>
     <p>Field Day Commander is designed to run on modest hardware, the kind of gear you'd actually bring to a field site. The deploy script installs everything it needs, so you're starting from a bare OS.</p>
@@ -435,7 +435,7 @@
 
     <div class="callout info">
       <div class="callout-title">No Internet Required at Runtime</div>
-      Field Day Commander runs fully offline once deployed. The install script downloads dependencies, so you need internet during setup. After that, no external connectivity is required, though an optional weather API integration is available if your site has internet access. Do the install at home before the event.
+      Field Day Commander runs offline once installed. The Linux install script downloads dependencies, so it needs internet during setup. The Windows installer bundles its dependencies and can install without internet access. After that, no external connectivity is required, though an optional weather API integration is available if your site has internet access. Do the install at home before the event.
     </div>
 
     <h2>Install Steps</h2>
@@ -1467,7 +1467,7 @@
         <div class="step-num">1</div>
         <div>
           <h4>Server</h4>
-          <p>A Raspberry Pi, laptop, or any Linux box connected to your field network via ethernet. Runs FrankenPHP on port 80 (or 443 with SSL). Laravel Reverb (WebSocket) runs on the same box and is reached through the web port, so browsers only ever talk to port 80 or 443.</p>
+          <p>A Linux server or a computer with 64-bit Windows 10 or 11 connected to your field network. Linux deployment uses port 80, or 443 with SSL. The <a href="how-to/windows-server.html">Windows installer</a> uses HTTP on port 80, 8000, or 8001. Laravel Reverb (WebSocket) is reached through the web port on either system.</p>
         </div>
       </div>
       <div class="step-item">
@@ -1488,7 +1488,7 @@
 
     <div class="callout info">
       <div class="callout-title">Firewall Ports</div>
-      The deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface. WebSocket traffic rides on the same port, so you don't need to open 8080. The deploy script doesn't open external logger ports. If you use external loggers, also open their UDP ports (12060, 2237, and 2238 by default) or TCP port 1000 for N3FJP. For N3FJP's default port: <code>sudo ufw allow 1000/tcp</code>.
+      For Linux, the deploy script opens ports automatically via UFW (Debian/Ubuntu) or firewalld (RHEL). If you're managing your firewall manually, open port 80 (or 443 for HTTPS) for the web interface. WebSocket traffic rides on the same port, so you don't need to open 8080. The deploy script doesn't open external logger ports. If you use external loggers, also open their UDP ports (12060, 2237, and 2238 by default) or TCP port 1000 for N3FJP. For N3FJP's default port: <code>sudo ufw allow 1000/tcp</code>. The Windows installer allows the web server and TCP and UDP logger listeners from the local subnet on every Windows network profile.
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -1674,7 +1674,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="backups">Backups</h2>
-    <p>To protect your log, photos, and settings, run the backup script. Field Day Commander ships <code>backup.sh</code> and <code>restore.sh</code> in the install directory. Each backup writes three files with the same timestamp: the database, your uploaded files (photos, logo, equipment pictures), and a copy of <code>.env</code>. Keep the <code>.env</code> copy with the rest. It holds the <code>APP_KEY</code> that two-factor secrets are encrypted with, and without it anyone using 2FA is locked out after a restore.</p>
+    <p>On Linux, to protect your log, photos, and settings, run the backup script. Field Day Commander ships <code>backup.sh</code> and <code>restore.sh</code> in the install directory. Each backup writes three files with the same timestamp: the database, your uploaded files (photos, logo, equipment pictures), and a copy of <code>.env</code>. Keep the <code>.env</code> copy with the rest. It holds the <code>APP_KEY</code> that two-factor secrets are encrypted with, and without it anyone using 2FA is locked out after a restore. On Windows, use the <a href="how-to/windows-server.html#backups">Start menu backup and restore tools</a>. Automatic backups are enabled during installation. They run hourly during an event and daily at 03:00 otherwise, keeping the newest 48. They contain the database and settings. Start menu backups also include uploaded files.</p>
 
     <div class="code-block">
       <div class="code-header">bash <span class="code-copy">Copy</span></div>
@@ -1697,7 +1697,7 @@
     <!-- ═══════════════════════════════════════════ -->
 
     <h2 id="updating">Updating</h2>
-    <p>Field Day Commander includes an <code>update.sh</code> script that will pull the latest code, update dependencies, run new database migrations, and restart services. Run it as root from the directory you cloned and deployed from. It doesn't take a backup, so run <code>backup.sh</code> first.</p>
+    <p>For Linux, Field Day Commander includes an <code>update.sh</code> script that will pull the latest code, update dependencies, run new database migrations, and restart services. Run it as root from the directory you cloned and deployed from. It doesn't take a backup, so run <code>backup.sh</code> first. On Windows, run the newer installer to upgrade. It keeps your data, settings, and web port.</p>
 
     <div class="code-block">
       <div class="code-header">bash <span class="code-copy">Copy</span></div>
