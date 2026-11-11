@@ -4,12 +4,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Support\WindowsCertificateStore;
-use App\Support\WindowsSafeFilesystem;
-use Illuminate\Filesystem\Filesystem;
+use App\Support\WindowsViewRace;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Illuminate\View\Compilers\BladeCompiler;
 
 describe('certificate store', function () {
     test('on Windows, HTTPS requests trust the Windows certificate store', function () {
@@ -30,57 +28,52 @@ describe('certificate store', function () {
     });
 });
 
-describe('safe filesystem', function () {
+describe('view race', function () {
     beforeEach(function () {
-        $this->dir = storage_path('framework/testing/safe-fs-'.Str::uuid());
+        $this->dir = storage_path('framework/testing/view-race-'.Str::uuid());
         File::ensureDirectoryExists($this->dir);
+        $this->temporary = "{$this->dir}\\3a46FA1.tmp";
+        $this->target = "{$this->dir}/3a4c2289d9537b3eb737ee24335703d1.blade.php";
+        File::put($this->temporary, 'compiled');
     });
 
     afterEach(function () {
         File::deleteDirectory($this->dir);
     });
 
-    test('writes the file normally', function () {
-        (new WindowsSafeFilesystem)->replace("{$this->dir}/view.php", 'compiled');
+    function renameWarning(string $from, string $to): string
+    {
+        return "rename({$from},{$to}): Access is denied (code: 5)";
+    }
 
-        expect(File::get("{$this->dir}/view.php"))->toBe('compiled')
-            ->and(File::files($this->dir))->toHaveCount(1);
+    test('a rename that lost to another request writing the same view is ignored and its temporary file removed', function () {
+        File::put($this->target, 'compiled by the other request');
+        $temporary = str_replace('\\', '/', $this->temporary);
+
+        expect(WindowsViewRace::isLostRace(E_WARNING, renameWarning($temporary, $this->target), $this->dir))->toBeTrue()
+            ->and(File::exists($temporary))->toBeFalse()
+            ->and(File::get($this->target))->toBe('compiled by the other request');
     });
 
-    test('when another request already put the view in place, the duplicate is dropped', function () {
-        File::put("{$this->dir}/view.php", 'compiled by the other request');
-        $files = new class extends WindowsSafeFilesystem
-        {
-            protected function moveIntoPlace(string $tempPath, string $path): bool
-            {
-                return false; // What Windows does while the other request has it open
-            }
-        };
-
-        $files->replace("{$this->dir}/view.php", 'compiled');
-
-        expect(File::get("{$this->dir}/view.php"))->toBe('compiled by the other request')
-            ->and(File::files($this->dir))->toHaveCount(1);
+    test('a rename with nothing in place still fails', function () {
+        expect(WindowsViewRace::isLostRace(E_WARNING, renameWarning($this->temporary, $this->target), $this->dir))->toBeFalse();
     });
 
-    test('the Blade compiler can be given the safe filesystem after it was built', function () {
-        $compiler = new BladeCompiler(new Filesystem, $this->dir);
-        $files = new WindowsSafeFilesystem;
+    test('renames outside the compiled views folder are left alone', function () {
+        $elsewhere = storage_path('app/private/photo.jpg');
 
-        WindowsSafeFilesystem::useIn($compiler, $files);
-
-        expect((fn () => $this->files)->call($compiler))->toBe($files);
+        expect(WindowsViewRace::isLostRace(E_WARNING, renameWarning($this->temporary, $elsewhere), $this->dir))->toBeFalse();
     });
 
-    test('a write that fails with nothing in place is still an error', function () {
-        $files = new class extends WindowsSafeFilesystem
-        {
-            protected function moveIntoPlace(string $tempPath, string $path): bool
-            {
-                return false;
-            }
-        };
+    test("the compiler's touch of an unchanged view is ignored, other touches aren't", function () {
+        $compiler = base_path('vendor/laravel/framework/src/Illuminate/View/Compilers/BladeCompiler.php');
 
-        expect(fn () => $files->replace("{$this->dir}/view.php", 'compiled'))->toThrow(RuntimeException::class);
+        expect(WindowsViewRace::isLostRace(E_WARNING, 'touch(): Utime failed: Permission denied', $this->dir, $compiler))->toBeTrue()
+            ->and(WindowsViewRace::isLostRace(E_WARNING, 'touch(): Utime failed: Permission denied', $this->dir, app_path('Services/Other.php')))->toBeFalse();
+    });
+
+    test('other warnings pass through', function () {
+        expect(WindowsViewRace::isLostRace(E_WARNING, 'Undefined variable $x', $this->dir))->toBeFalse()
+            ->and(WindowsViewRace::isLostRace(E_NOTICE, renameWarning($this->temporary, $this->target), $this->dir))->toBeFalse();
     });
 });
