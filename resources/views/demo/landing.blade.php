@@ -19,7 +19,7 @@
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <div class="text-center">
         <p id="provision-status" class="font-semibold text-lg">Provisioning your sandbox&hellip;</p>
-        <p class="text-base-content/50 text-sm mt-1">This usually takes a few seconds</p>
+        <p class="text-base-content/70 text-sm mt-1">This usually takes a few seconds</p>
     </div>
 </div>
 
@@ -76,7 +76,7 @@
         <input type="hidden" name="event_type" value="FD" class="demo-event-input">
 
         <div class="mb-6">
-            <p class="text-sm font-semibold mb-2">2. Tell us who you are <span class="font-normal text-base-content/50">(optional)</span></p>
+            <p class="text-sm font-semibold mb-2">2. Tell us who you are <span class="font-normal text-base-content/70">(optional)</span></p>
             <p class="text-xs text-base-content/60 mb-3">Leave these blank to use a made-up name and call sign. If you invite others, this is how they'll see you.</p>
             @include('demo.partials.identity-fields')
         </div>
@@ -101,7 +101,7 @@
         </div>
     </form>
 
-    <p class="text-center text-xs text-base-content/40 mt-8">
+    <p class="text-center text-xs text-base-content/70 mt-8">
         Demo data is isolated per visitor. Nothing you do affects anyone else.
     </p>
 </div>

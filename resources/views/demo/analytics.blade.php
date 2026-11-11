@@ -127,7 +127,7 @@
                 <h3 class="font-semibold mb-4">Role Distribution</h3>
                 <canvas x-ref="roleCanvas" height="200"></canvas>
                 @if(empty($roleDistribution['labels']))
-                    <p class="text-base-content/50 text-center py-8">No data yet</p>
+                    <p class="text-base-content/70 text-center py-8">No data yet</p>
                 @endif
             </div>
 
@@ -152,7 +152,7 @@
                 <h3 class="font-semibold mb-4">Event Type</h3>
                 <canvas x-ref="eventTypeCanvas" height="200"></canvas>
                 @if(empty($eventTypeDistribution['labels']))
-                    <p class="text-base-content/50 text-center py-8">No data yet</p>
+                    <p class="text-base-content/70 text-center py-8">No data yet</p>
                 @endif
             </div>
 
@@ -171,7 +171,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-base-content/50 text-center py-8">No data yet</p>
+                    <p class="text-base-content/70 text-center py-8">No data yet</p>
                 @endforelse
             </div>
         </div>
@@ -184,9 +184,9 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Page</th>
-                                <th class="text-right">Views</th>
-                                <th class="text-right">Sessions</th>
+                                <th scope="col">Page</th>
+                                <th scope="col" class="text-right">Views</th>
+                                <th scope="col" class="text-right">Sessions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -197,7 +197,7 @@
                                     <td class="text-right">{{ $page->unique_sessions }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-center text-base-content/50">No data yet</td></tr>
+                                <tr><td colspan="3" class="text-center text-base-content/70">No data yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -211,9 +211,9 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Action</th>
-                                <th class="text-right">Count</th>
-                                <th class="text-right">Sessions</th>
+                                <th scope="col">Action</th>
+                                <th scope="col" class="text-right">Count</th>
+                                <th scope="col" class="text-right">Sessions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -224,7 +224,7 @@
                                     <td class="text-right">{{ $feature->unique_sessions }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-center text-base-content/50">No data yet</td></tr>
+                                <tr><td colspan="3" class="text-center text-base-content/70">No data yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -240,9 +240,9 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Page</th>
-                                <th class="text-right">Avg Time</th>
-                                <th class="text-right">Views</th>
+                                <th scope="col">Page</th>
+                                <th scope="col" class="text-right">Avg Time</th>
+                                <th scope="col" class="text-right">Views</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -253,7 +253,7 @@
                                     <td class="text-right">{{ $page->views }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="3" class="text-center text-base-content/50">No data yet</td></tr>
+                                <tr><td colspan="3" class="text-center text-base-content/70">No data yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -267,13 +267,13 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Visitor</th>
-                                <th>Sessions</th>
-                                <th>Roles Tried</th>
-                                <th>Events Tried</th>
-                                <th>Device</th>
-                                <th>First Visit</th>
-                                <th>Last Visit</th>
+                                <th scope="col">Visitor</th>
+                                <th scope="col">Sessions</th>
+                                <th scope="col">Roles Tried</th>
+                                <th scope="col">Events Tried</th>
+                                <th scope="col">Device</th>
+                                <th scope="col">First Visit</th>
+                                <th scope="col">Last Visit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -288,7 +288,7 @@
                                     <td class="text-xs">{{ \Carbon\Carbon::parse($visitor['last_visit'])->format('M j, g:ia') }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="text-center text-base-content/50">No repeat visitors yet</td></tr>
+                                <tr><td colspan="7" class="text-center text-base-content/70">No repeat visitors yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -303,15 +303,15 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Role</th>
-                            <th>Event</th>
-                            <th>Visitor</th>
-                            <th class="text-right">Pages</th>
-                            <th class="text-right">Actions</th>
-                            <th>Duration</th>
-                            <th>Device</th>
-                            <th>Referrer</th>
-                            <th>Date</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Event</th>
+                            <th scope="col">Visitor</th>
+                            <th scope="col" class="text-right">Pages</th>
+                            <th scope="col" class="text-right">Actions</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Device</th>
+                            <th scope="col">Referrer</th>
+                            <th scope="col">Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -332,7 +332,7 @@
                                 <td class="text-xs">{{ $session->provisioned_at->format('M j, g:ia') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="text-center text-base-content/50">No sessions yet</td></tr>
+                            <tr><td colspan="9" class="text-center text-base-content/70">No sessions yet</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -347,12 +347,12 @@
                 <table class="table table-sm">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Call sign</th>
-                            <th>Role</th>
-                            <th>Joined</th>
-                            <th>Visitor</th>
-                            <th>Date</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Call sign</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Joined</th>
+                            <th scope="col">Visitor</th>
+                            <th scope="col">Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -370,7 +370,7 @@
                                 <td class="text-xs">{{ $participant->created_at->format('M j, g:ia') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="text-center text-base-content/50">No participants yet</td></tr>
+                            <tr><td colspan="6" class="text-center text-base-content/70">No participants yet</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -388,15 +388,15 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Role</th>
-                                <th>Event</th>
-                                <th>Visitor</th>
-                                <th class="text-right">Pages</th>
-                                <th class="text-right">Actions</th>
-                                <th>Duration</th>
-                                <th>Device</th>
-                                <th>Date</th>
-                                <th></th>
+                                <th scope="col">Role</th>
+                                <th scope="col">Event</th>
+                                <th scope="col">Visitor</th>
+                                <th scope="col" class="text-right">Pages</th>
+                                <th scope="col" class="text-right">Actions</th>
+                                <th scope="col">Duration</th>
+                                <th scope="col">Device</th>
+                                <th scope="col">Date</th>
+                                <th scope="col"><span class="sr-only">Open</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -417,7 +417,7 @@
                                     <td class="text-right text-xs text-primary">View &rarr;</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" class="text-center text-base-content/50">No sessions yet</td></tr>
+                                <tr><td colspan="9" class="text-center text-base-content/70">No sessions yet</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -447,7 +447,7 @@
                         <span class="badge badge-sm badge-ghost gap-1">
                             <span x-text="participant.name || 'Unnamed'"></span>
                             <span class="font-mono" x-show="participant.call_sign" x-text="participant.call_sign"></span>
-                            <span class="text-base-content/50" x-text="participant.via_invite ? '(invited)' : '(started)'"></span>
+                            <span class="text-base-content/70" x-text="participant.via_invite ? '(invited)' : '(started)'"></span>
                         </span>
                     </template>
                 </div>
@@ -462,19 +462,19 @@
             <div x-show="!loadingEvents" class="bg-base-100 rounded-box shadow-sm p-6">
                 <h3 class="font-semibold mb-4">Event Timeline</h3>
                 <template x-if="events.length === 0 && !loadingEvents">
-                    <p class="text-base-content/50 text-center py-8">No events recorded</p>
+                    <p class="text-base-content/70 text-center py-8">No events recorded</p>
                 </template>
                 <div class="space-y-2">
                     <template x-for="(event, index) in events" :key="index">
                         <div class="flex items-start gap-3 py-2 border-b border-base-200 last:border-0">
-                            <span class="font-mono text-xs text-base-content/50 w-14 shrink-0 pt-0.5" x-text="formatTime(event.seconds_from_start)"></span>
+                            <span class="font-mono text-xs text-base-content/70 w-14 shrink-0 pt-0.5" x-text="formatTime(event.seconds_from_start)"></span>
                             <span class="badge badge-xs shrink-0 mt-1" :class="badgeClass(event.type)" x-text="badgeLabel(event.type)"></span>
                             <div class="min-w-0">
                                 <span class="text-sm" x-text="event.friendly_name || event.name"></span>
                                 <template x-if="event.metadata">
-                                    <div class="text-xs text-base-content/50 mt-0.5">
+                                    <div class="text-xs text-base-content/70 mt-0.5">
                                         <template x-for="(val, key) in event.metadata" :key="key">
-                                            <span class="inline-block mr-3"><span class="text-base-content/40" x-text="key + ':'"></span> <span x-text="val"></span></span>
+                                            <span class="inline-block mr-3"><span class="text-base-content/70" x-text="key + ':'"></span> <span x-text="val"></span></span>
                                         </template>
                                     </div>
                                 </template>

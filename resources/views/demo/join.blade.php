@@ -27,7 +27,7 @@
             {{ $demoSession->event_type === 'WFD' ? 'Winter Field Day' : 'ARRL Field Day' }} demo.
             Everyone in it sees and changes the same data.
         </p>
-        <p class="text-sm text-base-content/50 mt-2">
+        <p class="text-sm text-base-content/70 mt-2">
             {{ $demoSession->participant_count }} of {{ $maxParticipants }} spots taken
             · expires {{ $demoSession->expires_at->diffForHumans() }}
         </p>
@@ -48,7 +48,7 @@
             @csrf
 
             <div>
-                <p class="text-sm font-semibold mb-2">1. Tell everyone who you are <span class="font-normal text-base-content/50">(optional)</span></p>
+                <p class="text-sm font-semibold mb-2">1. Tell everyone who you are <span class="font-normal text-base-content/70">(optional)</span></p>
                 <p class="text-xs text-base-content/60 mb-3">You'll get your own account in this sandbox, so others can see what you log. Leave these blank to use a made-up name and call sign.</p>
                 @include('demo.partials.identity-fields')
             </div>
