@@ -11,6 +11,7 @@ use App\Services\SiteBackupService;
 use App\Services\SiteBackupSettings;
 use App\Services\SqliteDatabaseCopier;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -143,6 +144,81 @@ test('two backups in the same minute get different names', function () {
 
     expect($second)->not->toBe($first)
         ->and(basename($second))->toEndWith('Z (2).zip');
+});
+
+test('pruning keeps the newer of two automatic backups from the same minute', function () {
+    Config::set('backup.keep_automatic', 1);
+    $this->freezeTime();
+
+    $this->backups->create(BackupKind::Automatic);
+    $second = $this->backups->create(BackupKind::Automatic);
+
+    expect(collect(File::files(config('backup.path')))->map->getFilename()->all())
+        ->toBe([basename($second)]);
+});
+
+test('keeping no automatic backups still keeps the one just made', function () {
+    Config::set('backup.keep_automatic', 0);
+
+    $this->backups->create(BackupKind::Automatic);
+    $this->travel(1)->hours();
+    $latest = $this->backups->create(BackupKind::Automatic);
+
+    expect(collect(File::files(config('backup.path')))->map->getFilename()->all())
+        ->toBe([basename($latest)]);
+});
+
+test('a deleted event is not named in a backup summary', function () {
+    Event::factory()->create(['name' => 'Field Day 2026', 'start_time' => now()->subDay(), 'end_time' => now()]);
+    Event::factory()->create(['name' => 'Test event', 'start_time' => now()->addMonth(), 'end_time' => now()->addMonth()->addDay()])->delete();
+
+    expect($this->backups->inspect($this->backups->create())['summary']['event'])->toBe('Field Day 2026');
+});
+
+test('a restore that fails before replacing anything says nothing was changed', function () {
+    $backup = $this->backups->create();
+    $copier = new class extends SqliteDatabaseCopier
+    {
+        public function isIntact(string $path): bool
+        {
+            throw new RuntimeException('disk read error');
+        }
+    };
+    $backups = new SiteBackupService($copier, new SiteBackupSettings, null, $this->files);
+
+    try {
+        $backups->restore($backup);
+        $this->fail('The restore should have failed.');
+    } catch (SiteBackupException $e) {
+        expect($e->getMessage())->not->toContain('partly restored')
+            ->and($e->getMessage())->toContain('disk read error');
+    }
+
+    expect(collect(File::files(config('backup.path')))->map->getFilename()->all())->toBe([basename($backup)]);
+});
+
+test('a restore that fails partway names the safety backup to restore', function () {
+    $backup = $this->backups->create();
+    $copier = new class extends SqliteDatabaseCopier
+    {
+        public function restoreFrom(Connection $connection, string $source): void
+        {
+            throw new RuntimeException('disk full');
+        }
+    };
+    $backups = new SiteBackupService($copier, new SiteBackupSettings, null, $this->files);
+
+    try {
+        $backups->restore($backup);
+        $this->fail('The restore should have failed.');
+    } catch (SiteBackupException $e) {
+        $safety = collect(File::files(config('backup.path')))->map->getFilename()
+            ->first(fn (string $name): bool => str_contains($name, 'backup before restore'));
+
+        expect($safety)->not->toBeNull()
+            ->and($e->getMessage())->toContain($safety)
+            ->and($e->getMessage())->toContain('disk full');
+    }
 });
 
 test('a restore brings back the data, files and settings, and saves what it replaced first', function () {

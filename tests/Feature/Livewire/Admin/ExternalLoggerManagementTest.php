@@ -42,6 +42,9 @@ beforeEach(function () {
         /** @var list<list<string>> */
         public array $spawnedArguments = [];
 
+        /** @var array<int, string> */
+        public array $commandLines = [];
+
         public function spawnDetached(array $arguments): ?int
         {
             $this->spawnedArguments[] = $arguments;
@@ -62,7 +65,7 @@ beforeEach(function () {
 
         public function commandLine(int $pid): ?string
         {
-            return null;
+            return $this->commandLines[$pid] ?? null;
         }
     };
     $this->app->instance(ListenerProcessRunner::class, $this->processRunner);
@@ -121,6 +124,7 @@ test('toggleN1mm enables and starts process', function () {
 });
 
 test('toggleN1mm disables and stops process', function () {
+    $this->processRunner->commandLines[31337] = 'php artisan external-logger:n1mm';
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n1mm',
@@ -194,6 +198,7 @@ test('toggleWsjtx enables and starts process', function () {
 });
 
 test('toggleWsjtx disables and stops process', function () {
+    $this->processRunner->commandLines[31337] = 'php artisan external-logger:wsjtx';
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'wsjtx',
@@ -282,6 +287,7 @@ test('toggleUdpAdif enables and starts process', function () {
 });
 
 test('toggleUdpAdif disables and stops process', function () {
+    $this->processRunner->commandLines[31337] = 'php artisan external-logger:udp-adif';
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'udp-adif',
@@ -406,6 +412,7 @@ test('toggleN3fjp enables the N3FJP server on port 1000 and starts it', function
 });
 
 test('toggleN3fjp disables and stops the N3FJP server', function () {
+    $this->processRunner->commandLines[31337] = 'php artisan external-logger:n3fjp';
     ExternalLoggerSetting::create([
         'event_configuration_id' => $this->config->id,
         'listener_type' => 'n3fjp',

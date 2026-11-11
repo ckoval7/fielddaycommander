@@ -27,11 +27,11 @@ class DatabaseSnapshotService
      */
     private const string FILENAME_PATTERN = '/^[A-Za-z0-9_-]+-\d{4}-\d{2}-\d{2}_\d{6}\.(sql|sqlite)$/';
 
+    private readonly SqliteDatabaseCopier $copier;
+
     /**
      * @param  string|null  $connectionName  The database connection to snapshot; null for the default
      */
-    private readonly SqliteDatabaseCopier $copier;
-
     public function __construct(private readonly ?string $connectionName = null, ?SqliteDatabaseCopier $copier = null)
     {
         $this->copier = $copier ?? new SqliteDatabaseCopier;

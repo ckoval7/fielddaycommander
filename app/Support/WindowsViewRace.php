@@ -34,7 +34,8 @@ final class WindowsViewRace
                 return true;
             }
 
-            return $previous === null || $previous($level, $message, $file, $line) !== false;
+            // With no earlier handler, false hands the error to PHP's own handling.
+            return $previous !== null && $previous($level, $message, $file, $line) !== false;
         });
     }
 

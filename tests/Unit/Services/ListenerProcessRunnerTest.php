@@ -114,6 +114,18 @@ describe('Windows', function () {
         Process::assertRan(fn (PendingProcess $process) => str_contains($process->command[4], 'ProcessId=4242'));
     });
 
+    test('a command line read moments ago is reused instead of starting PowerShell again', function () {
+        Process::fake(['*powershell*' => Process::result("php.exe artisan external-logger:n1mm\r\n")]);
+        $runner = new WindowsListenerProcessRunner;
+
+        $runner->commandLine(4242);
+        $runner->commandLine(4242);
+        $runner->commandLine(4243);
+
+        Process::assertRanTimes(fn (PendingProcess $process) => str_contains($process->command[4], 'ProcessId=4242'), 1);
+        Process::assertRanTimes(fn (PendingProcess $process) => str_contains($process->command[4], 'ProcessId=4243'), 1);
+    });
+
     test('a process with no command line is reported as gone', function () {
         Process::fake(['*powershell*' => Process::result('')]);
 

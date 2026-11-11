@@ -417,9 +417,6 @@ abstract class BaseUdpListenerCommand extends Command implements ExternalLoggerL
     }
 
     /**
-     * @return array{string, string}|null
-     */
-    /**
      * The next datagram on the socket. Waits up to the socket's timeout, or
      * not at all when $wait is false; that case checks with socket_select()
      * because Windows' sockets extension has no non-blocking receive flag.

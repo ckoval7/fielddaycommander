@@ -98,7 +98,9 @@ class ExternalLoggerManager
             return;
         }
 
-        if ($setting->pid !== null && $this->processRunner->isAlive($setting->pid)) {
+        // A PID that no longer runs our listener has been reused by another
+        // process, which must never be signalled or killed.
+        if ($setting->pid !== null && $this->isListenerProcess($setting->pid, $listenerType)) {
             $this->requestStop($setting->pid);
             $this->processRunner->terminate($setting->pid);
         }
@@ -167,9 +169,15 @@ class ExternalLoggerManager
 
     /**
      * Check that a PID belongs to our artisan listener, not a recycled OS process.
+     * The liveness check goes first because it's cheap on every OS, while
+     * reading a command line on Windows starts PowerShell.
      */
     private function isListenerProcess(int $pid, string $listenerType): bool
     {
+        if (! $this->processRunner->isAlive($pid)) {
+            return false;
+        }
+
         $cmdline = $this->processRunner->commandLine($pid);
 
         if ($cmdline === null) {

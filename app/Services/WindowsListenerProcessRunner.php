@@ -23,6 +23,20 @@ class WindowsListenerProcessRunner extends ListenerProcessRunner
 
     private const int STOP_POLL_MILLISECONDS = 250;
 
+    /**
+     * How long a command line read is reused. A status poll checks each
+     * listener several times, and every read starts PowerShell.
+     */
+    private const int COMMAND_LINE_REUSE_SECONDS = 2;
+
+    /**
+     * Recent command line reads, pruned on every read so the runner (a
+     * singleton under Octane) doesn't grow.
+     *
+     * @var array<int, array{at: float, commandLine: ?string}>
+     */
+    private array $recentCommandLines = [];
+
     public function spawnDetached(array $arguments): ?int
     {
         return $this->openDetached($arguments);
@@ -53,6 +67,25 @@ class WindowsListenerProcessRunner extends ListenerProcessRunner
     }
 
     public function commandLine(int $pid): ?string
+    {
+        $now = microtime(true);
+
+        $this->recentCommandLines = array_filter(
+            $this->recentCommandLines,
+            fn (array $read): bool => $now - $read['at'] < self::COMMAND_LINE_REUSE_SECONDS,
+        );
+
+        if (array_key_exists($pid, $this->recentCommandLines)) {
+            return $this->recentCommandLines[$pid]['commandLine'];
+        }
+
+        $commandLine = $this->readCommandLine($pid);
+        $this->recentCommandLines[$pid] = ['at' => $now, 'commandLine' => $commandLine];
+
+        return $commandLine;
+    }
+
+    private function readCommandLine(int $pid): ?string
     {
         $result = Process::run([
             'powershell', '-NoProfile', '-NonInteractive', '-Command',
