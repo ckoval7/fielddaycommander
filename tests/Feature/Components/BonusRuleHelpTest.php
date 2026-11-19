@@ -15,6 +15,15 @@ it('reads numbered rule sections with "point" instead of a dot', function () {
         ->toContain('<span aria-hidden="true">7.3.1</span><span class="sr-only">7 point 3 point 1</span>');
 });
 
+it('only lets the touch-sized help button overlap its row when asked to', function () {
+    $rule = ['section' => '7.3.1', 'text' => 'Emergency power.'];
+
+    expect(Blade::render('<x-bonus-rule-help :rule="$rule" compact>Bonus</x-bonus-rule-help>', ['rule' => $rule]))
+        ->toContain('pointer-coarse:-my-2.5')
+        ->and(Blade::render('<x-bonus-rule-help :rule="$rule">Bonus</x-bonus-rule-help>', ['rule' => $rule]))
+        ->not->toContain('pointer-coarse:-my-2.5');
+});
+
 it('leaves named rule sections as they are', function () {
     $html = Blade::render('<x-bonus-rule-help :rule="$rule" rulebook="WFDA">Bonus</x-bonus-rule-help>', [
         'rule' => ['section' => 'Objective & Multipliers', 'text' => 'Operate outdoors.'],

@@ -11,6 +11,10 @@
 - When an operator corrects or deletes a contact in their logger, the relay can pass that change to the server. The contact is updated or deleted here too, with an entry in the audit log, and a correction doesn't leave a second copy behind. A contact deleted here stays deleted, even if the logger sends it again.
 - On **Log Contacts**, the event's first contact with an ARRL/RAC section shows "New Section!" in **Recent QSOs**, in the **Details** column or the phone card's detail line, once it syncs to the server. The mark appears only in the logging session that made the contact, isn't saved to the contact or shown in **Logbook**, exports, or earlier sessions, and moves to the next contact with that section if the first is deleted.
 
+### Changed
+
+- The **Manual Bonus Claims** card on an event's page (**Manual Objective Claims** for Winter Field Day) now shows automatic bonuses and objectives under **Earned automatically**, with a note explaining each and an Earned or Not yet status. Previously, the card listed only manual claims.
+
 ### Fixed
 
 - Phone contacts counted as Digital when a logger sent the mode as `PH`. They now count as Phone. N3FJP contacts received directly by the server weren't affected.
