@@ -59,6 +59,7 @@ These variables in `.env` are used by `docker-compose.yml`:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_PORT` | `80` | Host port mapped to the container |
+| `APP_URL` | `http://localhost` | Address people use to reach the app. Set it for forgot password emails to work. |
 | `N3FJP_PORT` | `1000` | N3FJP TCP port published on the host and container. Set it in `.env` to match **TCP Port** on **External Loggers**, in the **N3FJP** card. |
 | `DB_DATABASE` | `fd_commander` | MySQL database name |
 | `DB_USERNAME` | `fd_commander` | MySQL user |
@@ -154,6 +155,8 @@ REVERB_PORT=443
 REVERB_SCHEME=https
 SESSION_SECURE_COOKIE=true
 ```
+
+Set `APP_URL` to the address people use to reach the app so forgot password emails can work.
 
 `SESSION_SECURE_COOKIE=true` keeps the session cookie off plain HTTP. The container's Caddy sets `X-Content-Type-Options` and `Referrer-Policy`. For HSTS, set `SECURITY_HSTS_MAX_AGE=31536000` once the proxy has a certificate browsers trust (Let's Encrypt, for example), or add `Strict-Transport-Security` at the proxy. The app only sends it when the proxy forwards `X-Forwarded-Proto: https`. If people also reach the site by a name other than `your-domain.com`, list it in `TRUSTED_HOSTS`.
 

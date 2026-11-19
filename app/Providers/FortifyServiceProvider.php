@@ -10,8 +10,11 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Requests\Auth\SendPasswordResetLinkRequest;
 use App\Http\Responses\ApprovalPendingRegisterResponse;
 use App\Models\User;
+use App\Support\PasswordResetLinks;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +25,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Http\Requests\SendPasswordResetLinkRequest as FortifySendPasswordResetLinkRequest;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -73,6 +77,12 @@ class FortifyServiceProvider extends ServiceProvider
 
                 return new \Laravel\Fortify\Http\Responses\RegisterResponse;
             }
+        );
+
+        // Reset links come from APP_URL, never the request's Host header.
+        $this->app->bind(FortifySendPasswordResetLinkRequest::class, SendPasswordResetLinkRequest::class);
+        ResetPassword::createUrlUsing(
+            fn (User $user, string $token): string => PasswordResetLinks::url($token, $user->getEmailForPasswordReset())
         );
 
         Fortify::createUsersUsing(CreateNewUser::class);
