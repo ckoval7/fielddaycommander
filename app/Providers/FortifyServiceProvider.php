@@ -13,6 +13,8 @@ use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Http\Requests\Auth\SendPasswordResetLinkRequest;
 use App\Http\Responses\ApprovalPendingRegisterResponse;
 use App\Models\User;
+use App\Services\LoginThrottle;
+use App\Support\AuthSecurity;
 use App\Support\PasswordResetLinks;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -21,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Contracts\RegisterResponse;
@@ -58,15 +61,11 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $mode = config('auth-security.registration_mode');
-        if (! in_array($mode, self::VALID_REGISTRATION_MODES, true)) {
-            throw new \RuntimeException("Invalid REGISTRATION_MODE: '{$mode}'. Must be one of: ".implode(', ', self::VALID_REGISTRATION_MODES));
-        }
+        $this->validateSettings();
 
-        $twoFaMode = config('auth-security.2fa_mode');
-        if (! in_array($twoFaMode, self::VALID_2FA_MODES, true)) {
-            throw new \RuntimeException("Invalid 2FA_MODE: '{$twoFaMode}'. Must be one of: ".implode(', ', self::VALID_2FA_MODES));
-        }
+        // PASSWORD_MIN_LENGTH for every account; administrative accounts get
+        // PASSWORD_ADMIN_MIN_LENGTH wherever the account or its role is known.
+        Password::defaults(fn (): Password => AuthSecurity::passwordRule());
 
         $this->app->bind(
             RegisterResponse::class,
@@ -100,21 +99,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
         Fortify::twoFactorChallengeView(fn () => view('auth.two-factor-challenge'));
 
-        Fortify::authenticateUsing(function (Request $request) {
-            $user = User::where('email', $request->email)->first();
-
-            if (! $user || ! Hash::check($request->password, $user->password)) {
-                return null;
-            }
-
-            if ($user->isLocked()) {
-                throw ValidationException::withMessages([
-                    'email' => [$user->isPendingApproval() ? self::PENDING_APPROVAL_MESSAGE : self::LOCKED_ACCOUNT_MESSAGE],
-                ]);
-            }
-
-            return $user;
-        });
+        Fortify::authenticateUsing(fn (Request $request): ?User => $this->authenticate($request));
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
@@ -125,5 +110,59 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
+    }
+
+    /**
+     * Refuse to boot with a mode or method that isn't one of the documented values.
+     */
+    private function validateSettings(): void
+    {
+        $settings = [
+            'REGISTRATION_MODE' => ['auth-security.registration_mode', self::VALID_REGISTRATION_MODES],
+            '2FA_MODE' => ['auth-security.2fa_mode', self::VALID_2FA_MODES],
+            'PASSWORD_RESET_METHOD' => ['auth-security.password_reset_method', AuthSecurity::RESET_METHODS],
+            'FAILED_LOGIN_STRATEGY' => ['auth-security.failed_login_strategy', AuthSecurity::FAILED_LOGIN_STRATEGIES],
+        ];
+
+        foreach ($settings as $name => [$key, $allowed]) {
+            $value = config($key);
+
+            if (! in_array($value, $allowed, true)) {
+                throw new \RuntimeException("Invalid {$name}: '{$value}'. Must be one of: ".implode(', ', $allowed));
+            }
+        }
+    }
+
+    /**
+     * Check a sign-in, applying the per-account failed-login limit (LoginThrottle).
+     */
+    private function authenticate(Request $request): ?User
+    {
+        $user = User::where('email', $request->email)->first();
+        $throttle = app(LoginThrottle::class);
+
+        if ($user && ($seconds = $throttle->secondsUntilAvailable($user)) > 0) {
+            throw ValidationException::withMessages([
+                Fortify::username() => [trans('auth.throttle', ['seconds' => $seconds, 'minutes' => (int) ceil($seconds / 60)])],
+            ]);
+        }
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            if ($user) {
+                $throttle->recordFailure($user);
+            }
+
+            return null;
+        }
+
+        if ($user->isLocked()) {
+            throw ValidationException::withMessages([
+                'email' => [$user->isPendingApproval() ? self::PENDING_APPROVAL_MESSAGE : self::LOCKED_ACCOUNT_MESSAGE],
+            ]);
+        }
+
+        $throttle->clear($user);
+
+        return $user;
     }
 }

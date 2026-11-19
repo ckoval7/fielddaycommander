@@ -23,7 +23,7 @@ class SendPasswordResetLinkRequest extends FortifySendPasswordResetLinkRequest
     {
         $validator->after(function (Validator $validator): void {
             if (! PasswordResetLinks::selfServiceAvailable()) {
-                $validator->errors()->add(Fortify::email(), PasswordResetLinks::UNAVAILABLE_MESSAGE);
+                $validator->errors()->add(Fortify::email(), PasswordResetLinks::unavailableMessage());
             }
         });
     }

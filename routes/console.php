@@ -30,6 +30,9 @@ Schedule::command('reminders:send')->everyMinute();
 // Clean up expired album exports
 Schedule::command('exports:clean')->daily();
 
+// Prune non-critical audit log entries older than AUDIT_RETENTION_DAYS
+Schedule::command('audit:cleanup')->dailyAt('04:00');
+
 // Monitor and restart crashed external logger listeners
 Schedule::command('external-logger:monitor')->everyMinute();
 
