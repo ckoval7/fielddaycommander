@@ -9,13 +9,13 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
+use App\Support\AuthSecurity;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password as PasswordBroker;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -247,7 +247,7 @@ class UserManagement extends Component
             'is_youth' => ['boolean'],
             'is_cpr_aed_trained' => ['boolean'],
             'role_id' => ['required', 'exists:roles,id'],
-            'password' => ['required_if:inviteMode,false', 'confirmed', Password::defaults()],
+            'password' => ['required_if:inviteMode,false', 'confirmed', AuthSecurity::passwordRule(Role::with('permissions')->find($this->role_id))],
         ], [
             'call_sign.required' => 'Enter a callsign.',
             'first_name.required' => self::FIRST_NAME_REQUIRED,
@@ -453,8 +453,8 @@ class UserManagement extends Component
     public function openResetModal(int $userId): void
     {
         $this->resettingUserId = $userId;
-        $this->resetMethod = 'manual';
-        $this->newPassword = Str::password(16);
+        $this->resetMethod = AuthSecurity::allowsAdminPasswordSet() ? 'manual' : 'email';
+        $this->newPassword = Str::password(AuthSecurity::temporaryPasswordLength(User::find($userId)));
         $this->newPassword_confirmation = '';
         $this->showResetModal = true;
     }
@@ -468,7 +468,7 @@ class UserManagement extends Component
         $this->activateEmail = '';
         $this->activateFirstName = $user->first_name === $user->call_sign ? '' : $user->first_name;
         $this->activateLastName = $user->last_name === '(Imported)' ? '' : $user->last_name;
-        $this->activatePassword = Str::password(16);
+        $this->activatePassword = Str::password(AuthSecurity::temporaryPasswordLength($user));
         $this->showActivateModal = true;
     }
 
@@ -487,7 +487,7 @@ class UserManagement extends Component
             'activateEmail' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class, 'email')->ignore($user->id)->withoutTrashed()],
             'activateFirstName' => ['required', 'string', 'max:50'],
             'activateLastName' => ['required', 'string', 'max:50'],
-            'activatePassword' => ['required', 'string', 'min:8'],
+            'activatePassword' => ['required', 'string', AuthSecurity::passwordRule($user)],
         ], [
             'activateEmail.required' => self::EMAIL_REQUIRED,
             'activateEmail.email' => self::EMAIL_INVALID,
@@ -536,11 +536,18 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         if ($this->resetMethod === 'manual') {
-            $this->validate([
-                'newPassword' => ['required', 'string', 'min:8'],
-            ]);
+            if (! AuthSecurity::allowsAdminPasswordSet()) {
+                $this->dispatch('toast', title: 'Error', description: 'Passwords on this server are reset by email only. Send a reset email instead.', icon: 'phosphor-x-circle', css: 'alert-error');
+
+                return;
+            }
 
             $user = User::findOrFail($this->resettingUserId);
+
+            $this->validate([
+                'newPassword' => ['required', 'string', AuthSecurity::passwordRule($user)],
+            ]);
+
             $user->update([
                 'password' => Hash::make($this->newPassword),
                 'requires_password_change' => true,

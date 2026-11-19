@@ -7,6 +7,7 @@
 use App\Http\Middleware\AuditLogger;
 use App\Http\Middleware\CheckSystemSetupComplete;
 use App\Http\Middleware\DevRoleOverride;
+use App\Http\Middleware\EnforceIdleTimeout;
 use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
@@ -45,6 +46,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->append(LeanHtmlResponse::class);
         $middleware->web(append: [
             EnsureAccountNotLocked::class,
+            EnforceIdleTimeout::class,
             DevRoleOverride::class,
             CheckSystemSetupComplete::class,
             EnforceRegistrationMode::class,

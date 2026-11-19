@@ -17,6 +17,8 @@ class EnsureAccountNotLocked
 {
     public const string LOCKED_MESSAGE = FortifyServiceProvider::LOCKED_ACCOUNT_MESSAGE;
 
+    public const string IDLE_MESSAGE = 'You were signed out after a period of inactivity. Sign in again to continue.';
+
     /**
      * Query parameter the login page reads to explain why the session ended.
      * The session is invalidated, so a flashed message would not survive
@@ -66,6 +68,7 @@ class EnsureAccountNotLocked
         return match ($reason) {
             'locked' => FortifyServiceProvider::LOCKED_ACCOUNT_MESSAGE,
             'pending' => FortifyServiceProvider::PENDING_APPROVAL_MESSAGE,
+            EnforceIdleTimeout::IDLE_REASON => self::IDLE_MESSAGE,
             default => null,
         };
     }

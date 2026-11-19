@@ -30,7 +30,7 @@
             </div>
         </form>
     @else
-        <x-alert :title="\App\Support\PasswordResetLinks::UNAVAILABLE_MESSAGE" class="mb-4" icon="phosphor-info" />
+        <x-alert :title="\App\Support\PasswordResetLinks::unavailableMessage()" class="mb-4" icon="phosphor-info" />
 
         <a href="{{ route('login') }}" class="link link-primary text-sm">
             Back to sign in

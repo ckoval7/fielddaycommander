@@ -14,6 +14,11 @@ class PasswordResetLinks
     public const UNAVAILABLE_MESSAGE = "Password reset by email isn't set up on this server yet. Ask an administrator to reset your password.";
 
     /**
+     * Shown instead while PASSWORD_RESET_METHOD is admin_only.
+     */
+    public const ADMIN_ONLY_MESSAGE = 'Ask an administrator to reset your password.';
+
+    /**
      * Prevent instantiation — this class exposes only static helpers.
      */
     private function __construct() {}
@@ -40,14 +45,23 @@ class PasswordResetLinks
     }
 
     /**
-     * Whether anyone may request a reset link for an email address. Off until
-     * APP_URL names the server, since a link to localhost is useless in an
-     * email. Administrators can still send reset emails from User Management;
+     * Whether anyone may request a reset link for an email address. Off while
+     * PASSWORD_RESET_METHOD is admin_only, and until APP_URL names the server,
+     * since a link to localhost is useless in an email. Administrators can
+     * still send reset emails from User Management; while APP_URL is unset
      * those links use the administrator's own address, like invitations.
      */
     public static function selfServiceAvailable(): bool
     {
-        return self::canonicalRoot() !== null;
+        return AuthSecurity::allowsEmailResets() && self::canonicalRoot() !== null;
+    }
+
+    /**
+     * Why self-service reset is off, for the forgot-password page.
+     */
+    public static function unavailableMessage(): string
+    {
+        return AuthSecurity::allowsEmailResets() ? self::UNAVAILABLE_MESSAGE : self::ADMIN_ONLY_MESSAGE;
     }
 
     /**

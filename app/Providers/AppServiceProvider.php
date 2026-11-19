@@ -38,6 +38,7 @@ use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
 use App\Services\ListenerProcessRunner;
+use App\Support\AuthSecurity;
 use App\Support\IconSprite;
 use App\Support\StationMode;
 use App\Support\WindowsCertificateStore;
@@ -108,6 +109,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Idle sign-outs are enforced by EnforceIdleTimeout, so the session
+        // itself must outlast SESSION_TIMEOUT_* and, with EVENT_DURATION_MODE, an event.
+        config(['session.lifetime' => AuthSecurity::sessionLifetimeMinutes()]);
+
         // Register EventContextService as a scoped binding (extends ActiveEventService)
         // Scoped ensures mutable state resets between Octane requests while sharing within a request
         $this->app->scoped(EventContextService::class);

@@ -25,6 +25,9 @@
 
 - Password-reset emails could link to another computer on the club network if someone requested a reset using that computer's address. Reset links now use `APP_URL` when it is set to the server's address. On Docker and Helm installs with email configured, set `APP_URL` to the address people use to reach the app before they can request their own reset emails.
 
+- Password reset, failed login, session timeout, password length, and audit retention settings were listed in `.env` and Helm values but had no effect. They now work. With the defaults, admins need 12-character passwords when setting or resetting them, and are signed out after 30 idle minutes outside events. Other users are signed out after 4 hours. During an event or its setup window, nobody is signed out for idling.
+- The audit log now deletes non-critical entries older than 365 days by default. Previously, entries were never pruned.
+
 ## 26.11.1 - 2026-11-03
 
 ### Added
