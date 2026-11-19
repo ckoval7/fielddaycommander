@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use App\Support\AuthSecurity;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,12 @@ class UserManagement extends Component
     private const SYSTEM_ACCOUNT_PROTECTED = 'The SYSTEM account is protected and can\'t be changed.';
 
     private const SYSTEM_ACCOUNT_SKIPPED = 'The SYSTEM account is protected and was skipped.';
+
+    private const ROLE_NOT_ASSIGNABLE = 'You can only give a role whose permissions you already have.';
+
+    private const OUTRANKED_SKIPPED = 'Accounts with permissions you don\'t have were skipped.';
+
+    private const OUTRANKED_PROTECTED = 'You can\'t change accounts that have permissions you don\'t have.';
 
     private const FIRST_NAME_REQUIRED = 'Enter a first name.';
 
@@ -156,7 +163,7 @@ class UserManagement extends Component
     public function users()
     {
         return User::query()
-            ->with('roles')
+            ->with(['roles.permissions', 'permissions'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('call_sign', 'like', "%{$this->search}%")
@@ -190,6 +197,17 @@ class UserManagement extends Component
         return Role::orderBy('name')->get();
     }
 
+    /**
+     * Roles the signed-in administrator may give out (see UserPolicy).
+     */
+    #[Computed]
+    public function assignableRoles()
+    {
+        return Role::with('permissions')->orderBy('name')->get()
+            ->filter(fn (Role $role): bool => Gate::allows('assign-role', $role))
+            ->values();
+    }
+
     public function openCreateModal(): void
     {
         $this->reset([
@@ -198,13 +216,14 @@ class UserManagement extends Component
             'password_confirmation', 'inviteMode', 'requirePasswordChange',
         ]);
         $this->inviteMode = (bool) config('mail.email_configured');
-        $this->role_id = $this->roles->first()?->id;
+        $this->role_id = $this->assignableRoles->first()?->id;
         $this->showModal = true;
     }
 
     public function openEditModal(int $userId): void
     {
         $user = User::with('roles')->findOrFail($userId);
+        Gate::authorize('update', $user);
 
         $this->editingUserId = $user->id;
         $this->call_sign = $user->call_sign;
@@ -214,7 +233,7 @@ class UserManagement extends Component
         $this->license_class = $user->license_class;
         $this->is_youth = (bool) $user->is_youth;
         $this->is_cpr_aed_trained = (bool) $user->is_cpr_aed_trained;
-        $this->role_id = $user->roles->first()?->id ?? $this->roles->first()->id;
+        $this->role_id = $user->roles->first()?->id ?? $this->assignableRoles->first()?->id;
 
         $this->showModal = true;
     }
@@ -260,6 +279,11 @@ class UserManagement extends Component
             'password.required_if' => 'Enter a password or send an invitation.',
         ]);
 
+        $role = Role::findOrFail($validated['role_id']);
+        if (! $this->authorizeRoleAssignment($role)) {
+            return;
+        }
+
         $user = User::create([
             'call_sign' => $validated['call_sign'],
             'first_name' => $validated['first_name'],
@@ -272,7 +296,6 @@ class UserManagement extends Component
             'requires_password_change' => ! $this->inviteMode && $this->requirePasswordChange,
         ]);
 
-        $role = Role::find($validated['role_id']);
         $user->assignRole($role);
 
         AuditLog::log('user.created', auditable: $user, newValues: [
@@ -348,15 +371,27 @@ class UserManagement extends Component
         ]);
 
         $user = User::findOrFail($this->editingUserId);
+        Gate::authorize('update', $user);
 
-        // SYSTEM account role is immutable
+        // SYSTEM account callsign and role are immutable: the callsign is what marks it as protected.
         if ($user->isSystemUser()) {
+            if ($validated['call_sign'] !== $user->call_sign) {
+                $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account callsign cannot be changed.', icon: 'phosphor-x-circle', css: 'alert-error');
+
+                return;
+            }
+
             $currentRoleId = $user->roles->first()?->id;
             if ($currentRoleId && (int) $validated['role_id'] !== $currentRoleId) {
                 $this->dispatch('toast', title: 'Error', description: 'The SYSTEM account role cannot be changed.', icon: 'phosphor-x-circle', css: 'alert-error');
 
                 return;
             }
+        }
+
+        $role = Role::findOrFail($validated['role_id']);
+        if ((int) $validated['role_id'] !== $user->roles->first()?->id && ! $this->authorizeRoleAssignment($role)) {
+            return;
         }
 
         $oldValues = [
@@ -375,7 +410,6 @@ class UserManagement extends Component
             'is_cpr_aed_trained' => $this->is_cpr_aed_trained,
         ]);
 
-        $role = Role::find($validated['role_id']);
         $user->syncRoles([$role]);
 
         AuditLog::log('user.updated', auditable: $user, oldValues: $oldValues, newValues: [
@@ -408,6 +442,7 @@ class UserManagement extends Component
         }
 
         $user = User::findOrFail($this->lockingUserId);
+        Gate::authorize('update', $user);
         $user->update([
             'account_locked_at' => now(),
             'approval_requested_at' => null,
@@ -427,6 +462,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         $user = User::findOrFail($userId);
+        Gate::authorize('update', $user);
         $user->update(['account_locked_at' => null, 'approval_requested_at' => null]);
 
         AuditLog::log('user.unlocked', auditable: $user, newValues: [
@@ -441,6 +477,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         $user = User::findOrFail($userId);
+        Gate::authorize('manageAccount', $user);
         $user->update(['requires_password_change' => true]);
 
         AuditLog::log('user.password.force_reset', auditable: $user, newValues: [
@@ -480,6 +517,7 @@ class UserManagement extends Component
         Gate::authorize('manage-users');
 
         $user = User::where('is_ghost', true)->findOrFail($this->activatingUserId);
+        Gate::authorize('manageAccount', $user);
 
         $this->activateEmail = strtolower(trim($this->activateEmail));
 
@@ -535,14 +573,15 @@ class UserManagement extends Component
     {
         Gate::authorize('manage-users');
 
+        $user = User::findOrFail($this->resettingUserId);
+        Gate::authorize('manageAccount', $user);
+
         if ($this->resetMethod === 'manual') {
             if (! AuthSecurity::allowsAdminPasswordSet()) {
                 $this->dispatch('toast', title: 'Error', description: 'Passwords on this server are reset by email only. Send a reset email instead.', icon: 'phosphor-x-circle', css: 'alert-error');
 
                 return;
             }
-
-            $user = User::findOrFail($this->resettingUserId);
 
             $this->validate([
                 'newPassword' => ['required', 'string', AuthSecurity::passwordRule($user)],
@@ -560,8 +599,6 @@ class UserManagement extends Component
             $this->showResetModal = false;
             $this->dispatch('toast', title: 'Success', description: 'Password reset.', icon: 'phosphor-key', css: 'alert-success');
         } else {
-            $user = User::findOrFail($this->resettingUserId);
-
             $status = PasswordBroker::sendResetLink(['email' => $user->email]);
 
             if ($status === PasswordBroker::RESET_LINK_SENT) {
@@ -598,6 +635,7 @@ class UserManagement extends Component
         }
 
         $user = User::findOrFail($this->deletingUserId);
+        Gate::authorize('manageAccount', $user);
 
         AuditLog::log('user.deleted', auditable: $user, oldValues: [
             'call_sign' => $user->call_sign,
@@ -625,11 +663,12 @@ class UserManagement extends Component
             return;
         }
 
-        $role = Role::find($this->bulk_role_id);
-        $users = User::whereIn('id', $this->selectedUsers)
-            ->excludeSystem()
-            ->with('roles')
-            ->get();
+        $role = Role::findOrFail($this->bulk_role_id);
+        if (! $this->authorizeRoleAssignment($role)) {
+            return;
+        }
+
+        $users = $this->bulkTargets('update');
         $count = $users->count();
         $users->each(function ($user) use ($role) {
             $oldRole = $user->roles->first()?->name;
@@ -644,8 +683,9 @@ class UserManagement extends Component
         });
 
         $skippedSystem = $this->selectionIncludesSystemUser();
+        $skippedOutranked = $this->outrankedCount($count);
         $this->reset(['selectedUsers', 'selectAll', 'bulk_role_id']);
-        $this->dispatchBulkResult($count, "Role assigned to {$count} ".str('user')->plural($count).'.', 'phosphor-check-circle', $skippedSystem);
+        $this->dispatchBulkResult($count, "Role assigned to {$count} ".str('user')->plural($count).'.', 'phosphor-check-circle', $skippedSystem, $skippedOutranked);
     }
 
     public function bulkLockAccounts(): void
@@ -668,7 +708,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = User::whereIn('id', $this->selectedUsers)->pluck('id')->all();
+        $userIds = $this->bulkTargets('update', includeSystem: true)->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => $this->bulkLockExpiry ?? now(),
@@ -685,8 +725,9 @@ class UserManagement extends Component
         }
 
         $count = count($userIds);
+        $skippedOutranked = $this->outrankedCount($count, includeSystem: true);
         $this->reset(['selectedUsers', 'selectAll', 'bulkLockExpiry']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' locked.', icon: 'phosphor-lock', css: 'alert-success');
+        $this->dispatchBulkResult($count, "{$count} ".str('account')->plural($count).' locked.', 'phosphor-lock', false, $skippedOutranked);
     }
 
     public function bulkUnlockAccounts(): void
@@ -703,7 +744,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = User::whereIn('id', $this->selectedUsers)->pluck('id')->all();
+        $userIds = $this->bulkTargets('update', includeSystem: true)->pluck('id')->all();
 
         User::whereIn('id', $userIds)->update([
             'account_locked_at' => null,
@@ -719,8 +760,9 @@ class UserManagement extends Component
         }
 
         $count = count($userIds);
+        $skippedOutranked = $this->outrankedCount($count, includeSystem: true);
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatch('toast', title: 'Success', description: "{$count} ".str('account')->plural($count).' unlocked.', icon: 'phosphor-lock-open', css: 'alert-success');
+        $this->dispatchBulkResult($count, "{$count} ".str('account')->plural($count).' unlocked.', 'phosphor-lock-open', false, $skippedOutranked);
     }
 
     public function openBulkDeleteModal(): void
@@ -754,7 +796,7 @@ class UserManagement extends Component
             return;
         }
 
-        $userIds = User::whereIn('id', $this->selectedUsers)->excludeSystem()->pluck('id')->all();
+        $userIds = $this->bulkTargets('manageAccount')->pluck('id')->all();
 
         $users = User::whereIn('id', $userIds)->get();
         foreach ($users as $user) {
@@ -769,9 +811,49 @@ class UserManagement extends Component
 
         $count = count($userIds);
         $skippedSystem = $this->selectionIncludesSystemUser();
+        $skippedOutranked = $this->outrankedCount($count);
         $this->showBulkDeleteModal = false;
         $this->reset(['selectedUsers', 'selectAll']);
-        $this->dispatchBulkResult($count, "{$count} ".str('user')->plural($count).' deleted.', 'phosphor-trash', $skippedSystem);
+        $this->dispatchBulkResult($count, "{$count} ".str('user')->plural($count).' deleted.', 'phosphor-trash', $skippedSystem, $skippedOutranked);
+    }
+
+    /**
+     * Refuse a role the signed-in administrator may not give out, with a toast.
+     */
+    private function authorizeRoleAssignment(Role $role): bool
+    {
+        if (Gate::allows('assign-role', $role)) {
+            return true;
+        }
+
+        $this->dispatch('toast', title: 'Error', description: self::ROLE_NOT_ASSIGNABLE, icon: 'phosphor-x-circle', css: 'alert-error');
+
+        return false;
+    }
+
+    /**
+     * Selected users the signed-in administrator may act on, optionally leaving out SYSTEM.
+     *
+     * @return Collection<int, User>
+     */
+    private function bulkTargets(string $ability, bool $includeSystem = false): Collection
+    {
+        return User::whereIn('id', $this->selectedUsers)
+            ->when(! $includeSystem, fn ($query) => $query->excludeSystem())
+            ->with(['roles.permissions', 'permissions'])
+            ->get()
+            ->filter(fn (User $user): bool => Gate::allows($ability, $user))
+            ->values();
+    }
+
+    /**
+     * How many selected users were skipped for holding permissions the administrator lacks.
+     */
+    private function outrankedCount(int $changed, bool $includeSystem = false): int
+    {
+        return User::whereIn('id', $this->selectedUsers)
+            ->when(! $includeSystem, fn ($query) => $query->excludeSystem())
+            ->count() - $changed;
     }
 
     /**
@@ -788,16 +870,21 @@ class UserManagement extends Component
      * Toast the outcome of a bulk action, warning instead of claiming success
      * when the protected SYSTEM account was the only user selected.
      */
-    private function dispatchBulkResult(int $count, string $description, string $icon, bool $skippedSystem): void
+    private function dispatchBulkResult(int $count, string $description, string $icon, bool $skippedSystem, int $skippedOutranked = 0): void
     {
-        if ($skippedSystem && $count === 0) {
-            $this->dispatch('toast', title: 'Nothing changed', description: self::SYSTEM_ACCOUNT_PROTECTED, icon: 'phosphor-warning', css: 'alert-warning');
+        if ($count === 0 && ($skippedSystem || $skippedOutranked > 0)) {
+            $reason = $skippedOutranked > 0 ? self::OUTRANKED_PROTECTED : self::SYSTEM_ACCOUNT_PROTECTED;
+            $this->dispatch('toast', title: 'Nothing changed', description: $reason, icon: 'phosphor-warning', css: 'alert-warning');
 
             return;
         }
 
         if ($skippedSystem) {
             $description .= ' '.self::SYSTEM_ACCOUNT_SKIPPED;
+        }
+
+        if ($skippedOutranked > 0) {
+            $description .= ' '.self::OUTRANKED_SKIPPED;
         }
 
         $this->dispatch('toast', title: 'Success', description: $description, icon: $icon, css: 'alert-success');

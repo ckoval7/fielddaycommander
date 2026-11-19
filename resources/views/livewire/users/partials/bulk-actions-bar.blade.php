@@ -12,7 +12,7 @@
                 <x-select
                     placeholder="Select Role" aria-label="Role to assign to selected users"
                     wire:model="bulk_role_id"
-                    :options="$this->roles"
+                    :options="$this->assignableRoles"
                     option-value="id"
                     option-label="name"
                 />

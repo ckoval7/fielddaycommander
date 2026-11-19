@@ -120,29 +120,32 @@
                                     </div>
                                 </td>
                                 <td>
+                                    @can('update', $user)
                                     <x-dropdown>
                                         <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $user->call_sign }}">
                             <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
                         </x-slot:trigger>
 
                                         <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
-                                        <x-menu-separator />
-
                                         @if($user->account_locked_at)
                                             <x-menu-item title="Unlock Account" icon="phosphor-lock-open" wire:click="unlockAccount({{ $user->id }})" />
                                         @else
                                             <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                         @endif
 
-                                        <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                        @if($user->is_ghost)
-                                            <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
-                                        @else
-                                            <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
-                                        @endif
-                                        <x-menu-separator />
-                                        <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                        @can('manageAccount', $user)
+                                            <x-menu-separator />
+                                            <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                            @if($user->is_ghost)
+                                                <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
+                                            @else
+                                                <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                            @endif
+                                            <x-menu-separator />
+                                            <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                        @endcan
                                     </x-dropdown>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -177,29 +180,32 @@
                                     <div class="text-sm text-base-content/70 truncate">{{ $user->email }}</div>
                                 </div>
                             </div>
+                            @can('update', $user)
                             <x-dropdown>
                                 <x-slot:trigger class="btn btn-sm btn-ghost" aria-label="Actions for {{ $user->call_sign }}">
                             <x-icon name="phosphor-dots-three-vertical" class="w-5 h-5" aria-hidden="true" />
                         </x-slot:trigger>
 
                                 <x-menu-item title="Edit" icon="phosphor-pencil-simple" wire:click="openEditModal({{ $user->id }})" />
-                                <x-menu-separator />
-
                                 @if($user->account_locked_at)
                                     <x-menu-item title="Unlock Account" icon="phosphor-lock-open" wire:click="unlockAccount({{ $user->id }})" />
                                 @else
                                     <x-menu-item title="Lock Account" icon="phosphor-lock" wire:click="openLockModal({{ $user->id }})" />
                                 @endif
 
-                                <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
-                                @if($user->is_ghost)
-                                    <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
-                                @else
-                                    <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
-                                @endif
-                                <x-menu-separator />
-                                <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                @can('manageAccount', $user)
+                                    <x-menu-separator />
+                                    <x-menu-item title="Require Password Change" icon="phosphor-key" wire:click="forcePasswordReset({{ $user->id }})" />
+                                    @if($user->is_ghost)
+                                        <x-menu-item title="Activate Account" icon="phosphor-user-check" wire:click="openActivateModal({{ $user->id }})" />
+                                    @else
+                                        <x-menu-item title="Reset Password" icon="phosphor-key" wire:click="openResetModal({{ $user->id }})" />
+                                    @endif
+                                    <x-menu-separator />
+                                    <x-menu-item title="Delete" icon="phosphor-trash" class="text-error" wire:click="openDeleteModal({{ $user->id }})" />
+                                @endcan
                             </x-dropdown>
+                            @endcan
                         </div>
 
                         <div class="flex flex-wrap gap-1.5 mt-2">
