@@ -33,6 +33,7 @@ use App\Observers\W1awBulletinObserver;
 use App\Policies\GuestbookEntryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\MessagePolicy;
+use App\Policies\UserPolicy;
 use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
@@ -176,6 +177,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->configureStationMode();
+
+        // Giving out roles is limited to what the administrator holds (see UserPolicy).
+        Gate::define('assign-role', [UserPolicy::class, 'assignRole']);
 
         // The settings page hosts system settings and the role manager, so
         // either permission opens it. Each tab checks its own permission.

@@ -66,7 +66,7 @@
             <x-select
                 label="Role"
                 wire:model.live="role_id"
-                :options="$this->roles"
+                :options="$this->assignableRoles"
                 option-value="id"
                 option-label="name"
                 required

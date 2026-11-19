@@ -21,6 +21,11 @@
 - Since v26.10.12, deleting a user or several selected users on **Users** showed only a red confirmation heading. The explanation below it now appears again, warning that the accounts will be removed from the users list and those users won't be able to sign in.
 - Since v26.11.1, when Field Day Commander became an N3FJP network server, an N3FJP PC connecting to a large event log, around 20,000 contacts or more depending on how much each contact held, was disconnected right after connecting without loading the log, and reconnecting failed the same way. This affected Linux, Docker, Helm, and Windows installs, with "N3FJP server dropped a client that stopped reading" in the server log. A PC now loads the whole log however large it is, as long as it keeps reading, and a PC that really stops responding is still disconnected.
 
+### Security
+
+- Anyone whose role had **Manage Users** could give any account, including their own, the System Administrator role, and could reset an administrator's password. This only affected clubs that gave **Manage Users** to a custom role. By default only System Administrator and Config Only have it. On **Users**, someone with **Manage Users** can now give out a role, or edit, lock, reset the password of, or delete an account, only when they already have every permission that role or account has. Roles they can't give out don't appear in the role lists, actions on accounts they can't manage don't appear in the row menu, and bulk actions skip those accounts and say so.
+- People with **Manage Roles** (System Administrator and Config Only by default) aren't limited, so the setup account can still create the first System Administrator. The SYSTEM setup account's callsign can no longer be changed, and its password can't be reset or the account deleted from **Users**. It can still be locked.
+
 ## 26.11.1 - 2026-11-03
 
 ### Added
