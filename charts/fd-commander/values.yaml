@@ -52,6 +52,7 @@ app:
   debug: false
   # Public URL of the installation, no trailing slash. Also used to build
   # asset and storage URLs, so it must match how users reach the app.
+  # Password-reset emails link here. Forgot password emails are off on localhost.
   url: "http://localhost"
   # Extra hostnames users reach the site by, comma-separated (for example a
   # public domain alongside a LAN name). The app.url host, its subdomains,

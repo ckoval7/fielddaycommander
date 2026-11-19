@@ -5,27 +5,35 @@
 <x-layouts.guest>
     <x-slot:title>Forgot Password</x-slot:title>
 
-    <div class="mb-4 text-sm">
-        Enter your account email address to request a password reset link.
-    </div>
-
-    @if (session('status'))
-        <x-alert :title="session('status')" class="mb-4" success />
-    @endif
-
-    <form method="POST" action="{{ route('password.email') }}">
-        @csrf
-
-        <div class="space-y-4">
-            <x-input label="Email" type="email" name="email" :value="old('email')" required autofocus autocomplete="email" icon="phosphor-envelope" errorField="email" />
-
-            <div class="flex items-center justify-between pt-2">
-                <a href="{{ route('login') }}" class="link link-primary text-sm">
-                    Back to sign in
-                </a>
-
-                <x-button label="Email Reset Link" type="submit" class="btn-primary" icon="phosphor-paper-plane-tilt" />
-            </div>
+    @if (\App\Support\PasswordResetLinks::selfServiceAvailable())
+        <div class="mb-4 text-sm">
+            Enter your account email address to request a password reset link.
         </div>
-    </form>
+
+        @if (session('status'))
+            <x-alert :title="session('status')" class="mb-4" success />
+        @endif
+
+        <form method="POST" action="{{ route('password.email') }}">
+            @csrf
+
+            <div class="space-y-4">
+                <x-input label="Email" type="email" name="email" :value="old('email')" required autofocus autocomplete="email" icon="phosphor-envelope" errorField="email" />
+
+                <div class="flex items-center justify-between pt-2">
+                    <a href="{{ route('login') }}" class="link link-primary text-sm">
+                        Back to sign in
+                    </a>
+
+                    <x-button label="Email Reset Link" type="submit" class="btn-primary" icon="phosphor-paper-plane-tilt" />
+                </div>
+            </div>
+        </form>
+    @else
+        <x-alert :title="\App\Support\PasswordResetLinks::unavailableMessage()" class="mb-4" icon="phosphor-info" />
+
+        <a href="{{ route('login') }}" class="link link-primary text-sm">
+            Back to sign in
+        </a>
+    @endif
 </x-layouts.guest>

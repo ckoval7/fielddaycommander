@@ -33,11 +33,13 @@ use App\Observers\W1awBulletinObserver;
 use App\Policies\GuestbookEntryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\MessagePolicy;
+use App\Policies\UserPolicy;
 use App\Policies\W1awBulletinPolicy;
 use App\Scoring\RuleSetFactory;
 use App\Services\ActiveEventService;
 use App\Services\EventContextService;
 use App\Services\ListenerProcessRunner;
+use App\Support\AuthSecurity;
 use App\Support\IconSprite;
 use App\Support\StationMode;
 use App\Support\WindowsCertificateStore;
@@ -108,6 +110,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Idle sign-outs are enforced by EnforceIdleTimeout, so the session
+        // itself must outlast SESSION_TIMEOUT_* and, with EVENT_DURATION_MODE, an event.
+        config(['session.lifetime' => AuthSecurity::sessionLifetimeMinutes()]);
+
         // Register EventContextService as a scoped binding (extends ActiveEventService)
         // Scoped ensures mutable state resets between Octane requests while sharing within a request
         $this->app->scoped(EventContextService::class);
@@ -176,6 +182,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->configureStationMode();
+
+        // Giving out roles is limited to what the administrator holds (see UserPolicy).
+        Gate::define('assign-role', [UserPolicy::class, 'assignRole']);
 
         // The settings page hosts system settings and the role manager, so
         // either permission opens it. Each tab checks its own permission.

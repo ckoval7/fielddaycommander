@@ -4,7 +4,7 @@
 --}}
 <x-modal wire:model="showResetModal" title="Reset Password">
     <form wire:submit="resetPassword">
-        @if(config('mail.email_configured'))
+        @if(config('mail.email_configured') && \App\Support\AuthSecurity::allowsAdminPasswordSet())
             <div class="mb-4">
                 <x-radio
                     wire:model.live="resetMethod"

@@ -46,6 +46,10 @@ Schedule::command('demo:fill-pool')
 Schedule::command('demo:simulate-activity')
     ->everyMinute()
     ->when(fn () => config('demo.enabled'));
+
+// Prune non-critical audit log entries older than AUDIT_RETENTION_DAYS
+Schedule::command('audit:cleanup')->dailyAt('04:00');
+
 // Monitor and restart crashed external logger listeners
 Schedule::command('external-logger:monitor')->everyMinute();
 

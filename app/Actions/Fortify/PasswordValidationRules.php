@@ -6,18 +6,21 @@
 
 namespace App\Actions\Fortify;
 
+use App\Models\User;
+use App\Support\AuthSecurity;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 trait PasswordValidationRules
 {
     /**
-     * Get the validation rules used to validate passwords.
+     * Get the validation rules used to validate passwords, with the stricter
+     * minimum length when the account is administrative.
      *
-     * @return array<int, Rule|array<mixed>|string>
+     * @return array<int, Rule|array<mixed>|string|Password>
      */
-    protected function passwordRules(): array
+    protected function passwordRules(?User $user = null): array
     {
-        return ['required', 'string', Password::default(), 'confirmed'];
+        return ['required', 'string', AuthSecurity::passwordRule($user), 'confirmed'];
     }
 }

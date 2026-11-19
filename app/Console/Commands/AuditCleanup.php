@@ -10,13 +10,13 @@ use Illuminate\Console\Command;
 
 class AuditCleanup extends Command
 {
-    protected $signature = 'audit:cleanup {--days=365 : Number of days to keep}';
+    protected $signature = 'audit:cleanup {--days= : Number of days to keep (default: AUDIT_RETENTION_DAYS)}';
 
     protected $description = 'Clean up old audit log entries';
 
     public function handle(): int
     {
-        $days = (int) $this->option('days');
+        $days = max(1, (int) ($this->option('days') ?? config('auth-security.audit_retention_days')));
         $cutoff = now()->subDays($days);
 
         $count = AuditLog::where('created_at', '<', $cutoff)

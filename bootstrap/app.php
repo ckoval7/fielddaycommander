@@ -10,6 +10,7 @@ use App\Http\Middleware\DemoAnalyticsMiddleware;
 use App\Http\Middleware\DemoMiddleware;
 use App\Http\Middleware\DemoRelayMiddleware;
 use App\Http\Middleware\DevRoleOverride;
+use App\Http\Middleware\EnforceIdleTimeout;
 use App\Http\Middleware\EnforceRegistrationMode;
 use App\Http\Middleware\EnforceStationMode;
 use App\Http\Middleware\Ensure2FAEnabled;
@@ -57,6 +58,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             DemoMiddleware::class,
             DemoAnalyticsMiddleware::class,
             EnsureAccountNotLocked::class,
+            EnforceIdleTimeout::class,
             DevRoleOverride::class,
             CheckSystemSetupComplete::class,
             EnforceRegistrationMode::class,

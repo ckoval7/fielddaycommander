@@ -8,6 +8,7 @@ namespace App\Livewire\Profile;
 use App\Models\AuditLog;
 use App\Models\OperatingSession;
 use App\Models\Setting;
+use App\Support\AuthSecurity;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
@@ -347,7 +348,7 @@ class UserProfile extends Component
     {
         $this->validate([
             'current_password' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', AuthSecurity::passwordRule(auth()->user()), 'confirmed'],
         ]);
 
         try {

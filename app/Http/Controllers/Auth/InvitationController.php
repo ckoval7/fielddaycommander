@@ -7,12 +7,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserInvitation;
+use App\Support\AuthSecurity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 
 class InvitationController extends Controller
 {
@@ -57,7 +57,7 @@ class InvitationController extends Controller
         }
 
         $validated = $request->validate([
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', AuthSecurity::passwordRule($invitation->user)],
         ]);
 
         $user = $invitation->user;
