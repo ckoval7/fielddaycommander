@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-@props(['rule' => null, 'rulebook' => 'ARRL'])
+@props(['rule' => null, 'rulebook' => 'ARRL', 'compact' => false])
 
 @php
     // Screen readers read "7.3.1" as a date, so say the dots as "point".
@@ -16,7 +16,11 @@
             <button
                 type="button"
                 x-on:click.stop="expanded = !expanded"
-                class="btn btn-ghost btn-xs btn-circle text-info hover:text-info-content hover:bg-info"
+                @class([
+                    'btn btn-ghost btn-xs btn-circle text-info hover:text-info-content hover:bg-info',
+                    // In a row padded enough to hold it, keep the 44px touch target without making the row taller.
+                    'relative z-10 pointer-coarse:-my-2.5' => $compact,
+                ])
                 :title="expanded ? 'Hide {{ $rulebook }} rule' : 'Show {{ $rulebook }} rule {{ $rule['section'] }}'"
                 :aria-expanded="expanded"
                 aria-label="Toggle {{ $rulebook }} rule {{ $spokenSection }} details"
