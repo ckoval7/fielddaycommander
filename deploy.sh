@@ -6,7 +6,7 @@ set -euo pipefail
 
 # --- Constants ---
 SCRIPT_VERSION="1.0.0"
-FRANKENPHP_VERSION="1.13.4"
+FRANKENPHP_VERSION="1.13.6"
 # The glibc (-gnu) builds, which need glibc 2.28+. FrankenPHP's maintainers
 # advise against the musl static builds in production.
 # FrankenPHP rebuilds the latest release's binaries every night, so a pinned
@@ -434,6 +434,51 @@ NODEREPOEOF
     return 0
 }
 
+# The ondrej/php PPA was retired in favour of packages.sury.org, run by the
+# same maintainer. Its relabelled Release file makes every apt-get update fail
+# until the PPA is removed, and it no longer gets PHP security releases.
+# Returns 0 if it removed or disabled a PPA entry.
+# update.sh carries the same two functions.
+remove_ondrej_php_ppa() {
+    local removed=1 f
+    local ppa_re='ppa\.launchpad(content)?\.net/ondrej/php'
+    for f in /etc/apt/sources.list.d/*.sources; do
+        [[ -f "$f" ]] && grep -Eq "$ppa_re" "$f" || continue
+        log_info "Removing the retired ondrej/php PPA (${f})..."
+        rm -f "$f"
+        removed=0
+    done
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+        [[ -f "$f" ]] && grep -Eq "^[[:space:]]*deb(-src)?[[:space:]].*${ppa_re}" "$f" || continue
+        log_info "Disabling the retired ondrej/php PPA in ${f}..."
+        sed -i -E "s|^([[:space:]]*deb(-src)?[[:space:]].*${ppa_re}.*)$|# \1|" "$f"
+        removed=0
+    done
+    rm -f /etc/apt/sources.list.d/ondrej-php.list /usr/share/keyrings/ondrej-php.gpg
+    return "$removed"
+}
+
+# Sury's repo for PHP 8.4 on Debian, Raspbian and Ubuntu releases that don't
+# carry it. Also refreshes the signing key. Leaves a Sury repo the admin
+# added another way alone, since two entries with different keys break apt.
+add_sury_php_repo_debian() {
+    local codename=$1 f
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+        [[ -f "$f" && "$f" != /etc/apt/sources.list.d/sury-php.list ]] || continue
+        if grep -Eq '^[^#]*packages\.sury\.org/php' "$f"; then
+            log_info "Sury PHP repo already set up in ${f}"
+            apt-get update -y
+            return
+        fi
+    done
+    log_info "Adding Sury PHP DEB repo for ${ID} ${codename}..."
+    install -d -m 0755 /usr/share/keyrings
+    https_curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg || return 1
+    echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${codename} main" \
+        > /etc/apt/sources.list.d/sury-php.list
+    apt-get update -y
+}
+
 # --- Package Installation ---
 install_packages_debian() {
     log_phase "Phase 2: Installing system packages (Debian/Ubuntu)"
@@ -441,30 +486,26 @@ install_packages_debian() {
     source /etc/os-release
     local codename="${VERSION_CODENAME:-}"
 
+    # A PPA left by an older deploy.sh would make apt-get update fail.
+    local php_repo_needed=0
+    if remove_ondrej_php_ppa; then
+        php_repo_needed=1
+    fi
+
     apt-get update -y
     apt-get install -y ca-certificates curl gnupg
 
     # PHP 8.4 ships natively on Debian 13+ (trixie) and any distro where apt already
-    # lists php8.4-cli. Only fall back to a third-party repo (Sury for Debian/Raspbian,
-    # ondrej/php PPA for Ubuntu) when the native archives don't carry it.
-    if command -v php8.4 &>/dev/null; then
+    # lists php8.4-cli. Only fall back to Sury's repo when the native archives
+    # don't carry it (or when it replaces the retired ondrej/php PPA).
+    if (( php_repo_needed )) || [[ -f /etc/apt/sources.list.d/sury-php.list ]]; then
+        add_sury_php_repo_debian "$codename"
+    elif command -v php8.4 &>/dev/null; then
         log_warn "PHP 8.4 already installed, skipping repo setup"
     elif apt-cache show php8.4-cli &>/dev/null; then
         log_info "PHP 8.4 available in default repos (${ID} ${codename}), skipping third-party repo"
-    elif [[ "$ID" == "ubuntu" ]]; then
-        log_info "Adding ondrej/php PPA for Ubuntu ${codename}..."
-        install -d -m 0755 /usr/share/keyrings
-        curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14aa40ec0831756756d7f66c4f4ea0aae5267a6c' \
-            | gpg --dearmor --yes -o /usr/share/keyrings/ondrej-php.gpg
-        echo "deb [signed-by=/usr/share/keyrings/ondrej-php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${codename} main" \
-            > /etc/apt/sources.list.d/ondrej-php.list
-        apt-get update -y
     else
-        log_info "Adding Sury PHP DEB repo for ${ID} ${codename}..."
-        curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
-        echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${codename} main" \
-            > /etc/apt/sources.list.d/sury-php.list
-        apt-get update -y
+        add_sury_php_repo_debian "$codename"
     fi
 
     # Add NodeSource repo
