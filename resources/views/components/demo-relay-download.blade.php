@@ -6,6 +6,7 @@
 @props(['linkRelays' => false])
 
 @if (config('demo.enabled'))
+    @php($expiresAt = \App\Support\DemoExpiry::at())
     {{-- Mary's alert drops the slot when it has a title, so the title is part of the slot. --}}
     <x-alert icon="phosphor-plugs-connected" class="alert-info" data-test="demo-relay-download">
         <strong class="block">Try your own logger</strong>
@@ -16,6 +17,10 @@
         @else
             Create a code below, enter
         @endif the server address and code in the relay, then log in your own software to see your contacts in this demo.
-        This sandbox and its connections expire after 24 hours, so you'll need a code from a new demo to reconnect.
+        @if ($expiresAt)
+            This sandbox and its connections expire in {{ $expiresAt->diffForHumans(syntax: \Carbon\CarbonInterface::DIFF_ABSOLUTE) }}, so you'll need a code from a new demo to reconnect.
+        @else
+            This sandbox and its connections expire when the demo does, so you'll need a code from a new demo to reconnect.
+        @endif
     </x-alert>
 @endif

@@ -7,6 +7,7 @@ use App\Livewire\Admin\ExternalLoggerManagement;
 use App\Livewire\Relays\RelayEnrollment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -54,4 +55,21 @@ test('the relay download notice is only shown in demo mode', function () {
 
     Livewire::actingAs($this->user)->test(ExternalLoggerManagement::class)
         ->assertDontSeeHtml('data-test="demo-relay-download"');
+});
+
+test('the relay download notice gives the sandbox\'s remaining time, not a fixed 24 hours', function () {
+    config(['demo.enabled' => true, 'demo.ttl_hours' => 24]);
+    Setting::set('demo_provisioned_at', now()->subHours(19)->addMinutes(30)->toIso8601String());
+
+    Livewire::actingAs($this->user)->test(RelayEnrollment::class)
+        ->assertSee('expire in 5 hours')
+        ->assertDontSee('24 hours');
+});
+
+test('the relay download notice falls back to plain wording when the sandbox has no provisioning time', function () {
+    config(['demo.enabled' => true]);
+
+    Livewire::actingAs($this->user)->test(RelayEnrollment::class)
+        ->assertSee('expire when the demo does')
+        ->assertDontSee('24 hours');
 });

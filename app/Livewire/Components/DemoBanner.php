@@ -6,8 +6,8 @@
 namespace App\Livewire\Components;
 
 use App\Models\DemoSession;
-use App\Models\Setting;
 use App\Support\DemoCookie;
+use App\Support\DemoExpiry;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
@@ -32,13 +32,12 @@ class DemoBanner extends Component
             return;
         }
 
-        $provisionedAt = Setting::get('demo_provisioned_at');
+        $this->expiresAt = DemoExpiry::at();
 
-        if (! $provisionedAt) {
+        if ($this->expiresAt === null) {
             return;
         }
 
-        $this->expiresAt = Carbon::parse($provisionedAt)->addHours(config('demo.ttl_hours', 24));
         $this->isVisible = true;
 
         $this->loadInvite();
