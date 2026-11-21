@@ -10,8 +10,8 @@
 #
 # Composer and Node run in containers pinned to the same images as the
 # Dockerfile. NSIS runs from makensis if it's installed, or a container.
-# FrankenPHP and WinSW are downloaded and checked against the
-# SHA-256 sums below.
+# FrankenPHP, WinSW and the Microsoft Visual C++ runtime are downloaded and
+# checked against the SHA-256 sums below.
 set -euo pipefail
 
 # Same FrankenPHP as deploy.sh and the Dockerfile. Its Windows build bundles
@@ -22,6 +22,14 @@ FRANKENPHP_SHA256="076c319a28b37a428b9c757ffa11b98dfc6ede42ec064c61629d279a2a9e5
 # the runtime built into Windows 10 and 11.
 WINSW_VERSION="2.12.0"
 WINSW_SHA256="b5066b7bbdfba1293e5d15cda3caaea88fbeab35bd5b38c41c913d492aadfc4f"
+# PHP for Windows needs the Microsoft Visual C++ runtime (vcruntime140.dll,
+# vcruntime140_1.dll, msvcp140.dll), which a fresh Windows doesn't have.
+# Microsoft's installer for it is bundled, since the server may never see the
+# internet. The URL is the one https://aka.ms/vs/17/release/vc_redist.x64.exe
+# redirects to; take a newer one from there, with the file's version.
+VC_REDIST_VERSION="14.44.35211"
+VC_REDIST_URL="https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe"
+VC_REDIST_SHA256="cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b"
 
 COMPOSER_IMAGE="composer:2.10.3"
 NODE_IMAGE="node:22.23.3-alpine"
@@ -92,6 +100,10 @@ mkdir -p "$stage/services"
 cp "$downloads/WinSW-$WINSW_VERSION.NET461.exe" "$stage/services/WinSW.exe"
 
 cp -r windows/server "$stage/server"
+
+log "Adding the Microsoft Visual C++ runtime $VC_REDIST_VERSION"
+download "$VC_REDIST_URL" "$downloads/vc_redist-$VC_REDIST_VERSION.x64.exe" "$VC_REDIST_SHA256"
+cp "$downloads/vc_redist-$VC_REDIST_VERSION.x64.exe" "$stage/server/vc_redist.x64.exe"
 cp -r windows/tools "$stage/tools"
 cp -r LICENSES "$stage/LICENSES"
 
