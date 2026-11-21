@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download - Field Day Commander</title>
+<meta name="description" content="Download the Field Day Commander server or relay for your club.">
+<link rel="canonical" href="https://fielddaycommander.org/download.html">
+<meta property="og:site_name" content="Field Day Commander">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Download - Field Day Commander">
+<meta property="og:description" content="Download the Field Day Commander server or relay for your club.">
+<meta property="og:url" content="https://fielddaycommander.org/download.html">
+<meta property="og:image" content="https://fielddaycommander.org/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Download - Field Day Commander">
+<meta name="twitter:description" content="Download the Field Day Commander server or relay for your club.">
+<meta name="twitter:image" content="https://fielddaycommander.org/og-image.png">
+<meta name="twitter:image:alt" content="Field Day Commander dashboard during Field Day: total score, QSOs per hour, sections worked, and QSOs per band">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fd-commander.css">
+<style>
+  .downloads { max-width: 900px; margin: 0 auto; padding: 0 2rem 5rem; }
+  .downloads p { color: var(--text-secondary); line-height: 1.65; }
+  .orientation p + p { margin-top: 0.5rem; }
+  .download-section { padding: 0; margin-top: 3rem; }
+  .download-section h2 { margin-bottom: 1rem; }
+  .download-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .download-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; min-width: 0; }
+  .download-card h3 { margin-bottom: 0.5rem; }
+  .recommended { color: var(--accent-emerald); font-size: 0.85rem; font-weight: 600; }
+  .download-card p + p { margin-top: 0.75rem; }
+  .download-button { display: inline-block; text-align: center; margin: 1rem 0 0.5rem; }
+  .downloads .download-meta { color: var(--text-muted); font-size: 0.85rem; }
+  .download-links { font-size: 0.9rem; margin-top: 0.75rem; }
+  .relay-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .relay-actions .download-button { width: 100%; }
+  .relay-actions + .download-meta { margin-top: 1rem; }
+  .download-note { margin-top: 2rem; }
+  .downloads .quiet { color: var(--text-muted); font-size: 0.85rem; margin-top: 2rem; }
+  @media (max-width: 600px) {
+    .page-hero { padding-left: 1rem; padding-right: 1rem; }
+    .downloads { padding-left: 1rem; padding-right: 1rem; }
+    .download-grid, .relay-actions { grid-template-columns: 1fr; }
+    .download-button { display: block; width: 100%; padding-left: 1rem; padding-right: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="topo-bg"></div>
+<nav></nav><script src="nav.js"></script>
+<section class="page-hero">
+  <h1>Download <span class="gradient">Field Day Commander</span></h1>
+  <p>Choose the software you need for your club.</p>
+</section>
+<main class="downloads container">
+  <div class="orientation">
+    <p>Install the server once on the computer that runs Field Day Commander for your club. Operators only need a web browser and install nothing.</p>
+    <p>The relay is optional. Install it on a Windows logging PC when the server is on a different network or in <a href="how-to/relay.html#do-you-need-it">other cases described in the relay guide</a>.</p>
+  </div>
+  <section class="download-section">
+    <h2>Field Day Commander Server</h2>
+    <div class="download-grid">
+      <div class="download-card">
+        <span class="recommended">Recommended</span>
+        <h3>Linux or Raspberry Pi</h3>
+        <p>Install with a script. There's no file to download.</p>
+        <a class="btn-primary download-button" href="how-to/install.html">Follow the Install Guide</a>
+        <p class="download-links"><a href="fd-commander-docs.html#docker">Docker instructions</a></p>
+      </div>
+      <div class="download-card">
+        <h3>Windows</h3>
+        <p>A supported option if you only have a Windows computer for the server. It uses a simpler built-in database.</p>
+        <a class="btn-primary download-button" id="server-download" href="https://github.com/ckoval7/fielddaycommander/releases/download/v26.11.2/field-day-commander-server-setup-26.11.2.exe">Download for Windows</a>
+        <p class="download-meta">Version <span id="server-version">26.11.2</span> · About 49 MB · 64-bit Windows 10 or 11 · Administrator access required</p>
+        <p class="download-links"><a href="how-to/windows-server.html">Setup guide</a> · <a href="https://github.com/ckoval7/fielddaycommander/releases/latest/download/field-day-commander-server-setup.sha256">Checksum</a></p>
+      </div>
+    </div>
+  </section>
+  <section class="download-section">
+    <h2>Field Day Commander Relay</h2>
+    <p>The relay is a Windows desktop program that sends contacts from logging software such as N3FJP, N1MM Logger+, or WSJT-X on a logging PC to a Field Day Commander server on another network.</p>
+    <div class="relay-actions">
+      <div><a class="btn-primary download-button" href="https://github.com/ckoval7/fielddaycommander-relay/releases/latest/download/relay-setup.exe">Download Relay Installer</a><p class="download-meta">About 5 MB · Installs for your Windows account without administrator rights</p></div>
+      <div><a class="btn-secondary download-button" href="https://github.com/ckoval7/fielddaycommander-relay/releases/latest/download/relay-portable.exe">Portable Version</a><p class="download-meta">About 15 MB · For a borrowed PC or one where you can't install anything</p></div>
+    </div>
+    <p class="download-meta">64-bit Windows 10 or later · Server requires Field Day Commander 26.11.2 or later</p>
+    <p class="download-links"><a href="how-to/relay.html">Setup guide</a> · <a href="https://github.com/ckoval7/fielddaycommander-relay/releases/latest/download/SHA256SUMS">Checksums</a></p>
+  </section>
+  <p class="download-note">The Windows downloads aren't code signed yet, so SmartScreen may show “Windows protected your PC”. Click <strong>More info</strong>, then <strong>Run anyway</strong>. Only do that for files downloaded from this page.</p>
+  <p class="quiet">Older versions and source code are on GitHub: <a href="https://github.com/ckoval7/fielddaycommander/releases" target="_blank" rel="noopener">server releases</a> · <a href="https://github.com/ckoval7/fielddaycommander-relay/releases" target="_blank" rel="noopener">relay releases</a>.</p>
+</main>
+<footer></footer><script src="footer.js"></script>
+<script>
+  fetch('https://api.github.com/repos/ckoval7/fielddaycommander/releases/latest')
+    .then(response => {
+      if (!response.ok) throw new Error('Release unavailable');
+      return response.json();
+    })
+    .then(release => {
+      const asset = release.assets.find(item => /^field-day-commander-server-setup-.+\.exe$/.test(item.name));
+      if (asset && typeof asset.browser_download_url === 'string' && asset.browser_download_url.startsWith('https://github.com/ckoval7/fielddaycommander/releases/download/') && typeof release.tag_name === 'string') {
+        document.getElementById('server-download').href = asset.browser_download_url;
+        document.getElementById('server-version').textContent = release.tag_name.replace(/^v/, '');
+      }
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
