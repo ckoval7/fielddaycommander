@@ -712,8 +712,8 @@ class StationCloneServiceTest extends TestCase
             'event_configuration_id' => $this->sourceConfig->id,
         ]);
 
-        // Mock DB::transaction to simulate an error
-        DB::shouldReceive('transaction')
+        // Make DB::transaction fail; other DB calls pass through
+        DB::partialMock()->shouldReceive('transaction')
             ->once()
             ->andThrow(new \Exception('Simulated error'));
 
