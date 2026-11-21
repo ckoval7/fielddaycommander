@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- On a Windows computer without the Microsoft Visual C++ runtime, such as a fresh Windows install, the server installer stopped at "Updating the server database" and showed "setup could not finish". The setup log showed `artisan optimize:clear failed with exit code -1073741515`. The installer now includes the runtime and installs it when it's missing or older than the bundled version, without needing an internet connection.
+
 ## 26.11.2 - 2026-11-20
 
 ### Added
