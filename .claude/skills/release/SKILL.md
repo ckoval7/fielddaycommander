@@ -186,7 +186,7 @@ Never merge the PR with GitHub's buttons. Squash, merge commit and rebase all le
    gh release view vYY.MM.N --json isDraft,assets --jq '{isDraft, assets: [.assets[].name]}'
    ```
 
-   The assets must include `field-day-commander-server-setup-YY.MM.N.exe` and `field-day-commander-server-setup.sha256`. If the run failed, read its log (`gh run view <id> --log-failed`), fix on a branch off `dev`, and tell the user: the installer is missing from this release until a rerun (`gh run rerun <id>`) or the next tag. If it made a draft, tell the user to title and publish that draft rather than creating a new release for the tag, which would leave two.
+   The assets must include `field-day-commander-server-setup-YY.MM.N.exe`, the same installer as `field-day-commander-server-setup.exe` (the website's Download page links to that name under `releases/latest/download/`), and `field-day-commander-server-setup.sha256`. If the run failed, read its log (`gh run view <id> --log-failed`), fix on a branch off `dev`, and tell the user: the installer is missing from this release until a rerun (`gh run rerun <id>`) or the next tag. If it made a draft, tell the user to title and publish that draft rather than creating a new release for the tag, which would leave two.
 
 ## 8. Demo and clean up
 
