@@ -463,8 +463,10 @@ remove_ondrej_php_ppa() {
 # added another way alone, since two entries with different keys break apt.
 add_sury_php_repo_debian() {
     local codename=$1 f
+    local list=/etc/apt/sources.list.d/sury-php.list
+    local keyring=/usr/share/keyrings/deb.sury.org-php.gpg
     for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
-        [[ -f "$f" && "$f" != /etc/apt/sources.list.d/sury-php.list ]] || continue
+        [[ -f "$f" && "$f" != "$list" ]] || continue
         if grep -Eq '^[^#]*packages\.sury\.org/php' "$f"; then
             log_info "Sury PHP repo already set up in ${f}"
             apt-get update -y
@@ -473,9 +475,8 @@ add_sury_php_repo_debian() {
     done
     log_info "Adding Sury PHP DEB repo for ${ID} ${codename}..."
     install -d -m 0755 /usr/share/keyrings
-    https_curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg || return 1
-    echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${codename} main" \
-        > /etc/apt/sources.list.d/sury-php.list
+    https_curl -fsSLo "$keyring" https://packages.sury.org/php/apt.gpg || return 1
+    echo "deb [signed-by=${keyring}] https://packages.sury.org/php/ ${codename} main" > "$list"
     apt-get update -y
 }
 
