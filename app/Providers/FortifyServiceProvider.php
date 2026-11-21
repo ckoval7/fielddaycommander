@@ -10,6 +10,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Exceptions\InvalidAuthSecurityConfigException;
 use App\Http\Requests\Auth\SendPasswordResetLinkRequest;
 use App\Http\Responses\ApprovalPendingRegisterResponse;
 use App\Models\User;
@@ -128,7 +129,7 @@ class FortifyServiceProvider extends ServiceProvider
             $value = config($key);
 
             if (! in_array($value, $allowed, true)) {
-                throw new \RuntimeException("Invalid {$name}: '{$value}'. Must be one of: ".implode(', ', $allowed));
+                throw new InvalidAuthSecurityConfigException("Invalid {$name}: '{$value}'. Must be one of: ".implode(', ', $allowed));
             }
         }
     }
