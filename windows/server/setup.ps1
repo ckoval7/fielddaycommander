@@ -126,41 +126,6 @@ function Initialize-DataFolders {
     Set-PrivateAcl $BackupDir @("*${installer}:(OI)(CI)M")
 }
 
-# PHP and FrankenPHP need the Microsoft Visual C++ runtime, which a fresh
-# Windows doesn't have: without it php.exe exits with -1073741515 (DLL not
-# found). Installs the bundled copy unless this one or a newer one is there.
-function Install-VcRuntime {
-    $redist = Join-Path $PSScriptRoot 'vc_redist.x64.exe'
-    $bundled = (Get-Item $redist).VersionInfo
-    $wanted = [version]::new($bundled.FileMajorPart, $bundled.FileMinorPart, $bundled.FileBuildPart)
-
-    $current = $true
-    foreach ($dll in @('vcruntime140.dll', 'vcruntime140_1.dll', 'msvcp140.dll')) {
-        $path = Join-Path ([Environment]::SystemDirectory) $dll
-        if (-not (Test-Path $path)) {
-            $current = $false
-            break
-        }
-        $info = (Get-Item $path).VersionInfo
-        if ([version]::new($info.FileMajorPart, $info.FileMinorPart, $info.FileBuildPart) -lt $wanted) {
-            $current = $false
-            break
-        }
-    }
-    if ($current) {
-        return
-    }
-
-    Write-Step "Installing the Microsoft Visual C++ runtime $wanted"
-    $process = Start-Process -FilePath $redist -Wait -PassThru `
-        -ArgumentList @('/install', '/quiet', '/norestart', '/log', "`"$(Join-Path $LogDir 'vc-redist.log')`"")
-
-    # 3010: installed, restart needed to finish. 1638: a newer one is already there.
-    if ($process.ExitCode -notin @(0, 3010, 1638)) {
-        throw "The Microsoft Visual C++ runtime could not be installed (exit code $($process.ExitCode)). Check $(Join-Path $LogDir 'vc-redist.log')."
-    }
-}
-
 function Write-PhpIni {
     $template = Get-Content -Raw (Join-Path $PSScriptRoot 'php.ini')
     $ini = $template.Replace('@EXTENSION_DIR@', (Join-Path $PhpDir 'ext'))
@@ -515,7 +480,6 @@ try {
         'Install' {
             Stop-Services
             Initialize-DataFolders
-            Install-VcRuntime
             Write-PhpIni
             $port = Select-HttpPort
             $script:ReverbPort = Select-ReverbPort

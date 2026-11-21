@@ -4,7 +4,8 @@
 
 ### Fixed
 
-- On a Windows computer without the Microsoft Visual C++ runtime, such as a fresh Windows install, the server installer stopped at "Updating the server database" and showed "setup could not finish". The setup log showed `artisan optimize:clear failed with exit code -1073741515`. The installer now includes the runtime and installs it when it's missing or older than the bundled version, without needing an internet connection.
+- On a Windows computer without the Microsoft Visual C++ runtime, such as a fresh Windows install, the server installer stopped at "Updating the server database" and showed "setup could not finish". The setup log showed `artisan optimize:clear failed with exit code -1073741515`. The server now comes with its own copy of the runtime files, so it starts without the runtime installed and without an internet connection.
+- When updating or retrying the Windows server installer, or uninstalling the server, removing the old files took a long time while the details box listed each file. Removal is now faster, and during an update or retry the details box shows "Removing the previous version's files..." instead.
 
 ## 26.11.2 - 2026-11-20
 

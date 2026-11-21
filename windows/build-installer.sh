@@ -9,7 +9,8 @@
 #   windows/build-installer.sh
 #
 # Composer and Node run in containers pinned to the same images as the
-# Dockerfile. NSIS runs from makensis if it's installed, or a container.
+# Dockerfile. NSIS and cabextract run from the host if they're installed, or
+# a container.
 # FrankenPHP, WinSW and the Microsoft Visual C++ runtime are downloaded and
 # checked against the SHA-256 sums below.
 set -euo pipefail
@@ -23,9 +24,11 @@ FRANKENPHP_SHA256="076c319a28b37a428b9c757ffa11b98dfc6ede42ec064c61629d279a2a9e5
 WINSW_VERSION="2.12.0"
 WINSW_SHA256="b5066b7bbdfba1293e5d15cda3caaea88fbeab35bd5b38c41c913d492aadfc4f"
 # PHP for Windows needs the Microsoft Visual C++ runtime (vcruntime140.dll,
-# vcruntime140_1.dll, msvcp140.dll), which a fresh Windows doesn't have.
-# Microsoft's installer for it is bundled, since the server may never see the
-# internet. The URL is the one https://aka.ms/vs/17/release/vc_redist.x64.exe
+# vcruntime140_1.dll, msvcp140.dll), which a fresh Windows doesn't have. The
+# three DLLs are taken out of Microsoft's installer for it and put next to
+# php.exe, which Microsoft allows. The installer itself isn't shipped:
+# Microsoft Defender deleted a setup program that carried it and ran it
+# quietly. The URL is the one https://aka.ms/vs/17/release/vc_redist.x64.exe
 # redirects to; take a newer one from there, with the file's version.
 VC_REDIST_VERSION="14.44.35211"
 VC_REDIST_URL="https://download.visualstudio.microsoft.com/download/pr/e9604e21-4b79-4096-a4b3-1b63d4b55b4d/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe"
@@ -103,7 +106,37 @@ cp -r windows/server "$stage/server"
 
 log "Adding the Microsoft Visual C++ runtime $VC_REDIST_VERSION"
 download "$VC_REDIST_URL" "$downloads/vc_redist-$VC_REDIST_VERSION.x64.exe" "$VC_REDIST_SHA256"
-cp "$downloads/vc_redist-$VC_REDIST_VERSION.x64.exe" "$stage/server/vc_redist.x64.exe"
+# The installer holds cabinets, and one of those holds the DLLs with
+# _amd64 on the end of their names.
+vc_runtime="$repo/build/windows-vc-runtime"
+rm -rf "$vc_runtime"
+mkdir -p "$vc_runtime"
+cp "$downloads/vc_redist-$VC_REDIST_VERSION.x64.exe" "$vc_runtime/vc_redist.exe"
+unpack_vc_runtime='
+    cd "$1"
+    cabextract -q -d outer vc_redist.exe >/dev/null 2>&1 || true
+    for cab in outer/*; do
+        cabextract -q -d dlls -F "*140*.dll_amd64" "$cab" >/dev/null 2>&1 || true
+    done
+'
+if command -v cabextract >/dev/null 2>&1; then
+    sh -c "$unpack_vc_runtime" sh "$vc_runtime"
+else
+    docker run --rm -v "$repo":/src "$NSIS_IMAGE" sh -c '
+        set -e
+        apt-get update -qq >/dev/null
+        apt-get install -y -qq --no-install-recommends cabextract >/dev/null
+        sh -c "$1" sh /src/build/windows-vc-runtime
+        chown -R "$2" /src/build/windows-vc-runtime
+    ' sh "$unpack_vc_runtime" "$owner"
+fi
+for dll in vcruntime140.dll vcruntime140_1.dll msvcp140.dll; do
+    if [[ ! -s "$vc_runtime/dlls/${dll}_amd64" ]]; then
+        echo "$dll was not found in the Microsoft Visual C++ runtime installer." >&2
+        exit 1
+    fi
+    cp "$vc_runtime/dlls/${dll}_amd64" "$stage/frankenphp/$dll"
+done
 cp -r windows/tools "$stage/tools"
 cp -r LICENSES "$stage/LICENSES"
 

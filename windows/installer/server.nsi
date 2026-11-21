@@ -95,6 +95,17 @@ FunctionEnd
   Pop $0
 !macroend
 
+; The code folder holds tens of thousands of small files. Windows removes
+; them far faster than RMDir /r, which also lists every file in the details
+; box. RMDir /r then clears anything left over.
+!macro REMOVE_FOLDER FOLDER
+  SetDetailsPrint none
+  nsExec::Exec 'cmd.exe /c rmdir /s /q "${FOLDER}"'
+  Pop $0
+  RMDir /r "${FOLDER}"
+  SetDetailsPrint both
+!macroend
+
 Section
   SetShellVarContext all
 
@@ -108,7 +119,8 @@ Section
     Pop $0
     !insertmacro REMOVE_STORAGE_JUNCTION
     ; Old code is removed so files dropped from this version don't linger.
-    RMDir /r "$INSTDIR\app"
+    DetailPrint "Removing the previous version's files..."
+    !insertmacro REMOVE_FOLDER "$INSTDIR\app"
   ${EndIf}
 
   DetailPrint "Copying server files..."
@@ -181,8 +193,9 @@ Section "Uninstall"
   !insertmacro REMOVE_STORAGE_JUNCTION
 
   RMDir /r "$SMPROGRAMS\${PRODUCT}"
-  RMDir /r "$INSTDIR\app"
-  RMDir /r "$INSTDIR\frankenphp"
+  DetailPrint "Removing the server files..."
+  !insertmacro REMOVE_FOLDER "$INSTDIR\app"
+  !insertmacro REMOVE_FOLDER "$INSTDIR\frankenphp"
   RMDir /r "$INSTDIR\services"
   RMDir /r "$INSTDIR\server"
   RMDir /r "$INSTDIR\tools"
