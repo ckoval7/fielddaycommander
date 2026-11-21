@@ -852,6 +852,90 @@ migrate_env_to_redis() {
 }
 
 # --- NodeSource repos (same as deploy.sh) ---
+# The ondrej/php PPA was retired in favour of packages.sury.org, run by the
+# same maintainer. Its relabelled Release file makes every apt-get update fail
+# until the PPA is removed, and it no longer gets PHP security releases.
+# Returns 0 if it removed or disabled a PPA entry.
+# deploy.sh carries the same two functions.
+remove_ondrej_php_ppa() {
+    local removed=1 f
+    local ppa_re='ppa\.launchpad(content)?\.net/ondrej/php'
+    for f in /etc/apt/sources.list.d/*.sources; do
+        [[ -f "$f" ]] && grep -Eq "$ppa_re" "$f" || continue
+        log_info "Removing the retired ondrej/php PPA (${f})..."
+        rm -f "$f"
+        removed=0
+    done
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+        [[ -f "$f" ]] && grep -Eq "^[[:space:]]*deb(-src)?[[:space:]].*${ppa_re}" "$f" || continue
+        log_info "Disabling the retired ondrej/php PPA in ${f}..."
+        sed -i -E "s|^([[:space:]]*deb(-src)?[[:space:]].*${ppa_re}.*)$|# \1|" "$f"
+        removed=0
+    done
+    rm -f /etc/apt/sources.list.d/ondrej-php.list /usr/share/keyrings/ondrej-php.gpg
+    return "$removed"
+}
+
+# Sury's repo for PHP 8.4 on Debian, Raspbian and Ubuntu releases that don't
+# carry it. Also refreshes the signing key. Leaves a Sury repo the admin
+# added another way alone, since two entries with different keys break apt.
+add_sury_php_repo_debian() {
+    local codename=$1 f
+    for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+        [[ -f "$f" && "$f" != /etc/apt/sources.list.d/sury-php.list ]] || continue
+        if grep -Eq '^[^#]*packages\.sury\.org/php' "$f"; then
+            log_info "Sury PHP repo already set up in ${f}"
+            apt-get update -y
+            return
+        fi
+    done
+    log_info "Adding Sury PHP DEB repo for ${ID} ${codename}..."
+    install -d -m 0755 /usr/share/keyrings
+    https_curl -fsSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg || return 1
+    echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${codename} main" \
+        > /etc/apt/sources.list.d/sury-php.list
+    apt-get update -y
+}
+
+# Keep the system PHP that runs the queue worker, scheduler, logger listeners
+# and artisan patched. FrankenPHP's own PHP, which serves web pages, is updated
+# by stage_frankenphp_update. Moves Ubuntu installs off the retired ondrej/php
+# PPA first, since it makes apt-get update fail. A failure here only warns, so
+# a server without internet access still gets the app update.
+update_system_php() {
+    log_phase "Updating system PHP packages"
+
+    case "$PKG_MANAGER" in
+        apt)
+            if remove_ondrej_php_ppa || [[ -f /etc/apt/sources.list.d/sury-php.list ]]; then
+                if ! add_sury_php_repo_debian "${VERSION_CODENAME:-}"; then
+                    log_warn "Could not set up the Sury PHP repo — keeping the installed PHP packages"
+                    return 0
+                fi
+            elif ! apt-get update -y; then
+                log_warn "apt-get update failed — keeping the installed PHP packages"
+                return 0
+            fi
+            local -a pkgs
+            mapfile -t pkgs < <(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'php*' 2>/dev/null | awk '$1 == "ii" {print $2}')
+            if (( ${#pkgs[@]} )) && ! apt-get install -y --only-upgrade "${pkgs[@]}"; then
+                log_warn "Upgrading the PHP packages failed — keeping the installed ones"
+            fi
+            ;;
+        dnf)
+            if ! dnf upgrade -y 'php*'; then
+                log_warn "Upgrading the PHP packages failed — keeping the installed ones"
+            fi
+            ;;
+        *)
+            log_warn "Unknown distro — skipping the system PHP update"
+            return 0
+            ;;
+    esac
+
+    log_info "System PHP $(php -r 'echo PHP_VERSION;' 2>/dev/null || echo 'not found')"
+}
+
 # NodeSource's documented manual setup (signed repo + keyring) rather than
 # piping its setup script into a root shell; apt/dnf verify every package.
 add_nodesource_repo_debian() {
@@ -1525,6 +1609,7 @@ main() {
     fetch_updates
     pull_updates
     reexec_if_script_changed
+    update_system_php
     migrate_env_settings
     if prompt_redis_migration; then
         bootstrap_redis

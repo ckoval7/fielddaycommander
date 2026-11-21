@@ -16,8 +16,8 @@ set -euo pipefail
 
 # Same FrankenPHP as deploy.sh and the Dockerfile. Its Windows build bundles
 # the official PHP for Windows (8.5) with the extension DLLs.
-FRANKENPHP_VERSION="1.13.4"
-FRANKENPHP_SHA256="22e92d1465437480ca3b6c0618a6f1d2377f7ecd5ae212ba705ed035478d72d1"
+FRANKENPHP_VERSION="1.13.6"
+FRANKENPHP_SHA256="076c319a28b37a428b9c757ffa11b98dfc6ede42ec064c61629d279a2a9e5ad9"
 # Runs PHP and FrankenPHP as Windows services. The .NET Framework build uses
 # the runtime built into Windows 10 and 11.
 WINSW_VERSION="2.12.0"
