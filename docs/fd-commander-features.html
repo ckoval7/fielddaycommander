@@ -353,6 +353,7 @@
         <h3>Bring contacts in from the software you already run</h3>
         <p>Keep logging in N3FJP, WSJT-X, N1MM Logger+, or fldigi while Field Day Commander collects the contacts. N3FJP shares contacts both ways over TCP, while the other programs send contacts over UDP. You can also import an ADIF file after the fact with a guided wizard that parses the file, maps stations, validates records, and lets you review everything before it hits your log.</p>
         <p><a href="how-to/n3fjp.html">Set up N3FJP with Field Day Commander &rarr;</a></p>
+        <p><a href="how-to/relay.html">Field Day Commander Relay</a> connects Windows logging PCs to a server on another network.</p>
         <ul class="feature-bullets">
           <li><span class="check">&#10003;</span> N3FJP TCP server with two-way contact sharing between Field Day Commander and every connected N3FJP PC</li>
           <li><span class="check">&#10003;</span> N1MM Logger+ UDP broadcast listener with live packet and error stats</li>
@@ -362,6 +363,8 @@
           <li><span class="check">&#10003;</span> Validation catches records outside the event window, flags dupes, and lets you skip or fix before importing</li>
           <li><span class="check">&#10003;</span> Configurable UDP ports with firewall instructions for each listener</li>
           <li><span class="check">&#10003;</span> Sub-modes like FT8 or SSTV recorded on every contact, whichever way it came in</li>
+          <li><span class="check">&#10003;</span> Outbound HTTPS from the relay, with no port forwarding</li>
+          <li><span class="check">&#10003;</span> Contacts kept on the PC through outages and sent when the connection returns</li>
         </ul>
       </div>
       <div class="feature-visual">
@@ -677,7 +680,7 @@
       <div class="section-label">Ready?</div>
       <h2 class="section-title">Bring your next Field Day together.</h2>
       <p class="section-desc" style="margin-left:auto;margin-right:auto">
-        Explore the live demo with your Field Day team. When you’re ready, follow the install guide to set up your club’s server.
+        Explore the live demo with your Field Day team. When you’re ready, follow the recommended <a href="how-to/install.html">Linux install</a> or <a href="fd-commander-docs.html#docker">Docker instructions</a>. A <a href="how-to/windows-server.html">Windows installer</a> is also available if your club only has a Windows computer for the server.
       </p>
       <div class="hero-actions">
         <a href="https://demo.fielddaycommander.org/" target="_blank" rel="noopener" class="btn-primary">Try the Live Demo</a>
