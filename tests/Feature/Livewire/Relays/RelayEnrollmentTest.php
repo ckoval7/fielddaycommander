@@ -138,7 +138,8 @@ test('the code goes away once it has been used', function () {
     $screen = relayScreen($this->operator)->set('name', 'Phone Tent')->call('issue');
     $code = $screen->get('issuedCode');
 
-    $this->postJson('https://localhost/api/relay/v1/enroll', ['code' => $code])->assertCreated();
+    // Same origin as the component: Livewire 404s an update from another one.
+    $this->postJson('/api/relay/v1/enroll', ['code' => $code])->assertCreated();
 
     $screen->call('checkIssuedCode')->assertSet('issuedCode', null)->assertDontSee($code)->assertSee('Enrolled');
 });
