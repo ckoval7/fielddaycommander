@@ -39,4 +39,5 @@ coverage.xml
 # Windows installer build (windows/build-installer.sh)
 /build/windows-installer/
 /build/windows-downloads/
+/build/windows-vc-runtime/
 /dist/
