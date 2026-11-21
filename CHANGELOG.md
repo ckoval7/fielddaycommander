@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.11.2 - 2026-11-20
+
 ### Added
 
 - Install the Field Day Commander server on Windows with one installer, without Docker or Linux. It runs as Windows services and keeps your log, settings, and photos across updates. Start menu shortcuts let you back up and restore, with automatic backups hourly during an event and daily otherwise.
@@ -30,6 +32,7 @@
 - Anyone whose role had **Manage Users** could give any account, including their own, the System Administrator role, and could reset an administrator's password. This only affected clubs that gave **Manage Users** to a custom role. By default only System Administrator and Config Only have it. On **Users**, someone with **Manage Users** can now give out a role, or edit, lock, reset the password of, or delete an account, only when they already have every permission that role or account has. Roles they can't give out don't appear in the role lists, actions on accounts they can't manage don't appear in the row menu, and bulk actions skip those accounts and say so.
 - People with **Manage Roles** (System Administrator and Config Only by default) aren't limited, so the setup account can still create the first System Administrator. The SYSTEM setup account's callsign can no longer be changed, and its password can't be reset or the account deleted from **Users**. It can still be locked.
 - Field Day Commander now runs on PHP 8.4.28 from PHP's November 19, 2026 security release, which fixes memory-safety bugs in PHP's session, date, and DOM code. Docker and Helm installs get it in the new image with FrankenPHP 1.13.6. The new Windows installer includes FrankenPHP 1.13.6, which bundles PHP 8.5.13 for Windows from the same security release. On Linux installs set up with `deploy.sh`, `update.sh` now also upgrades the system PHP packages through apt or dnf. These packages run the queue worker, scheduler, logger listeners, and artisan. Previously, `update.sh` updated FrankenPHP but left the system PHP packages at their installed versions unless you ran system updates.
+- Symfony 8.1.11 fixes seven security advisories, including CVE-2026-121619, which could let a client using an IPv4-mapped, 6to4, or Teredo address be treated as a trusted proxy when an admin had set `TRUSTED_PROXIES=private_ranges`. Livewire 4.4.9 now refuses a screen update sent to a different web address than the page was loaded from. Access by LAN IP, a .local name, or another hostname still works because browsers send updates to the page's own address.
 
 ## 26.11.1 - 2026-11-03
 
