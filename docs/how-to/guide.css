@@ -284,3 +284,11 @@
   color: var(--accent-emerald);
   white-space: nowrap;
 }
+
+/* Keep long guide titles inside the content column, clear of the page contents list. */
+.page-hero h1 {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+  text-wrap: balance;
+}
