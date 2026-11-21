@@ -74,9 +74,9 @@
       </div>
       <div class="download-card">
         <h3>Windows</h3>
-        <p>A supported option if you only have a Windows computer for the server. It uses a simpler built-in database.</p>
-        <a class="btn-primary download-button" id="server-download" href="https://github.com/ckoval7/fielddaycommander/releases/download/v26.11.2/field-day-commander-server-setup-26.11.2.exe">Download for Windows</a>
-        <p class="download-meta">Version <span id="server-version">26.11.2</span> · About 49 MB · 64-bit Windows 10 or 11 · Administrator access required</p>
+        <p>A supported option if you want to use a Windows PC for the server. It uses a simpler built-in database.</p>
+        <a class="btn-primary download-button" id="server-download" href="https://github.com/ckoval7/fielddaycommander/releases/latest">Download for Windows</a>
+        <p class="download-meta"><span id="server-version-label" hidden>Version <span id="server-version"></span> · </span>About 49 MB · 64-bit Windows 10 or 11 · Administrator access required</p>
         <p class="download-links"><a href="how-to/windows-server.html">Setup guide</a> · <a href="https://github.com/ckoval7/fielddaycommander/releases/latest/download/field-day-commander-server-setup.sha256">Checksum</a></p>
       </div>
     </div>
@@ -106,6 +106,7 @@
       if (asset && typeof asset.browser_download_url === 'string' && asset.browser_download_url.startsWith('https://github.com/ckoval7/fielddaycommander/releases/download/') && typeof release.tag_name === 'string') {
         document.getElementById('server-download').href = asset.browser_download_url;
         document.getElementById('server-version').textContent = release.tag_name.replace(/^v/, '');
+        document.getElementById('server-version-label').hidden = false;
       }
     })
     .catch(() => {});
