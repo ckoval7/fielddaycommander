@@ -97,6 +97,11 @@
       <p>To upgrade, run the newer installer on the same computer. It stops the services and replaces the code while keeping your data, settings, and web port.</p>
       <p>To uninstall, remove <strong>Field Day Commander Server</strong> from Windows' installed apps. The uninstaller asks whether to also delete your log, settings, and photos. <strong>No</strong> is selected by default. If you keep the data, reinstalling will use it again. Backups in Public Documents are always kept.</p>
 
+      <h2 id="relay">Using Field Day Commander Relay</h2>
+      <p>The Windows server installer serves HTTP only. Field Day Commander Relay needs HTTPS to connect from another PC, so you'll need a TLS proxy in front of the server. Linux installs can set up HTTPS with <code>deploy.sh</code>. See <a href="dns-tls.html">DNS &amp; TLS</a>.</p>
+      <p>If the relay runs on the server computer, it can connect over HTTP at <code>http://localhost</code>. Add the web port if it isn't 80, for example <code>http://localhost:8000</code>. To create an enrollment code, open the server's <strong>Relays</strong> page on that computer at the same localhost address. Other plain HTTP addresses show an <strong>HTTPS required for relays</strong> notice instead of the form.</p>
+      <p>If your logging PCs share the server's LAN, you may not need the relay. See <a href="relay.html#do-you-need-it">Do You Need the Relay?</a></p>
+
       <h2>Troubleshooting</h2>
       <h3>Setup says it could not finish</h3>
       <p>Read <code>C:\ProgramData\Field Day Commander\logs\setup.log</code> for the error. Fix the problem described there, then run the installer again.</p>
