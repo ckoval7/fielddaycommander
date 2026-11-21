@@ -73,6 +73,11 @@ jobs:
           name: windows-installer
           path: release
 
+      # The fixed name gives the website a link that always fetches the newest
+      # installer: releases/latest/download/field-day-commander-server-setup.exe
+      - name: Add a copy without the version in its name
+        run: cd release && cp -- field-day-commander-server-setup-*.exe field-day-commander-server-setup.exe
+
       - name: Add the checksum
         run: cd release && sha256sum -- *.exe > field-day-commander-server-setup.sha256
 
