@@ -132,5 +132,6 @@ test('demo infrastructure requests do not end a station-mode session', function 
     expect(session(StationMode::SESSION_KEY))->toBe($this->device->id);
 })->with([
     'analytics beacon' => ['POST', '/demo/analytics/beacon'],
+    'heartbeat' => ['POST', '/demo/heartbeat'],
     'demo landing' => ['GET', '/demo'],
 ]);

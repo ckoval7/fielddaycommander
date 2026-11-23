@@ -43,6 +43,37 @@ class DemoAnalyticsController extends Controller
         'WFD' => 'Winter Field Day',
     ];
 
+    /**
+     * How often, at most, a heartbeat writes last_seen_at.
+     */
+    private const HEARTBEAT_WRITE_SECONDS = 60;
+
+    /**
+     * Mark the visitor's sandbox as in use while one of its tabs is on screen.
+     *
+     * Reading a page without clicking sends no other requests, so without
+     * this a visitor could look idle and lose their sandbox to cleanup or to
+     * a newcomer while still using it. The page only sends heartbeats while
+     * it is visible; a hidden, frozen or closed tab sends none. Touches only
+     * the central demo_sessions row, never the visitor's database.
+     */
+    public function heartbeat(Request $request): Response
+    {
+        abort_unless(config('demo.enabled'), 404);
+
+        $uuid = DemoCookie::fromRequest($request)?->uuid;
+
+        if ($uuid !== null) {
+            DemoSession::query()
+                ->where('session_uuid', $uuid)
+                ->where('expires_at', '>', now())
+                ->where('last_seen_at', '<', now()->subSeconds(self::HEARTBEAT_WRITE_SECONDS))
+                ->update(['last_seen_at' => now()]);
+        }
+
+        return response()->noContent();
+    }
+
     public function beacon(Request $request): Response
     {
         abort_unless(config('demo.enabled'), 404);

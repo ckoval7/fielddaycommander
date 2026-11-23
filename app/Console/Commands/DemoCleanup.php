@@ -123,6 +123,11 @@ class DemoCleanup extends Command
      * gives its seats back quickly, while anyone who clicked around keeps
      * theirs for the longer idle timeout.
      *
+     * Only while the demo is busy (demo.early_drop_percent of its seats
+     * taken). A server can't tell a closed tab from one the browser froze
+     * to save memory, so on a quiet demo every sandbox keeps its full TTL
+     * and nobody comes back to find theirs gone for no reason.
+     *
      * @param  list<object>  $rows  The demo_* schemas listed before the TTL sweep.
      * @param  list<string>  $alreadyDropped  Schemas the TTL sweep just dropped.
      * @return list<string> The databases that were dropped.
@@ -140,6 +145,10 @@ class DemoCleanup extends Command
             array_map(fn (object $row): string => $row->schema_name ?? $row->SCHEMA_NAME, $rows),
             $alreadyDropped,
         );
+
+        if (! $this->isBusy($pool, $existing)) {
+            return [];
+        }
 
         $idleSessions = DemoSession::query()
             ->where('expires_at', '>', Carbon::now())
@@ -179,6 +188,36 @@ class DemoCleanup extends Command
         }
 
         return $dropped;
+    }
+
+    /**
+     * Whether enough seats are taken to start dropping sandboxes early.
+     * Pooled databases nobody has claimed are not seats.
+     *
+     * @param  array<int, string>  $existing  Demo schemas that still exist.
+     */
+    private function isBusy(DemoDatabasePool $pool, array $existing): bool
+    {
+        $threshold = (int) ceil(
+            (int) config('demo.max_sessions', 25) * (int) config('demo.early_drop_percent', 70) / 100,
+        );
+
+        if ($threshold <= 0) {
+            return true;
+        }
+
+        $seats = count(array_filter(
+            array_diff($existing, $pool->pooledDatabaseNames()),
+            fn (string $name): bool => (bool) preg_match('/^demo_[a-f0-9_]{32,40}$/', $name),
+        ));
+
+        if ($seats < $threshold) {
+            $this->info("Demo is quiet ({$seats} of ".config('demo.max_sessions', 25).' seats taken); keeping idle sandboxes.');
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

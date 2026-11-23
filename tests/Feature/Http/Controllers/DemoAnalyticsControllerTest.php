@@ -469,3 +469,48 @@ it('breaks analytics down by the event type each visitor chose', function () {
         ->assertSee('Event Type')
         ->assertSee('Winter Field Day');
 });
+
+it('marks the sandbox in use when a visible tab sends a heartbeat', function () {
+    $this->demoSession->update(['last_seen_at' => now()->subMinutes(20)]);
+
+    $this->withCookies(['demo_session' => $this->uuid.'|1'])
+        ->post(route('demo.heartbeat'))
+        ->assertNoContent();
+
+    expect($this->demoSession->fresh()->last_seen_at->diffInSeconds(now(), true))->toBeLessThan(5);
+});
+
+it('writes a heartbeat at most once a minute', function () {
+    $recently = now()->subSeconds(30)->startOfSecond();
+    $this->demoSession->update(['last_seen_at' => $recently]);
+
+    $this->withCookies(['demo_session' => $this->uuid.'|1'])
+        ->post(route('demo.heartbeat'))
+        ->assertNoContent();
+
+    expect($this->demoSession->fresh()->last_seen_at->equalTo($recently))->toBeTrue();
+});
+
+it('does not revive an expired sandbox from a heartbeat', function () {
+    $stale = now()->subHours(2)->startOfSecond();
+    $this->demoSession->update(['last_seen_at' => $stale, 'expires_at' => now()->subMinute()]);
+
+    $this->withCookies(['demo_session' => $this->uuid.'|1'])
+        ->post(route('demo.heartbeat'))
+        ->assertNoContent();
+
+    expect($this->demoSession->fresh()->last_seen_at->equalTo($stale))->toBeTrue();
+});
+
+it('accepts a heartbeat without a demo cookie and does nothing', function () {
+    $this->post(route('demo.heartbeat'))->assertNoContent();
+});
+
+it('throttles heartbeats per address', function () {
+    foreach (range(1, 120) as $i) {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])->post(route('demo.heartbeat'));
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])->post(route('demo.heartbeat'))->assertTooManyRequests();
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.8'])->post(route('demo.heartbeat'))->assertNoContent();
+});

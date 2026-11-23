@@ -21,6 +21,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -63,11 +64,18 @@ class DemoController extends Controller
      */
     private const PARTICIPANT_EMAIL_DOMAIN = 'demo.invalid';
 
-    public function landing(): View
+    public function landing(Request $request): Response
     {
         abort_unless(config('demo.enabled'), 404);
 
-        return view('demo.landing');
+        $response = response()->view('demo.landing', ['ended' => $this->endedSandbox($request)]);
+
+        // Shown once: a reload or a later visit gets the plain landing page.
+        if ($request->hasCookie(DemoCookie::ENDED_NAME)) {
+            $response->withoutCookie(DemoCookie::ENDED_NAME);
+        }
+
+        return $response;
     }
 
     public function provision(Request $request, DemoDatabasePool $pool, DemoSeatReclaimer $reclaimer): RedirectResponse
@@ -568,6 +576,42 @@ class DemoController extends Controller
         } catch (\Throwable $e) {
             report($e);
         }
+    }
+
+    /**
+     * What the landing page needs to explain a sandbox the visitor just lost
+     * and offer it again: whether it reached the end of its TTL or was
+     * dropped early, its event, and (for the visitor who started it) its
+     * role. Guests joined someone else's sandbox in a role of their own that
+     * isn't recorded against their account, so they pick again.
+     *
+     * @return array{expired: bool, event_type: string, role: string|null}|null
+     */
+    private function endedSandbox(Request $request): ?array
+    {
+        $visitor = DemoCookie::endedFromRequest($request);
+
+        if ($visitor === null) {
+            return null;
+        }
+
+        try {
+            $demoSession = DemoSession::where('session_uuid', $visitor->uuid)->first();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($demoSession === null) {
+            return null;
+        }
+
+        $role = $demoSession->isHostedBy($visitor->userId) ? $demoSession->role : null;
+
+        return [
+            'expired' => $demoSession->provisioned_at->copy()->addHours((int) config('demo.ttl_hours', 24))->isPast(),
+            'event_type' => in_array($demoSession->event_type, ['FD', 'WFD'], true) ? $demoSession->event_type : 'FD',
+            'role' => array_key_exists((string) $role, DemoCookie::ROLES) ? $role : null,
+        ];
     }
 
     private function forgetPreviousVisitor(): void

@@ -21,6 +21,14 @@ class DemoCookie
     public const NAME = 'demo_session';
 
     /**
+     * Remembers which sandbox a visitor just lost, so the landing page can
+     * say why and offer to start again the same way.
+     */
+    public const ENDED_NAME = 'demo_ended';
+
+    private const ENDED_MINUTES = 24 * 60;
+
+    /**
      * Roles a visitor can pick, keyed by the slug the demo forms submit.
      *
      * @var array<string, string>
@@ -42,7 +50,25 @@ class DemoCookie
      */
     public static function fromRequest(Request $request): ?self
     {
-        [$uuid, $userId] = array_pad(explode('|', (string) $request->cookie(self::NAME), 2), 2, null);
+        return self::parse($request->cookie(self::NAME));
+    }
+
+    /**
+     * The sandbox the visitor was last sent away from, if any.
+     */
+    public static function endedFromRequest(Request $request): ?self
+    {
+        return self::parse($request->cookie(self::ENDED_NAME));
+    }
+
+    public static function makeEnded(self $visitor, bool $secure): Cookie
+    {
+        return cookie(self::ENDED_NAME, $visitor->uuid.'|'.$visitor->userId, self::ENDED_MINUTES, '/', null, $secure, true, false, 'Lax');
+    }
+
+    private static function parse(mixed $value): ?self
+    {
+        [$uuid, $userId] = array_pad(explode('|', (string) $value, 2), 2, null);
 
         if (! Str::isUuid($uuid) || ! ctype_digit((string) $userId)) {
             return null;

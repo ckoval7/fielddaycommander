@@ -69,6 +69,8 @@ class DemoServiceProvider extends ServiceProvider
     {
         RateLimiter::for('demo-provision', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
         RateLimiter::for('demo-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
+        // Generous: a club sharing one address can have many tabs open.
+        RateLimiter::for('demo-heartbeat', fn (Request $request): Limit => Limit::perMinute(120)->by($request->ip()));
     }
 
     /**

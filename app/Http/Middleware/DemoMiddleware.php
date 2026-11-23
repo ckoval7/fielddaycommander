@@ -71,8 +71,7 @@ class DemoMiddleware
         }
 
         if (! $this->demoDatabaseExists($dbName)) {
-            return redirect()->route('demo.landing')
-                ->withoutCookie(DemoCookie::NAME);
+            return $this->sandboxEnded($request, $visitor);
         }
 
         // Switch the demo connection to this visitor's isolated database
@@ -106,6 +105,25 @@ class DemoMiddleware
         $user = Auth::id() === $userId ? Auth::user() : User::find($userId);
 
         return $user?->isLocked() ?? false;
+    }
+
+    /**
+     * Send a visitor whose sandbox is gone (expired, or dropped while nobody
+     * was using it) to the landing page, which explains what happened and
+     * offers to start again. A Livewire request gets a 419 with the landing
+     * page as its redirect, which app.js follows.
+     */
+    protected function sandboxEnded(Request $request, DemoCookie $visitor): Response
+    {
+        $landingUrl = route('demo.landing');
+
+        $response = $request->expectsJson() || $request->isJson() || $request->hasHeader('X-Livewire')
+            ? response()->json(['redirect' => $landingUrl], 419)
+            : redirect()->to($landingUrl);
+
+        return $response
+            ->withoutCookie(DemoCookie::NAME)
+            ->withCookie(DemoCookie::makeEnded($visitor, $request->isSecure()));
     }
 
     /**
@@ -149,7 +167,7 @@ class DemoMiddleware
     public static function isInfrastructureRequest(Request $request): bool
     {
         return config('demo.enabled') && $request->is(
-            'demo', 'demo/provision', 'demo/reset', 'demo/join/*', 'demo/analytics/beacon',
+            'demo', 'demo/provision', 'demo/reset', 'demo/join/*', 'demo/heartbeat', 'demo/analytics/beacon',
             'demo/analytics', 'demo/analytics/api', 'demo/analytics/sessions/*/events',
         );
     }

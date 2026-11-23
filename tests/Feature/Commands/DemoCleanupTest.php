@@ -18,6 +18,9 @@ afterEach(function () {
 beforeEach(function () {
     Config::set('demo.enabled', true);
     Config::set('demo.ttl_hours', 24);
+    // Most tests here are about which sandboxes count as idle, not about
+    // whether the demo is busy enough to drop them; see the busy tests below.
+    Config::set('demo.early_drop_percent', 0);
 });
 
 test('cleanup command runs successfully with no demo databases', function () {
@@ -142,6 +145,7 @@ test('cleanup drops a sandbox nobody has touched for the idle timeout', function
     ]);
 
     $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
     $pool->shouldReceive('dropSandbox')->once()->with($idleUuid);
     $pool->shouldReceive('dropOrphans')->once()->with([DemoDatabasePool::databaseName($activeUuid)])->andReturn([]);
 
@@ -159,7 +163,9 @@ test('the idle sweep skips sandboxes whose database is already gone', function (
 
     demoSchemasWithinTtl([]);
 
-    $this->mock(DemoDatabasePool::class)->shouldNotReceive('dropSandbox');
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
+    $pool->shouldNotReceive('dropSandbox');
 
     $this->artisan('demo:cleanup')->assertSuccessful();
 });
@@ -172,6 +178,7 @@ test('an idle timeout of zero keeps idle sandboxes for the full TTL', function (
     demoSchemasWithinTtl([DemoDatabasePool::databaseName($uuid)]);
 
     $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
     $pool->shouldNotReceive('dropSandbox');
     $pool->shouldReceive('dropOrphans')->andReturn([]);
 
@@ -191,6 +198,7 @@ test('cleanup drops a sandbox never used past its first page well before the idl
     demoSchemasWithinTtl(array_map(DemoDatabasePool::databaseName(...), [$unusedUuid, $browsedUuid, $freshUuid]));
 
     $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
     $pool->shouldReceive('dropSandbox')->once()->with($unusedUuid);
     $pool->shouldReceive('dropOrphans')->andReturn([]);
 
@@ -206,7 +214,52 @@ test('an unused timeout of zero leaves unused sandboxes to the idle timeout', fu
     demoSchemasWithinTtl([DemoDatabasePool::databaseName($uuid)]);
 
     $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
     $pool->shouldNotReceive('dropSandbox');
+    $pool->shouldReceive('dropOrphans')->andReturn([]);
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
+});
+
+test('a quiet demo keeps idle and unused sandboxes for their full TTL', function () {
+    Config::set('demo.max_sessions', 10);
+    Config::set('demo.early_drop_percent', 70);
+    $idle = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    $pooled = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    cleanupDemoSession($idle, now()->subHours(5), pageViews: 1);
+
+    // Six schemas but one is an unclaimed pool database: five of ten seats, under 70%.
+    $names = [DemoDatabasePool::databaseName($idle), DemoDatabasePool::databaseName($pooled)];
+    foreach (range(1, 4) as $i) {
+        $names[] = DemoDatabasePool::databaseName(sprintf('%08d-0000-0000-0000-000000000000', $i));
+    }
+    demoSchemasWithinTtl($names);
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([DemoDatabasePool::databaseName($pooled)]);
+    $pool->shouldNotReceive('dropSandbox');
+    $pool->shouldReceive('dropOrphans')->andReturn([]);
+
+    $this->artisan('demo:cleanup')
+        ->expectsOutputToContain('Demo is quiet (5 of 10 seats taken)')
+        ->assertSuccessful();
+});
+
+test('a busy demo drops idle sandboxes early', function () {
+    Config::set('demo.max_sessions', 10);
+    Config::set('demo.early_drop_percent', 70);
+    $idle = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    cleanupDemoSession($idle, now()->subHours(5), pageViews: 1);
+
+    $names = [DemoDatabasePool::databaseName($idle)];
+    foreach (range(1, 6) as $i) {
+        $names[] = DemoDatabasePool::databaseName(sprintf('%08d-0000-0000-0000-000000000000', $i));
+    }
+    demoSchemasWithinTtl($names);
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
+    $pool->shouldReceive('dropSandbox')->once()->with($idle);
     $pool->shouldReceive('dropOrphans')->andReturn([]);
 
     $this->artisan('demo:cleanup')->assertSuccessful();

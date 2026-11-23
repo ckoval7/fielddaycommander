@@ -23,7 +23,7 @@
     </div>
 </div>
 
-<div id="provision-content" class="max-w-lg w-full">
+<div id="provision-content" class="max-w-lg w-full" data-preselect-event="{{ $ended['event_type'] ?? 'FD' }}">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold">Field Day Commander</h1>
         @php($ttlHours = config('demo.ttl_hours', 24))
@@ -34,6 +34,27 @@
         <div class="alert alert-error mb-6">{{ session('error') }}</div>
     @elseif(request()->query(\App\Http\Middleware\DemoMiddleware::LOCKED_REASON_PARAMETER) === 'locked')
         <div class="alert alert-error mb-6">{{ \App\Http\Middleware\DemoMiddleware::LOCKED_MESSAGE }}</div>
+    @elseif($ended)
+        {{-- The visitor's last sandbox is gone. Their event is preselected below
+             and their name and call sign are remembered in this browser, so
+             the button starts an identical sandbox in one tap. --}}
+        <div class="alert alert-info alert-vertical sm:alert-horizontal mb-6 text-left" data-demo-ended="{{ $ended['expired'] ? 'expired' : 'cleared' }}">
+            <div>
+                @if($ended['expired'])
+                    <strong class="block">Your sandbox ended after {{ $ttlHours }} {{ \Illuminate\Support\Str::plural('hour', $ttlHours) }}.</strong>
+                    <span>Your old work is gone, but you can start a fresh sandbox below.</span>
+                @else
+                    <strong class="block">Your sandbox was cleared.</strong>
+                    <span>The demo was busy, so your unused sandbox made room for someone else. Your old work is gone, but you can start a fresh sandbox below.</span>
+                @endif
+            </div>
+            @if($ended['role'])
+                <button type="submit" form="demo-provision-form" name="role" value="{{ $ended['role'] }}"
+                        class="btn btn-primary max-sm:w-full">
+                    Start again as {{ \App\Support\DemoCookie::ROLES[$ended['role']] }}
+                </button>
+            @endif
+        </div>
     @endif
 
     {{-- Every provisioning slot was busy: the script below resubmits the
@@ -139,6 +160,14 @@
             input.value = chosen.dataset.eventCode;
         });
     }
+
+    // Coming back from a sandbox that was cleared: start on its event.
+    var preselect = content.dataset.preselectEvent;
+    eventOptions.forEach(function (option) {
+        if (option.dataset.eventCode === preselect) {
+            selectEvent(option);
+        }
+    });
 
     eventOptions.forEach(function (option, index) {
         option.addEventListener('click', function () {

@@ -449,3 +449,44 @@ test('a full demo lets a newcomer in once a seat is reclaimed for them', functio
         ->assertSessionHas('provision_retry')
         ->assertSessionMissing('error');
 });
+
+test('the landing page offers the host their lost sandbox again, once', function () {
+    $demoSession = invitedDemoSession(['host_user_id' => 7, 'role' => 'station_captain', 'event_type' => 'WFD', 'expires_at' => now()]);
+
+    $this->withCookies(['demo_ended' => $demoSession->session_uuid.'|7'])
+        ->get(route('demo.landing'))
+        ->assertOk()
+        ->assertSee('data-demo-ended', false)
+        ->assertSee('form="demo-provision-form" name="role" value="station_captain"', false)
+        ->assertSee('Station Captain')
+        ->assertSee('data-preselect-event="WFD"', false)
+        ->assertCookieExpired('demo_ended');
+});
+
+test('a guest whose sandbox ended is told so but picks a role again', function () {
+    $demoSession = invitedDemoSession(['host_user_id' => 7, 'expires_at' => now()]);
+
+    $this->withCookies(['demo_ended' => $demoSession->session_uuid.'|42'])
+        ->get(route('demo.landing'))
+        ->assertSee('data-demo-ended', false)
+        ->assertDontSee('form="demo-provision-form"', false);
+});
+
+test('the landing page tells a sandbox that ran its full time from one cleared early', function () {
+    $expired = invitedDemoSession(['host_user_id' => 7, 'provisioned_at' => now()->subHours(25), 'expires_at' => now()->subHour()]);
+    $cleared = invitedDemoSession(['host_user_id' => 7, 'provisioned_at' => now()->subHours(2), 'expires_at' => now()]);
+
+    $expiredPage = $this->withCookies(['demo_ended' => $expired->session_uuid.'|7'])->get(route('demo.landing'))->getContent();
+    $clearedPage = $this->withCookies(['demo_ended' => $cleared->session_uuid.'|7'])->get(route('demo.landing'))->getContent();
+
+    expect($expiredPage)->toContain('data-demo-ended="expired"')
+        ->and($clearedPage)->toContain('data-demo-ended="cleared"');
+});
+
+test('the landing page ignores an ended-sandbox note it cannot match', function () {
+    $this->withCookies(['demo_ended' => (string) Illuminate\Support\Str::uuid().'|7'])
+        ->get(route('demo.landing'))
+        ->assertOk()
+        ->assertDontSee('data-demo-ended', false)
+        ->assertSee('data-preselect-event="FD"', false);
+});

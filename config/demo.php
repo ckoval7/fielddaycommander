@@ -67,6 +67,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Early Drops Only When Busy
+    |--------------------------------------------------------------------------
+    |
+    | The idle and unused timeouts only apply once this percentage of
+    | max_sessions is taken. Below it, every sandbox keeps its full TTL, since
+    | a tab the browser froze to save memory looks the same as a closed one.
+    | Set to 0 to always apply them.
+    |
+    */
+
+    'early_drop_percent' => (int) env('DEMO_EARLY_DROP_PERCENT', 70),
+
+    /*
+    |--------------------------------------------------------------------------
     | Reclaiming Seats
     |--------------------------------------------------------------------------
     |

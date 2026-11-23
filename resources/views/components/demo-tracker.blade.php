@@ -7,6 +7,8 @@
     visibleSeconds: 0,
     isVisible: true,
     timer: null,
+    heartbeatTimer: null,
+    lastHeartbeat: 0,
 
     init() {
         this.startTime = Date.now();
@@ -18,11 +20,27 @@
 
         document.addEventListener('visibilitychange', () => {
             this.isVisible = !document.hidden;
+            if (this.isVisible) this.heartbeat();
         });
+
+        // Tell the server the sandbox is in use while this tab is on screen,
+        // so reading without clicking doesn't count as idle. Hidden tabs
+        // skip it, and frozen or closed ones can't send it at all.
+        this.heartbeat();
+        this.heartbeatTimer = setInterval(() => this.heartbeat(), 120000);
 
         window.addEventListener('beforeunload', () => { this.sendBeacon(); });
 
         document.addEventListener('livewire:navigate', () => { this.sendBeacon(); this.reset(); });
+    },
+
+    heartbeat() {
+        if (document.hidden || Date.now() - this.lastHeartbeat < 60000) return;
+
+        this.lastHeartbeat = Date.now();
+        navigator.sendBeacon('{{ route("demo.heartbeat") }}', new URLSearchParams({
+            _token: '{{ csrf_token() }}'
+        }));
     },
 
     reset() {
@@ -43,5 +61,6 @@
 
     destroy() {
         clearInterval(this.timer);
+        clearInterval(this.heartbeatTimer);
     }
 }" x-on:remove.window="sendBeacon()" class="hidden"></div>

@@ -168,3 +168,26 @@ test('tells Livewire requests from a locked visitor to go to the landing page', 
         ->assertStatus(419)
         ->assertJson(['redirect' => route('demo.landing', ['account' => 'locked'])]);
 });
+
+test('a visitor whose sandbox is gone is sent to the landing page with a note of which one it was', function () {
+    $uuid = (string) Str::uuid();
+
+    $this->withCookies(['demo_session' => $uuid.'|7'])
+        ->get('/')
+        ->assertRedirect(route('demo.landing'))
+        ->assertCookieExpired('demo_session')
+        ->assertCookie('demo_ended', $uuid.'|7');
+});
+
+test('a Livewire request from a sandbox that is gone is told to go to the landing page', function () {
+    $uuid = (string) Str::uuid();
+
+    // JSON test requests only carry cookies with credentials.
+    $this->withCredentials()
+        ->withCookies(['demo_session' => $uuid.'|7'])
+        ->withHeader('X-Livewire', 'true')
+        ->getJson('/')
+        ->assertStatus(419)
+        ->assertJson(['redirect' => route('demo.landing')])
+        ->assertCookie('demo_ended', $uuid.'|7');
+});

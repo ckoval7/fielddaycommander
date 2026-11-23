@@ -20,6 +20,9 @@ Route::get('/demo/join/{token}', [DemoController::class, 'showJoin'])
 Route::post('/demo/join/{token}', [DemoController::class, 'join'])
     ->name('demo.join.store')
     ->middleware('throttle:10,1');
+Route::post('/demo/heartbeat', [DemoAnalyticsController::class, 'heartbeat'])
+    ->name('demo.heartbeat')
+    ->middleware('throttle:demo-heartbeat');
 Route::post('/demo/analytics/beacon', [DemoAnalyticsController::class, 'beacon'])
     ->name('demo.analytics.beacon')
     ->middleware('throttle:60,1');
