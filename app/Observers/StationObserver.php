@@ -5,8 +5,10 @@
 
 namespace App\Observers;
 
+use App\Events\StationStatusChanged;
 use App\Models\EquipmentEvent;
 use App\Models\Station;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Observer for Station model to auto-commit primary radios to events.
@@ -32,6 +34,17 @@ class StationObserver
     {
         if ($station->wasChanged('radio_equipment_id')) {
             $this->handleRadioChange($station);
+        }
+
+        if ($station->wasChanged('unavailable_reason')) {
+            try {
+                StationStatusChanged::notify($station);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to broadcast station status change', [
+                    'station_id' => $station->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 

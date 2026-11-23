@@ -184,6 +184,12 @@ class Station extends Model
      */
     public function markUnavailable(StationUnavailableReason $reason, ?string $note, User $markedBy): int
     {
+        // End sessions first: the update below broadcasts the change, and
+        // pages that refresh on it should already see the sessions closed.
+        $endedSessions = $this->operatingSessions()
+            ->whereNull('end_time')
+            ->update(['end_time' => appNow()]);
+
         $this->update([
             'unavailable_reason' => $reason,
             'unavailable_note' => filled($note) ? $note : null,
@@ -191,9 +197,7 @@ class Station extends Model
             'unavailable_by_user_id' => $markedBy->id,
         ]);
 
-        return $this->operatingSessions()
-            ->whereNull('end_time')
-            ->update(['end_time' => appNow()]);
+        return $endedSessions;
     }
 
     /**
