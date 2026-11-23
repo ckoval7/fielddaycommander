@@ -329,3 +329,86 @@ test('join page can be installed to the home screen', function () {
         ->assertOk()
         ->assertSee('<link rel="manifest" href="'.asset('manifest.webmanifest').'">', false);
 });
+
+test('the host starting over drops a sandbox nobody joined', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 1, 'host_user_id' => 7]);
+
+    $this->mock(App\Services\DemoDatabasePool::class)
+        ->shouldReceive('dropSandbox')->once()->with($demoSession->session_uuid);
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|7'])
+        ->post(route('demo.reset'))
+        ->assertRedirect(route('demo.landing'));
+
+    expect($demoSession->fresh()->hasExpired())->toBeTrue();
+});
+
+test('the host starting over keeps a sandbox someone joined', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 2, 'host_user_id' => 7]);
+
+    $this->mock(App\Services\DemoDatabasePool::class)->shouldNotReceive('dropSandbox');
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|7'])
+        ->post(route('demo.reset'));
+
+    expect($demoSession->fresh()->hasExpired())->toBeFalse();
+});
+
+test('a guest starting over never drops the sandbox', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 1, 'host_user_id' => 7]);
+
+    $this->mock(App\Services\DemoDatabasePool::class)->shouldNotReceive('dropSandbox');
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|42'])
+        ->post(route('demo.reset'));
+
+    expect($demoSession->fresh()->hasExpired())->toBeFalse();
+});
+
+test('starting over still signs the visitor out when the drop fails', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 1, 'host_user_id' => 7]);
+
+    $this->mock(App\Services\DemoDatabasePool::class)
+        ->shouldReceive('dropSandbox')->andThrow(new RuntimeException('database busy'));
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|7'])
+        ->post(route('demo.reset'))
+        ->assertRedirect(route('demo.landing'))
+        ->assertCookieExpired('demo_session');
+
+    expect($demoSession->fresh()->hasExpired())->toBeFalse();
+});
+
+test('starting a new sandbox drops the visitor\'s previous one', function () {
+    $demoSession = invitedDemoSession(['participant_count' => 1, 'host_user_id' => 7]);
+
+    $pool = $this->mock(App\Services\DemoDatabasePool::class);
+    $pool->shouldReceive('dropSandbox')->once()->with($demoSession->session_uuid);
+    // Stop provisioning right after the drop: no slot free, so the visitor is asked to wait.
+    $pool->shouldReceive('acquireProvisioningSlot')->andReturnNull();
+
+    $this->withCookies(['demo_session' => $demoSession->session_uuid.'|7'])
+        ->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+        ->assertRedirect(route('demo.landing'));
+
+    expect($demoSession->fresh()->hasExpired())->toBeTrue();
+});
+
+test('demo provisioning is throttled per address, not per signed-in persona', function () {
+    $pool = $this->mock(App\Services\DemoDatabasePool::class);
+    $pool->shouldReceive('acquireProvisioningSlot')->andReturnNull();
+
+    foreach (range(1, 10) as $attempt) {
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
+            ->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+            ->assertRedirect();
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.5'])
+        ->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+        ->assertTooManyRequests();
+
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.6'])
+        ->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+        ->assertRedirect();
+});

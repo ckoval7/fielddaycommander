@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/demo', [DemoController::class, 'landing'])->name('demo.landing');
 Route::post('/demo/provision', [DemoController::class, 'provision'])
     ->name('demo.provision')
-    ->middleware('throttle:10,1');
+    ->middleware('throttle:demo-provision');
 Route::post('/demo/reset', [DemoController::class, 'reset'])
     ->name('demo.reset')
-    ->middleware('throttle:5,1');
+    ->middleware('throttle:demo-reset');
 Route::get('/demo/join/{token}', [DemoController::class, 'showJoin'])
     ->name('demo.join')
     ->middleware('throttle:30,1');

@@ -188,3 +188,18 @@ test('pooled databases and unexpected schema names are never treated as orphans'
 
     expect($pool->dropOrphans($names))->toBe([]);
 });
+
+test('dropping a sandbox removes its database and the relay routes pointing at it', function () {
+    $uuid = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    $dbName = DemoDatabasePool::databaseName($uuid);
+    $other = DemoDatabasePool::databaseName('1f8fad5b-d9cb-469f-a165-70867728950e');
+    App\Models\DemoRelayRoute::remember(str_repeat('a', 64), $dbName);
+    App\Models\DemoRelayRoute::remember(str_repeat('b', 64), $other);
+
+    $pool = fakeDemoPool();
+    $pool->shouldReceive('dropDatabase')->once()->with($dbName, Mockery::any());
+
+    $pool->dropSandbox($uuid);
+
+    expect(App\Models\DemoRelayRoute::pluck('database')->all())->toBe([$other]);
+});

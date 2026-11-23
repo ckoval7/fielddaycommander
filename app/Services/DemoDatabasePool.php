@@ -6,6 +6,7 @@
 namespace App\Services;
 
 use App\Models\DemoPoolDatabase;
+use App\Models\DemoRelayRoute;
 use App\Support\DemoCache;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Support\Facades\Artisan;
@@ -253,6 +254,22 @@ class DemoDatabasePool
         DB::purge('demo');
 
         return $dropped;
+    }
+
+    /**
+     * Drop a visitor's sandbox before its TTL runs out, freeing its seat.
+     *
+     * Its cache entries and relay routes go with it, so nothing keeps
+     * pointing at a database that no longer exists.
+     */
+    public function dropSandbox(string $uuid): void
+    {
+        $dbName = self::databaseName($uuid);
+        $baseDatabase = config('database.connections.demo.database');
+
+        $this->dropDatabase($dbName, $baseDatabase);
+        DemoCache::forget($dbName);
+        DemoRelayRoute::where('database', $dbName)->delete();
     }
 
     /**

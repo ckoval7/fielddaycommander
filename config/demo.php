@@ -42,6 +42,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Idle Timeout
+    |--------------------------------------------------------------------------
+    |
+    | How many hours a sandbox may go without a single request before cleanup
+    | drops it early, freeing its seat for someone else. Set to 0 to keep
+    | every sandbox for the full TTL.
+    |
+    */
+
+    'idle_hours' => (int) env('DEMO_IDLE_HOURS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Users Per Session
     |--------------------------------------------------------------------------
     |

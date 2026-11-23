@@ -8,8 +8,11 @@ namespace App\Providers;
 use App\Models\DemoRelayRoute;
 use App\Models\Relay;
 use App\Support\DemoDatabase;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class DemoServiceProvider extends ServiceProvider
@@ -32,6 +35,8 @@ class DemoServiceProvider extends ServiceProvider
         // Does nothing outside demo mode, since DemoDatabase::current() is then null.
         Relay::created(self::rememberEnrollmentCode(...));
 
+        self::configureRateLimiters();
+
         if (! config('demo.enabled')) {
             return;
         }
@@ -49,6 +54,21 @@ class DemoServiceProvider extends ServiceProvider
                 DemoDatabase::activate($dbName);
             }
         });
+    }
+
+    /**
+     * Throttles for the demo's own routes, keyed on the visitor's address.
+     *
+     * An unnamed throttle keys on the signed-in user when one resolves, and
+     * these routes run before the visitor's sandbox is selected, so the user
+     * would come from whichever sandbox the worker served last. Every sandbox
+     * numbers its personas alike, which would share one counter across
+     * unrelated visitors.
+     */
+    private static function configureRateLimiters(): void
+    {
+        RateLimiter::for('demo-provision', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+        RateLimiter::for('demo-reset', fn (Request $request): Limit => Limit::perMinute(5)->by($request->ip()));
     }
 
     /**

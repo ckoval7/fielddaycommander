@@ -19,7 +19,7 @@ class DemoCleanup extends Command
 {
     protected $signature = 'demo:cleanup';
 
-    protected $description = 'Drop expired demo_* databases based on demo_provisioned_at timestamp, plus abandoned unfinished ones';
+    protected $description = 'Drop expired demo_* databases based on demo_provisioned_at timestamp, plus idle and abandoned unfinished ones';
 
     public function handle(DemoDatabasePool $pool): int
     {
@@ -95,6 +95,8 @@ class DemoCleanup extends Command
                 $this->info('Dropped '.count($dropped).' expired demo database(s).');
             }
 
+            $dropped = [...$dropped, ...$this->dropIdle($pool, $rows, $dropped)];
+
             $this->dropOrphans($pool, $rows, $dropped);
         }
 
@@ -111,6 +113,54 @@ class DemoCleanup extends Command
     private function pruneRelayRoutes(): void
     {
         DemoRelayRoute::where('created_at', '<', Carbon::now()->subHours(config('demo.ttl_hours', 24)))->delete();
+    }
+
+    /**
+     * Drop sandboxes nobody has touched for demo.idle_hours, so a seat held
+     * by someone who wandered off frees up long before the TTL.
+     *
+     * @param  list<object>  $rows  The demo_* schemas listed before the TTL sweep.
+     * @param  list<string>  $alreadyDropped  Schemas the TTL sweep just dropped.
+     * @return list<string> The databases that were dropped.
+     */
+    private function dropIdle(DemoDatabasePool $pool, array $rows, array $alreadyDropped): array
+    {
+        $idleHours = (int) config('demo.idle_hours', 3);
+
+        if ($idleHours <= 0) {
+            return [];
+        }
+
+        $existing = array_diff(
+            array_map(fn (object $row): string => $row->schema_name ?? $row->SCHEMA_NAME, $rows),
+            $alreadyDropped,
+        );
+
+        $idleSessions = DemoSession::query()
+            ->where('last_seen_at', '<', Carbon::now()->subHours($idleHours))
+            ->where('expires_at', '>', Carbon::now())
+            ->get();
+
+        $dropped = [];
+
+        foreach ($idleSessions as $session) {
+            try {
+                $dbName = DemoDatabasePool::databaseName($session->session_uuid);
+
+                if (! in_array($dbName, $existing, true)) {
+                    continue;
+                }
+
+                $pool->dropSandbox($session->session_uuid);
+                $session->update(['expires_at' => Carbon::now()]);
+                $this->info("Dropped idle demo database: {$dbName}");
+                $dropped[] = $dbName;
+            } catch (\Throwable $e) {
+                $this->warn("Could not drop idle sandbox {$session->session_uuid}: {$e->getMessage()}");
+            }
+        }
+
+        return $dropped;
     }
 
     /**

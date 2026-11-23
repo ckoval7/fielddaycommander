@@ -110,6 +110,17 @@ class DemoSession extends Model
         return $this->host_user_id === null || $this->host_user_id === $userId;
     }
 
+    /**
+     * Whether this visitor may drop the sandbox when they leave it: they
+     * started it, nobody joined through an invite, and it is still live.
+     */
+    public function isDisposableBy(int $userId): bool
+    {
+        return $this->isHostedBy($userId)
+            && $this->participant_count <= 1
+            && ! $this->hasExpired();
+    }
+
     public function hasExpired(): bool
     {
         return $this->expires_at !== null && $this->expires_at->isPast();

@@ -13,6 +13,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
+// Tests here that stand in for the DB facade leave the mock bound while the
+// app tears down, which asks it for the open connections.
+afterEach(function () {
+    if (DB::getFacadeRoot() instanceof Mockery\MockInterface) {
+        DB::shouldReceive('getConnections')->andReturn([])->byDefault();
+    }
+});
+
 uses(RefreshDatabase::class);
 
 const SANDBOX_A = 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa';

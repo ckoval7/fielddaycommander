@@ -8,6 +8,14 @@ use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use Illuminate\Support\Facades\DB;
 
+// Tests here that stand in for the DB facade leave the mock bound while the
+// app tears down, which asks it for the open connections.
+afterEach(function () {
+    if (DB::getFacadeRoot() instanceof Mockery\MockInterface) {
+        DB::shouldReceive('getConnections')->andReturn([])->byDefault();
+    }
+});
+
 it('prunes analytics sessions and their events older than the retention period', function () {
     config(['demo.enabled' => true, 'demo.analytics_retention_days' => 30]);
 

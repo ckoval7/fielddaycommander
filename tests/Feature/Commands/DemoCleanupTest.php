@@ -7,6 +7,14 @@ use App\Services\DemoDatabasePool;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
+// Tests here that stand in for the DB facade leave the mock bound while the
+// app tears down, which asks it for the open connections.
+afterEach(function () {
+    if (DB::getFacadeRoot() instanceof Mockery\MockInterface) {
+        DB::shouldReceive('getConnections')->andReturn([])->byDefault();
+    }
+});
+
 beforeEach(function () {
     Config::set('demo.enabled', true);
     Config::set('demo.ttl_hours', 24);
@@ -82,4 +90,89 @@ test('cleanup does not pass databases it just dropped as expired to the orphan s
     $this->artisan('demo:cleanup')
         ->expectsOutputToContain("Dropped expired demo database: {$expired}")
         ->assertSuccessful();
+});
+
+/**
+ * Stand in for the TTL sweep's look inside each schema: every database here
+ * is still within its TTL, so only the idle sweep can drop it.
+ *
+ * @param  list<string>  $databases
+ */
+function demoSchemasWithinTtl(array $databases): void
+{
+    DB::shouldReceive('select')->once()->andReturn(
+        array_map(fn (string $name): object => (object) ['schema_name' => $name], $databases),
+    );
+    DB::shouldReceive('purge');
+
+    $schema = Mockery::mock();
+    $schema->shouldReceive('hasTable')->with('system_config')->andReturn(true);
+
+    $connection = Mockery::mock();
+    $connection->shouldReceive('getSchemaBuilder')->andReturn($schema);
+    $connection->shouldReceive('table->where->value')->andReturn(now()->toDateTimeString());
+    DB::shouldReceive('connection')->with('demo')->andReturn($connection);
+}
+
+function cleanupDemoSession(string $uuid, Carbon\CarbonInterface $lastSeenAt, ?Carbon\CarbonInterface $expiresAt = null): App\Models\DemoSession
+{
+    return App\Models\DemoSession::create([
+        'session_uuid' => $uuid,
+        'role' => 'operator',
+        'event_type' => 'FD',
+        'visitor_hash' => str_repeat('a', 64),
+        'user_agent' => 'Pest',
+        'provisioned_at' => now()->subHours(5),
+        'last_seen_at' => $lastSeenAt,
+        'expires_at' => $expiresAt ?? now()->addHours(19),
+    ]);
+}
+
+test('cleanup drops a sandbox nobody has touched for the idle timeout', function () {
+    Config::set('demo.idle_hours', 3);
+    $idleUuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    $activeUuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    $idle = cleanupDemoSession($idleUuid, now()->subHours(4));
+    $active = cleanupDemoSession($activeUuid, now()->subMinutes(10));
+
+    demoSchemasWithinTtl([
+        DemoDatabasePool::databaseName($idleUuid),
+        DemoDatabasePool::databaseName($activeUuid),
+    ]);
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('dropSandbox')->once()->with($idleUuid);
+    $pool->shouldReceive('dropOrphans')->once()->with([DemoDatabasePool::databaseName($activeUuid)])->andReturn([]);
+
+    $this->artisan('demo:cleanup')
+        ->expectsOutputToContain('Dropped idle demo database: '.DemoDatabasePool::databaseName($idleUuid))
+        ->assertSuccessful();
+
+    expect($idle->fresh()->hasExpired())->toBeTrue()
+        ->and($active->fresh()->hasExpired())->toBeFalse();
+});
+
+test('the idle sweep skips sandboxes whose database is already gone', function () {
+    Config::set('demo.idle_hours', 3);
+    cleanupDemoSession('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', now()->subHours(4));
+
+    demoSchemasWithinTtl([]);
+
+    $this->mock(DemoDatabasePool::class)->shouldNotReceive('dropSandbox');
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
+});
+
+test('an idle timeout of zero keeps idle sandboxes for the full TTL', function () {
+    Config::set('demo.idle_hours', 0);
+    $uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    cleanupDemoSession($uuid, now()->subHours(20));
+
+    demoSchemasWithinTtl([DemoDatabasePool::databaseName($uuid)]);
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldNotReceive('dropSandbox');
+    $pool->shouldReceive('dropOrphans')->andReturn([]);
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
 });

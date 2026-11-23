@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+// Tests here that stand in for the DB facade leave the mock bound while the
+// app tears down, which asks it for the open connections.
+afterEach(function () {
+    if (DB::getFacadeRoot() instanceof Mockery\MockInterface) {
+        DB::shouldReceive('getConnections')->andReturn([])->byDefault();
+    }
+});
+
 uses(RefreshDatabase::class);
 
 beforeEach(function () {

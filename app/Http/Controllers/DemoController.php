@@ -81,6 +81,7 @@ class DemoController extends Controller
         ], self::IDENTITY_MESSAGES);
 
         $this->forgetPreviousVisitor();
+        $this->releaseSandbox(DemoCookie::fromRequest($request), $pool);
 
         $currentCount = $this->countDemoSessions($pool);
 
@@ -308,7 +309,7 @@ class DemoController extends Controller
         return redirect('/')->withCookie($cookie);
     }
 
-    public function reset(Request $request): RedirectResponse
+    public function reset(Request $request, DemoDatabasePool $pool): RedirectResponse
     {
         abort_unless(config('demo.enabled'), 404);
 
@@ -342,6 +343,10 @@ class DemoController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // After signing out: dropping repoints the demo connection, and the
+        // logout above still resolves the user through it.
+        $this->releaseSandbox($visitor, $pool);
 
         return redirect()->route('demo.landing')
             ->withoutCookie(DemoCookie::NAME);
@@ -534,6 +539,34 @@ class DemoController extends Controller
      * The override then tells Spatie the member already holds the role, so
      * seeding or guest creation never actually assigns it.
      */
+    /**
+     * Drop the sandbox a visitor is leaving when it was theirs alone, so
+     * starting over does not hold a seat until the TTL runs out. A sandbox
+     * someone joined through an invite stays up for them.
+     *
+     * Best-effort: a sandbox that could not be dropped here is left to
+     * demo:cleanup.
+     */
+    private function releaseSandbox(?DemoCookie $visitor, DemoDatabasePool $pool): void
+    {
+        if ($visitor === null) {
+            return;
+        }
+
+        try {
+            $demoSession = DemoSession::where('session_uuid', $visitor->uuid)->first();
+
+            if ($demoSession === null || ! $demoSession->isDisposableBy($visitor->userId)) {
+                return;
+            }
+
+            $pool->dropSandbox($visitor->uuid);
+            $demoSession->update(['expires_at' => now()]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
     private function forgetPreviousVisitor(): void
     {
         Auth::logout();
