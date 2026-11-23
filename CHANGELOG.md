@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- On **Stations**, cards with an open operating session now show the operator's callsign, band, mode, and a rough rate in QSOs/hr. The rate counts the station's contacts in the last 60 minutes, excluding dupes. Cards without an open session don't show these details. The page uses the same live connection as the dashboard to update without a reload when sessions start or end, band or mode changes, contacts are logged, or stations are marked unavailable or ready. While the event is on the air, it also refreshes about once a minute to keep the rate current between contacts.
+
 ### Fixed
 
 - On a Windows computer without the Microsoft Visual C++ runtime, such as a fresh Windows install, the server installer stopped at "Updating the server database" and showed "setup could not finish". The setup log showed `artisan optimize:clear failed with exit code -1073741515`. The server now comes with its own copy of the runtime files, so it starts without the runtime installed and without an internet connection.

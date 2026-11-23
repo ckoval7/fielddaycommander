@@ -4,14 +4,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Livewire\Stations\StationsList;
+use App\Models\Band;
 use App\Models\Contact;
 use App\Models\Equipment;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\Mode;
 use App\Models\OperatingSession;
 use App\Models\Setting;
 use App\Models\Station;
 use App\Models\User;
+use App\Support\BroadcastChannels;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -577,4 +580,89 @@ test('stats calculate equipment count correctly', function () {
     $stats = $component->get('stats');
 
     expect($stats['equipment_count'])->toBe(5); // 2 + 3
+});
+
+test('station card shows the current operator, band, mode and hourly rate', function () {
+    $this->actingAs($this->user);
+
+    $station = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    $operator = User::factory()->create(['call_sign' => 'K1ABC']);
+    $band = Band::factory()->create(['name' => '20m']);
+    $mode = Mode::factory()->create(['name' => 'CW']);
+
+    $session = OperatingSession::factory()->active()->create([
+        'station_id' => $station->id,
+        'operator_user_id' => $operator->id,
+        'band_id' => $band->id,
+        'mode_id' => $mode->id,
+    ]);
+
+    $contact = fn (array $attributes = []) => Contact::factory()->create([
+        'event_configuration_id' => $this->eventConfig->id,
+        'operating_session_id' => $session->id,
+        ...$attributes,
+    ]);
+
+    $contact(['qso_time' => appNow()->subMinutes(5)]);
+    $contact(['qso_time' => appNow()->subMinutes(50)]);
+    $contact(['qso_time' => appNow()->subMinutes(10), 'is_duplicate' => true]);
+    $contact(['qso_time' => appNow()->subMinutes(90)]);
+
+    Livewire::test(StationsList::class)
+        ->assertSeeHtml('data-station-on-air')
+        ->assertSee('K1ABC')
+        ->assertSee('20m CW')
+        ->assertSeeHtml('>2 <span class="font-normal text-base-content/70">QSOs/hr</span>');
+});
+
+test('station card hides the on-air details when no one is operating', function () {
+    $this->actingAs($this->user);
+
+    $station = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    OperatingSession::factory()->create([
+        'station_id' => $station->id,
+        'start_time' => now()->subHours(3),
+        'end_time' => now()->subHours(2),
+    ]);
+
+    Livewire::test(StationsList::class)
+        ->assertDontSeeHtml('data-station-on-air')
+        ->assertDontSee('QSOs/hr');
+});
+
+test('stations list listens for contact and station status broadcasts on the selected event', function () {
+    $this->actingAs($this->user);
+
+    $listeners = Livewire::test(StationsList::class)->instance()->getListeners();
+    $channel = BroadcastChannels::event($this->event->id);
+
+    expect($listeners)
+        ->toHaveKey(BroadcastChannels::privateListener($channel, '.'.BroadcastChannels::STATION_STATUS_CHANGED), 'refreshStations')
+        ->toHaveKey(BroadcastChannels::privateListener($channel, '.'.BroadcastChannels::CONTACT_LOGGED), 'refreshStations');
+});
+
+test('refreshing the stations list shows a session started after the page loaded', function () {
+    $this->actingAs($this->user);
+
+    $station = Station::factory()->create(['event_configuration_id' => $this->eventConfig->id]);
+    $component = Livewire::test(StationsList::class)->assertDontSeeHtml('data-station-on-air');
+
+    OperatingSession::factory()->active()->create([
+        'station_id' => $station->id,
+        'operator_user_id' => User::factory()->create(['call_sign' => 'W2XYZ'])->id,
+    ]);
+
+    $component->call('refreshStations')
+        ->assertSeeHtml('data-station-on-air')
+        ->assertSee('W2XYZ');
+});
+
+test('stations list polls only while the selected event is on the air', function () {
+    $this->actingAs($this->user);
+
+    Livewire::test(StationsList::class)->assertDontSeeHtml('wire:poll.60s="refreshStations"');
+
+    $this->event->update(['start_time' => now()->subHours(2), 'end_time' => now()->addHours(20)]);
+
+    Livewire::test(StationsList::class)->assertSeeHtml('wire:poll.60s="refreshStations"');
 });

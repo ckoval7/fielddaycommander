@@ -2,7 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div class="space-y-6">
+<div class="space-y-6" @if($this->isLive) wire:poll.60s="refreshStations" @endif>
     <x-slot:title>Stations</x-slot:title>
 
     {{-- Header --}}
@@ -130,6 +130,25 @@
                                 @endif
                             </div>
                         </div>
+
+                        {{-- On the air: current operator, band/mode and rolling hourly rate --}}
+                        @php $openSession = $station->operatingSessions->first(); @endphp
+                        @if($openSession)
+                            <dl class="mb-3 pb-3 border-b border-base-300 grid grid-cols-3 gap-x-3 gap-y-2 text-sm sm:text-base" data-station-on-air>
+                                <div class="min-w-0">
+                                    <dt class="text-xs text-base-content/60">Operator</dt>
+                                    <dd class="font-semibold break-all">{{ $openSession->operator?->call_sign ?? 'Unknown' }}</dd>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs text-base-content/60">Band / Mode</dt>
+                                    <dd class="font-semibold break-words">{{ $openSession->band?->name ?? '?' }} {{ $openSession->mode?->name ?? '?' }}</dd>
+                                </div>
+                                <div class="min-w-0">
+                                    <dt class="text-xs text-base-content/60">Rate</dt>
+                                    <dd class="font-semibold">{{ $station->contacts_last_hour_count }} <span class="font-normal text-base-content/70">QSOs/hr</span></dd>
+                                </div>
+                            </dl>
+                        @endif
 
                         {{-- Readiness --}}
                         @if($station->isUnavailable())

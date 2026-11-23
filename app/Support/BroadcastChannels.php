@@ -30,6 +30,8 @@ class BroadcastChannels
      */
     public const CONTACT_DELETED = 'ContactDeleted';
 
+    public const STATION_STATUS_CHANGED = 'StationStatusChanged';
+
     /**
      * Prevent instantiation — this class exposes only static helpers.
      */

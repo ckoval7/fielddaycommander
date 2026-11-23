@@ -6,11 +6,13 @@
 namespace App\Livewire\Stations;
 
 use App\Enums\StationUnavailableReason;
+use App\Events\StationStatusChanged;
 use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\Station;
 use App\Models\StationDevice;
 use App\Services\EventContextService;
+use App\Support\BroadcastChannels;
 use App\Support\StationMode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -68,6 +70,51 @@ class StationsList extends Component
         return Event::completed()
             ->orderBy('end_time', 'desc')
             ->first();
+    }
+
+    /**
+     * Refresh the cards when contacts are logged or a station's session,
+     * band, mode or readiness changes.
+     *
+     * @return array<string, string>
+     */
+    public function getListeners(): array
+    {
+        if (! $this->eventFilter) {
+            return [];
+        }
+
+        $channel = BroadcastChannels::event($this->eventFilter);
+
+        return [
+            ...BroadcastChannels::contactChangeListeners($this->eventFilter, 'refreshStations'),
+            BroadcastChannels::privateListener($channel, '.'.BroadcastChannels::STATION_STATUS_CHANGED) => 'refreshStations',
+        ];
+    }
+
+    /**
+     * Drop cached station data so the next render reads it fresh.
+     */
+    public function refreshStations(): void
+    {
+        unset($this->stations, $this->stats);
+    }
+
+    /**
+     * Whether the selected event is on the air now, so the hourly rate keeps
+     * moving between broadcasts.
+     */
+    #[Computed]
+    public function isLive(): bool
+    {
+        $event = $this->eventFilter ? Event::find($this->eventFilter) : null;
+
+        if ($event?->start_time === null || $event->end_time === null) {
+            return false;
+        }
+
+        // The rate counts the last hour, so it keeps settling for an hour after the end.
+        return appNow()->between($event->start_time, $event->end_time->copy()->addHour());
     }
 
     /**
@@ -169,10 +216,17 @@ class StationsList extends Component
                 'unavailableBy',
                 'devices' => fn ($query) => $query->active()->latest(),
                 'operatingSessions' => function ($query) {
-                    $query->whereNull('end_time')->latest();
+                    $query->whereNull('end_time')
+                        ->with(['operator:id,call_sign,first_name', 'band:id,name', 'mode:id,name'])
+                        ->latest();
                 },
             ])
-            ->withCount('additionalEquipment')
+            ->withCount([
+                'additionalEquipment',
+                'contacts as contacts_last_hour_count' => fn ($query) => $query
+                    ->notDuplicate()
+                    ->where('qso_time', '>=', appNow()->subHour()),
+            ])
             ->orderBy('name')
             ->paginate(12);
     }
@@ -189,6 +243,10 @@ class StationsList extends Component
         $closed = $station->operatingSessions()
             ->whereNull('end_time')
             ->update(['end_time' => now()]);
+
+        if ($closed > 0) {
+            StationStatusChanged::notify($station);
+        }
 
         // Clear computed caches so the card re-renders
         unset($this->stations);

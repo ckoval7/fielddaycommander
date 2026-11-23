@@ -6,6 +6,7 @@
 namespace App\Observers;
 
 use App\Enums\NotificationCategory;
+use App\Events\StationStatusChanged;
 use App\Models\OperatingSession;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,8 @@ class OperatingSessionObserver
         if ($session->is_transcription) {
             return;
         }
+
+        $this->broadcastStationStatus($session);
 
         try {
             $operator = $session->operator;
@@ -53,6 +56,10 @@ class OperatingSessionObserver
             return;
         }
 
+        if ($session->wasChanged(['end_time', 'band_id', 'mode_id', 'operator_user_id', 'station_id'])) {
+            $this->broadcastStationStatus($session);
+        }
+
         if (! $session->wasChanged('end_time') || $session->end_time === null) {
             return;
         }
@@ -70,6 +77,21 @@ class OperatingSessionObserver
             );
         } catch (\Exception $e) {
             Log::error('Failed to send operating session ended notification', [
+                'session_id' => $session->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Tell open stations pages that this session's station changed.
+     */
+    protected function broadcastStationStatus(OperatingSession $session): void
+    {
+        try {
+            StationStatusChanged::notify($session->station_id);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to broadcast station status change', [
                 'session_id' => $session->id,
                 'error' => $e->getMessage(),
             ]);

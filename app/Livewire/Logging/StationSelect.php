@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Logging;
 
+use App\Events\StationStatusChanged;
 use App\Models\Band;
 use App\Models\Event;
 use App\Models\Mode;
@@ -337,11 +338,13 @@ class StationSelect extends Component
 
         // A walk-up operator has left any other station they were running.
         if (StationMode::isActive()) {
-            OperatingSession::query()
+            $leftSessions = OperatingSession::query()
                 ->active()
                 ->forUser(auth()->id())
-                ->whereNull('external_source')
-                ->update(['end_time' => appNow()]);
+                ->whereNull('external_source');
+            $leftStationIds = (clone $leftSessions)->pluck('station_id')->unique();
+            $leftSessions->update(['end_time' => appNow()]);
+            $leftStationIds->each(fn (int $stationId) => StationStatusChanged::notify($stationId));
         }
 
         // Per FD Rule 6.9: no two transmitters on the same band-mode at the same time.
@@ -417,10 +420,14 @@ class StationSelect extends Component
         }
 
         // End the existing session
-        OperatingSession::query()
+        $ended = OperatingSession::query()
             ->active()
             ->forStation($this->takeoverStationId)
             ->update(['end_time' => appNow()]);
+
+        if ($ended > 0) {
+            StationStatusChanged::notify($this->takeoverStationId);
+        }
 
         // Open setup modal for the new session
         $this->selectedStationId = $this->takeoverStationId;
