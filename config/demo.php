@@ -55,6 +55,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Unused Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Minutes before cleanup drops a sandbox that was never used past the
+    | first page it opened on. Set to 0 to leave those to the idle timeout.
+    |
+    */
+
+    'unused_minutes' => (int) env('DEMO_UNUSED_MINUTES', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reclaiming Seats
+    |--------------------------------------------------------------------------
+    |
+    | When the demo is full, a new visitor can take a seat from an address
+    | holding more than its fair share, but only a sandbox nobody has touched
+    | for this many minutes.
+    |
+    */
+
+    'reclaim_idle_minutes' => (int) env('DEMO_RECLAIM_IDLE_MINUTES', 10),
+
+    /*
+    |--------------------------------------------------------------------------
     | Users Per Session
     |--------------------------------------------------------------------------
     |

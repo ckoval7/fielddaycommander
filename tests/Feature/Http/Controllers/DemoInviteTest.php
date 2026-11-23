@@ -375,8 +375,6 @@ test('starting over still signs the visitor out when the drop fails', function (
         ->post(route('demo.reset'))
         ->assertRedirect(route('demo.landing'))
         ->assertCookieExpired('demo_session');
-
-    expect($demoSession->fresh()->hasExpired())->toBeFalse();
 });
 
 test('starting a new sandbox drops the visitor\'s previous one', function () {
@@ -411,4 +409,43 @@ test('demo provisioning is throttled per address, not per signed-in persona', fu
     $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.6'])
         ->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
         ->assertRedirect();
+});
+
+/**
+ * Make the demo look full: one more sandbox schema than the cap allows.
+ */
+function demoAtCapacity(): void
+{
+    Config::set('demo.max_sessions', 1);
+    Illuminate\Support\Facades\DB::shouldReceive('getDriverName')->andReturn('mysql');
+    Illuminate\Support\Facades\DB::shouldReceive('select')->andReturn([
+        (object) ['schema_name' => 'demo_aaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaaaaa'],
+    ]);
+    Illuminate\Support\Facades\DB::shouldReceive('getConnections')->andReturn([])->byDefault();
+}
+
+test('a full demo turns a newcomer away when no seat can fairly be taken', function () {
+    demoAtCapacity();
+    $this->mock(App\Services\DemoSeatReclaimer::class)->shouldReceive('reclaimFor')->once()->andReturnNull();
+    $pool = $this->mock(App\Services\DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
+    $pool->shouldNotReceive('acquireProvisioningSlot');
+
+    $this->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+        ->assertRedirect(route('demo.landing'))
+        ->assertSessionHas('error', 'Demo capacity is currently full. Please try again in a few minutes.');
+});
+
+test('a full demo lets a newcomer in once a seat is reclaimed for them', function () {
+    demoAtCapacity();
+    $this->mock(App\Services\DemoSeatReclaimer::class)
+        ->shouldReceive('reclaimFor')->once()->with(App\Models\DemoSession::visitorHash('127.0.0.1'))->andReturn('some-uuid');
+    // Provisioning carries on to the build, which stops here for want of a slot.
+    $pool = $this->mock(App\Services\DemoDatabasePool::class);
+    $pool->shouldReceive('pooledDatabaseNames')->andReturn([]);
+    $pool->shouldReceive('acquireProvisioningSlot')->once()->andReturnNull();
+
+    $this->post(route('demo.provision'), ['role' => 'operator', 'event_type' => 'FD'])
+        ->assertSessionHas('provision_retry')
+        ->assertSessionMissing('error');
 });

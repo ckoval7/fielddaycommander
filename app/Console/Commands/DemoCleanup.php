@@ -116,8 +116,12 @@ class DemoCleanup extends Command
     }
 
     /**
-     * Drop sandboxes nobody has touched for demo.idle_hours, so a seat held
-     * by someone who wandered off frees up long before the TTL.
+     * Drop sandboxes nobody is using, so their seats free up long before the
+     * TTL: any sandbox without a request for demo.idle_hours, and one that
+     * was never used past its first page for demo.unused_minutes. A visitor
+     * who starts a sandbox and walks away (or a script that starts many)
+     * gives its seats back quickly, while anyone who clicked around keeps
+     * theirs for the longer idle timeout.
      *
      * @param  list<object>  $rows  The demo_* schemas listed before the TTL sweep.
      * @param  list<string>  $alreadyDropped  Schemas the TTL sweep just dropped.
@@ -126,8 +130,9 @@ class DemoCleanup extends Command
     private function dropIdle(DemoDatabasePool $pool, array $rows, array $alreadyDropped): array
     {
         $idleHours = (int) config('demo.idle_hours', 3);
+        $unusedMinutes = (int) config('demo.unused_minutes', 30);
 
-        if ($idleHours <= 0) {
+        if ($idleHours <= 0 && $unusedMinutes <= 0) {
             return [];
         }
 
@@ -137,8 +142,18 @@ class DemoCleanup extends Command
         );
 
         $idleSessions = DemoSession::query()
-            ->where('last_seen_at', '<', Carbon::now()->subHours($idleHours))
             ->where('expires_at', '>', Carbon::now())
+            ->where(function ($query) use ($idleHours, $unusedMinutes): void {
+                if ($idleHours > 0) {
+                    $query->orWhere('last_seen_at', '<', Carbon::now()->subHours($idleHours));
+                }
+
+                if ($unusedMinutes > 0) {
+                    $query->orWhere(fn ($unused) => $unused
+                        ->where('total_page_views', '<=', 1)
+                        ->where('last_seen_at', '<', Carbon::now()->subMinutes($unusedMinutes)));
+                }
+            })
             ->get();
 
         $dropped = [];
@@ -151,8 +166,11 @@ class DemoCleanup extends Command
                     continue;
                 }
 
+                if (! $session->retire()) {
+                    continue;
+                }
+
                 $pool->dropSandbox($session->session_uuid);
-                $session->update(['expires_at' => Carbon::now()]);
                 $this->info("Dropped idle demo database: {$dbName}");
                 $dropped[] = $dbName;
             } catch (\Throwable $e) {

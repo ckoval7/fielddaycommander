@@ -114,7 +114,7 @@ function demoSchemasWithinTtl(array $databases): void
     DB::shouldReceive('connection')->with('demo')->andReturn($connection);
 }
 
-function cleanupDemoSession(string $uuid, Carbon\CarbonInterface $lastSeenAt, ?Carbon\CarbonInterface $expiresAt = null): App\Models\DemoSession
+function cleanupDemoSession(string $uuid, Carbon\CarbonInterface $lastSeenAt, ?Carbon\CarbonInterface $expiresAt = null, int $pageViews = 5): App\Models\DemoSession
 {
     return App\Models\DemoSession::create([
         'session_uuid' => $uuid,
@@ -125,6 +125,7 @@ function cleanupDemoSession(string $uuid, Carbon\CarbonInterface $lastSeenAt, ?C
         'provisioned_at' => now()->subHours(5),
         'last_seen_at' => $lastSeenAt,
         'expires_at' => $expiresAt ?? now()->addHours(19),
+        'total_page_views' => $pageViews,
     ]);
 }
 
@@ -167,6 +168,40 @@ test('an idle timeout of zero keeps idle sandboxes for the full TTL', function (
     Config::set('demo.idle_hours', 0);
     $uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     cleanupDemoSession($uuid, now()->subHours(20));
+
+    demoSchemasWithinTtl([DemoDatabasePool::databaseName($uuid)]);
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldNotReceive('dropSandbox');
+    $pool->shouldReceive('dropOrphans')->andReturn([]);
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
+});
+
+test('cleanup drops a sandbox never used past its first page well before the idle timeout', function () {
+    Config::set('demo.idle_hours', 3);
+    Config::set('demo.unused_minutes', 30);
+    $unusedUuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    $browsedUuid = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    $freshUuid = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+    cleanupDemoSession($unusedUuid, now()->subMinutes(45), pageViews: 1);
+    cleanupDemoSession($browsedUuid, now()->subMinutes(45), pageViews: 2);
+    cleanupDemoSession($freshUuid, now()->subMinutes(10), pageViews: 1);
+
+    demoSchemasWithinTtl(array_map(DemoDatabasePool::databaseName(...), [$unusedUuid, $browsedUuid, $freshUuid]));
+
+    $pool = $this->mock(DemoDatabasePool::class);
+    $pool->shouldReceive('dropSandbox')->once()->with($unusedUuid);
+    $pool->shouldReceive('dropOrphans')->andReturn([]);
+
+    $this->artisan('demo:cleanup')->assertSuccessful();
+});
+
+test('an unused timeout of zero leaves unused sandboxes to the idle timeout', function () {
+    Config::set('demo.idle_hours', 3);
+    Config::set('demo.unused_minutes', 0);
+    $uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    cleanupDemoSession($uuid, now()->subMinutes(90), pageViews: 1);
 
     demoSchemasWithinTtl([DemoDatabasePool::databaseName($uuid)]);
 

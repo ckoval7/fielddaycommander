@@ -38,8 +38,8 @@ class DemoDatabasePool
 
     /**
      * How long a database must stay unfinished before it counts as orphaned.
-     * Provisioning finishes in seconds, so anything unfinished across two
-     * hourly cleanups was abandoned.
+     * Provisioning finishes in seconds, so anything still unfinished this
+     * long after a cleanup first saw it was abandoned.
      */
     private const ORPHAN_GRACE_MINUTES = 30;
 

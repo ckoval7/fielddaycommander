@@ -30,9 +30,10 @@ Schedule::command('reminders:send')->everyMinute();
 // Clean up expired album exports
 Schedule::command('exports:clean')->daily();
 
-// Drop expired demo databases
+// Drop expired, idle and unused demo databases
 Schedule::command('demo:cleanup')
-    ->hourly()
+    ->everyTenMinutes()
+    ->withoutOverlapping()
     ->when(fn () => config('demo.enabled'));
 
 // Keep migrated demo databases ready so new visitors only wait for seeding

@@ -121,6 +121,23 @@ class DemoSession extends Model
             && ! $this->hasExpired();
     }
 
+    /**
+     * Mark a live sandbox expired, so invites stop and nobody else retires
+     * it. The check and the update are one conditional UPDATE, so of two
+     * requests retiring the same sandbox at once only one gets true.
+     */
+    public function retire(): bool
+    {
+        $retired = static::query()
+            ->whereKey($this->getKey())
+            ->where('expires_at', '>', now())
+            ->update(['expires_at' => now()]) > 0;
+
+        $this->refresh();
+
+        return $retired;
+    }
+
     public function hasExpired(): bool
     {
         return $this->expires_at !== null && $this->expires_at->isPast();

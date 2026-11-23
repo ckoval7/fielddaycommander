@@ -11,6 +11,7 @@ use App\Models\DemoParticipant;
 use App\Models\DemoSession;
 use App\Models\User;
 use App\Services\DemoDatabasePool;
+use App\Services\DemoSeatReclaimer;
 use App\Support\CallsignGenerator;
 use App\Support\DemoCookie;
 use App\Support\DemoDatabase;
@@ -69,7 +70,7 @@ class DemoController extends Controller
         return view('demo.landing');
     }
 
-    public function provision(Request $request, DemoDatabasePool $pool): RedirectResponse
+    public function provision(Request $request, DemoDatabasePool $pool, DemoSeatReclaimer $reclaimer): RedirectResponse
     {
         abort_unless(config('demo.enabled'), 404);
 
@@ -85,7 +86,8 @@ class DemoController extends Controller
 
         $currentCount = $this->countDemoSessions($pool);
 
-        if ($currentCount >= config('demo.max_sessions', 25)) {
+        if ($currentCount >= config('demo.max_sessions', 25)
+            && $reclaimer->reclaimFor(DemoSession::visitorHash($request->ip())) === null) {
             return redirect()->route('demo.landing')
                 ->with('error', 'Demo capacity is currently full. Please try again in a few minutes.');
         }
@@ -560,8 +562,9 @@ class DemoController extends Controller
                 return;
             }
 
-            $pool->dropSandbox($visitor->uuid);
-            $demoSession->update(['expires_at' => now()]);
+            if ($demoSession->retire()) {
+                $pool->dropSandbox($visitor->uuid);
+            }
         } catch (\Throwable $e) {
             report($e);
         }
