@@ -78,7 +78,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <x-input
                         label="First Name"
-                        wire:model="first_name"
+                        wire:model="firstName"
                         autocomplete="given-name"
                         autocapitalize="words"
                         icon="phosphor-user"
@@ -87,7 +87,7 @@
 
                     <x-input
                         label="Last Name"
-                        wire:model="last_name"
+                        wire:model="lastName"
                         autocomplete="family-name"
                         autocapitalize="words"
                         icon="phosphor-user"
@@ -107,7 +107,7 @@
 
                     <x-select
                         label="License Class"
-                        wire:model="license_class"
+                        wire:model="licenseClass"
                         :options="$this->licenseClasses"
                         option-value="value"
                         option-label="label"

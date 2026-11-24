@@ -50,11 +50,11 @@ beforeEach(function () {
 function fillInterestForm(mixed $component, array $overrides = []): mixed
 {
     $values = array_merge([
-        'first_name' => 'Pat',
-        'last_name' => 'Smith',
+        'firstName' => 'Pat',
+        'lastName' => 'Smith',
         'callsign' => 'k1abc',
         'email' => 'Pat@Example.com',
-        'license_class' => LicenseClass::General->value,
+        'licenseClass' => LicenseClass::General->value,
         'availability' => [InterestAvailability::Setup->value, InterestAvailability::Overnight->value],
         'notes' => 'I can bring a generator.',
     ], $overrides);
@@ -95,13 +95,13 @@ describe('public form', function () {
     test('requires a name, an email and at least one time', function () {
         Livewire::test(InterestForm::class)
             ->call('save')
-            ->assertHasErrors(['first_name', 'last_name', 'email', 'availability']);
+            ->assertHasErrors(['firstName', 'lastName', 'email', 'availability']);
 
         expect(EventInterest::count())->toBe(0);
     });
 
     test('call sign and license class are optional', function () {
-        fillInterestForm(Livewire::test(InterestForm::class), ['callsign' => '', 'license_class' => ''])
+        fillInterestForm(Livewire::test(InterestForm::class), ['callsign' => '', 'licenseClass' => ''])
             ->call('save')
             ->assertHasNoErrors();
 
@@ -186,11 +186,11 @@ describe('accounts', function () {
         $this->actingAs($user);
 
         Livewire::test(InterestForm::class)
-            ->assertSet('first_name', 'Pat')
-            ->assertSet('last_name', 'Smith')
+            ->assertSet('firstName', 'Pat')
+            ->assertSet('lastName', 'Smith')
             ->assertSet('callsign', 'K1ABC')
             ->assertSet('email', 'pat@example.com')
-            ->assertSet('license_class', 'Extra')
+            ->assertSet('licenseClass', 'Extra')
             ->set('availability', [InterestAvailability::Daytime->value])
             ->call('save')
             ->assertHasNoErrors()
@@ -240,7 +240,7 @@ describe('accounts', function () {
     });
 
     test('keeps a two-word first name whole for registration', function () {
-        fillInterestForm(Livewire::test(InterestForm::class), ['first_name' => 'Mary Ann', 'last_name' => 'Smith'])
+        fillInterestForm(Livewire::test(InterestForm::class), ['firstName' => 'Mary Ann', 'lastName' => 'Smith'])
             ->call('save')
             ->assertHasNoErrors();
 
