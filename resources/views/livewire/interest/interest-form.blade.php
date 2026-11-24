@@ -3,11 +3,11 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    <x-slot:title>Volunteer Interest{{ $this->event ? ' - ' . $this->event->name : '' }}</x-slot:title>
+    <x-slot:title>Participation Interest{{ $this->event ? ' - ' . $this->event->name : '' }}</x-slot:title>
 
     <div class="p-4 md:p-6 max-sm:px-0 max-w-2xl">
         <div class="mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold">Want to help out?</h1>
+            <h1 class="text-2xl md:text-3xl font-bold">Want to take part?</h1>
             @if($this->event)
                 <p class="text-base-content/70 mt-1">
                     {{ $this->event->name }} &middot; {{ toLocalTime($this->event->start_time)->format('M j, Y') }}
@@ -62,7 +62,7 @@
         @else
             <x-card>
                 <p class="text-base-content/70 mb-4">
-                    Shift sign-ups aren't open yet. Tell the organizers you'd like to help and roughly when you're free. To change your answers later, send the form again with the same email.
+                    Shift sign-ups aren't open yet. Let the organizers know you'd like to operate, log, or lend a hand with setup and teardown, and roughly when you're free. To change your answers later, send the form again with the same email.
                 </p>
 
                 <form wire:submit="save" class="space-y-4">
@@ -119,7 +119,7 @@
                     />
 
                     <fieldset class="space-y-2">
-                        <legend class="font-semibold text-sm mb-2">When could you help?</legend>
+                        <legend class="font-semibold text-sm mb-2">When are you free?</legend>
                         <p class="text-sm text-base-content/70 -mt-1 mb-2">Pick at least one time that might work. You can choose more than one.</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             @foreach($this->availabilityOptions as $block)

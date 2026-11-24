@@ -20,7 +20,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Public form where people say they'd like to help at the next event, before
+ * Public form where people say they'd like to take part in the next event, before
  * shift sign-ups are open. Sending it again with the same email updates the
  * earlier response.
  */
@@ -253,13 +253,13 @@ class InterestForm extends Component
             'name.required' => 'Please enter your name.',
             'email.required' => 'Please enter your email.',
             'callsign.regex' => 'A call sign can only have letters, numbers, and a slash.',
-            'availability.required' => 'Pick at least one time you might be able to help.',
-            'availability.min' => 'Pick at least one time you might be able to help.',
+            'availability.required' => 'Pick at least one time you might be free.',
+            'availability.min' => 'Pick at least one time you might be free.',
         ];
     }
 
     public function render(): View
     {
-        return view('livewire.interest.interest-form')->layout('layouts.app', ['title' => 'Volunteer Interest']);
+        return view('livewire.interest.interest-form')->layout('layouts.app', ['title' => 'Participation Interest']);
     }
 }
