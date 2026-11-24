@@ -50,7 +50,8 @@ beforeEach(function () {
 function fillInterestForm(mixed $component, array $overrides = []): mixed
 {
     $values = array_merge([
-        'name' => 'Pat Smith',
+        'first_name' => 'Pat',
+        'last_name' => 'Smith',
         'callsign' => 'k1abc',
         'email' => 'Pat@Example.com',
         'license_class' => LicenseClass::General->value,
@@ -94,7 +95,7 @@ describe('public form', function () {
     test('requires a name, an email and at least one time', function () {
         Livewire::test(InterestForm::class)
             ->call('save')
-            ->assertHasErrors(['name', 'email', 'availability']);
+            ->assertHasErrors(['first_name', 'last_name', 'email', 'availability']);
 
         expect(EventInterest::count())->toBe(0);
     });
@@ -185,7 +186,8 @@ describe('accounts', function () {
         $this->actingAs($user);
 
         Livewire::test(InterestForm::class)
-            ->assertSet('name', 'Pat Smith')
+            ->assertSet('first_name', 'Pat')
+            ->assertSet('last_name', 'Smith')
             ->assertSet('callsign', 'K1ABC')
             ->assertSet('email', 'pat@example.com')
             ->assertSet('license_class', 'Extra')
@@ -235,6 +237,16 @@ describe('accounts', function () {
             ->call('save')
             ->assertDontSee(route('register'))
             ->assertSee(route('login'));
+    });
+
+    test('keeps a two-word first name whole for registration', function () {
+        fillInterestForm(Livewire::test(InterestForm::class), ['first_name' => 'Mary Ann', 'last_name' => 'Smith'])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect(session(InterestForm::PREFILL_SESSION_KEY))
+            ->toMatchArray(['first_name' => 'Mary Ann', 'last_name' => 'Smith'])
+            ->and(EventInterest::sole()->full_name)->toBe('Mary Ann Smith');
     });
 
     test('the registration page starts with the visitor\'s details', function () {
@@ -294,11 +306,13 @@ describe('organizer view', function () {
 
     test('lists responses with counts for each time', function () {
         EventInterest::factory()->for($this->eventConfig)->create([
-            'name' => 'Pat Smith',
+            'first_name' => 'Pat',
+            'last_name' => 'Smith',
             'availability' => [InterestAvailability::Setup, InterestAvailability::Overnight],
         ]);
         EventInterest::factory()->for($this->eventConfig)->create([
-            'name' => 'Sam Jones',
+            'first_name' => 'Sam',
+            'last_name' => 'Jones',
             'availability' => [InterestAvailability::Setup],
         ]);
 

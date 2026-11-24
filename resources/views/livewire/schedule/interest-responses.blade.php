@@ -79,7 +79,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                         <div class="flex-1 min-w-0 space-y-1">
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <span class="font-semibold">{{ $response->name }}</span>
+                                <span class="font-semibold">{{ $response->full_name }}</span>
                                 @if($response->callsign)
                                     <span class="text-base-content/70">{{ $response->callsign }}</span>
                                 @endif
@@ -108,9 +108,9 @@
                         <x-button
                             icon="phosphor-trash"
                             class="btn-ghost btn-sm text-error self-end sm:self-start"
-                            aria-label="Delete response from {{ $response->name }}"
+                            aria-label="Delete response from {{ $response->full_name }}"
                             wire:click="deleteResponse({{ $response->id }})"
-                            wire:confirm="Delete the response from {{ $response->name }}?"
+                            wire:confirm="Delete the response from {{ $response->full_name }}?"
                         />
                     </div>
                 </x-card>

@@ -56,7 +56,7 @@ class InterestResponses extends Component
     #[Computed]
     public function responses(): Collection
     {
-        return $this->eventConfig->interests()->latest()->get();
+        return $this->eventConfig->interests()->orderBy('last_name')->orderBy('first_name')->get();
     }
 
     /**
@@ -114,7 +114,7 @@ class InterestResponses extends Component
         AuditLog::log(
             action: 'interest.response.deleted',
             auditable: $interest,
-            oldValues: ['name' => $interest->name, 'callsign' => $interest->callsign],
+            oldValues: ['name' => $interest->full_name, 'callsign' => $interest->callsign],
         );
 
         $interest->delete();

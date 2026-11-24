@@ -24,7 +24,8 @@ class EventInterestFactory extends Factory
         return [
             'event_configuration_id' => EventConfiguration::factory(),
             'user_id' => null,
-            'name' => fake()->name(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'callsign' => strtoupper(fake()->bothify('??#???')),
             'email' => fake()->unique()->safeEmail(),
             'license_class' => fake()->randomElement(LicenseClass::cases()),

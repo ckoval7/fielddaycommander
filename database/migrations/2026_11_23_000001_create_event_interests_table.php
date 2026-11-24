@@ -19,7 +19,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('name', 100);
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
             $table->string('callsign', 20)->nullable();
             $table->string('email', 255);
             $table->string('license_class', 20)->nullable();

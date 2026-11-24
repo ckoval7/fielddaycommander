@@ -40,7 +40,9 @@ class InterestForm extends Component
     #[Locked]
     public ?int $eventId = null;
 
-    public string $name = '';
+    public string $first_name = '';
+
+    public string $last_name = '';
 
     public string $callsign = '';
 
@@ -75,7 +77,8 @@ class InterestForm extends Component
             return;
         }
 
-        $this->name = trim(($user->first_name ?? '').' '.($user->last_name ?? ''));
+        $this->first_name = $user->first_name ?? '';
+        $this->last_name = $user->last_name ?? '';
         $this->callsign = $user->call_sign ?? '';
         $this->email = $user->email ?? '';
         $this->license_class = $user->license_class ?? '';
@@ -186,7 +189,8 @@ class InterestForm extends Component
 
         $interest->fill([
             'user_id' => auth()->id() ?? $interest->user_id,
-            'name' => trim($validated['name']),
+            'first_name' => trim($validated['first_name']),
+            'last_name' => trim($validated['last_name']),
             'callsign' => $callsign,
             'license_class' => $validated['license_class'] ?: null,
             'availability' => $validated['availability'],
@@ -198,7 +202,7 @@ class InterestForm extends Component
             action: $this->updatedExisting ? 'interest.response.updated' : 'interest.response.sent',
             auditable: $interest,
             newValues: [
-                'name' => $interest->name,
+                'name' => $interest->full_name,
                 'callsign' => $interest->callsign,
                 'availability' => $validated['availability'],
             ],
@@ -227,11 +231,9 @@ class InterestForm extends Component
      */
     protected function rememberForRegistration(EventInterest $interest): void
     {
-        $parts = preg_split('/\s+/', $interest->name, 2);
-
         session()->put(self::PREFILL_SESSION_KEY, [
-            'first_name' => $parts[0] ?? '',
-            'last_name' => $parts[1] ?? '',
+            'first_name' => $interest->first_name,
+            'last_name' => $interest->last_name,
             'call_sign' => $interest->callsign ?? '',
             'email' => $interest->email,
             'license_class' => $interest->license_class?->userValue(),
@@ -244,7 +246,8 @@ class InterestForm extends Component
     protected function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
             'callsign' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9\/]*$/'],
             'email' => ['required', 'email', 'max:255'],
             'license_class' => ['nullable', Rule::enum(LicenseClass::class)],
@@ -261,7 +264,8 @@ class InterestForm extends Component
     protected function messages(): array
     {
         return [
-            'name.required' => 'Please enter your name.',
+            'first_name.required' => 'Please enter your first name.',
+            'last_name.required' => 'Please enter your last name.',
             'email.required' => 'Please enter your email.',
             'callsign.regex' => 'A call sign can only have letters, numbers, and a slash.',
             'availability.required' => 'Pick at least one time you might be free.',

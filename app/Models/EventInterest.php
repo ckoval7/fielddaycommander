@@ -9,6 +9,7 @@ use App\Enums\InterestAvailability;
 use App\Enums\LicenseClass;
 use Database\Factories\EventInterestFactory;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,8 @@ class EventInterest extends Model
     protected $fillable = [
         'event_configuration_id',
         'user_id',
-        'name',
+        'first_name',
+        'last_name',
         'callsign',
         'email',
         'license_class',
@@ -40,6 +42,14 @@ class EventInterest extends Model
             'license_class' => LicenseClass::class,
             'availability' => AsEnumCollection::of(InterestAvailability::class),
         ];
+    }
+
+    /**
+     * First and last name together, for lists and messages.
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::get(fn (): string => trim("{$this->first_name} {$this->last_name}"));
     }
 
     public function eventConfiguration(): BelongsTo

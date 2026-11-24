@@ -75,14 +75,24 @@
                         <x-alert icon="phosphor-warning" class="alert-error">{{ $message }}</x-alert>
                     @enderror
 
-                    <x-input
-                        label="Name"
-                        wire:model="name"
-                        autocomplete="name"
-                        autocapitalize="words"
-                        icon="phosphor-user"
-                        required
-                    />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <x-input
+                            label="First name"
+                            wire:model="first_name"
+                            autocomplete="given-name"
+                            autocapitalize="words"
+                            icon="phosphor-user"
+                            required
+                        />
+                        <x-input
+                            label="Last name"
+                            wire:model="last_name"
+                            autocomplete="family-name"
+                            autocapitalize="words"
+                            icon="phosphor-user"
+                            required
+                        />
+                    </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <x-input
