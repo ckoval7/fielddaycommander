@@ -12,6 +12,7 @@ use App\Models\Event;
 use App\Models\EventConfiguration;
 use App\Models\EventInterest;
 use App\Models\User;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -230,15 +231,6 @@ describe('accounts', function () {
             ->assertDontSee(route('register'));
     });
 
-    test('points a visitor who already has an account to sign in', function () {
-        User::factory()->create(['email' => 'pat@example.com']);
-
-        fillInterestForm(Livewire::test(InterestForm::class))
-            ->call('save')
-            ->assertDontSee(route('register'))
-            ->assertSee(route('login'));
-    });
-
     test('keeps a two-word first name whole for registration', function () {
         fillInterestForm(Livewire::test(InterestForm::class), ['firstName' => 'Mary Ann', 'lastName' => 'Smith'])
             ->call('save')
@@ -256,6 +248,7 @@ describe('accounts', function () {
             'call_sign' => 'K1ABC',
             'email' => 'pat@example.com',
             'license_class' => 'General',
+            'saved_at' => now()->getTimestamp(),
         ]);
 
         $this->get('/register')
@@ -267,7 +260,41 @@ describe('accounts', function () {
             ->assertSee('name="license_class" value="General"', false);
     });
 
+    test('the registration page drops details left by an earlier visitor', function () {
+        session()->put(InterestForm::PREFILL_SESSION_KEY, [
+            'first_name' => 'Pat',
+            'email' => 'pat@example.com',
+            'saved_at' => now()->subMinutes(InterestForm::PREFILL_MINUTES + 1)->getTimestamp(),
+        ]);
+
+        $this->get('/register')
+            ->assertOk()
+            ->assertDontSee('value="pat@example.com"', false)
+            ->assertSessionMissing(InterestForm::PREFILL_SESSION_KEY);
+    });
+
     test('registering claims the visitor\'s responses and keeps the license class', function () {
+        Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+        EventInterest::factory()->for($this->eventConfig)->create(['email' => 'pat@example.com']);
+
+        $this->post('/register', [
+            'call_sign' => 'K1ABC',
+            'first_name' => 'Pat',
+            'last_name' => 'Smith',
+            'email' => 'Pat@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'license_class' => 'General',
+        ]);
+
+        $user = User::where('call_sign', 'K1ABC')->sole();
+
+        expect($user->license_class)->toBe('General')
+            ->and(EventInterest::sole()->user_id)->toBe($user->id);
+    });
+
+    test('when emails must be verified, responses stay unclaimed until the email is verified', function () {
+        config(['auth-security.registration_mode' => 'email_verification_required']);
         Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
         EventInterest::factory()->for($this->eventConfig)->create(['email' => 'pat@example.com']);
 
@@ -285,8 +312,56 @@ describe('accounts', function () {
 
         $user = User::where('call_sign', 'K1ABC')->sole();
 
-        expect($user->license_class)->toBe('General')
-            ->and(EventInterest::sole()->user_id)->toBe($user->id);
+        expect(EventInterest::sole()->user_id)->toBeNull();
+
+        event(new Verified($user));
+
+        expect(EventInterest::sole()->user_id)->toBe($user->id);
+    });
+
+    test('a signed-in user with an unverified email cannot take over a response sent under it', function () {
+        config(['auth-security.registration_mode' => 'email_verification_required']);
+        $interest = EventInterest::factory()->for($this->eventConfig)->create(['email' => 'pat@example.com', 'notes' => 'Only Saturday']);
+        $user = User::factory()->unverified()->create(['email' => 'pat@example.com']);
+
+        $this->actingAs($user);
+
+        Livewire::test(InterestForm::class)
+            ->assertSet('notes', '')
+            ->set('availability', [InterestAvailability::Daytime->value])
+            ->call('save')
+            ->assertHasErrors('form');
+
+        expect($interest->fresh()->user_id)->toBeNull()
+            ->and($interest->fresh()->notes)->toBe('Only Saturday');
+    });
+
+    test('a signed-in user always updates their own response, whatever email is typed', function () {
+        $user = User::factory()->create(['email' => 'pat@example.com']);
+        EventInterest::factory()->for($this->eventConfig)->create(['email' => 'pat@example.com', 'user_id' => $user->id]);
+        $other = EventInterest::factory()->for($this->eventConfig)->create(['email' => 'sam@example.com', 'notes' => 'Sam']);
+
+        $this->actingAs($user);
+
+        Livewire::test(InterestForm::class)
+            ->set('email', 'sam@example.com')
+            ->set('availability', [InterestAvailability::Daytime->value])
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('updatedExisting', true);
+
+        expect(EventInterest::count())->toBe(2)
+            ->and($other->fresh()->user_id)->toBeNull()
+            ->and($other->fresh()->notes)->toBe('Sam');
+    });
+
+    test('shows the same sign-in prompt whether or not the email has an account', function () {
+        User::factory()->create(['email' => 'pat@example.com']);
+
+        fillInterestForm(Livewire::test(InterestForm::class))
+            ->call('save')
+            ->assertSee(route('register'))
+            ->assertSee(route('login'));
     });
 });
 

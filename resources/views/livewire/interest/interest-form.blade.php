@@ -30,18 +30,20 @@
                 </p>
 
                 @if($this->canRegister)
-                    <p>You'll need an account to sign up for shifts. Make one now and your details are already filled in.</p>
+                    <p>
+                        You'll need an account to sign up for shifts. Create one now and your details are already filled in. If you have an account,
+                        <a href="{{ route('login') }}" class="link link-primary">sign in</a>.
+                    </p>
                     <x-button
                         label="Create an Account"
                         icon="phosphor-user-plus"
                         class="btn-primary"
                         link="{{ route('register') }}"
                     />
-                @elseif($this->hasAccount)
+                @elseif(! auth()->check())
                     <p>
-                        You already have an account with this email.
-                        <a href="{{ route('login') }}" class="link link-primary">Sign in</a>
-                        to sign up for shifts.
+                        To sign up for shifts, you'll need to
+                        <a href="{{ route('login') }}" class="link link-primary">sign in</a>.
                     </p>
                 @endif
 
@@ -124,6 +126,7 @@
                             icon="phosphor-envelope"
                             placeholder="you@example.com"
                             hint="Organizers can use this to contact you."
+                            :readonly="auth()->check()"
                             required
                         />
                     </div>

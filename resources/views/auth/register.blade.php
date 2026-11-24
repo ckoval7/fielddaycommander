@@ -7,7 +7,7 @@
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
-        @php($prefill = session(\App\Livewire\Interest\InterestForm::PREFILL_SESSION_KEY, []))
+        @php($prefill = \App\Livewire\Interest\InterestForm::registrationPrefill())
         @if(! empty($prefill['license_class']))
             <input type="hidden" name="license_class" value="{{ old('license_class', $prefill['license_class']) }}" />
         @endif

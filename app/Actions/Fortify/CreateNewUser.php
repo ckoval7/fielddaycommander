@@ -6,8 +6,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\LicenseClass;
+use App\Listeners\ClaimInterestResponses;
 use App\Livewire\Interest\InterestForm;
-use App\Models\EventInterest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -50,7 +51,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
             'is_youth' => ['sometimes', 'boolean'],
             'is_cpr_aed_trained' => ['sometimes', 'boolean'],
-            'license_class' => ['nullable', 'string', 'in:Technician,General,Advanced,Extra'],
+            'license_class' => ['nullable', 'string', Rule::in(array_filter(array_map(fn (LicenseClass $class): ?string => $class->userValue(), LicenseClass::cases())))],
         ])->validate();
 
         $requiresApproval = config('auth-security.registration_mode') === 'approval_required';
@@ -71,21 +72,14 @@ class CreateNewUser implements CreatesNewUsers
         // Assign default "Operator" role to new users
         $user->assignRole('Operator');
 
-        $this->claimInterestResponses($user);
-
-        return $user;
-    }
-
-    /**
-     * Tie interest-form responses sent under this email to the new account,
-     * and drop the details kept for pre-filling this page.
-     */
-    protected function claimInterestResponses(User $user): void
-    {
-        EventInterest::whereNull('user_id')
-            ->where('email', mb_strtolower($user->email))
-            ->update(['user_id' => $user->id]);
+        // Claim interest responses sent under this email only once the account
+        // counts as owning it; otherwise ClaimInterestResponses does it on verification
+        if ($user->hasVerifiedEmail()) {
+            ClaimInterestResponses::claimFor($user);
+        }
 
         session()->forget(InterestForm::PREFILL_SESSION_KEY);
+
+        return $user;
     }
 }

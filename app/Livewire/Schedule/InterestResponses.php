@@ -47,7 +47,7 @@ class InterestResponses extends Component
     #[Computed]
     public function eventIsOver(): bool
     {
-        return $this->eventConfig->event?->end_time?->isPast() ?? true;
+        return $this->eventConfig->event?->end_time?->lt(appNow()) ?? true;
     }
 
     /**

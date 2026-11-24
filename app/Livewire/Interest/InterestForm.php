@@ -13,6 +13,7 @@ use App\Models\EventInterest;
 use App\Models\User;
 use App\Services\EventContextService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -36,6 +37,12 @@ class InterestForm extends Component
      * Session key holding the details to pre-fill on the registration page.
      */
     public const PREFILL_SESSION_KEY = 'interest_prefill';
+
+    /**
+     * Minutes the registration page keeps offering those details, so the next
+     * person on a shared browser doesn't get them.
+     */
+    public const PREFILL_MINUTES = 15;
 
     #[Locked]
     public ?int $eventId = null;
@@ -85,7 +92,8 @@ class InterestForm extends Component
 
         $existing = $this->event?->eventConfiguration
             ?->interests()
-            ->where(fn ($query) => $query->where('user_id', $user->id)->orWhere('email', mb_strtolower($user->email)))
+            ->where(fn ($query) => $query->where('user_id', $user->id)
+                ->when($user->hasVerifiedEmail(), fn ($query) => $query->orWhere('email', mb_strtolower($user->email))))
             ->first();
 
         if ($existing) {
@@ -123,23 +131,14 @@ class InterestForm extends Component
     }
 
     /**
-     * Whether to invite a visitor without an account to create one.
+     * Whether to invite a visitor who isn't signed in to create an account.
+     * It doesn't check the email, so the page never reveals who has one.
      */
     #[Computed]
     public function canRegister(): bool
     {
         return ! auth()->check()
-            && config('auth-security.registration_mode') !== 'disabled'
-            && ! User::whereRaw('LOWER(email) = ?', [mb_strtolower($this->email)])->exists();
-    }
-
-    /**
-     * Whether a visitor who isn't signed in already has an account under this email.
-     */
-    #[Computed]
-    public function hasAccount(): bool
-    {
-        return ! auth()->check() && User::whereRaw('LOWER(email) = ?', [mb_strtolower($this->email)])->exists();
+            && config('auth-security.registration_mode') !== 'disabled';
     }
 
     public function save(): void
@@ -152,7 +151,7 @@ class InterestForm extends Component
 
         $config = $this->event?->eventConfiguration;
 
-        if (! $config?->interest_form_enabled || $this->event->end_time->isPast()) {
+        if (! $config?->interest_form_enabled || $this->event->end_time->lt(appNow())) {
             $this->addError('form', 'This form is closed.');
 
             return;
@@ -170,25 +169,11 @@ class InterestForm extends Component
 
         $validated = $this->validate();
 
-        $email = mb_strtolower(trim($validated['email']));
+        // A signed-in user's response always goes under their account's email
+        $email = mb_strtolower(trim(auth()->user()?->email ?? $validated['email']));
         $callsign = $validated['callsign'] !== '' ? mb_strtoupper(trim($validated['callsign'])) : null;
 
-        $interest = EventInterest::firstOrNew([
-            'event_configuration_id' => $config->id,
-            'email' => $email,
-        ]);
-
-        // A response tied to an account can only be changed by that account
-        if ($interest->user_id !== null && $interest->user_id !== auth()->id()) {
-            $this->addError('form', 'We already have a response for this email. Sign in to change it.');
-
-            return;
-        }
-
-        $this->updatedExisting = $interest->exists;
-
-        $interest->fill([
-            'user_id' => auth()->id() ?? $interest->user_id,
+        $attributes = [
             'first_name' => trim($validated['firstName']),
             'last_name' => trim($validated['lastName']),
             'callsign' => $callsign,
@@ -196,7 +181,18 @@ class InterestForm extends Component
             'availability' => $validated['availability'],
             'notes' => $validated['notes'] !== '' ? $validated['notes'] : null,
             'ip_address' => request()->ip(),
-        ])->save();
+        ];
+
+        try {
+            $interest = $this->storeResponse($config->id, $email, $attributes);
+        } catch (UniqueConstraintViolationException) {
+            // A second tap saved the same response first; update that one instead
+            $interest = $this->storeResponse($config->id, $email, $attributes);
+        }
+
+        if (! $interest) {
+            return;
+        }
 
         AuditLog::log(
             action: $this->updatedExisting ? 'interest.response.updated' : 'interest.response.sent',
@@ -215,6 +211,60 @@ class InterestForm extends Component
 
         $this->email = $email;
         $this->submitted = true;
+    }
+
+    /**
+     * Create or update the response for this email, or for the signed-in
+     * user's account. Returns null, with an error added, when this person
+     * may not change it.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function storeResponse(int $configId, string $email, array $attributes): ?EventInterest
+    {
+        $user = auth()->user();
+
+        $interest = ($user ? EventInterest::where('event_configuration_id', $configId)->where('user_id', $user->id)->first() : null)
+            ?? EventInterest::firstOrNew(['event_configuration_id' => $configId, 'email' => $email]);
+
+        // A response tied to an account can only be changed by that account
+        if ($interest->user_id !== null && $interest->user_id !== $user?->id) {
+            $this->addError('form', 'We already have a response for this email. Sign in to change it.');
+
+            return null;
+        }
+
+        // Only someone who has proved they own the email can take over its response
+        if ($user && $interest->exists && $interest->user_id === null && ! $user->hasVerifiedEmail()) {
+            $this->addError('form', 'Verify your email address to change the response sent under it.');
+
+            return null;
+        }
+
+        $this->updatedExisting = $interest->exists;
+
+        $interest->fill([...$attributes, 'user_id' => $user?->id ?? $interest->user_id])->save();
+
+        return $interest;
+    }
+
+    /**
+     * The details to pre-fill on the registration page, if the visitor sent
+     * the form recently enough on this browser.
+     *
+     * @return array<string, string|null>
+     */
+    public static function registrationPrefill(): array
+    {
+        $prefill = session(self::PREFILL_SESSION_KEY, []);
+
+        if (! isset($prefill['saved_at']) || $prefill['saved_at'] < now()->subMinutes(self::PREFILL_MINUTES)->getTimestamp()) {
+            session()->forget(self::PREFILL_SESSION_KEY);
+
+            return [];
+        }
+
+        return $prefill;
     }
 
     /**
@@ -237,6 +287,7 @@ class InterestForm extends Component
             'call_sign' => $interest->callsign ?? '',
             'email' => $interest->email,
             'license_class' => $interest->license_class?->userValue(),
+            'saved_at' => now()->getTimestamp(),
         ]);
     }
 
