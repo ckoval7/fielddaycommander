@@ -87,7 +87,8 @@ describe('public form', function () {
             ->and($interest->callsign)->toBe('K1ABC')
             ->and($interest->license_class)->toBe(LicenseClass::General)
             ->and($interest->availability->all())->toBe([InterestAvailability::Setup, InterestAvailability::Overnight])
-            ->and($interest->user_id)->toBeNull();
+            ->and($interest->user_id)->toBeNull()
+            ->and(AuditLog::where('action', 'interest.response.sent')->where('auditable_id', $interest->id)->exists())->toBeTrue();
     });
 
     test('requires a name, an email and at least one time', function () {
@@ -308,10 +309,10 @@ describe('organizer view', function () {
             ->assertSee('Sam Jones')
             ->assertSee(route('interest.form'));
 
-        expect($component->instance()->availabilityCounts)->toMatchArray([
-            'setup' => 2,
-            'overnight' => 1,
-            'daytime' => 0,
+        expect(collect($component->instance()->availabilityTally)->pluck('count', 'label')->all())->toMatchArray([
+            'Setup' => 2,
+            'Overnight' => 1,
+            'Daytime' => 0,
         ]);
     });
 

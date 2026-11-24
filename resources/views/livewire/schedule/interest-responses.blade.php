@@ -2,27 +2,7 @@
     SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
-<div
-    class="mt-6 space-y-4"
-    x-data="{
-        copied: null,
-        async copy(text, which) {
-            try {
-                await navigator.clipboard.writeText(text);
-            } catch (e) {
-                {{-- The clipboard API needs HTTPS, which a field LAN often lacks --}}
-                const field = document.createElement('textarea');
-                field.value = text;
-                document.body.appendChild(field);
-                field.select();
-                document.execCommand('copy');
-                field.remove();
-            }
-            this.copied = which;
-            setTimeout(() => this.copied = null, 2000);
-        },
-    }"
->
+<div class="mt-6 space-y-4">
     <x-card shadow>
         <div class="space-y-3">
             <x-toggle
@@ -36,14 +16,20 @@
                 <p class="text-sm text-base-content/70">This event has ended, so the form can't open.</p>
             @elseif($formEnabled)
                 <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-                    <code class="flex-1 min-w-0 break-all rounded-box bg-base-200 px-3 py-2 text-sm">{{ route('interest.form') }}</code>
+                    <code class="flex-1 min-w-0 break-all rounded-box bg-base-200 px-3 py-2 text-sm select-all">{{ route('interest.form') }}</code>
                     <x-button
-                        icon="phosphor-copy"
+                        label="Copy link"
+                        icon="phosphor-clipboard"
                         class="btn-outline btn-sm"
-                        x-on:click="copy({{ Js::from(route('interest.form')) }}, 'link')"
-                    >
-                        <span x-text="copied === 'link' ? 'Copied' : 'Copy link'">Copy link</span>
-                    </x-button>
+                        type="button"
+                        x-on:click="
+                            if (await $copy({{ Js::from(route('interest.form')) }})) {
+                                $wire.dispatch('toast', { title: 'Copied', description: 'Link copied to clipboard', icon: 'phosphor-clipboard', css: 'alert-info' });
+                            } else {
+                                $wire.dispatch('toast', { title: 'Could not copy', description: 'Select the link and copy it manually', icon: 'phosphor-warning', css: 'alert-warning' });
+                            }
+                        "
+                    />
                 </div>
                 <p class="text-sm text-base-content/70">Share this link in your club newsletter, email list, or website.</p>
             @endif
@@ -66,20 +52,24 @@
                         {{ $this->responses->count() }} {{ Str::plural('person', $this->responses->count()) }} interested
                     </p>
                     <div class="flex flex-wrap gap-2 mt-2">
-                        @foreach(\App\Enums\InterestAvailability::cases() as $block)
-                            <span class="badge badge-ghost">
-                                {{ $block->label() }}: {{ $this->availabilityCounts[$block->value] }}
-                            </span>
+                        @foreach($this->availabilityTally as $tally)
+                            <span class="badge badge-ghost">{{ $tally['label'] }}: {{ $tally['count'] }}</span>
                         @endforeach
                     </div>
                 </div>
                 <x-button
+                    label="Copy all emails"
                     icon="phosphor-envelope-simple"
                     class="btn-outline btn-sm"
-                    x-on:click="copy({{ Js::from($this->emailList) }}, 'emails')"
-                >
-                    <span x-text="copied === 'emails' ? 'Copied' : 'Copy all emails'">Copy all emails</span>
-                </x-button>
+                    type="button"
+                    x-on:click="
+                            if (await $copy({{ Js::from($this->emailList) }})) {
+                                $wire.dispatch('toast', { title: 'Copied', description: 'Email addresses copied to clipboard', icon: 'phosphor-clipboard', css: 'alert-info' });
+                            } else {
+                                $wire.dispatch('toast', { title: 'Could not copy', description: 'Copy the addresses from the responses below instead', icon: 'phosphor-warning', css: 'alert-warning' });
+                            }
+                        "
+                />
             </div>
         </x-card>
 
@@ -119,7 +109,8 @@
                             icon="phosphor-trash"
                             class="btn-ghost btn-sm text-error self-end sm:self-start"
                             aria-label="Delete response from {{ $response->name }}"
-                            x-on:click="if (await $confirm({ message: {{ Js::from('Delete the response from '.$response->name.'?') }}, confirmLabel: 'Delete', danger: true })) $wire.deleteResponse({{ $response->id }})"
+                            wire:click="deleteResponse({{ $response->id }})"
+                            wire:confirm="Delete the response from {{ $response->name }}?"
                         />
                     </div>
                 </x-card>

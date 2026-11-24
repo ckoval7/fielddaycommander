@@ -118,27 +118,22 @@
                         required
                     />
 
-                    <fieldset class="space-y-2">
-                        <legend class="font-semibold text-sm mb-2">When are you free?</legend>
-                        <p class="text-sm text-base-content/70 -mt-1 mb-2">Pick at least one time that might work. You can choose more than one.</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <fieldset class="fieldset py-0">
+                        <legend class="fieldset-legend mb-0.5">When are you free? <span class="text-error">*</span></legend>
+                        <p class="fieldset-label">Pick at least one time that might work. You can choose more than one.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                             @foreach($this->availabilityOptions as $block)
-                                <label class="flex items-center gap-3 rounded-box border border-base-300 px-3 py-2 min-h-11 cursor-pointer has-checked:border-primary has-checked:bg-primary/5">
-                                    <input
-                                        type="checkbox"
-                                        class="checkbox checkbox-sm checkbox-primary"
-                                        wire:model="availability"
-                                        value="{{ $block->value }}"
-                                    />
-                                    <span>
-                                        <span class="block">{{ $block->label() }}</span>
-                                        <span class="block text-sm text-base-content/60">{{ $block->hint() }}</span>
-                                    </span>
-                                </label>
+                                <x-checkbox
+                                    value="{{ $block->value }}"
+                                    wire:model="availability"
+                                    :label="$block->label()"
+                                    :hint="$block->hint()"
+                                    omit-error
+                                />
                             @endforeach
                         </div>
                         @error('availability')
-                            <p class="text-error text-sm">{{ $message }}</p>
+                            <div class="text-error">{{ $message }}</div>
                         @enderror
                     </fieldset>
 
@@ -147,7 +142,7 @@
                         wire:model="notes"
                         rows="3"
                         maxlength="1000"
-                        placeholder="For example, I can bring a generator, or I can only stay until 6 PM Saturday."
+                        placeholder="What would you like to do? For example, operate CW or phone, log for an operator, run the GOTA station, or help with antennas."
                     />
 
                     <div class="pt-2">

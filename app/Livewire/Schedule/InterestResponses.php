@@ -60,22 +60,19 @@ class InterestResponses extends Component
     }
 
     /**
-     * How many responses picked each block of time.
+     * How many responses picked each block of time, in the form's order.
      *
-     * @return array<string, int>
+     * @return list<array{label: string, count: int}>
      */
     #[Computed]
-    public function availabilityCounts(): array
+    public function availabilityTally(): array
     {
-        $counts = [];
-
-        foreach (InterestAvailability::cases() as $block) {
-            $counts[$block->value] = $this->responses
+        return array_map(fn (InterestAvailability $block): array => [
+            'label' => $block->label(),
+            'count' => $this->responses
                 ->filter(fn (EventInterest $interest): bool => $interest->availability->contains($block))
-                ->count();
-        }
-
-        return $counts;
+                ->count(),
+        ], InterestAvailability::cases());
     }
 
     /**
@@ -104,6 +101,8 @@ class InterestResponses extends Component
             action: $value ? 'interest.form.opened' : 'interest.form.closed',
             auditable: $config,
         );
+
+        $this->dispatch('toast', title: 'Success', description: $value ? 'Interest form opened' : 'Interest form closed', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function deleteResponse(int $interestId): void
@@ -120,7 +119,9 @@ class InterestResponses extends Component
 
         $interest->delete();
 
-        unset($this->responses, $this->availabilityCounts, $this->emailList);
+        unset($this->responses, $this->availabilityTally, $this->emailList);
+
+        $this->dispatch('toast', title: 'Success', description: 'Response deleted', icon: 'phosphor-check-circle', css: 'alert-success');
     }
 
     public function render(): View

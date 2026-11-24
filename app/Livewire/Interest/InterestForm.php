@@ -7,6 +7,7 @@ namespace App\Livewire\Interest;
 
 use App\Enums\InterestAvailability;
 use App\Enums\LicenseClass;
+use App\Models\AuditLog;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Models\User;
@@ -192,6 +193,16 @@ class InterestForm extends Component
             'notes' => $validated['notes'] !== '' ? $validated['notes'] : null,
             'ip_address' => request()->ip(),
         ])->save();
+
+        AuditLog::log(
+            action: $this->updatedExisting ? 'interest.response.updated' : 'interest.response.sent',
+            auditable: $interest,
+            newValues: [
+                'name' => $interest->name,
+                'callsign' => $interest->callsign,
+                'availability' => $validated['availability'],
+            ],
+        );
 
         if (! auth()->check()) {
             RateLimiter::hit($rateLimitKey, 3600);
