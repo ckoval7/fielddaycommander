@@ -11,7 +11,9 @@ use Illuminate\Auth\Events\Verified;
 
 /**
  * Ties interest-form responses sent under an email to the account that
- * owns it, once the account counts as owning the email.
+ * owns it, once that account is approved and counts as owning the email.
+ * Runs on registration, email verification and every way an account is
+ * unlocked; until then, the response stays editable from the public form.
  */
 class ClaimInterestResponses
 {
@@ -24,6 +26,10 @@ class ClaimInterestResponses
 
     public static function claimFor(User $user): void
     {
+        if ($user->account_locked_at !== null || ! $user->hasVerifiedEmail()) {
+            return;
+        }
+
         EventInterest::whereNull('user_id')
             ->where('email', mb_strtolower($user->email))
             ->update(['user_id' => $user->id]);

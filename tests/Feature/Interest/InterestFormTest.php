@@ -293,6 +293,32 @@ describe('accounts', function () {
             ->and(EventInterest::sole()->user_id)->toBe($user->id);
     });
 
+    test('when accounts need approval, a pending registration leaves the response editable from the form', function () {
+        config(['auth-security.registration_mode' => 'approval_required']);
+        Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
+        EventInterest::factory()->for($this->eventConfig)->create(['email' => 'pat@example.com']);
+
+        $this->post('/register', [
+            'call_sign' => 'K1ABC',
+            'first_name' => 'Pat',
+            'last_name' => 'Smith',
+            'email' => 'pat@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+        auth()->logout();
+
+        expect(User::where('call_sign', 'K1ABC')->sole()->account_locked_at)->not->toBeNull()
+            ->and(EventInterest::sole()->user_id)->toBeNull();
+
+        fillInterestForm(Livewire::test(InterestForm::class), ['email' => 'pat@example.com', 'notes' => 'Changed while waiting'])
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('updatedExisting', true);
+
+        expect(EventInterest::sole()->notes)->toBe('Changed while waiting');
+    });
+
     test('when emails must be verified, responses stay unclaimed until the email is verified', function () {
         config(['auth-security.registration_mode' => 'email_verification_required']);
         Role::firstOrCreate(['name' => 'Operator', 'guard_name' => 'web']);
@@ -314,6 +340,7 @@ describe('accounts', function () {
 
         expect(EventInterest::sole()->user_id)->toBeNull();
 
+        $user->markEmailAsVerified();
         event(new Verified($user));
 
         expect(EventInterest::sole()->user_id)->toBe($user->id);

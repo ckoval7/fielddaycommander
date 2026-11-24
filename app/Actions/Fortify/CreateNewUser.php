@@ -72,11 +72,8 @@ class CreateNewUser implements CreatesNewUsers
         // Assign default "Operator" role to new users
         $user->assignRole('Operator');
 
-        // Claim interest responses sent under this email only once the account
-        // counts as owning it; otherwise ClaimInterestResponses does it on verification
-        if ($user->hasVerifiedEmail()) {
-            ClaimInterestResponses::claimFor($user);
-        }
+        // Skipped until the account is approved or its email verified
+        ClaimInterestResponses::claimFor($user);
 
         session()->forget(InterestForm::PREFILL_SESSION_KEY);
 
