@@ -6,6 +6,8 @@
 
 namespace App\Actions\Fortify;
 
+use App\Livewire\Interest\InterestForm;
+use App\Models\EventInterest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -48,6 +50,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
             'is_youth' => ['sometimes', 'boolean'],
             'is_cpr_aed_trained' => ['sometimes', 'boolean'],
+            'license_class' => ['nullable', 'string', 'in:Technician,General,Advanced,Extra'],
         ])->validate();
 
         $requiresApproval = config('auth-security.registration_mode') === 'approval_required';
@@ -60,6 +63,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
             'is_youth' => ! empty($input['is_youth']),
             'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
+            'license_class' => $input['license_class'] ?? null,
             'account_locked_at' => $requiresApproval ? now() : null,
             'approval_requested_at' => $requiresApproval ? now() : null,
         ]);
@@ -67,6 +71,21 @@ class CreateNewUser implements CreatesNewUsers
         // Assign default "Operator" role to new users
         $user->assignRole('Operator');
 
+        $this->claimInterestResponses($user);
+
         return $user;
+    }
+
+    /**
+     * Tie interest-form responses sent under this email to the new account,
+     * and drop the details kept for pre-filling this page.
+     */
+    protected function claimInterestResponses(User $user): void
+    {
+        EventInterest::whereNull('user_id')
+            ->where('email', mb_strtolower($user->email))
+            ->update(['user_id' => $user->id]);
+
+        session()->forget(InterestForm::PREFILL_SESSION_KEY);
     }
 }

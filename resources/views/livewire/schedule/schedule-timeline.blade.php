@@ -38,6 +38,16 @@
             </div>
         </div>
 
+        @if($eventConfig?->interest_form_enabled)
+            <x-alert icon="phosphor-hand-waving" class="alert-info mb-6">
+                <strong class="block">Interested in helping?</strong>
+                Let the organizers know you'd like to help and when you're free.
+                <x-slot:actions class="flex-wrap max-sm:w-full">
+                    <x-button label="I'm Interested" class="btn-sm" link="{{ route('interest.form') }}" />
+                </x-slot:actions>
+            </x-alert>
+        @endif
+
         @if($eventConfig)
             @include('livewire.schedule.partials.filter-bar', [
                 'showSearch' => true,

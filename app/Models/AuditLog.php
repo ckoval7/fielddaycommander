@@ -119,6 +119,9 @@ class AuditLog extends Model
         'shift.updated' => 'Shift updated',
         'shift.deleted' => 'Shift deleted',
         'shift.bulk_created' => 'Shifts bulk created',
+        'interest.form.opened' => 'Interest form opened',
+        'interest.form.closed' => 'Interest form closed',
+        'interest.response.deleted' => 'Interest response deleted',
 
         // Bonuses
         'bonus.claimed' => 'Bonus claimed',

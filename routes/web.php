@@ -29,6 +29,7 @@ use App\Livewire\Gallery\GalleryIndex;
 use App\Livewire\Gallery\GalleryShow;
 use App\Livewire\Gallery\GalleryUpload;
 use App\Livewire\Guestbook\GuestbookManager;
+use App\Livewire\Interest\InterestForm;
 use App\Livewire\Logging\LoggingInterface;
 use App\Livewire\Logging\StationSelect;
 use App\Livewire\Logging\TranscribeInterface;
@@ -143,6 +144,9 @@ Route::get('/guestbook', function () {
 Route::get('/guestbook/kiosk', function () {
     return view('guestbook.kiosk');
 })->name('guestbook.kiosk');
+
+// Public volunteer interest form, for before shift sign-ups open
+Route::get('/interest', InterestForm::class)->name('interest.form');
 
 // Gallery
 Route::get('/gallery', GalleryIndex::class)->name('gallery.index');

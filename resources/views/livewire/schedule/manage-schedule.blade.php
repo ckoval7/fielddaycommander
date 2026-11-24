@@ -425,6 +425,11 @@
                         @endif
                     </div>
                 </x-tab>
+
+                {{-- Tab 4: Interest form responses, collected before sign-ups open --}}
+                <x-tab name="interest" label="Interest" icon="phosphor-hand-waving">
+                    <livewire:schedule.interest-responses :event-config-id="$eventConfig->id" />
+                </x-tab>
             </x-tabs>
         @endif
     </div>

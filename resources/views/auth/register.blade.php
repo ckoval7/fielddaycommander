@@ -7,6 +7,10 @@
 
     <form method="POST" action="{{ route('register') }}">
         @csrf
+        @php($prefill = session(\App\Livewire\Interest\InterestForm::PREFILL_SESSION_KEY, []))
+        @if(! empty($prefill['license_class']))
+            <input type="hidden" name="license_class" value="{{ old('license_class', $prefill['license_class']) }}" />
+        @endif
 
         @if(config('auth-security.registration_mode') === 'approval_required')
             <div class="alert alert-info mb-4">
@@ -16,10 +20,10 @@
         @endif
 
         <div class="space-y-4">
-            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign')" required autofocus autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" icon="phosphor-megaphone" errorField="call_sign" />
-            <x-input label="First Name" type="text" name="first_name" :value="old('first_name')" required autocomplete="given-name" icon="phosphor-user" errorField="first_name" autocapitalize="words" />
-            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name')" required autocomplete="family-name" icon="phosphor-user" errorField="last_name" autocapitalize="words" />
-            <x-input label="Email" type="email" name="email" :value="old('email')" required autocomplete="email" icon="phosphor-envelope" errorField="email" />
+            <x-input label="Call Sign" type="text" name="call_sign" :value="old('call_sign', $prefill['call_sign'] ?? '')" required autofocus autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" icon="phosphor-megaphone" errorField="call_sign" />
+            <x-input label="First Name" type="text" name="first_name" :value="old('first_name', $prefill['first_name'] ?? '')" required autocomplete="given-name" icon="phosphor-user" errorField="first_name" autocapitalize="words" />
+            <x-input label="Last Name" type="text" name="last_name" :value="old('last_name', $prefill['last_name'] ?? '')" required autocomplete="family-name" icon="phosphor-user" errorField="last_name" autocapitalize="words" />
+            <x-input label="Email" type="email" name="email" :value="old('email', $prefill['email'] ?? '')" required autocomplete="email" icon="phosphor-envelope" errorField="email" />
             <x-input label="Password" type="password" name="password" required autocomplete="new-password" icon="phosphor-lock" errorField="password" />
             <x-input label="Confirm Password" type="password" name="password_confirmation" required autocomplete="new-password" icon="phosphor-lock" errorField="password_confirmation" />
 
