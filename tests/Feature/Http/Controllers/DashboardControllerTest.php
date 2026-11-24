@@ -6,6 +6,7 @@
 use App\Models\Dashboard;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventInterest;
 use App\Models\EventType;
 use App\Models\OperatingClass;
 use App\Models\User;
@@ -276,6 +277,53 @@ test('get-ready checklist shows routes for privileged users', function () {
     foreach ($checklist as $item) {
         expect($item['route'])->not->toBeNull("Button for '{$item['label']}' should be visible for privileged users");
     }
+});
+
+test('get-ready checklist marks the interest form done once it is open', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id]);
+
+    $interestItem = fn () => collect($this->actingAs($user)->get(route('dashboard'))->viewData('checklist'))
+        ->firstWhere('label', 'Interest form opened');
+
+    expect($interestItem()['done'])->toBeFalse();
+
+    $config->update(['interest_form_enabled' => true]);
+    expect($interestItem()['done'])->toBeTrue();
+});
+
+test('get-ready checklist keeps the interest form done after it closes with responses', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+    $config = EventConfiguration::factory()->create(['event_id' => $event->id, 'interest_form_enabled' => false]);
+    EventInterest::factory()->create(['event_configuration_id' => $config->id]);
+
+    $item = collect($this->actingAs($user)->get(route('dashboard'))->viewData('checklist'))
+        ->firstWhere('label', 'Interest form opened');
+
+    expect($item['done'])->toBeTrue();
+});
+
+test('get-ready interest form item opens the interest tab for shift managers', function () {
+    Permission::create(['name' => 'manage-shifts']);
+    $user = User::factory()->create();
+    $user->givePermissionTo('manage-shifts');
+    Event::factory()->create([
+        'start_time' => appNow()->addDays(7),
+        'end_time' => appNow()->addDays(8),
+    ]);
+
+    $item = collect($this->actingAs($user)->get(route('dashboard'))->viewData('checklist'))
+        ->firstWhere('label', 'Interest form opened');
+
+    expect($item['route'])->toBe(route('schedule.manage', ['tab' => 'interest']));
 });
 
 test('only creates one default dashboard per user', function () {
