@@ -5,7 +5,7 @@
 <div>
     <x-slot:title>Participation Interest{{ $this->event ? ' - ' . $this->event->name : '' }}</x-slot:title>
 
-    <div class="p-4 md:p-6 max-sm:px-0 max-w-2xl">
+    <div class="p-4 md:p-6 max-sm:px-0 max-w-2xl mx-auto">
         <div class="mb-6">
             <h1 class="text-2xl md:text-3xl font-bold">Count me in</h1>
             @if($this->event)
