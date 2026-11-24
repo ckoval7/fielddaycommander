@@ -38,7 +38,7 @@
             </div>
         </div>
 
-        @if($eventConfig?->interest_form_enabled)
+        @if($this->interestFormOpen)
             <x-alert icon="phosphor-hand-waving" class="alert-info mb-6">
                 <strong class="block">Planning to participate?</strong>
                 Tell the organizers you're in, and when you're free.
