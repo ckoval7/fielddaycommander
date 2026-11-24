@@ -40,7 +40,7 @@
                     <x-button
                         icon="phosphor-copy"
                         class="btn-outline btn-sm"
-                        x-on:click="copy(@js(route('interest.form')), 'link')"
+                        x-on:click="copy({{ Js::from(route('interest.form')) }}, 'link')"
                     >
                         <span x-text="copied === 'link' ? 'Copied' : 'Copy link'">Copy link</span>
                     </x-button>
@@ -76,7 +76,7 @@
                 <x-button
                     icon="phosphor-envelope-simple"
                     class="btn-outline btn-sm"
-                    x-on:click="copy(@js($this->emailList), 'emails')"
+                    x-on:click="copy({{ Js::from($this->emailList) }}, 'emails')"
                 >
                     <span x-text="copied === 'emails' ? 'Copied' : 'Copy all emails'">Copy all emails</span>
                 </x-button>
@@ -119,7 +119,7 @@
                             icon="phosphor-trash"
                             class="btn-ghost btn-sm text-error self-end sm:self-start"
                             aria-label="Delete response from {{ $response->name }}"
-                            x-on:click="if (await $confirm({ message: @js('Delete the response from '.$response->name.'?'), confirmLabel: 'Delete', danger: true })) $wire.deleteResponse({{ $response->id }})"
+                            x-on:click="if (await $confirm({ message: {{ Js::from('Delete the response from '.$response->name.'?') }}, confirmLabel: 'Delete', danger: true })) $wire.deleteResponse({{ $response->id }})"
                         />
                     </div>
                 </x-card>

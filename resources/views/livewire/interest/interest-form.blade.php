@@ -28,14 +28,13 @@
                         {{ $updatedExisting ? 'Your response is updated' : 'Thanks for letting us know' }}
                     </h2>
                     <p class="text-base-content/70">
-                        Your response has been saved with {{ $email }}.
+                        We saved your response under {{ $email }}.
                     </p>
 
                     @if($this->canRegister)
                         <div class="rounded-box bg-base-200 p-4 max-sm:p-3 text-left space-y-3">
                             <p>
-                                <strong class="block">Create an account</strong>
-                                Create an account to sign up for shifts. Your details are already filled in.
+                                You'll need an account to sign up for shifts. Make one now and your details are already filled in.
                             </p>
                             <x-button
                                 label="Create an Account"
