@@ -85,7 +85,7 @@ class InterestForm extends Component
 
         $existing = $this->event?->eventConfiguration
             ?->interests()
-            ->where(fn ($query) => $query->where('user_id', $user->id)->orWhere('email', $user->email))
+            ->where(fn ($query) => $query->where('user_id', $user->id)->orWhere('email', mb_strtolower($user->email)))
             ->first();
 
         if ($existing) {
@@ -130,7 +130,7 @@ class InterestForm extends Component
     {
         return ! auth()->check()
             && config('auth-security.registration_mode') !== 'disabled'
-            && ! User::where('email', $this->email)->exists();
+            && ! User::whereRaw('LOWER(email) = ?', [mb_strtolower($this->email)])->exists();
     }
 
     /**
@@ -139,7 +139,7 @@ class InterestForm extends Component
     #[Computed]
     public function hasAccount(): bool
     {
-        return ! auth()->check() && User::where('email', $this->email)->exists();
+        return ! auth()->check() && User::whereRaw('LOWER(email) = ?', [mb_strtolower($this->email)])->exists();
     }
 
     public function save(): void
