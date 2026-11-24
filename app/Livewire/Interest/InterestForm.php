@@ -20,7 +20,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Public form where people say they'd like to take part in the next event, before
+ * Public form where people say they plan to participate in the next event, before
  * shift sign-ups are open. Sending it again with the same email updates the
  * earlier response.
  */

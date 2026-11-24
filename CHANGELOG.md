@@ -4,7 +4,7 @@
 
 ### Added
 
-- Club members can say they'd like to operate or lend a hand at the next event, and when they're free, through a public participation interest form and update their response with the same email. On **Manage Schedule**, organizers with **manage-shifts** can open the form, share its link, review availability and responses, copy email addresses, and delete responses.
+- Club members can say they plan to participate in the next event, on the air or helping set up, and when they're free, through a public participation interest form and update their response with the same email. On **Manage Schedule**, organizers with **manage-shifts** can open the form, share its link, review availability and responses, copy email addresses, and delete responses.
 - On **Stations**, cards with an open operating session now show the operator's callsign, band, mode, and a rough rate in QSOs/hr. The rate counts the station's contacts in the last 60 minutes, excluding dupes. Cards without an open session don't show these details. The page uses the same live connection as the dashboard to update without a reload when sessions start or end, band or mode changes, contacts are logged, or stations are marked unavailable or ready. While the event is on the air, it also refreshes about once a minute to keep the rate current between contacts.
 
 ### Fixed

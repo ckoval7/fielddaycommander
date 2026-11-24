@@ -29,7 +29,7 @@
                 label="Accept interest responses"
                 wire:model.live="formEnabled"
                 :disabled="$this->eventIsOver"
-                hint="Open a public form where people can say they'd like to take part, and when they're free."
+                hint="Open a public form where people can say they plan to participate, and when they're free."
             />
 
             @if($this->eventIsOver)

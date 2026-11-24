@@ -7,7 +7,7 @@
 
     <div class="p-4 md:p-6 max-sm:px-0 max-w-2xl">
         <div class="mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold">Want to take part?</h1>
+            <h1 class="text-2xl md:text-3xl font-bold">Count me in</h1>
             @if($this->event)
                 <p class="text-base-content/70 mt-1">
                     {{ $this->event->name }} &middot; {{ toLocalTime($this->event->start_time)->format('M j, Y') }}
@@ -62,7 +62,7 @@
         @else
             <x-card>
                 <p class="text-base-content/70 mb-4">
-                    Shift sign-ups aren't open yet. Let the organizers know you'd like to operate, log, or lend a hand with setup and teardown, and roughly when you're free. To change your answers later, send the form again with the same email.
+                    Shift sign-ups aren't open yet. Let the organizers know you plan to participate, on the air or helping set up, and roughly when you're free. To change your answers later, send the form again with the same email.
                 </p>
 
                 <form wire:submit="save" class="space-y-4">
