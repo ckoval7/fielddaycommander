@@ -13,6 +13,17 @@
  */
 const EFFECT = 'validationErrors';
 
+/**
+ * Error keys for messages about the whole form, not one field. Components
+ * show these inline with @error('form'), so the summary leaves them out
+ * rather than repeating them.
+ */
+const FORM_LEVEL_KEYS = new Set(['form']);
+
+function fieldErrors(errors) {
+    return Object.fromEntries(Object.entries(errors).filter(([field]) => !FORM_LEVEL_KEYS.has(field)));
+}
+
 export function registerFormErrorSummary(Alpine, Livewire) {
     Alpine.store('formErrors', {
         open: false,
@@ -27,6 +38,12 @@ export function registerFormErrorSummary(Alpine, Livewire) {
         },
 
         show(component, errors) {
+            errors = fieldErrors(errors);
+
+            if (Object.keys(errors).length === 0) {
+                return;
+            }
+
             this.component = component;
             this.errors = errors;
             this.open = true;
@@ -38,6 +55,8 @@ export function registerFormErrorSummary(Alpine, Livewire) {
             if (this.component?.id !== component.id) {
                 return;
             }
+
+            errors = fieldErrors(errors);
 
             if (Object.keys(errors).length === 0) {
                 this.dismiss();
