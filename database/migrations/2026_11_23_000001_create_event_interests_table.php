@@ -17,7 +17,7 @@ return new class extends Migration
 
         Schema::create('event_interests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_configuration_id')->constrained('event_configurations')->cascadeOnDelete();
+            $table->foreignId('event_configuration_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('first_name', 100);
             $table->string('last_name', 100);
