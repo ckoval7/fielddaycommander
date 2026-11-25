@@ -88,6 +88,20 @@ class ActiveEventService
     }
 
     /**
+     * Get the event taking interest-form responses: the running or next
+     * upcoming event whose interest form is turned on. Past events never
+     * take responses.
+     */
+    public function getOpenInterestEvent(): ?Event
+    {
+        return Event::where('end_time', '>=', appNow())
+            ->whereHas('eventConfiguration', fn ($query) => $query->where('interest_form_enabled', true))
+            ->orderBy('start_time')
+            ->with('eventConfiguration')
+            ->first();
+    }
+
+    /**
      * Get the active event ID.
      *
      * Returns a string 'no-event' when no event is active, for use in cache keys.

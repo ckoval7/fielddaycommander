@@ -5,6 +5,7 @@
 
 namespace App\Livewire\Users;
 
+use App\Listeners\ClaimInterestResponses;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
@@ -464,6 +465,7 @@ class UserManagement extends Component
         $user = User::findOrFail($userId);
         Gate::authorize('update', $user);
         $user->update(['account_locked_at' => null, 'approval_requested_at' => null]);
+        ClaimInterestResponses::claimFor($user);
 
         AuditLog::log('user.unlocked', auditable: $user, newValues: [
             'call_sign' => $user->call_sign,
@@ -556,6 +558,8 @@ class UserManagement extends Component
         if ($user->roles()->doesntExist()) {
             $user->assignRole('Operator');
         }
+
+        ClaimInterestResponses::claimFor($user);
 
         AuditLog::log('user.ghost_activated', auditable: $user, newValues: [
             'call_sign' => $user->call_sign,
@@ -753,6 +757,7 @@ class UserManagement extends Component
 
         $users = User::whereIn('id', $userIds)->get();
         foreach ($users as $user) {
+            ClaimInterestResponses::claimFor($user);
             AuditLog::log('user.unlocked', auditable: $user, newValues: [
                 'call_sign' => $user->call_sign,
                 'bulk_action' => true,

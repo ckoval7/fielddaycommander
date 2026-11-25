@@ -41,6 +41,8 @@ dataset('screens', [
     'schedule dashboard' => '/schedule/dashboard',
     'manage schedule' => '/schedule/manage',
     'my shifts' => '/schedule/my-shifts',
+    'manage schedule interest' => '/schedule/manage?tab=interest',
+    'interest form' => '/interest',
     'my equipment' => '/equipment',
     'all equipment' => '/equipment/all',
     'club equipment' => '/equipment/club',

@@ -6,6 +6,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\LicenseClass;
+use App\Listeners\ClaimInterestResponses;
+use App\Livewire\Interest\InterestForm;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -48,6 +51,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
             'is_youth' => ['sometimes', 'boolean'],
             'is_cpr_aed_trained' => ['sometimes', 'boolean'],
+            'license_class' => ['nullable', 'string', Rule::in(array_filter(array_map(fn (LicenseClass $class): ?string => $class->userValue(), LicenseClass::cases())))],
         ])->validate();
 
         $requiresApproval = config('auth-security.registration_mode') === 'approval_required';
@@ -60,12 +64,18 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
             'is_youth' => ! empty($input['is_youth']),
             'is_cpr_aed_trained' => ! empty($input['is_cpr_aed_trained']),
+            'license_class' => $input['license_class'] ?? null,
             'account_locked_at' => $requiresApproval ? now() : null,
             'approval_requested_at' => $requiresApproval ? now() : null,
         ]);
 
         // Assign default "Operator" role to new users
         $user->assignRole('Operator');
+
+        // Skipped until the account is approved or its email verified
+        ClaimInterestResponses::claimFor($user);
+
+        session()->forget(InterestForm::PREFILL_SESSION_KEY);
 
         return $user;
     }

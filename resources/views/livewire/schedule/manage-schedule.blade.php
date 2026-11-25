@@ -39,7 +39,11 @@
             </x-alert>
         @else
             {{-- Tabs --}}
-            <x-tabs wire:model="activeTab">
+            {{-- On a phone the tab row scrolls sideways; bring an opened-by-link tab into view --}}
+            <x-tabs
+                wire:model="activeTab"
+                x-init="setTimeout(() => { const tab = $el.querySelector('.tab-active'); if (tab && tab.offsetLeft + tab.offsetWidth > $el.clientWidth) { $el.scrollLeft = tab.offsetLeft + tab.offsetWidth - $el.clientWidth; } })"
+            >
                 {{-- Tab 1: Shifts --}}
                 <x-tab name="shifts" label="Shifts" icon="phosphor-clock">
                     <div class="mt-6 space-y-4">
@@ -424,6 +428,11 @@
                             </div>
                         @endif
                     </div>
+                </x-tab>
+
+                {{-- Tab 4: Interest form responses, collected before sign-ups open --}}
+                <x-tab name="interest" label="Interest" icon="phosphor-hand-waving">
+                    <livewire:schedule.interest-responses :event-config-id="$eventConfig->id" />
                 </x-tab>
             </x-tabs>
         @endif

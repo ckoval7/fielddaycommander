@@ -5,6 +5,7 @@
 
 use App\Livewire\Users\UserManagement;
 use App\Models\AuditLog;
+use App\Models\EventInterest;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
@@ -932,6 +933,30 @@ test('can bulk lock multiple accounts', function () {
 
     expect($user1->isLocked())->toBeTrue()
         ->and($user2->isLocked())->toBeTrue();
+});
+
+test('approving a pending registration ties its interest responses to the account', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['email' => 'pat@example.com', 'account_locked_at' => now(), 'approval_requested_at' => now()]);
+    $interest = EventInterest::factory()->create(['email' => 'pat@example.com']);
+
+    Livewire::test(UserManagement::class)->call('unlockAccount', $user->id);
+
+    expect($interest->fresh()->user_id)->toBe($user->id);
+});
+
+test('bulk unlocking ties each account\'s interest responses to it', function () {
+    $this->actingAs($this->admin);
+
+    $user = User::factory()->create(['email' => 'pat@example.com', 'account_locked_at' => now(), 'approval_requested_at' => now()]);
+    $interest = EventInterest::factory()->create(['email' => 'pat@example.com']);
+
+    Livewire::test(UserManagement::class)
+        ->set('selectedUsers', [$user->id])
+        ->call('bulkUnlockAccounts');
+
+    expect($interest->fresh()->user_id)->toBe($user->id);
 });
 
 test('can bulk unlock multiple accounts', function () {

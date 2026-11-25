@@ -92,6 +92,13 @@ class DashboardController extends Controller
                 'route' => $user->can('view-events') ? route('events.show', $event) : null,
             ],
             [
+                'label' => 'Interest form opened',
+                // Still done once the form is closed again, as long as people responded.
+                'done' => $eventConfig !== null
+                    && ($eventConfig->interest_form_enabled || $eventConfig->interests()->exists()),
+                'route' => $user->can('manage-shifts') ? route('schedule.manage', ['tab' => 'interest']) : null,
+            ],
+            [
                 'label' => 'Equipment inventoried',
                 'done' => EquipmentEvent::forEvent($event->id)->byOwner($user->id)->exists(),
                 'route' => route('equipment.index'),

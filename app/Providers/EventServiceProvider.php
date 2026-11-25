@@ -6,6 +6,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\ClaimInterestResponses;
 use App\Listeners\UpdateLastLoginInfo;
 use App\Scoring\DomainEvents\GuestbookEntryChanged;
 use App\Scoring\DomainEvents\MessageChanged;
@@ -13,6 +14,7 @@ use App\Scoring\DomainEvents\QsoLogged;
 use App\Scoring\DomainEvents\W1awBulletinChanged;
 use App\Scoring\Listeners\ReconcileOnDomainEvent;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -34,6 +36,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Login::class => [
             UpdateLastLoginInfo::class,
+        ],
+        Verified::class => [
+            ClaimInterestResponses::class,
         ],
         MessageChanged::class => [
             ReconcileOnDomainEvent::class,

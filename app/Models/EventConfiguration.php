@@ -53,6 +53,7 @@ class EventConfiguration extends Model
         'uses_methane',
         'uses_other_power',
         'guestbook_enabled',
+        'interest_form_enabled',
         'grid_square',
         'latitude',
         'longitude',
@@ -83,6 +84,7 @@ class EventConfiguration extends Model
             'uses_water' => 'boolean',
             'uses_methane' => 'boolean',
             'guestbook_enabled' => 'boolean',
+            'interest_form_enabled' => 'boolean',
             'is_open_to_public' => 'boolean',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
@@ -298,6 +300,11 @@ class EventConfiguration extends Model
     public function guestbookEntries(): HasMany
     {
         return $this->hasMany(GuestbookEntry::class);
+    }
+
+    public function interests(): HasMany
+    {
+        return $this->hasMany(EventInterest::class);
     }
 
     public function shiftRoles(): HasMany
