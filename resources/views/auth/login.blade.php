@@ -19,7 +19,7 @@
         @csrf
 
         <div class="space-y-4">
-            <x-input label="Email" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" icon="phosphor-envelope" errorField="email" />
+            <x-input label="Callsign or email" type="text" name="email" :value="old('email')" required autofocus autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" icon="phosphor-user" errorField="email" />
             <x-input label="Password" type="password" name="password" required autocomplete="current-password" icon="phosphor-lock" errorField="password" />
             <x-checkbox label="Remember me" name="remember" />
 

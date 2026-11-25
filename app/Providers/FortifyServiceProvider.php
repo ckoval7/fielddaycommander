@@ -139,7 +139,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function authenticate(Request $request): ?User
     {
-        $user = User::where('email', $request->email)->first();
+        $user = $this->findLoginUser((string) $request->input(Fortify::username()));
         $throttle = app(LoginThrottle::class);
 
         if ($user && ($seconds = $throttle->secondsUntilAvailable($user)) > 0) {
@@ -165,5 +165,30 @@ class FortifyServiceProvider extends ServiceProvider
         $throttle->clear($user);
 
         return $user;
+    }
+
+    /**
+     * Find the account a sign-in names, by email or by callsign.
+     *
+     * Anything with an "@" is an email. Anything else is a callsign, which
+     * only counts when exactly one active account holds it: callsign
+     * uniqueness is enforced by validation, not the database, so an older
+     * install could have duplicates, and those must sign in by email.
+     */
+    private function findLoginUser(string $login): ?User
+    {
+        $login = trim($login);
+
+        if ($login === '') {
+            return null;
+        }
+
+        if (str_contains($login, '@')) {
+            return User::where('email', $login)->first();
+        }
+
+        $matches = User::where('call_sign', mb_strtoupper($login))->limit(2)->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
     }
 }
