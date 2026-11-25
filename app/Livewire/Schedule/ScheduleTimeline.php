@@ -40,6 +40,17 @@ class ScheduleTimeline extends Component
     }
 
     /**
+     * Whether /interest is taking responses for this schedule's event, so the
+     * banner only points at a form that belongs to it.
+     */
+    #[Computed]
+    public function interestFormOpen(): bool
+    {
+        return $this->eventConfig !== null
+            && app(EventContextService::class)->getOpenInterestEvent()?->id === $this->eventConfig->event_id;
+    }
+
+    /**
      * Get filtered shifts as a flat collection.
      *
      * @return Collection<int, Shift>

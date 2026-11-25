@@ -4,10 +4,12 @@
 
 ### Added
 
+- Club members can say they plan to participate in the next event, on the air or helping set up, and when they're free, through a public participation interest form and update their response with the same email. On **Manage Schedule**, organizers with **manage-shifts** can open the form, share its link, review availability and responses, copy email addresses, and delete responses.
 - On **Stations**, cards with an open operating session now show the operator's callsign, band, mode, and a rough rate in QSOs/hr. The rate counts the station's contacts in the last 60 minutes, excluding dupes. Cards without an open session don't show these details. The page uses the same live connection as the dashboard to update without a reload when sessions start or end, band or mode changes, contacts are logged, or stations are marked unavailable or ready. While the event is on the air, it also refreshes about once a minute to keep the rate current between contacts.
 
 ### Fixed
 
+- On the public guestbook sign-in form, pressing **Sign Guestbook** when the guestbook wasn't accepting entries showed "The guestbook is not accepting entries. Check back later." twice: in the form and in the red **Please fix the following errors** box at the bottom of the screen. The message now appears once, in the form. The pop-up box still appears for errors on individual fields.
 - On a Windows computer without the Microsoft Visual C++ runtime, such as a fresh Windows install, the server installer stopped at "Updating the server database" and showed "setup could not finish". The setup log showed `artisan optimize:clear failed with exit code -1073741515`. The server now comes with its own copy of the runtime files, so it starts without the runtime installed and without an internet connection.
 - When updating or retrying the Windows server installer, or uninstalling the server, removing the old files took a long time while the details box listed each file. Removal is now faster, and during an update or retry the details box shows "Removing the previous version's files..." instead.
 

@@ -5,6 +5,7 @@
 
 namespace Tests\Browser\Support;
 
+use App\Enums\InterestAvailability;
 use App\Enums\VisitorCategory;
 use App\Models\Band;
 use App\Models\Contact;
@@ -12,6 +13,7 @@ use App\Models\Equipment;
 use App\Models\EquipmentEvent;
 use App\Models\Event;
 use App\Models\EventConfiguration;
+use App\Models\EventInterest;
 use App\Models\EventType;
 use App\Models\GuestbookEntry;
 use App\Models\Message;
@@ -91,6 +93,7 @@ final class FieldDayScene
             'transmitter_count' => 3,
             'is_active' => true,
             'guestbook_enabled' => true,
+            'interest_form_enabled' => true,
         ]);
 
         $stations = collect(['Phone 1', 'CW 1', 'Digital 1'])->map(fn (string $name) => Station::factory()->create([
@@ -111,6 +114,7 @@ final class FieldDayScene
         self::shifts($config, $admin, $operators->all());
         self::guestbook($config, $admin);
         self::equipment($event, $stations->all(), $admin);
+        self::interests($config);
         Message::factory()->count(3)->create(['event_configuration_id' => $config->id, 'user_id' => $admin->id]);
 
         return new self($admin, $event, $config, $station, $session);
@@ -206,6 +210,20 @@ final class FieldDayScene
                 'verified_at' => $i % 2 === 0 ? now() : null,
             ]);
         }
+    }
+
+    /**
+     * Interest-form responses, one with a long note and an address that has to wrap.
+     */
+    private static function interests(EventConfiguration $config): void
+    {
+        EventInterest::factory()->create([
+            'event_configuration_id' => $config->id,
+            'email' => 'a-very-long-address-for-wrapping@radio-club-example.org',
+            'availability' => InterestAvailability::cases(),
+            'notes' => 'I can bring a 2 kW generator and a 40 foot push-up mast, but I have to leave by 6 PM on Saturday.',
+        ]);
+        EventInterest::factory()->count(2)->create(['event_configuration_id' => $config->id]);
     }
 
     /**
