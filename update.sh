@@ -900,6 +900,18 @@ add_sury_php_repo_debian() {
     apt-get update -y
 }
 
+# Point /usr/bin/php at PHP 8.4. Another PHP installed alongside it (by
+# hand, or pulled in by a Sury metapackage) would otherwise take over the
+# CLI that runs Composer, artisan and the services, without the extensions
+# the app needs.
+pin_php_cli_debian() {
+    [[ -x /usr/bin/php8.4 ]] || return 0
+    if [[ "$(readlink -f /usr/bin/php 2>/dev/null)" != /usr/bin/php8.4 ]]; then
+        log_info "Pointing /usr/bin/php at PHP 8.4..."
+        update-alternatives --set php /usr/bin/php8.4 || log_warn "Could not point /usr/bin/php at PHP 8.4"
+    fi
+}
+
 # Keep the system PHP that runs the queue worker, scheduler, logger listeners
 # and artisan patched. FrankenPHP's own PHP, which serves web pages, is updated
 # by stage_frankenphp_update. Moves Ubuntu installs off the retired ondrej/php
@@ -919,11 +931,16 @@ update_system_php() {
                 log_warn "apt-get update failed — keeping the installed PHP packages"
                 return 0
             fi
+            # Only the php8.4-* packages. Sury's unversioned metapackages
+            # (php-redis, php-igbinary, ...) follow Sury's newest PHP, so
+            # upgrading them installs a new PHP whose CLI takes over
+            # /usr/bin/php without the extensions the app needs.
             local -a pkgs
-            mapfile -t pkgs < <(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'php*' 2>/dev/null | awk '$1 == "ii" {print $2}')
+            mapfile -t pkgs < <(dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' 'php8.4-*' 2>/dev/null | awk '$1 == "ii" {print $2}')
             if (( ${#pkgs[@]} )) && ! apt-get install -y --only-upgrade "${pkgs[@]}"; then
                 log_warn "Upgrading the PHP packages failed — keeping the installed ones"
             fi
+            pin_php_cli_debian
             ;;
         dnf)
             if ! dnf upgrade -y 'php*'; then

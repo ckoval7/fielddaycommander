@@ -481,6 +481,18 @@ add_sury_php_repo_debian() {
 }
 
 # --- Package Installation ---
+# Point /usr/bin/php at PHP 8.4. Another PHP installed alongside it (by
+# hand, or pulled in by a Sury metapackage) would otherwise take over the
+# CLI that runs Composer, artisan and the services, without the extensions
+# the app needs.
+pin_php_cli_debian() {
+    [[ -x /usr/bin/php8.4 ]] || return 0
+    if [[ "$(readlink -f /usr/bin/php 2>/dev/null)" != /usr/bin/php8.4 ]]; then
+        log_info "Pointing /usr/bin/php at PHP 8.4..."
+        update-alternatives --set php /usr/bin/php8.4 || log_warn "Could not point /usr/bin/php at PHP 8.4"
+    fi
+}
+
 install_packages_debian() {
     log_phase "Phase 2: Installing system packages (Debian/Ubuntu)"
 
@@ -521,6 +533,8 @@ install_packages_debian() {
         php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml \
         php8.4-curl php8.4-zip php8.4-bcmath php8.4-gd php8.4-intl php8.4-redis \
         mariadb-server redis-server nodejs unzip git
+
+    pin_php_cli_debian
 }
 
 install_packages_rhel() {
