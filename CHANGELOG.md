@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.11.3 - 2026-11-25
+
 ### Added
 
 - Club members can say they plan to participate in the next event, on the air or helping set up, and when they're free, through a public participation interest form and update their response with the same email. On **Manage Schedule**, organizers with **manage-shifts** can open the form, share its link, review availability and responses, copy email addresses, and delete responses.
