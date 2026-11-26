@@ -22,6 +22,7 @@ class AuditLog extends Model
         'user.2fa.challenge' => '2FA challenge',
         'user.logout' => 'Signed out',
         'user.register' => 'User registered',
+        'support.sign_in' => 'Hosting support signed in',
 
         // User Management
         'user.created' => 'User created',

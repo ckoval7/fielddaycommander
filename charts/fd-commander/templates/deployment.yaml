@@ -138,6 +138,13 @@ spec:
                   name: {{ include "fd-commander.secretName" . }}
                   key: MAIL_PASSWORD
             {{- end }}
+            {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).supportKeySecret) }}
+            - name: HOSTED_SUPPORT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.hosted.supportKeySecret }}
+                  key: {{ .Values.hosted.supportKeySecretKey | default "HOSTED_SUPPORT_KEY" }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -176,7 +183,23 @@ spec:
           volumeMounts:
             - name: storage
               mountPath: /app/storage
+            {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).bootstrapSecret) }}
+            # Read by tenant:bootstrap on boot (see docker/entrypoint.sh).
+            - name: tenant-bootstrap
+              mountPath: /run/fd-commander/bootstrap
+              readOnly: true
+            {{- end }}
       volumes:
+        {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).bootstrapSecret) }}
+        - name: tenant-bootstrap
+          secret:
+            secretName: {{ .Values.hosted.bootstrapSecret }}
+            # The hosting service may delete it once the club is set up.
+            optional: true
+            items:
+              - key: tenant.json
+                path: tenant.json
+        {{- end }}
         - name: storage
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:

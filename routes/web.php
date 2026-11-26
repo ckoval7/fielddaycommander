@@ -5,6 +5,7 @@
 
 use App\Http\Controllers\AlbumExportController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\Auth\SupportSignInController;
 use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Equipment\EquipmentReportController;
@@ -70,6 +71,12 @@ Route::prefix('setup')->group(function () {
 // User Invitation Routes
 Route::get('/register/invite/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
+
+// Hosted clubs: the hosting service's support staff sign in as SYSTEM
+// through a signed, single-use link (404 unless hosted mode allows it).
+Route::get('/support/sign-in', SupportSignInController::class)
+    ->middleware('throttle:10,1')
+    ->name('support.sign-in');
 
 // Station Mode (walk-up logging on an enrolled browser)
 Route::get('/station-mode', StationModeLanding::class)->name('station-mode.landing');

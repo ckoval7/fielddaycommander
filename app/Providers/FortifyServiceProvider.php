@@ -16,6 +16,7 @@ use App\Http\Responses\ApprovalPendingRegisterResponse;
 use App\Models\User;
 use App\Services\LoginThrottle;
 use App\Support\AuthSecurity;
+use App\Support\HostedMode;
 use App\Support\PasswordResetLinks;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -140,6 +141,13 @@ class FortifyServiceProvider extends ServiceProvider
     private function authenticate(Request $request): ?User
     {
         $user = $this->findLoginUser((string) $request->input(Fortify::username()));
+
+        // On a hosted club, SYSTEM belongs to the hosting service's support
+        // staff and only opens through a support sign-in link.
+        if (HostedMode::isHiddenSystemAccount($user)) {
+            return null;
+        }
+
         $throttle = app(LoginThrottle::class);
 
         if ($user && ($seconds = $throttle->secondsUntilAvailable($user)) > 0) {

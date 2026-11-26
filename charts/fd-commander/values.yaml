@@ -111,6 +111,26 @@ app:
 existingSecret: ""
 
 # ---------------------------------------------------------------------------
+# Hosted mode — for a hosting service running one release per club
+# ---------------------------------------------------------------------------
+# Self-hosted installs leave this off. With it on, the club is set up by
+# tenant:bootstrap from bootstrapSecret instead of the setup wizard, the
+# person who signed the club up becomes its System Administrator, and the
+# SYSTEM account is hidden from the club and opens only through support
+# sign-in links signed with the key in supportKeySecret.
+hosted:
+  enabled: false
+  # Secret holding the club's bootstrap file under the key tenant.json. It
+  # is mounted read-only and applied on boot until setup is complete; the
+  # pod still starts if the hosting service deletes it afterwards.
+  bootstrapSecret: ""
+  # Secret holding the support sign-in key. Blank turns support sign-in off.
+  supportKeySecret: ""
+  supportKeySecretKey: HOSTED_SUPPORT_KEY
+  # Longest a support sign-in link may stay valid, in minutes.
+  supportLinkMaxMinutes: 10
+
+# ---------------------------------------------------------------------------
 # Octane (FrankenPHP) runtime
 # ---------------------------------------------------------------------------
 # Passed to octane:frankenphp as --workers / --max-requests via supervisord.
@@ -323,9 +343,18 @@ redis:
 externalRedis:
   host: ""
   port: 6379
+  # Redis 6+ ACL user. Leave blank to authenticate with the password alone.
+  username: ""
   password: ""
   database: 0
   cacheDatabase: 1
+  # Key prefix for this release's cache, sessions and queues. Set a unique
+  # one (such as the release name followed by ":") when several releases
+  # share one Redis server, or they read each other's sessions and jobs.
+  # Blank keeps the app's default, which is the same for every release.
+  # Changing it on a running install signs everyone out and strands any
+  # jobs still queued under the old prefix.
+  prefix: ""
 
 # ---------------------------------------------------------------------------
 # Persistence for storage/ (uploads, gallery images, logs, seeder marker)
@@ -416,3 +445,29 @@ tolerations: []
 affinity: {}
 
 extraEnv: []
+
+# ---------------------------------------------------------------------------
+# NetworkPolicy
+# ---------------------------------------------------------------------------
+# Limits the app pod's traffic. Needs a CNI that enforces NetworkPolicy
+# (Calico, Cilium, ...); others accept the object and ignore it. Inbound
+# traffic is allowed only from the ingress controller's namespace and from
+# this release's own pods (for the bundled MySQL and Redis). Outbound
+# traffic is allowed to DNS, to this release's bundled MySQL and Redis, to
+# the rules in extraEgress, and, with allowInternet, to public addresses
+# on the ports the app uses (HTTPS for weather, SMTP for mail).
+networkPolicy:
+  enabled: false
+  # Labels of the namespace the ingress controller runs in.
+  ingressNamespaceSelector:
+    kubernetes.io/metadata.name: ingress-nginx
+  allowInternet: true
+  internetPorts: [443, 587, 465, 25]
+  # Extra egress rules, such as a shared MySQL or Redis outside this release:
+  #   - to:
+  #       - namespaceSelector:
+  #           matchLabels:
+  #             kubernetes.io/metadata.name: shared-db
+  #     ports:
+  #       - port: 3306
+  extraEgress: []

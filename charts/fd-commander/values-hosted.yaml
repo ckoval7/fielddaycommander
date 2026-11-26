@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Starting point for a hosting service running one release per club, layered
+# over values.yaml:
+#
+#   helm install <club> charts/fd-commander -n <club> \
+#     -f charts/fd-commander/values-hosted.yaml -f <club>-values.yaml
+#
+# The per-club file sets app.url, ingress.host, the database and Redis
+# credentials, and the two Secrets under hosted. Self-hosted installs don't
+# use this file.
+
+app:
+  env: production
+  developerMode: false
+  hstsMaxAge: 31536000
+  sessionSecureCookie: true
+  # The person who signs the club up adds members; nobody registers alone.
+  registrationMode: approval_required
+
+hosted:
+  enabled: true
+  bootstrapSecret: tenant-bootstrap
+  supportKeySecret: tenant-support
+
+# Small footprint per club: two Octane workers cover a busy Field Day station.
+octane:
+  workers: 2
+  maxRequests: 500
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 768Mi
+    ephemeral-storage: 2Gi
+  requests:
+    cpu: 100m
+    memory: 384Mi
+    ephemeral-storage: 256Mi
+
+persistence:
+  size: 5Gi
+
+# One shared MySQL server and one shared Redis serve every club. Each club
+# gets its own database and MySQL user, and its own Redis ACL user limited
+# to its key prefix (~<prefix>*). Fill these in per club.
+mysql:
+  enabled: false
+externalDatabase:
+  host: mysql.shared-db.svc.cluster.local
+  port: 3306
+  database: ""
+  username: ""
+  password: ""
+
+redis:
+  enabled: false
+externalRedis:
+  host: redis.shared-db.svc.cluster.local
+  port: 6379
+  username: ""
+  password: ""
+  database: 0
+  cacheDatabase: 0
+  prefix: ""
+
+# Direct listener ports can't be told apart by club, and N3FJP's hostPort
+# blocks a second club's pod on the same node. Hosted clubs connect their
+# loggers through Field Day Commander Relay instead.
+externalLoggers:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  host: ""
+  tls:
+    enabled: true
+
+networkPolicy:
+  enabled: true
+  extraEgress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: shared-db
+      ports:
+        - port: 3306
+        - port: 6379

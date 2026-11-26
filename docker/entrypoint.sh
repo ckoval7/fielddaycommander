@@ -115,6 +115,18 @@ else
     echo "Seeders already ran (marker exists), skipping."
 fi
 
+# 7b. A hosted club is set up from the hosting service's bootstrap file in
+#     place of the setup wizard. It does nothing once setup is complete.
+if [[ "${HOSTED_MODE:-false}" = "true" ]]; then
+    BOOTSTRAP_FILE="${TENANT_BOOTSTRAP_FILE:-/run/fd-commander/bootstrap/tenant.json}"
+    if [[ -f "$BOOTSTRAP_FILE" ]]; then
+        echo "Hosted mode: applying the club's bootstrap file..."
+        php artisan tenant:bootstrap --from="$BOOTSTRAP_FILE"
+    else
+        echo "Hosted mode: no bootstrap file at $BOOTSTRAP_FILE, skipping."
+    fi
+fi
+
 # 8. Cache configuration
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize

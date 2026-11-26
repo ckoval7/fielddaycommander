@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- Helm chart users can set `externalRedis.username` for a Redis 6+ ACL user. When bundled Redis is off, the chart sends it as `REDIS_USERNAME`. Set `externalRedis.prefix` to give each release its own cache, sessions, and queues on a shared Redis server. Blank keeps the old behavior. Changing the prefix on a running install signs everyone out and strands jobs queued under the old prefix.
+- Helm chart users can enable `networkPolicy.enabled` to restrict traffic to and from the app pod. It defaults to `false` and needs a CNI that enforces NetworkPolicy. Inbound traffic is allowed from the ingress controller namespace selected by `networkPolicy.ingressNamespaceSelector`, which defaults to `ingress-nginx`. Outbound traffic is allowed to DNS, the release's bundled MySQL and Redis, and public addresses on ports 443, 587, 465, and 25 for weather and mail (`networkPolicy.allowInternet` and `networkPolicy.internetPorts`), plus any `networkPolicy.extraEgress` rules.
+
 ## 26.11.3 - 2026-11-25
 
 ### Added

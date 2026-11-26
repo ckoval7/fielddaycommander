@@ -1080,6 +1080,7 @@ configure_env() {
     set_env "LOG_STACK" "daily"
     set_env "LOG_DAILY_DAYS" "14"
     set_env "DEVELOPER_MODE" "false"
+    set_env "HOSTED_MODE" "false"
 
     set_env "DB_CONNECTION" "mysql"
     set_env "DB_HOST" "127.0.0.1"

@@ -6,6 +6,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Support\HostedMode;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
 
@@ -23,10 +24,15 @@ use Spatie\Permission\Models\Role;
 class UserPolicy
 {
     /**
-     * Edit an account's details and role, or unlock it.
+     * Edit an account's details and role, or unlock it. On a hosted club,
+     * SYSTEM belongs to the hosting service and the club can't touch it.
      */
     public function update(User $actor, User $target): bool
     {
+        if (HostedMode::isHiddenSystemAccount($target) && ! $actor->is($target)) {
+            return false;
+        }
+
         return $actor->can('manage-users')
             && $this->holdsAll($actor, $target->getAllPermissions()->pluck('name'));
     }

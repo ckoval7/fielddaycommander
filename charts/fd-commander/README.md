@@ -57,6 +57,12 @@ at an existing server through `externalDatabase` or `externalRedis`.
 | `redis.enabled` | Deploy the bundled Redis StatefulSet. | `true` |
 | `redis.master.persistence.size` | Redis data volume size. | `2Gi` |
 | `redis.master.configuration` | `redis.conf` contents (AOF, eviction, `maxmemory`). | see `values.yaml` |
+| `externalRedis.username` | Redis 6+ ACL user name when bundled Redis is off. | `""` |
+| `externalRedis.prefix` | Key prefix for cache, sessions, and queues. Blank keeps the default. | `""` |
+| `networkPolicy.enabled` | Restrict app pod traffic with a NetworkPolicy. | `false` |
+| `networkPolicy.ingressNamespaceSelector` | Labels selecting the ingress controller namespace. | `kubernetes.io/metadata.name: ingress-nginx` |
+| `networkPolicy.allowInternet` | Allow outbound traffic to public addresses on configured ports. | `true` |
+| `networkPolicy.extraEgress` | Additional egress rules. | `[]` |
 | `reverb.enabled` | Run the Reverb WebSocket server for live updates. | `true` |
 | `externalLoggers.enabled` | Expose the UDP and N3FJP TCP ports for radio logging software. | `true` |
 | `externalLoggers.n3fjp.enabled` | Publish the N3FJP TCP port as a hostPort. | `true` |
