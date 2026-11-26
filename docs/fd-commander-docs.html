@@ -575,7 +575,7 @@
     <p>The <strong>GOTA Station (Get On The Air)</strong> card lets novice operators make contacts under supervision. It only appears for classes that allow a GOTA station, so you won't see it on a Winter Field Day event. Turn on <strong>Open to the public</strong> under <strong>Public Visitors</strong> if you want people to come see the operation. The directions, visiting times, contact details, website, and "What visitors will see" text you enter there show up in a <strong>Visit Us</strong> section on the public page. Last, <strong>Guestbook Settings</strong> turns on the visitor guestbook (see <a href="#guestbook">Visitor Guestbook</a>).</p>
 
     <h3>Setup Checklist</h3>
-    <p>The dashboard tracks five setup milestones:</p>
+    <p>The dashboard tracks six setup milestones:</p>
     <div class="step-list">
       <div class="step-item">
         <div class="step-num">1</div>
@@ -587,26 +587,33 @@
       <div class="step-item">
         <div class="step-num">2</div>
         <div>
+          <h4>Interest form opened</h4>
+          <p>The form is open, or it was closed after someone responded. People who can manage shifts can follow this item to the Interest tab.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div>
           <h4>Equipment inventoried</h4>
           <p>At least one piece of equipment has been added to the system.</p>
         </div>
       </div>
       <div class="step-item">
-        <div class="step-num">3</div>
+        <div class="step-num">4</div>
         <div>
           <h4>Stations set up</h4>
           <p>At least one station has been defined with band and mode assignments.</p>
         </div>
       </div>
       <div class="step-item">
-        <div class="step-num">4</div>
+        <div class="step-num">5</div>
         <div>
           <h4>Shifts scheduled</h4>
           <p>Operator shifts have been created for your stations.</p>
         </div>
       </div>
       <div class="step-item">
-        <div class="step-num">5</div>
+        <div class="step-num">6</div>
         <div>
           <h4>W1AW Bulletin schedule set up</h4>
           <p>The bulletin transmission schedule has been entered for the event. On Winter Field Day events this item reads <strong>WFD Bulletin schedule set up</strong>.</p>
@@ -995,6 +1002,19 @@
 
     <h2 id="scheduling">Volunteer Scheduling</h2>
     <p>The scheduling system lets you define shift blocks and roles, then lets volunteers self-sign-up for open slots. <strong>Event Management &gt; Shift Schedule</strong> is the operator-facing board where people browse and claim shifts. Its <strong>Dashboard</strong> button opens the Shift Dashboard, which shows coverage at a glance. <strong>Administration &gt; Manage Schedule</strong> is where the event manager builds the schedule.</p>
+
+    <h3 id="interest-form">Interest Form</h3>
+    <p>Before you build shifts, open the interest form to find out who plans to participate and roughly when they're free. Go to <strong>Administration &gt; Manage Schedule</strong> and select the <strong>Interest</strong> tab. You need the <code>manage-shifts</code> permission. Turn on <strong>Accept interest responses</strong>, then use <strong>Copy link</strong> to share the address in your club newsletter, email list, or website. You can close the form with the same toggle. It can't be opened after the event ends.</p>
+
+    <p>The tab shows the number of people interested and a tally for each time block. Each response shows the person's name, call sign, license class, email, chosen blocks, notes, and when it was sent. A <strong>Has account</strong> badge identifies a response tied to an account. Use <strong>Copy all emails</strong> to copy comma-separated addresses for a Bcc line. The trash button deletes a response after you confirm.</p>
+
+    <p>The public page is at <code>/interest</code> on your server, for example <code>http://fd-commander.local/interest</code>. It shows the earliest event that hasn't ended and has the form open, with <strong>Count Me In</strong> above the event name and date. If none is open, it says "Not taking responses right now" and "Check back closer to the next event." No account is needed to send a response.</p>
+
+    <p>Visitors enter their first name, last name, and email, and choose at least one time under <strong>When are you free?</strong>: Setup (before the event starts), Daytime (morning and afternoon), Evening (until about midnight), Overnight (midnight to sunrise), or Teardown (after the event ends). Call sign and license class are optional. A call sign can contain letters, numbers, and slashes. Optional notes can be up to 1,000 characters. Click <strong>Send</strong> to submit.</p>
+
+    <p>To update a response, send the form again with the same email, or click <strong>Change My Response</strong> after sending it. Signed-in users see their details and earlier answers filled in, and the email is fixed to their account email. Once an approved account has a verified email matching a response, the response is tied to that account and only that account can change it. Others using that email are asked to sign in.</p>
+
+    <p>After sending, visitors who aren't signed in are told they need an account to sign up for shifts. If registration is available, <strong>Create an Account</strong> opens registration with their name, call sign, email, and license class filled in for 15 minutes on that browser. If registration is disabled, a sign-in link appears instead. Visitors who aren't signed in can send up to five responses per hour from the same network.</p>
 
     <h3>Setting Up Roles</h3>
     <p>Before creating shifts, define the roles you need. Go to <strong>Administration &gt; Manage Schedule</strong> and click the <strong>Roles</strong> tab. Field Day Commander ships with sample roles that cover common Field Day positions: Safety Officer, Site Responsibilities, Public Information Table, Public Greeter, GOTA Coach, Message Handler, Event Manager, Station Captain, and Operator. Each role has a description, an optional bonus point value, and two key settings:</p>
