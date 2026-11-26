@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- On **Create Event**, **Edit Event**, and **Clone Event**, a thin line flashed under the header with every key press in **Event Name**, and when you changed switches or selections. The line now appears only while the event is being saved. The year in the name, such as "Field Day 2026", is now checked when you leave the field. It still fills in the event year and, on create and clone, the dates for supported event types.
+
 ## 26.11.3 - 2026-11-25
 
 ### Added
