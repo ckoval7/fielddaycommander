@@ -122,8 +122,7 @@ class ReportController extends Controller
         $data = $this->submissionReportService->getData($config);
 
         $callsign = strtolower(str_replace('/', '_', $config->callsign));
-        $year = $config->event->start_time->year;
-        $filename = "{$callsign}-{$year}-submission-sheet.pdf";
+        $filename = "{$callsign}-{$config->event->year}-submission-sheet.pdf";
 
         $pdf = Pdf::loadView('reports.submission-sheet-pdf', $data)
             ->setPaper('letter', 'portrait');

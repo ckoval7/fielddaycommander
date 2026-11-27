@@ -4,6 +4,9 @@
 
 ### Added
 
+- Complete first-time setup from a JSON file with `php artisan setup:apply`, Docker, `deploy.sh`, or Helm instead of using the setup wizard. See `DOCKER.md` for the file format and deployment options.
+- Use `php artisan user:sign-in-link` to sign in to SYSTEM or another account once without a password or two-factor authentication. Each use appears in **Audit Logs**.
+- Set `SYSTEM_ACCOUNT_LOCKED=true` after creating a named System Administrator to hide SYSTEM and allow access only through a one-time sign-in link. Use `--lock-system` with `deploy.sh` or `app.systemAccountLocked` with Helm.
 - Helm chart users can set `externalRedis.username` for a Redis 6+ ACL user. When bundled Redis is off, the chart sends it as `REDIS_USERNAME`. Set `externalRedis.prefix` to give each release its own cache, sessions, and queues on a shared Redis server. Blank keeps the old behavior. Changing the prefix on a running install signs everyone out and strands jobs queued under the old prefix.
 - Helm chart users can enable `networkPolicy.enabled` to restrict traffic to and from the app pod. It defaults to `false` and needs a CNI that enforces NetworkPolicy. Inbound traffic is allowed from the ingress controller namespace selected by `networkPolicy.ingressNamespaceSelector`, which defaults to `ingress-nginx`. Outbound traffic is allowed to DNS, the release's bundled MySQL and Redis, and public addresses on ports 443, 587, 465, and 25 for weather and mail (`networkPolicy.allowInternet` and `networkPolicy.internetPorts`), plus any `networkPolicy.extraEgress` rules.
 
@@ -13,6 +16,7 @@
 - On Docker, Helm, and `deploy.sh` installs, pages and contact saves were slower and used more CPU than they should have because the app started from scratch on every request. The app now stays loaded between requests. Docker and Helm users can pull the new image. On a `deploy.sh` install, run `sudo ./update.sh`.
 - With many members, a contact that worked a new section or reached a 50-QSO milestone could take a long time to save while notifications were sent to every member. Notifications are now sent by the queue worker after the save and may arrive a moment later.
 - With N1MM Logger+, WSJT-X/JTDX, fldigi, ADIF over UDP, or Field Day Commander Relay, changing the operator, band, or mode could leave several sessions open at a station until they had been idle for 30 minutes. The previous logger session now ends when a contact arrives under the new operator, band, or mode. Sessions started in the browser aren't affected.
+- In **Reports**, the Winter Field Day event summary and ARRL Field Day submission sheet showed fixed titles with the start date's year in their headings and footers, so a 2027 event held in 2026 showed 2026. They now show the name entered in **Event Name**, and their file names, like the Field Day Cabrillo log's, use the event's year.
 
 ## 26.11.3 - 2026-11-25
 

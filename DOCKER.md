@@ -60,6 +60,10 @@ These variables in `.env` are used by `docker-compose.yml`:
 |----------|---------|-------------|
 | `APP_PORT` | `80` | Host port mapped to the container |
 | `APP_URL` | `http://localhost` | Address people use to reach the app. Set it for forgot password emails to work. |
+| `SYSTEM_ACCOUNT_LOCKED` | `false` | Hide SYSTEM and allow it to sign in only with a one-time link. Set this after creating a named System Administrator. |
+| `SETUP_FILE` | *(empty)* | Path inside the container to a first-time setup JSON file. |
+| `SIGN_IN_LINK_KEY` | *(empty)* | Key an outside service can use to sign one-time links. Command-line links don't need it. |
+| `SIGN_IN_LINK_MAX_MINUTES` | `10` | Maximum lifetime of a one-time sign-in link, in minutes. |
 | `N3FJP_PORT` | `1000` | N3FJP TCP port published on the host and container. Set it in `.env` to match **TCP Port** on **External Loggers**, in the **N3FJP** card. |
 | `DB_DATABASE` | `fd_commander` | MySQL database name |
 | `DB_USERNAME` | `fd_commander` | MySQL user |
@@ -104,6 +108,65 @@ On first startup, the entrypoint script automatically:
 5. Caches configuration, routes, views, and events
 
 Seeders only run once. A marker file in the persistent storage volume prevents re-seeding on subsequent starts.
+
+## Set Up From a File
+
+To complete first-time setup without the wizard, save a JSON file such as `setup.json`:
+
+```json
+{
+  "organization": {
+    "name": "Example Radio Club",
+    "callsign": "W1AW",
+    "email": "club@example.org",
+    "phone": "555-0100"
+  },
+  "timezone": "America/New_York",
+  "site_name": "Example Radio Club",
+  "site_tagline": "Field Day",
+  "date_format": "Y-m-d",
+  "time_format": "H:i:s",
+  "contact_email": "contact@example.org",
+  "admin": {
+    "first_name": "Alex",
+    "last_name": "Example",
+    "call_sign": "K1ABC",
+    "email": "alex@example.org"
+  }
+}
+```
+
+- `organization` and its `name` are required. Its `callsign`, `email`, and `phone` are optional.
+- `timezone` is required. `site_name` defaults to the organization name. `site_tagline` and `contact_email` are optional.
+- `date_format` can be `Y-m-d`, `m/d/Y`, `d/m/Y`, or `d.m.Y` and defaults to `Y-m-d`. `time_format` can be `H:i:s` or `h:i:s A` and defaults to `H:i:s`.
+- `system_password` is optional. If supplied, it must have at least 12 characters, including uppercase and lowercase letters, a number, and a symbol. If omitted, SYSTEM gets a random password nobody knows. Use a one-time sign-in link to open it.
+- `admin` is optional. Its `first_name`, `last_name`, `call_sign`, and `email` create a named System Administrator. The command prints an invitation link where they choose a password. You can also supply `invitation_token` of at least 40 characters and a future `invitation_expires_at` as an ISO date. Otherwise, a token is generated and the link lasts 72 hours, like invitations from User Management.
+
+After starting Compose, apply the file from your host:
+
+```bash
+docker compose exec -T app php artisan setup:apply - < setup.json
+```
+
+You can also mount the file into the container and set `SETUP_FILE` to its path inside the container. The entrypoint applies it on boot and skips a missing file. Once setup is complete, `setup:apply` does nothing, so it can run on every boot. You can also run `php artisan setup:apply <file>` directly, using `-` for standard input.
+
+`deploy.sh --setup-file <path>` uses the same format after the seeders run. It can't be combined with `--no-seeders`. The file is read as root, so the app user doesn't need permission to read it. For Helm, set `setup.existingSecret` to a Secret containing the file under `setup.json`. You can change the key with `setup.secretKey`. The chart mounts it read-only and applies it on boot. You can delete the Secret after setup.
+
+## Sign In With a One-Time Link
+
+If SYSTEM is locked, or you lose a password or two-factor device without email on the field LAN, create a one-time link on the server:
+
+```bash
+docker compose exec app php artisan user:sign-in-link
+```
+
+The command defaults to SYSTEM. Add a callsign to sign in to another account. The link bypasses the password and two-factor authentication, works once, and lasts up to `SIGN_IN_LINK_MAX_MINUTES` (10 minutes by default). Use `--minutes` to shorten it. A link session isn't sent to two-factor setup when two-factor authentication is required. A link won't open an account locked by an administrator.
+
+If you'll open the link at an address other than `APP_URL`, add `--url=http://192.168.1.20`. Open it using the address it was made for. Add `--by="Support Tech"` to record who signed in. The default is "the server command line". Each use appears in **Audit Logs** as "Signed in with a one-time link".
+
+For Helm, run `kubectl exec deploy/<release> -- php artisan user:sign-in-link`. On a `deploy.sh` install, run `sudo -u fdcommander php /var/www/fd-commander/artisan user:sign-in-link`. An outside service such as a hosting provider's support desk can sign links using `SIGN_IN_LINK_KEY`, or Helm's `signInLinks.keySecret`. Command-line links don't need that key.
+
+Set `SYSTEM_ACCOUNT_LOCKED=true` after creating a named System Administrator. Locked SYSTEM can't sign in with a password, is hidden from the user list, and can't be edited by anyone else. Open it with a one-time link. The setting defaults to off. On `deploy.sh` use `--lock-system`, and on Helm set `app.systemAccountLocked`.
 
 ## Reverse Proxy (HTTPS)
 

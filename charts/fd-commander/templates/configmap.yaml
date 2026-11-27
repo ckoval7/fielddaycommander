@@ -23,14 +23,6 @@ data:
   TRUSTED_PROXIES: {{ dig "trustedProxies" "127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7" .Values.app | quote }}
   SECURITY_HSTS_MAX_AGE: {{ dig "hstsMaxAge" 0 .Values.app | quote }}
   DEVELOPER_MODE: {{ .Values.app.developerMode | quote }}
-  {{- $hosted := (.Values.hosted | default dict).enabled | default false }}
-  {{- if and $hosted .Values.app.developerMode }}
-  {{- fail "app.developerMode can't be on with hosted.enabled: the club would get the developer tools." }}
-  {{- end }}
-  HOSTED_MODE: {{ $hosted | quote }}
-  {{- if $hosted }}
-  HOSTED_SUPPORT_LINK_MAX_MINUTES: {{ (.Values.hosted | default dict).supportLinkMaxMinutes | default 10 | quote }}
-  {{- end }}
   LOG_CHANNEL: "stack"
   LOG_STACK: "daily"
   LOG_DAILY_DAYS: {{ .Values.app.logDailyDays | default 14 | quote }}
@@ -124,6 +116,11 @@ data:
   AUDIT_RETENTION_DAYS: {{ .Values.app.auditRetentionDays | quote }}
   PASSWORD_MIN_LENGTH: {{ .Values.app.passwordMinLength | quote }}
   PASSWORD_ADMIN_MIN_LENGTH: {{ .Values.app.passwordAdminMinLength | quote }}
+  SYSTEM_ACCOUNT_LOCKED: {{ dig "systemAccountLocked" false .Values.app | quote }}
+  SIGN_IN_LINK_MAX_MINUTES: {{ dig "maxMinutes" 10 (.Values.signInLinks | default dict) | quote }}
+  {{- if dig "existingSecret" "" (.Values.setup | default dict) }}
+  SETUP_FILE: "/run/fd-commander/setup/setup.json"
+  {{- end }}
   BCRYPT_ROUNDS: "12"
 
   {{- if .Values.externalLoggers.enabled }}

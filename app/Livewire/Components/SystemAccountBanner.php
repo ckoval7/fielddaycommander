@@ -5,7 +5,7 @@
 
 namespace App\Livewire\Components;
 
-use App\Support\HostedMode;
+use App\Support\SignInLinks;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -14,16 +14,18 @@ class SystemAccountBanner extends Component
     public bool $isSystemUser = false;
 
     /**
-     * Whether SYSTEM was opened by the hosting service's support staff,
-     * which changes the banner from "make a personal account" to a notice
-     * that the session is a support visit.
+     * Who opened SYSTEM with a one-time sign-in link, which changes the
+     * banner from "make a personal account" to a notice naming them.
      */
-    public bool $isSupportSession = false;
+    public ?string $openedBy = null;
 
     public function mount(): void
     {
         $this->isSystemUser = auth()->user()?->isSystemUser() ?? false;
-        $this->isSupportSession = $this->isSystemUser && HostedMode::hidesSystemAccount();
+
+        if ($this->isSystemUser) {
+            $this->openedBy = session(SignInLinks::SESSION_KEY);
+        }
     }
 
     public function render(): View

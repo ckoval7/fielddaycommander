@@ -3,12 +3,12 @@
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div>
-    @if($isSupportSession)
+    @if($isSystemUser && $openedBy !== null)
         <div class="alert bg-amber-100 border-l-4 border-amber-500 text-amber-900 shadow-md rounded-none" role="alert">
             <div class="flex items-start sm:items-center gap-3 w-full">
-                <x-icon name="phosphor-lifebuoy" class="w-5 h-5 text-amber-700 shrink-0" />
+                <x-icon name="phosphor-key" class="w-5 h-5 text-amber-700 shrink-0" />
                 <div class="flex-1 text-sm sm:text-base">
-                    <strong>Support session.</strong> You're signed in as SYSTEM. This sign-in is recorded in the club's <strong>Audit Logs</strong>.
+                    <strong>SYSTEM opened with a one-time link</strong> by {{ $openedBy }}. This sign-in is in <strong>Audit Logs</strong>.
                 </div>
             </div>
         </div>

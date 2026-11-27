@@ -5,7 +5,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\HostedMode;
+use App\Support\SignInLinks;
 use App\Support\StationMode;
 use Closure;
 use Illuminate\Http\Request;
@@ -39,8 +39,8 @@ class Ensure2FAEnabled
             && $request->user()
             && ! $request->user()->two_factor_confirmed_at
             && ! StationMode::isActive()
-            // A support link is the hosting service's credential for SYSTEM.
-            && ! $request->session()->has(HostedMode::SUPPORT_SESSION_KEY)
+            // A one-time sign-in link is a fresh credential of its own.
+            && ! SignInLinks::openedSession()
             && ! $request->routeIs('profile')
             && ! $request->routeIs('logout', 'logout.get')
             && ! $request->routeIs('two-factor.*')

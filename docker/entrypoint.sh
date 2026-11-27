@@ -115,15 +115,15 @@ else
     echo "Seeders already ran (marker exists), skipping."
 fi
 
-# 7b. A hosted club is set up from the hosting service's bootstrap file in
-#     place of the setup wizard. It does nothing once setup is complete.
-if [[ "${HOSTED_MODE:-false}" = "true" ]]; then
-    BOOTSTRAP_FILE="${TENANT_BOOTSTRAP_FILE:-/run/fd-commander/bootstrap/tenant.json}"
-    if [[ -f "$BOOTSTRAP_FILE" ]]; then
-        echo "Hosted mode: applying the club's bootstrap file..."
-        php artisan tenant:bootstrap --from="$BOOTSTRAP_FILE"
+# 7b. Complete first-time setup from a file instead of the setup wizard.
+#     setup:apply does nothing once setup is complete, and a missing file is
+#     skipped so the file can be removed after the first boot.
+if [[ -n "${SETUP_FILE:-}" ]]; then
+    if [[ -f "$SETUP_FILE" ]]; then
+        echo "Applying setup file $SETUP_FILE..."
+        php artisan setup:apply "$SETUP_FILE"
     else
-        echo "Hosted mode: no bootstrap file at $BOOTSTRAP_FILE, skipping."
+        echo "No setup file at $SETUP_FILE, skipping."
     fi
 fi
 

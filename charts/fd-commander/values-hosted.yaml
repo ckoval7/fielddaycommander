@@ -8,8 +8,8 @@
 #     -f charts/fd-commander/values-hosted.yaml -f <club>-values.yaml
 #
 # The per-club file sets app.url, ingress.host, the database and Redis
-# credentials, and the two Secrets under hosted. Self-hosted installs don't
-# use this file.
+# credentials, and the club's two Secrets: its setup file and the hosting
+# service's sign-in link key. Self-hosted installs don't use this file.
 
 app:
   env: production
@@ -18,11 +18,18 @@ app:
   sessionSecureCookie: true
   # The person who signs the club up adds members; nobody registers alone.
   registrationMode: approval_required
+  # SYSTEM belongs to the hosting service: the club can't see it or sign in
+  # as it. Support staff open it with links signed by signInLinks.keySecret.
+  systemAccountLocked: true
 
-hosted:
-  enabled: true
-  bootstrapSecret: tenant-bootstrap
-  supportKeySecret: tenant-support
+# The club's setup file (setup.json), written by the hosting service when the
+# club signs up. The person who signed up is its "admin" and gets the
+# invitation link. It can be deleted once the club is set up.
+setup:
+  existingSecret: tenant-setup
+
+signInLinks:
+  keySecret: tenant-support
 
 # Small footprint per club: two Octane workers cover a busy Field Day station.
 octane:

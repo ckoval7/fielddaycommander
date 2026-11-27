@@ -100,6 +100,10 @@ app:
   auditRetentionDays: 365
   passwordMinLength: 8
   passwordAdminMinLength: 12
+  # Lock the SYSTEM setup account: no password sign-in, hidden from the
+  # user list. Open it with a one-time link from
+  #   kubectl exec deploy/<release> -- php artisan user:sign-in-link
+  systemAccountLocked: false
   # Send the session cookie only over HTTPS. Enabled automatically when
   # ingress.tls.enabled is set or app.url starts with https://; turn on by
   # hand if TLS terminates elsewhere in front of the app.
@@ -111,24 +115,26 @@ app:
 existingSecret: ""
 
 # ---------------------------------------------------------------------------
-# Hosted mode — for a hosting service running one release per club
+# First-time setup from a file
 # ---------------------------------------------------------------------------
-# Self-hosted installs leave this off. With it on, the club is set up by
-# tenant:bootstrap from bootstrapSecret instead of the setup wizard, the
-# person who signed the club up becomes its System Administrator, and the
-# SYSTEM account is hidden from the club and opens only through support
-# sign-in links signed with the key in supportKeySecret.
-hosted:
-  enabled: false
-  # Secret holding the club's bootstrap file under the key tenant.json. It
-  # is mounted read-only and applied on boot until setup is complete; the
-  # pod still starts if the hosting service deletes it afterwards.
-  bootstrapSecret: ""
-  # Secret holding the support sign-in key. Blank turns support sign-in off.
-  supportKeySecret: ""
-  supportKeySecretKey: HOSTED_SUPPORT_KEY
-  # Longest a support sign-in link may stay valid, in minutes.
-  supportLinkMaxMinutes: 10
+# Secret holding a setup file (key setup.json, format in DOCKER.md). When
+# set, the pod completes first-time setup from it on boot instead of the
+# setup wizard. It's mounted read-only and skipped once setup is complete,
+# so the Secret can be deleted after the first boot.
+setup:
+  existingSecret: ""
+  secretKey: setup.json
+
+# ---------------------------------------------------------------------------
+# One-time sign-in links
+# ---------------------------------------------------------------------------
+# `php artisan user:sign-in-link` works without any of this. Set keySecret
+# to also accept links signed by an outside service (SIGN_IN_LINK_KEY).
+signInLinks:
+  keySecret: ""
+  keySecretKey: SIGN_IN_LINK_KEY
+  # Longest a link may stay valid, in minutes.
+  maxMinutes: 10
 
 # ---------------------------------------------------------------------------
 # Octane (FrankenPHP) runtime
@@ -343,9 +349,9 @@ redis:
 externalRedis:
   host: ""
   port: 6379
+  password: ""
   # Redis 6+ ACL user. Leave blank to authenticate with the password alone.
   username: ""
-  password: ""
   database: 0
   cacheDatabase: 1
   # Key prefix for this release's cache, sessions and queues. Set a unique
@@ -451,8 +457,7 @@ extraEnv: []
 # ---------------------------------------------------------------------------
 # Limits the app pod's traffic. Needs a CNI that enforces NetworkPolicy
 # (Calico, Cilium, ...); others accept the object and ignore it. Inbound
-# traffic is allowed only from the ingress controller's namespace and from
-# this release's own pods (for the bundled MySQL and Redis). Outbound
+# traffic is allowed only from the ingress controller's namespace. Outbound
 # traffic is allowed to DNS, to this release's bundled MySQL and Redis, to
 # the rules in extraEgress, and, with allowInternet, to public addresses
 # on the ports the app uses (HTTPS for weather, SMTP for mail).

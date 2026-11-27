@@ -138,12 +138,12 @@ spec:
                   name: {{ include "fd-commander.secretName" . }}
                   key: MAIL_PASSWORD
             {{- end }}
-            {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).supportKeySecret) }}
-            - name: HOSTED_SUPPORT_KEY
+            {{- with dig "keySecret" "" (.Values.signInLinks | default dict) }}
+            - name: SIGN_IN_LINK_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.hosted.supportKeySecret }}
-                  key: {{ .Values.hosted.supportKeySecretKey | default "HOSTED_SUPPORT_KEY" }}
+                  name: {{ . }}
+                  key: {{ dig "keySecretKey" "SIGN_IN_LINK_KEY" $.Values.signInLinks }}
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
@@ -183,22 +183,22 @@ spec:
           volumeMounts:
             - name: storage
               mountPath: /app/storage
-            {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).bootstrapSecret) }}
-            # Read by tenant:bootstrap on boot (see docker/entrypoint.sh).
-            - name: tenant-bootstrap
-              mountPath: /run/fd-commander/bootstrap
+            {{- if dig "existingSecret" "" (.Values.setup | default dict) }}
+            # Read by setup:apply on boot (see docker/entrypoint.sh).
+            - name: setup-file
+              mountPath: /run/fd-commander/setup
               readOnly: true
             {{- end }}
       volumes:
-        {{- if and ((.Values.hosted | default dict).enabled) ((.Values.hosted | default dict).bootstrapSecret) }}
-        - name: tenant-bootstrap
+        {{- with dig "existingSecret" "" (.Values.setup | default dict) }}
+        - name: setup-file
           secret:
-            secretName: {{ .Values.hosted.bootstrapSecret }}
-            # The hosting service may delete it once the club is set up.
+            secretName: {{ . }}
+            # It may be deleted once setup is complete.
             optional: true
             items:
-              - key: tenant.json
-                path: tenant.json
+              - key: {{ dig "secretKey" "setup.json" $.Values.setup }}
+                path: setup.json
         {{- end }}
         - name: storage
         {{- if .Values.persistence.enabled }}
