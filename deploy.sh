@@ -81,6 +81,8 @@ SSL_KEY=""
 TRUSTED_HOSTS=""
 TRUSTED_PROXIES=""
 NO_SEEDERS=false
+SETUP_FILE=""
+LOCK_SYSTEM=false
 DRY_RUN=false
 DEMO_MODE=false
 DB_SERVICE="mariadb"
@@ -119,6 +121,10 @@ Optional:
                           besides this machine (127.0.0.1, ::1).
   --no-seeders            Skip database seeders
   --demo                  Deploy as a public demo instance (per-visitor sandboxed databases)
+  --setup-file <path>     Complete first-time setup from this JSON file instead
+                          of the setup wizard (format in DOCKER.md)
+  --lock-system           Lock the SYSTEM account (SYSTEM_ACCOUNT_LOCKED=true).
+                          Use with a setup file that names a first admin.
   --dry-run               Show plan without executing
   -h, --help              Show this help message
 USAGE
@@ -144,6 +150,8 @@ while [[ $# -gt 0 ]]; do
         --trusted-proxies) TRUSTED_PROXIES="$2"; shift 2 ;;
         --no-seeders)   NO_SEEDERS=true; shift ;;
         --demo)         DEMO_MODE=true; NO_SEEDERS=true; shift ;;
+        --setup-file)   SETUP_FILE="$2"; shift 2 ;;
+        --lock-system)  LOCK_SYSTEM=true; shift ;;
         --dry-run)      DRY_RUN=true; shift ;;
         -h|--help)      usage 0 ;;
         *)              log_error "Unknown option: $1"; usage 1 ;;
@@ -197,6 +205,16 @@ validate_args() {
 
     if [[ -n "$SSL_KEY" ]] && [[ ! -f "$SSL_KEY" ]]; then
         log_error "SSL key not found: $SSL_KEY"
+        errors=$((errors + 1))
+    fi
+
+    if [[ -n "$SETUP_FILE" ]] && [[ ! -r "$SETUP_FILE" ]]; then
+        log_error "Setup file not found or unreadable: $SETUP_FILE"
+        errors=$((errors + 1))
+    fi
+
+    if [[ -n "$SETUP_FILE" ]] && $NO_SEEDERS; then
+        log_error "--setup-file needs the seeders (it can't be used with --no-seeders)"
         errors=$((errors + 1))
     fi
 
@@ -397,6 +415,8 @@ print_dry_run() {
     echo "Source:         $( [[ -n "$REPO_URL" ]] && echo "$REPO_URL (branch: $BRANCH)" || echo "Copy current directory" )"
     echo "Demo Mode:      $( $DEMO_MODE && echo "Yes (per-visitor sandboxed databases)" || echo "No" )"
     echo "Seeders:        $( $NO_SEEDERS && echo "Skipped" || echo "Production seeders" )"
+    echo "Setup:          $( [[ -n "$SETUP_FILE" ]] && echo "From $SETUP_FILE" || echo "Setup wizard" )"
+    echo "SYSTEM locked:  $( $LOCK_SYSTEM && echo "Yes" || echo "No" )"
     echo ""
     echo "Cache/Queue/Session: Redis (AOF fsync=always, volatile-lru)"
     echo "Phases: Packages → App Setup → Redis → Database → Caddy → SSL → Systemd → Firewall → Cache"
@@ -1091,6 +1111,7 @@ configure_env() {
     set_env "LOG_STACK" "daily"
     set_env "LOG_DAILY_DAYS" "14"
     set_env "DEVELOPER_MODE" "false"
+    set_env "SYSTEM_ACCOUNT_LOCKED" "$LOCK_SYSTEM"
 
     set_env "DB_CONNECTION" "mysql"
     set_env "DB_HOST" "127.0.0.1"
@@ -1370,6 +1391,12 @@ DEMOEOF
         done
     else
         log_warn "Seeders skipped (--no-seeders)"
+    fi
+
+    # Read as root and piped in, so the file needn't be readable by the app user.
+    if [[ -n "$SETUP_FILE" ]]; then
+        log_info "Applying setup file ${SETUP_FILE}..."
+        sudo -u fdcommander php artisan setup:apply - < "$SETUP_FILE"
     fi
 
     log_info "Database setup complete"
@@ -1824,9 +1851,15 @@ finalize() {
             echo "  5. For HTTPS: re-run with --ssl --email <address> and a real domain name"
         fi
     else
-        echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} now: the setup wizard sets the"
-        echo "     SYSTEM admin password (anyone who reaches it first can complete it)"
-        echo "  2. Then sign in with callsign SYSTEM and the password you chose"
+        if [[ -n "$SETUP_FILE" ]]; then
+            echo "  1. Setup is complete from ${SETUP_FILE}. Use the invitation link printed"
+            echo "     above, or open SYSTEM with: sudo -u fdcommander php ${APP_PATH}/artisan user:sign-in-link"
+            echo "  2. Delete ${SETUP_FILE} if it holds a password"
+        else
+            echo "  1. Visit ${SCHEME}://${DOMAIN}${PORT_SUFFIX} now: the setup wizard sets the"
+            echo "     SYSTEM admin password (anyone who reaches it first can complete it)"
+            echo "  2. Then sign in with callsign SYSTEM and the password you chose"
+        fi
         echo "  3. Review firewall settings if not configured"
         echo "  4. Schedule backups: sudo ${APP_PATH}/backup.sh --install-schedule"
         if ! $SSL_ENABLED; then

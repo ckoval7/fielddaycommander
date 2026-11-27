@@ -1,0 +1,75 @@
+# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "fd-commander.fullname" . }}
+  labels:
+    {{- include "fd-commander.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "fd-commander.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Web and WebSocket traffic from the ingress controller.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              {{- toYaml .Values.networkPolicy.ingressNamespaceSelector | nindent 14 }}
+      ports:
+        - port: http
+        {{- if .Values.reverb.enabled }}
+        - port: reverb
+        {{- end }}
+  egress:
+    # DNS, in whichever namespace the cluster runs it.
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    {{- if or .Values.mysql.enabled .Values.redis.enabled }}
+    # This release's bundled MySQL and Redis.
+    - to:
+        {{- if .Values.mysql.enabled }}
+        - podSelector:
+            matchLabels:
+              {{- include "fd-commander.backingSelectorLabels" (dict "component" "mysql" "context" $) | nindent 14 }}
+        {{- end }}
+        {{- if .Values.redis.enabled }}
+        - podSelector:
+            matchLabels:
+              {{- include "fd-commander.backingSelectorLabels" (dict "component" "redis" "context" $) | nindent 14 }}
+        {{- end }}
+    {{- end }}
+    {{- if .Values.networkPolicy.allowInternet }}
+    # Public addresses only: weather lookups (HTTPS) and outgoing mail.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 100.64.0.0/10
+              - 169.254.0.0/16
+      ports:
+        {{- range .Values.networkPolicy.internetPorts }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
+    {{- end }}
+    {{- with .Values.networkPolicy.extraEgress }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}
