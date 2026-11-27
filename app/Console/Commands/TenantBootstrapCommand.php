@@ -39,6 +39,31 @@ class TenantBootstrapCommand extends Command
 
     public function handle(): int
     {
+        $skip = $this->skipStatus();
+
+        if ($skip !== null) {
+            return $skip;
+        }
+
+        $data = $this->readBootstrapFile();
+
+        if ($data === null) {
+            return self::FAILURE;
+        }
+
+        $owner = $this->bootstrap($data);
+
+        $this->info("Set up the club. {$owner->call_sign} is its System Administrator.");
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * The exit status when there's nothing to do here: outside hosted mode,
+     * or once setup is complete. Null when the club still needs setting up.
+     */
+    private function skipStatus(): ?int
+    {
         if (! HostedMode::isEnabled()) {
             $this->error('tenant:bootstrap only runs with HOSTED_MODE=true. Self-hosted installs use the setup wizard.');
 
@@ -51,37 +76,60 @@ class TenantBootstrapCommand extends Command
             return self::SUCCESS;
         }
 
-        $path = (string) ($this->option('from') ?: config('hosted.bootstrap_file'));
+        return null;
+    }
 
-        if (! File::isReadable($path)) {
-            $this->error("Bootstrap file {$path} is missing or unreadable.");
+    /**
+     * The validated bootstrap data, or null after reporting why the file
+     * can't be used.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function readBootstrapFile(): ?array
+    {
+        $input = $this->decodeBootstrapFile((string) ($this->option('from') ?: config('hosted.bootstrap_file')));
 
-            return self::FAILURE;
+        if ($input === null) {
+            return null;
         }
 
-        try {
-            $input = json_decode(File::get($path), true, 16, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            $this->error("Bootstrap file {$path} is not valid JSON: {$exception->getMessage()}");
-
-            return self::FAILURE;
-        }
-
-        $validator = Validator::make(is_array($input) ? self::normalize($input) : [], self::rules());
+        $validator = Validator::make(self::normalize($input), self::rules());
 
         if ($validator->fails()) {
             foreach ($validator->errors()->all() as $message) {
                 $this->error($message);
             }
 
-            return self::FAILURE;
+            return null;
         }
 
-        $owner = $this->bootstrap($validator->validated());
+        return $validator->validated();
+    }
 
-        $this->info("Set up the club. {$owner->call_sign} is its System Administrator.");
+    /**
+     * The decoded JSON at the path ([] when it isn't an object, so that
+     * validation reports what's missing), or null after reporting that it is
+     * missing, unreadable or not JSON.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function decodeBootstrapFile(string $path): ?array
+    {
+        if (! File::isReadable($path)) {
+            $this->error("Bootstrap file {$path} is missing or unreadable.");
 
-        return self::SUCCESS;
+            return null;
+        }
+
+        try {
+            $decoded = json_decode(File::get($path), true, 16, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            $this->error("Bootstrap file {$path} is not valid JSON: {$exception->getMessage()}");
+
+            return null;
+        }
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**

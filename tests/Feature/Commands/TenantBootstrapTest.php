@@ -117,3 +117,21 @@ test('rejects an invalid bootstrap file without setting anything up', function (
 test('fails on a missing file', function () {
     $this->artisan('tenant:bootstrap', ['--from' => '/nonexistent/tenant.json'])->assertFailed();
 });
+
+test('reports what is missing when the file is not a JSON object', function (string $contents) {
+    file_put_contents($this->bootstrapFile, $contents);
+
+    $this->artisan('tenant:bootstrap', ['--from' => $this->bootstrapFile])
+        ->expectsOutputToContain('required')
+        ->assertFailed();
+
+    expect(Organization::count())->toBe(0);
+})->with(['null' => 'null', 'list' => '[1, 2]', 'string' => '"club"']);
+
+test('fails on a file that is not JSON', function () {
+    file_put_contents($this->bootstrapFile, '{not json');
+
+    $this->artisan('tenant:bootstrap', ['--from' => $this->bootstrapFile])
+        ->expectsOutputToContain('is not valid JSON')
+        ->assertFailed();
+});
