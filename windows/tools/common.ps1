@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Shared helpers for the Start menu backup and restore tools. Dot-source it.

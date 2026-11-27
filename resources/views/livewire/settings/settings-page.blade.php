@@ -1,5 +1,5 @@
 {{--
-    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 <div class="max-w-7xl mx-auto py-8 px-4 max-sm:px-0">

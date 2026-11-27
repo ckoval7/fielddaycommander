@@ -1,5 +1,5 @@
 {{--
-    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- @var $row array{equipment_description: string, serial_number: ?string, status: string, owner_name: string, owner_callsign: ?string, station: string, value_usd: ?float, status_changed_at: ?string, circumstances: ?string} --}}

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # The Sail PHP image plus Chromium and its system libraries, for the Pest
