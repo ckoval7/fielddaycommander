@@ -71,9 +71,13 @@ externalRedis:
 externalLoggers:
   enabled: false
 
+# The hosting cluster runs Traefik in the traefik namespace, which redirects
+# plain HTTP to HTTPS on its web entry point and sets its own request
+# limits. maxBodySize only sets an ingress-nginx annotation, so it's off.
 ingress:
   enabled: true
-  className: nginx
+  className: traefik
+  maxBodySize: ""
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt
   host: ""
@@ -82,6 +86,8 @@ ingress:
 
 networkPolicy:
   enabled: true
+  ingressNamespaceSelector:
+    kubernetes.io/metadata.name: traefik
   extraEgress:
     - to:
         - namespaceSelector:
