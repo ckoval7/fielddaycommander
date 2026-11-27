@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Services\LoginThrottle;
 use App\Support\AuthSecurity;
 use App\Support\PasswordResetLinks;
+use App\Support\SystemAccount;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -140,6 +141,12 @@ class FortifyServiceProvider extends ServiceProvider
     private function authenticate(Request $request): ?User
     {
         $user = $this->findLoginUser((string) $request->input(Fortify::username()));
+
+        // A locked SYSTEM opens only through a one-time sign-in link.
+        if (SystemAccount::isLockedAccount($user)) {
+            return null;
+        }
+
         $throttle = app(LoginThrottle::class);
 
         if ($user && ($seconds = $throttle->secondsUntilAvailable($user)) > 0) {

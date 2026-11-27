@@ -19,6 +19,7 @@ class AuditLog extends Model
         'user.login.success' => 'Signed in',
         'user.login.failed' => 'Failed sign-in attempt',
         'user.login.2fa_failed' => 'Failed 2FA verification',
+        'user.login.sign_in_link' => 'Signed in with a one-time link',
         'user.2fa.challenge' => '2FA challenge',
         'user.logout' => 'Signed out',
         'user.register' => 'User registered',

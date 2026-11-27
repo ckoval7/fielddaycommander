@@ -5,6 +5,7 @@
 
 use App\Http\Controllers\AlbumExportController;
 use App\Http\Controllers\Auth\InvitationController;
+use App\Http\Controllers\Auth\SignInLinkController;
 use App\Http\Controllers\ContactSyncController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Equipment\EquipmentReportController;
@@ -70,6 +71,12 @@ Route::prefix('setup')->group(function () {
 // User Invitation Routes
 Route::get('/register/invite/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/register/invite/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
+
+// One-time sign-in links from `php artisan user:sign-in-link` (or a service
+// holding SIGN_IN_LINK_KEY). See App\Support\SignInLinks.
+Route::get('/sign-in/link', SignInLinkController::class)
+    ->middleware('throttle:10,1')
+    ->name('sign-in-link');
 
 // Station Mode (walk-up logging on an enrolled browser)
 Route::get('/station-mode', StationModeLanding::class)->name('station-mode.landing');

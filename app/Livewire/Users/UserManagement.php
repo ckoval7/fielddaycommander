@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitation as UserInvitationNotification;
 use App\Support\AuthSecurity;
+use App\Support\SystemAccount;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -165,6 +166,7 @@ class UserManagement extends Component
     {
         return User::query()
             ->with(['roles.permissions', 'permissions'])
+            ->when(SystemAccount::isLocked(), fn ($query) => $query->excludeSystem())
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('call_sign', 'like', "%{$this->search}%")

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Complete first-time setup from a JSON file with `php artisan setup:apply`, Docker, `deploy.sh`, or Helm instead of using the setup wizard. See `DOCKER.md` for the file format and deployment options.
+- Use `php artisan user:sign-in-link` to sign in to SYSTEM or another account once without a password or two-factor authentication. Each use appears in **Audit Logs**.
+- Set `SYSTEM_ACCOUNT_LOCKED=true` after creating a named System Administrator to hide SYSTEM and allow access only through a one-time sign-in link. Use `--lock-system` with `deploy.sh` or `app.systemAccountLocked` with Helm.
+- Helm chart users can set `externalRedis.username` for a Redis 6+ ACL user. When bundled Redis is off, the chart sends it as `REDIS_USERNAME`. Set `externalRedis.prefix` to give each release its own cache, sessions, and queues on a shared Redis server. Blank keeps the old behavior. Changing the prefix on a running install signs everyone out and strands jobs queued under the old prefix.
+- Helm chart users can enable `networkPolicy.enabled` to restrict traffic to and from the app pod. It defaults to `false` and needs a CNI that enforces NetworkPolicy. Inbound traffic is allowed from the ingress controller namespace selected by `networkPolicy.ingressNamespaceSelector`, which defaults to `ingress-nginx`. Outbound traffic is allowed to DNS, the release's bundled MySQL and Redis, and public addresses on ports 443, 587, 465, and 25 for weather and mail (`networkPolicy.allowInternet` and `networkPolicy.internetPorts`), plus any `networkPolicy.extraEgress` rules.
+
 ### Fixed
 
 - On **Create Event**, **Edit Event**, and **Clone Event**, a thin line flashed under the header with every key press in **Event Name**, and when you changed switches or selections. The line now appears only while the event is being saved. The year in the name, such as "Field Day 2026", is now checked when you leave the field. It still fills in the event year and, on create and clone, the dates for supported event types.
