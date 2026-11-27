@@ -8,6 +8,7 @@
 - On Docker, Helm, and `deploy.sh` installs, pages and contact saves were slower and used more CPU than they should have because the app started from scratch on every request. The app now stays loaded between requests. Docker and Helm users can pull the new image. On a `deploy.sh` install, run `sudo ./update.sh`.
 - With many members, a contact that worked a new section or reached a 50-QSO milestone could take a long time to save while notifications were sent to every member. Notifications are now sent by the queue worker after the save and may arrive a moment later.
 - With N1MM Logger+, WSJT-X/JTDX, fldigi, ADIF over UDP, or Field Day Commander Relay, changing the operator, band, or mode could leave several sessions open at a station until they had been idle for 30 minutes. The previous logger session now ends when a contact arrives under the new operator, band, or mode. Sessions started in the browser aren't affected.
+- In **Reports**, the Winter Field Day event summary and ARRL Field Day submission sheet showed fixed titles with the start date's year in their headings and footers, so a 2027 event held in 2026 showed 2026. They now show the name entered in **Event Name**, and their file names, like the Field Day Cabrillo log's, use the event's year.
 
 ## 26.11.3 - 2026-11-25
 

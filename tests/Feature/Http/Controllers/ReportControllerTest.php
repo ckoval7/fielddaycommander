@@ -45,6 +45,7 @@ beforeEach(function () {
     ]);
 
     $this->event = Event::factory()->create([
+        'year' => 2027,
         'start_time' => now()->subHours(12),
         'end_time' => now()->addHours(12),
     ]);
@@ -82,16 +83,13 @@ describe('cabrillo endpoint', function () {
             ->toContain('END-OF-LOG:');
     });
 
-    test('filename header contains callsign and year', function () {
-        $year = now()->subHours(12)->year;
-
+    test('filename header contains callsign and the event year', function () {
         $disposition = $this->actingAs($this->user)
             ->get(route('reports.cabrillo'))
             ->headers->get('Content-Disposition');
 
         expect($disposition)
-            ->toContain('w1aw')
-            ->toContain((string) $year);
+            ->toContain('w1aw-2027-');
     });
 
     test('returns 404 when no active event exists', function () {
@@ -165,8 +163,7 @@ describe('submission-sheet endpoint', function () {
 
         expect($disposition)
             ->toStartWith('inline')
-            ->toContain('w1aw')
-            ->toContain('submission-sheet');
+            ->toContain('w1aw-2027-submission-sheet.pdf');
     });
 
     test('returns 404 when no active event exists', function () {

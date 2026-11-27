@@ -347,6 +347,27 @@ describe('WFD event summary', function () {
         expect($response->headers->get('Content-Disposition'))->toStartWith('inline')->toContain('k4sco_p-')->toContain('event-summary.pdf');
     })->with(['2027', '2026']);
 
+    test('titles the summary with the event name and files it under the event year', function () {
+        $config = makeReportEvent('WFD', '2027');
+        $config->event->update([
+            'name' => 'Anytown ARC Winter Field Day 2027',
+            'year' => 2027,
+            'start_time' => '2026-11-27 16:00:00',
+            'end_time' => '2026-11-28 22:00:00',
+        ]);
+
+        $data = app(WfdEventSummaryService::class)->getData($config->fresh());
+
+        expect($data['event_name'])->toBe('Anytown ARC Winter Field Day 2027')
+            ->and($data['event_year'])->toBe(2027);
+
+        $html = view('reports.wfd-event-summary-pdf', $data)->render();
+        expect($html)->toContain('Anytown ARC Winter Field Day 2027 — Event Summary')->not->toContain('2026 —');
+
+        $response = $this->actingAs($this->user)->get(route('reports.wfd-event-summary'));
+        expect($response->headers->get('Content-Disposition'))->toContain('-2027-event-summary.pdf');
+    });
+
     test('includes the saved bulletin copy under its WFD name', function () {
         $config = makeReportEvent('WFD', '2027');
         W1awBulletin::factory()->create([

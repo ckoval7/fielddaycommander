@@ -94,7 +94,8 @@ class SubmissionReportService
             'bulletin' => $bulletin,
 
             // Metadata
-            'event_year' => $config->event->start_time->year,
+            'event_name' => $config->event->name,
+            'event_year' => $config->event->year,
             'event_start' => $config->event->start_time,
             'event_end' => $config->event->end_time,
             'generated_at' => now(),
