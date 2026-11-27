@@ -225,10 +225,9 @@ class CabrilloExporter
             return str_replace('/', '_', strtoupper($config->callsign)).'.log';
         }
 
-        $year = $config->event->start_time->year;
         $callsign = strtolower(str_replace('/', '_', $config->callsign));
 
-        return "{$callsign}-{$year}-{$config->logFilenameSlug()}.log";
+        return "{$callsign}-{$config->event->year}-{$config->logFilenameSlug()}.log";
     }
 
     private function powerCategory(int $watts): string
