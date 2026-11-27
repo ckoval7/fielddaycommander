@@ -72,17 +72,21 @@ externalLoggers:
   enabled: false
 
 # The hosting cluster runs Traefik in the traefik namespace, which redirects
-# plain HTTP to HTTPS on its web entry point and sets its own request
-# limits. maxBodySize only sets an ingress-nginx annotation, so it's off.
+# plain HTTP to HTTPS on its web entry point and serves one wildcard
+# certificate for every club as its default. So a club's Ingress has no TLS
+# section or certificate of its own: the annotations make it HTTPS-only on
+# Traefik's websecure entry point, with that default certificate.
+# maxBodySize only sets an ingress-nginx annotation, so it's off.
 ingress:
   enabled: true
   className: traefik
   maxBodySize: ""
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
   host: ""
   tls:
-    enabled: true
+    enabled: false
 
 networkPolicy:
   enabled: true
