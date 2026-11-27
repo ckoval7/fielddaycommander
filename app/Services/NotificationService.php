@@ -7,6 +7,7 @@ namespace App\Services;
 
 use App\Enums\NotificationCategory;
 use App\Events\NewNotification;
+use App\Jobs\NotifyAllUsers;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 use Illuminate\Support\Facades\Log;
@@ -50,9 +51,25 @@ class NotificationService
     }
 
     /**
-     * Send a notification to all users subscribed to the given category.
+     * Queue a notification for all users subscribed to the given category.
+     *
+     * The per-user writes run on the queue, so the save that triggered the
+     * notification doesn't wait on them.
      */
     public function notifyAll(
+        NotificationCategory $category,
+        string $title,
+        string $message,
+        ?string $url = null,
+        ?string $groupKey = null,
+    ): void {
+        NotifyAllUsers::dispatch($category, $title, $message, $url, $groupKey);
+    }
+
+    /**
+     * Send a notification to all users subscribed to the given category, now.
+     */
+    public function sendToAll(
         NotificationCategory $category,
         string $title,
         string $message,

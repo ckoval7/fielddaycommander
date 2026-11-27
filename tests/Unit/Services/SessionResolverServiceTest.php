@@ -145,3 +145,97 @@ test('closes session by setting end_time', function () {
     $session->refresh();
     expect($session->end_time)->not->toBeNull();
 });
+
+test('an operator change ends the station\'s previous logger session', function () {
+    $previous = OperatingSession::factory()->external()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_transcription' => false,
+        'start_time' => Carbon::parse('2026-06-28 17:00:00'),
+        'end_time' => null,
+    ]);
+    $nextOperator = User::factory()->create();
+
+    $session = $this->resolver->resolve(
+        stationId: $this->station->id,
+        operatorUserId: $nextOperator->id,
+        bandId: $this->band->id,
+        modeId: $this->mode->id,
+        startTime: Carbon::parse('2026-06-28 18:00:00'),
+        externalSource: 'N1MM',
+    );
+
+    expect($session->id)->not->toBe($previous->id)
+        ->and($previous->fresh()->end_time->toDateTimeString())->toBe('2026-06-28 18:00:00')
+        ->and(OperatingSession::where('station_id', $this->station->id)->whereNull('end_time')->count())->toBe(1);
+});
+
+test('a contact for the open logger session leaves it open', function () {
+    $open = OperatingSession::factory()->external()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_transcription' => false,
+        'end_time' => null,
+    ]);
+
+    $this->resolver->resolve(
+        stationId: $this->station->id,
+        operatorUserId: $this->user->id,
+        bandId: $this->band->id,
+        modeId: $this->mode->id,
+        startTime: Carbon::parse('2026-06-28 18:00:00'),
+        externalSource: 'N1MM',
+    );
+
+    expect($open->fresh()->end_time)->toBeNull();
+});
+
+test('a logger contact leaves sessions started in the browser open', function () {
+    $browser = OperatingSession::factory()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_transcription' => false,
+        'external_source' => null,
+        'end_time' => null,
+    ]);
+
+    $this->resolver->resolve(
+        stationId: $this->station->id,
+        operatorUserId: User::factory()->create()->id,
+        bandId: $this->band->id,
+        modeId: $this->mode->id,
+        startTime: Carbon::parse('2026-06-28 18:00:00'),
+        externalSource: 'N1MM',
+    );
+
+    expect($browser->fresh()->end_time)->toBeNull();
+});
+
+test('a backdated contact does not end a session before it started', function () {
+    $previous = OperatingSession::factory()->external()->create([
+        'station_id' => $this->station->id,
+        'operator_user_id' => $this->user->id,
+        'band_id' => $this->band->id,
+        'mode_id' => $this->mode->id,
+        'is_transcription' => false,
+        'start_time' => Carbon::parse('2026-06-28 19:00:00'),
+        'end_time' => null,
+    ]);
+
+    $this->resolver->resolve(
+        stationId: $this->station->id,
+        operatorUserId: User::factory()->create()->id,
+        bandId: $this->band->id,
+        modeId: $this->mode->id,
+        startTime: Carbon::parse('2026-06-28 18:00:00'),
+        externalSource: 'N1MM',
+    );
+
+    expect($previous->fresh()->end_time->toDateTimeString())->toBe('2026-06-28 19:00:00');
+});

@@ -4,11 +4,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use App\Enums\NotificationCategory;
+use App\Jobs\NotifyAllUsers;
 use App\Models\User;
 use App\Notifications\InAppNotification;
 use App\Services\DeveloperClockService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->service = new NotificationService;
@@ -91,6 +93,26 @@ test('notifyAll sends to all subscribed users', function () {
 
     Notification::assertSentTo($subscribedUser, InAppNotification::class);
     Notification::assertNotSentTo($unsubscribedUser, InAppNotification::class);
+});
+
+test('notifyAll queues the fan-out instead of writing for each user inline', function () {
+    Queue::fake();
+    Notification::fake();
+
+    User::factory()->count(3)->create();
+
+    $this->service->notifyAll(
+        category: NotificationCategory::QsoMilestone,
+        title: 'QSO Milestone!',
+        message: '50 QSOs logged',
+        groupKey: 'qso_milestone_50',
+    );
+
+    Notification::assertNothingSent();
+    Queue::assertPushed(NotifyAllUsers::class, function (NotifyAllUsers $job): bool {
+        return $job->category === NotificationCategory::QsoMilestone
+            && $job->groupKey === 'qso_milestone_50';
+    });
 });
 
 test('shouldDebounce returns false when no recent notifications exist', function () {

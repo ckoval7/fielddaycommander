@@ -9,7 +9,7 @@
         title="{{ $mode === 'create' ? 'Create Event' : ($mode === 'clone' ? 'Clone Event' : 'Edit Event') }}"
         subtitle="{{ $mode === 'create' ? 'Set up a Field Day or Winter Field Day event' : ($mode === 'clone' ? 'Create a copy of this event with updated details' : 'Update event details and configuration') }}"
         separator
-        progress-indicator
+        progress-indicator="save"
     >
         <x-slot:actions class="flex-wrap max-sm:w-full">
             <x-button
@@ -38,7 +38,7 @@
                 <div class="md:col-span-6">
                     <x-input
                         label="Event Name"
-                        wire:model.live="name"
+                        wire:model.blur="name"
                         autocapitalize="words"
                         required
                         icon="phosphor-calendar"
