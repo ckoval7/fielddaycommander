@@ -48,8 +48,11 @@ afterEach(function () {
 test('completes setup with a named System Administrator', function () {
     ($this->writeSetup)();
 
+    // The token came from the file, so it stays out of the output (and the
+    // container log).
     $this->artisan('setup:apply', ['file' => $this->setupFile])
-        ->expectsOutputToContain(route('invitation.show', str_repeat('a', 64)))
+        ->doesntExpectOutputToContain(str_repeat('a', 64))
+        ->expectsOutputToContain('token from the setup file')
         ->assertSuccessful();
 
     $admin = User::where('call_sign', 'K1ABC')->firstOrFail();
@@ -89,7 +92,9 @@ test('the admin, their invitation token and the SYSTEM password are optional', f
 test('generates an invitation that lasts 72 hours when the file gives none', function () {
     ($this->writeSetup)(without: ['admin.invitation_token', 'admin.invitation_expires_at']);
 
-    $this->artisan('setup:apply', ['file' => $this->setupFile])->assertSuccessful();
+    $this->artisan('setup:apply', ['file' => $this->setupFile])
+        ->expectsOutputToContain('/register/invite/')
+        ->assertSuccessful();
 
     $invitation = UserInvitation::sole();
     expect(strlen($invitation->token))->toBe(64)
