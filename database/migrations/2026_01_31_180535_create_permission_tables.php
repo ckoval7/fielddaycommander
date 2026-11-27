@@ -1,7 +1,7 @@
 <?php
 
 // SPDX-FileCopyrightText: Spatie bvba <info@spatie.be>
-// SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+// SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
 // SPDX-License-Identifier: GPL-3.0-or-later AND MIT
 
 use Illuminate\Database\Migrations\Migration;

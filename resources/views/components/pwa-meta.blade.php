@@ -1,5 +1,5 @@
 {{--
-    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- Home-screen install metadata. theme-color starts on the light base-100 and the

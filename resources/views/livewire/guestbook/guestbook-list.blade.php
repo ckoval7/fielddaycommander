@@ -1,5 +1,5 @@
 {{--
-    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- A container, so the entry grid follows the space it's given (half the guestbook page, or the full kiosk width) rather than the screen --}}
