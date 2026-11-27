@@ -178,13 +178,13 @@ test('excludes duplicate contacts from qso lines', function () {
 });
 
 test('generates a correct filename', function () {
-    $config = makeCabrilloExporterConfig([], ['start_time' => '2025-06-28 12:00:00']);
+    $config = makeCabrilloExporterConfig([], ['year' => 2025, 'start_time' => '2025-06-28 12:00:00']);
     $filename = app(CabrilloExporter::class)->filename($config);
     expect($filename)->toBe('w1aw-2025-field-day.log');
 });
 
 test('field day filename replaces a slash in a portable callsign', function () {
-    $config = makeCabrilloExporterConfig(['callsign' => 'W1AW/1'], ['start_time' => '2025-06-28 12:00:00']);
+    $config = makeCabrilloExporterConfig(['callsign' => 'W1AW/1'], ['year' => 2025, 'start_time' => '2025-06-28 12:00:00']);
     expect(app(CabrilloExporter::class)->filename($config))->toBe('w1aw_1-2025-field-day.log');
 });
 
