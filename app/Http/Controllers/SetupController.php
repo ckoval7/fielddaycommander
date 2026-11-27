@@ -8,11 +8,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SetupStep1Request;
 use App\Http\Requests\SetupStep2Request;
 use App\Http\Requests\SetupStep3Request;
-use App\Models\Organization;
-use App\Models\Setting;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use App\Services\InitialSetupService;
+use App\Support\SystemAccount;
 use Illuminate\Support\Facades\Storage;
 
 class SetupController extends Controller
@@ -60,7 +57,7 @@ class SetupController extends Controller
         return view('setup.preferences', ['step' => 3]);
     }
 
-    public function complete(SetupStep3Request $request)
+    public function complete(SetupStep3Request $request, InitialSetupService $setup)
     {
         $step1 = $request->session()->get('setup_wizard.step1');
         $step2 = $request->session()->get('setup_wizard.step2');
@@ -72,76 +69,50 @@ class SetupController extends Controller
                 ->with('error', 'Setup details are missing. Please start again with the admin password.');
         }
 
-        DB::transaction(function () use ($step1, $step2, $step3) {
-            // Create or update the system admin account
-            $admin = User::updateOrCreate(
-                ['call_sign' => User::SYSTEM_CALL_SIGN],
-                [
-                    'first_name' => 'System',
-                    'last_name' => 'Administrator',
-                    'email' => 'admin@localhost',
-                    'password' => Hash::make($step1['admin_password']),
-                    'user_role' => 'admin',
-                    'email_verified_at' => now(),
-                ]
-            );
-
-            // Ensure the admin has the Config Only role
-            if (! $admin->hasRole('Config Only')) {
-                $admin->assignRole('Config Only');
-            }
-
-            // Create default organization
-            $organization = Organization::create([
+        $setup->complete([
+            'system_password' => $step1['admin_password'],
+            'organization' => [
                 'name' => $step3['organization_name'],
                 'callsign' => $step3['organization_callsign'] ?? null,
                 'email' => $step3['organization_email'] ?? null,
                 'phone' => $step3['organization_phone'] ?? null,
-                'is_active' => true,
-            ]);
-
-            // Store organization ID as system setting
-            Setting::set('default_organization_id', $organization->id);
-
-            // Save site branding settings
-            Setting::set('site_name', $step2['site_name']);
-            if (! empty($step2['site_tagline'])) {
-                Setting::set('site_tagline', $step2['site_tagline']);
-            }
-
-            // Move logo from temp to permanent storage
-            if (! empty($step2['logo_temp_path'])) {
-                $tempPath = $step2['logo_temp_path'];
-                $extension = pathinfo(Storage::path($tempPath), PATHINFO_EXTENSION);
-                $filename = 'logo-'.time().'.'.$extension;
-                $permanentPath = 'branding/'.$filename;
-
-                Storage::disk('public')->put(
-                    $permanentPath,
-                    Storage::get($tempPath)
-                );
-
-                Storage::delete($tempPath); // Clean up temp file
-                Setting::set('site_logo_path', $permanentPath);
-            }
-
-            // Save system preferences
-            Setting::set('timezone', $step3['timezone']);
-            Setting::set('date_format', $step3['date_format']);
-            Setting::set('time_format', $step3['time_format']);
-            Setting::set('datetime_format', $step3['date_format'].' '.$step3['time_format']);
-
-            if (! empty($step3['contact_email'])) {
-                Setting::set('contact_email', $step3['contact_email']);
-            }
-
-            // Mark setup as complete
-            Setting::set('setup_completed', 'true');
-        });
+            ],
+            'site_name' => $step2['site_name'],
+            'site_tagline' => $step2['site_tagline'] ?? null,
+            'site_logo_path' => $this->storeLogo($step2['logo_temp_path'] ?? null),
+            'timezone' => $step3['timezone'],
+            'date_format' => $step3['date_format'],
+            'time_format' => $step3['time_format'],
+            'contact_email' => $step3['contact_email'] ?? null,
+        ], method: 'setup wizard');
 
         // Clear wizard session data
         $request->session()->forget('setup_wizard');
 
+        if (SystemAccount::isLocked()) {
+            return redirect()->route('login')->with('success', 'Setup is complete. SYSTEM is locked, so open it with php artisan user:sign-in-link on the server.');
+        }
+
         return redirect()->route('login')->with('success', 'Setup is complete! Please sign in with admin@localhost and the password you set.');
+    }
+
+    /**
+     * Move the logo uploaded in step 2 from temporary to public storage.
+     *
+     * @return string|null The logo's path on the public disk.
+     */
+    private function storeLogo(?string $tempPath): ?string
+    {
+        if (blank($tempPath)) {
+            return null;
+        }
+
+        $extension = pathinfo(Storage::path($tempPath), PATHINFO_EXTENSION);
+        $permanentPath = 'branding/logo-'.time().'.'.$extension;
+
+        Storage::disk('public')->put($permanentPath, Storage::get($tempPath));
+        Storage::delete($tempPath);
+
+        return $permanentPath;
     }
 }

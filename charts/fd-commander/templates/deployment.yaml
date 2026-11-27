@@ -138,6 +138,13 @@ spec:
                   name: {{ include "fd-commander.secretName" . }}
                   key: MAIL_PASSWORD
             {{- end }}
+            {{- with dig "keySecret" "" (.Values.signInLinks | default dict) }}
+            - name: SIGN_IN_LINK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: {{ dig "keySecretKey" "SIGN_IN_LINK_KEY" $.Values.signInLinks }}
+            {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -176,7 +183,23 @@ spec:
           volumeMounts:
             - name: storage
               mountPath: /app/storage
+            {{- if dig "existingSecret" "" (.Values.setup | default dict) }}
+            # Read by setup:apply on boot (see docker/entrypoint.sh).
+            - name: setup-file
+              mountPath: /run/fd-commander/setup
+              readOnly: true
+            {{- end }}
       volumes:
+        {{- with dig "existingSecret" "" (.Values.setup | default dict) }}
+        - name: setup-file
+          secret:
+            secretName: {{ . }}
+            # It may be deleted once setup is complete.
+            optional: true
+            items:
+              - key: {{ dig "secretKey" "setup.json" $.Values.setup }}
+                path: setup.json
+        {{- end }}
         - name: storage
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:

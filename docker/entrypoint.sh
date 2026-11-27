@@ -115,6 +115,18 @@ else
     echo "Seeders already ran (marker exists), skipping."
 fi
 
+# 7b. Complete first-time setup from a file instead of the setup wizard.
+#     setup:apply does nothing once setup is complete, and a missing file is
+#     skipped so the file can be removed after the first boot.
+if [[ -n "${SETUP_FILE:-}" ]]; then
+    if [[ -f "$SETUP_FILE" ]]; then
+        echo "Applying setup file $SETUP_FILE..."
+        php artisan setup:apply "$SETUP_FILE"
+    else
+        echo "No setup file at $SETUP_FILE, skipping."
+    fi
+fi
+
 # 8. Cache configuration
 echo "Optimizing application (config/route/view/event caches)..."
 php artisan optimize

@@ -36,4 +36,18 @@ return [
     // self-signed certificates for that host until it expires, which can lock
     // field sites out. Set it (e.g. 31536000) only behind a trusted certificate.
     'hsts_max_age' => (int) env('SECURITY_HSTS_MAX_AGE', 0),
+
+    // Lock the SYSTEM setup account once the club has a named System
+    // Administrator: it can't sign in with a password, is left out of the
+    // user list and can't be edited. It still opens through a one-time
+    // sign-in link from `php artisan user:sign-in-link`.
+    'system_account_locked' => (bool) env('SYSTEM_ACCOUNT_LOCKED', false),
+
+    // One-time sign-in links (`php artisan user:sign-in-link`). The command
+    // signs links with a key derived from APP_KEY. Set SIGN_IN_LINK_KEY to
+    // also accept links signed by an outside service, such as a hosting
+    // provider's support desk. A link can't be made to last longer than
+    // sign_in_link_max_minutes.
+    'sign_in_link_key' => env('SIGN_IN_LINK_KEY'),
+    'sign_in_link_max_minutes' => (int) env('SIGN_IN_LINK_MAX_MINUTES', 10),
 ];
