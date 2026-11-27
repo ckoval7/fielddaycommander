@@ -10,6 +10,7 @@
 ### Fixed
 
 - On **Create Event**, **Edit Event**, and **Clone Event**, a thin line flashed under the header with every key press in **Event Name**, and when you changed switches or selections. The line now appears only while the event is being saved. The year in the name, such as "Field Day 2026", is now checked when you leave the field. It still fills in the event year and, on create and clone, the dates for supported event types.
+- On Docker, Helm, and `deploy.sh` installs, pages and contact saves were slower and used more CPU than they should have because the app started from scratch on every request. The app now stays loaded between requests. Docker and Helm users can pull the new image. On a `deploy.sh` install, run `sudo ./update.sh`.
 
 ## 26.11.3 - 2026-11-25
 

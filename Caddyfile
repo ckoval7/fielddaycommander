@@ -1,6 +1,18 @@
 # SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Run the app in Octane worker mode. Without this block FrankenPHP boots
+# Laravel from scratch on every request. octane:frankenphp sets these
+# variables (worker count from --workers, MAX_REQUESTS from --max-requests).
+{
+	frankenphp {
+		worker {
+			file "{$APP_PUBLIC_PATH}/frankenphp-worker.php"
+			{$CADDY_SERVER_WORKER_DIRECTIVE}
+		}
+	}
+}
+
 {$CADDY_SITE_ADDRESS::80} {
 	root * {$APP_PATH:/var/www/fd-commander}/public
 	encode zstd gzip
@@ -33,5 +45,10 @@
 		}
 	}
 
-	php_server
+	php_server {
+		index frankenphp-worker.php
+		try_files {path} frankenphp-worker.php
+		# Required for the public/storage/ symlink
+		resolve_root_symlink
+	}
 }
