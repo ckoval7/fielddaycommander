@@ -5,6 +5,9 @@
 ### Fixed
 
 - On **Create Event**, **Edit Event**, and **Clone Event**, a thin line flashed under the header with every key press in **Event Name**, and when you changed switches or selections. The line now appears only while the event is being saved. The year in the name, such as "Field Day 2026", is now checked when you leave the field. It still fills in the event year and, on create and clone, the dates for supported event types.
+- On Docker, Helm, and `deploy.sh` installs, pages and contact saves were slower and used more CPU than they should have because the app started from scratch on every request. The app now stays loaded between requests. Docker and Helm users can pull the new image. On a `deploy.sh` install, run `sudo ./update.sh`.
+- With many members, a contact that worked a new section or reached a 50-QSO milestone could take a long time to save while notifications were sent to every member. Notifications are now sent by the queue worker after the save and may arrive a moment later.
+- With N1MM Logger+, WSJT-X/JTDX, fldigi, ADIF over UDP, or Field Day Commander Relay, changing the operator, band, or mode could leave several sessions open at a station until they had been idle for 30 minutes. The previous logger session now ends when a contact arrives under the new operator, band, or mode. Sessions started in the browser aren't affected.
 
 ## 26.11.3 - 2026-11-25
 
