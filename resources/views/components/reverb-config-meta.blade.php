@@ -1,5 +1,5 @@
 {{--
-    SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+    SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
     SPDX-License-Identifier: GPL-3.0-or-later
 --}}
 {{-- Live-update (Reverb) settings for resources/js/bootstrap.js. Host, port and scheme stay null unless
