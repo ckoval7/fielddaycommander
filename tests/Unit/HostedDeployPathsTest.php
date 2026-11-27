@@ -45,5 +45,6 @@ test('the hosted preset turns off what a shared cluster cannot give each club', 
         ->and($values['mysql']['enabled'])->toBeFalse()
         ->and($values['redis']['enabled'])->toBeFalse()
         ->and($values['networkPolicy']['enabled'])->toBeTrue()
-        ->and($values['ingress']['tls']['enabled'])->toBeTrue();
+        ->and($values['ingress']['tls']['enabled'])->toBeFalse()
+        ->and($values['ingress']['annotations']['traefik.ingress.kubernetes.io/router.tls'])->toBe('true');
 });
