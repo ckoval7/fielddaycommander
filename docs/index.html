@@ -371,6 +371,38 @@
   .roles .rail-list li { padding-bottom: 26px; }
   .roles .rail-list li:last-child { padding-bottom: 0; }
 
+  /* ── VIDEO ── */
+  .video { border-top: 1px solid var(--border); }
+  .video-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr);
+    gap: 56px; align-items: center;
+  }
+  .video-credit { margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted); }
+  .video-frame {
+    position: relative; aspect-ratio: 16 / 9; margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--bg-secondary);
+  }
+  .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video-play {
+    position: absolute; inset: 0; display: block;
+    padding: 0; border: 0; background: none; cursor: pointer;
+    color: #fff; text-decoration: none;
+  }
+  .video-play img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .video-play-icon {
+    position: absolute; top: 50%; left: 50%;
+    width: 72px; height: 72px; margin: -36px 0 0 -36px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--rail-accent); color: #15191e;
+    box-shadow: 0 0 0 8px var(--rail-accent-halo);
+    transition: transform 0.25s;
+  }
+  .video-play-icon svg { width: 28px; height: 28px; margin-left: 4px; }
+  .video-play:hover .video-play-icon, .video-play:focus-visible .video-play-icon { transform: scale(1.08); }
+
   /* ── QUICK ANSWERS ── */
   .quick-answers { border-top: 1px solid var(--border); }
   .quick-answers-grid {
@@ -416,7 +448,8 @@
   .closing .deploy-rail { margin: 0; }
 
   @media (max-width: 900px) {
-    .big-screen-grid, .roles-grid, .quick-answers-grid, .closing-grid { grid-template-columns: 1fr; }
+    .big-screen-grid, .roles-grid, .video-grid, .quick-answers-grid, .closing-grid { grid-template-columns: 1fr; }
+    .video-grid { gap: 32px; }
     .roles-grid { gap: 32px; }
     .big-screen-grid { gap: 32px; }
     .quick-answers-grid { gap: 32px; }
@@ -753,6 +786,26 @@
   </div>
 </section>
 
+<section class="video" id="video">
+  <div class="container">
+    <div class="video-grid">
+      <div>
+        <div class="section-label rail-label">Watch the Demo</div>
+        <h2 class="rail-title">See Field Day Commander in use.</h2>
+        <p class="rail-subline">Watch The Ham Radio Guy demonstrate Field Day Commander using the public live demo.</p>
+        <p class="video-credit">The Ham Radio Guy: &ldquo;Is This the ULTIMATE Field Day Tool? Field Day Commander!&rdquo;</p>
+        <a href="https://www.youtube.com/watch?v=lAcsnuLVFVM" target="_blank" rel="noopener" class="rail-link">Watch the episode on YouTube &rarr;</a>
+      </div>
+      <figure class="video-frame">
+        <a class="video-play" href="https://www.youtube.com/watch?v=lAcsnuLVFVM" target="_blank" rel="noopener" data-video-id="lAcsnuLVFVM" aria-label="Play the video: Is This the ULTIMATE Field Day Tool? Field Day Commander!">
+          <img src="screenshots/ham-radio-guy-video.webp" alt="" width="1280" height="720" loading="lazy">
+          <span class="video-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+        </a>
+      </figure>
+    </div>
+  </div>
+</section>
+
 <section class="quick-answers">
   <div class="container">
     <div class="quick-answers-grid">
@@ -891,6 +944,24 @@
           status.textContent = '';
         }, 1600);
       });
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    var link = document.querySelector('.video-play');
+    if (!link) return;
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + link.dataset.videoId + '?autoplay=1&rel=0';
+      iframe.title = 'Is This the ULTIMATE Field Day Tool? Field Day Commander!';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allowFullscreen = true;
+      link.replaceWith(iframe);
+      iframe.focus();
     });
   })();
 </script>
