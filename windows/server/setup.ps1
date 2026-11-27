@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Corey Koval <ckoval7@gmail.com>
+# SPDX-FileCopyrightText: 2026 Corey Koval <support@fielddaycommander.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Sets up, stops or removes the Windows server. The installer runs it as
