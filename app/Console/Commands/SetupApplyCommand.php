@@ -54,7 +54,11 @@ class SetupApplyCommand extends Command
 
         $this->info("Setup is complete for {$result->organization->name}.");
 
-        if ($result->adminInvitation !== null) {
+        // A token from the file is already known to whoever wrote it, and
+        // boot output lands in container logs, so print only one made here.
+        if ($result->adminInvitation !== null && filled($data['admin']['invitation_token'] ?? null)) {
+            $this->info("{$result->adminInvitation->user->call_sign} is the System Administrator. Their invitation link uses the token from the setup file.");
+        } elseif ($result->adminInvitation !== null) {
             $this->info("{$result->adminInvitation->user->call_sign} can choose a password for their System Administrator account at:");
             $this->line(route('invitation.show', $result->adminInvitation->token));
             $this->line('The link expires '.$result->adminInvitation->expires_at->toDayDateTimeString().'.');
