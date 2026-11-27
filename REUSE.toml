@@ -1,6 +1,6 @@
 version = 1
 SPDX-PackageName = "FD Commander website"
-SPDX-PackageSupplier = "Corey Koval <ckoval7@gmail.com>"
+SPDX-PackageSupplier = "Corey Koval <support@fielddaycommander.org>"
 SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
 
 # The site's JavaScript and CSS carry their own SPDX headers. This file covers
@@ -9,7 +9,7 @@ SPDX-PackageDownloadLocation = "https://github.com/ckoval7/fielddaycommander"
 # Default: the app snapshot this branch still carries from main, and tooling.
 [[annotations]]
 path = "**"
-SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-FileCopyrightText = "2026 Corey Koval <support@fielddaycommander.org>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Creative works: the website, images, and documentation.
@@ -21,7 +21,7 @@ path = [
     "README.md",
     "DOCKER.md",
 ]
-SPDX-FileCopyrightText = "2026 Corey Koval <ckoval7@gmail.com>"
+SPDX-FileCopyrightText = "2026 Corey Koval <support@fielddaycommander.org>"
 SPDX-License-Identifier = "CC-BY-NC-SA-4.0"
 
 # Files that started from the MIT-licensed Laravel application skeleton and
@@ -77,7 +77,7 @@ path = [
     "tests/TestCase.php",
     "vite.config.js",
 ]
-SPDX-FileCopyrightText = ["Taylor Otwell", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-FileCopyrightText = ["Taylor Otwell", "2026 Corey Koval <support@fielddaycommander.org>"]
 SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
 
 # Started from the laravel-dompdf config stub.
@@ -85,7 +85,7 @@ SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
 path = [
     "config/dompdf.php",
 ]
-SPDX-FileCopyrightText = ["2021 barryvdh", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-FileCopyrightText = ["2021 barryvdh", "2026 Corey Koval <support@fielddaycommander.org>"]
 SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
 
 # Started from laravel-permission stubs.
@@ -94,7 +94,7 @@ path = [
     "config/permission.php",
     "database/migrations/2026_01_31_180535_create_permission_tables.php",
 ]
-SPDX-FileCopyrightText = ["Spatie bvba <info@spatie.be>", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-FileCopyrightText = ["Spatie bvba <info@spatie.be>", "2026 Corey Koval <support@fielddaycommander.org>"]
 SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
 
 # Started from the Pest stub.
@@ -102,5 +102,5 @@ SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
 path = [
     "tests/Pest.php",
 ]
-SPDX-FileCopyrightText = ["Nuno Maduro", "2026 Corey Koval <ckoval7@gmail.com>"]
+SPDX-FileCopyrightText = ["Nuno Maduro", "2026 Corey Koval <support@fielddaycommander.org>"]
 SPDX-License-Identifier = "GPL-3.0-or-later AND MIT"
