@@ -32,23 +32,12 @@ class SignInLinkCommand extends Command
         $callsign = mb_strtoupper(trim((string) $this->argument('callsign')));
         $by = trim((string) $this->option('by'));
 
-        if (! User::where('call_sign', $callsign)->exists()) {
-            $this->error("No account found with callsign {$callsign}.");
-
-            return self::FAILURE;
-        }
-
-        if ($by === '' || mb_strlen($by) > SignInLinks::MAX_BY_LENGTH) {
-            $this->error('--by must be 1 to '.SignInLinks::MAX_BY_LENGTH.' characters.');
-
-            return self::FAILURE;
-        }
-
         $base = rtrim((string) ($this->option('url') ?: config('app.url')), '/');
         $host = parse_url($base, PHP_URL_HOST);
+        $error = $this->validationError($callsign, $by, $base, $host);
 
-        if (! is_string($host) || $host === '') {
-            $this->error("{$base} is not a full address. Use --url with a full address, such as --url=http://192.168.1.20");
+        if ($error !== null) {
+            $this->error($error);
 
             return self::FAILURE;
         }
@@ -69,5 +58,15 @@ class SignInLinkCommand extends Command
         $this->line($base.'/sign-in/link?'.$query);
 
         return self::SUCCESS;
+    }
+
+    private function validationError(string $callsign, string $by, string $base, mixed $host): ?string
+    {
+        return match (true) {
+            ! User::where('call_sign', $callsign)->exists() => "No account found with callsign {$callsign}.",
+            $by === '' || mb_strlen($by) > SignInLinks::MAX_BY_LENGTH => '--by must be 1 to '.SignInLinks::MAX_BY_LENGTH.' characters.',
+            ! is_string($host) || $host === '' => "{$base} is not a full address. Use --url with a full address, such as --url=http://192.168.1.20",
+            default => null,
+        };
     }
 }
