@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 26.11.4 - 2026-11-27
+
 ### Added
 
 - Complete first-time setup from a JSON file with `php artisan setup:apply`, Docker, `deploy.sh`, or Helm instead of using the setup wizard. See `DOCKER.md` for the file format and deployment options.
